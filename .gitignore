@@ -1,0 +1,10 @@
+
+*.ipch
+.vs/EngineDX/v16/.suo
+*.db
+*.opendb
+.vscode/c_cpp_properties.json
+Debug/*
+x64/Debug/*
+EngineDX.vcxproj.filters
+EngineDX.vcxproj.user
