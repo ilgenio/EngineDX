@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Module.h"
+
 #include <windows.h>
 #include <wrl.h>
 #include <d3d12.h>
@@ -9,7 +11,7 @@
 
 template<class T> using ComPtr = Microsoft::WRL::ComPtr<T>;
 
-class Engine
+class ModuleRender : public Module
 {   
 public:
     struct TimeInfo
@@ -54,12 +56,13 @@ private:
 
 public:
 
-    Engine();
-    ~Engine();
+    ModuleRender(HWND hWnd);
+    ~ModuleRender();
 
-    bool init(HWND wnd);
-    void update();
-    void render();
+    bool         init();
+    UpdateStatus preUpdate();
+    UpdateStatus update();
+    UpdateStatus postUpdate();
 
     void resize();
     void toogleFullscreen();
@@ -81,5 +84,4 @@ private:
 
     void getWindowSize(unsigned& width, unsigned& height);
     void clear(float clearColor[4]);
-    void present();
 };

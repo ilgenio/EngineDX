@@ -4,7 +4,10 @@
 #include "framework.h"
 #include "EngineDX.h"
 
-#include "Engine.h"
+#include "Application.h"
+#include "ModuleRender.h"
+
+#include <shellapi.h>
 
 #define MAX_LOADSTRING 100
 
@@ -12,7 +15,8 @@
 HINSTANCE hInst;                                // current instance
 WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
 WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
-Engine engine;
+
+Application* app = nullptr;
 
 // Forward declarations of functions included in this code module:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
@@ -55,10 +59,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         }
     }
 
+    delete app;
+
     return (int) msg.wParam;
 }
-
-
 
 //
 //  FUNCTION: MyRegisterClass()
@@ -108,7 +112,15 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
       return FALSE;
    }
 
-   engine.init(hWnd);
+   
+   app = new Application(__argc, __argv, hWnd);
+
+   if(!app->init())
+   {
+       delete app;
+
+       return FALSE;
+   }
 
    ShowWindow(hWnd, nCmdShow);
    UpdateWindow(hWnd);
@@ -153,20 +165,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             HDC hdc = BeginPaint(hWnd, &ps);
             // TODO: Add any drawing code that uses hdc here...
             EndPaint(hWnd, &ps);*/
-            engine.update();
-            engine.render();
+            app->update();
         }
         break;
     case WM_DESTROY:
         PostQuitMessage(0);
         break;
     case WM_SIZE:
-        engine.resize();
+        app->getRender()->resize();
         break;
     case WM_KEYDOWN:
         if (wParam == VK_F11)
         {
-            engine.toogleFullscreen();
+            app->getRender()->toogleFullscreen();
         }
     default:
         return DefWindowProc(hWnd, message, wParam, lParam);
