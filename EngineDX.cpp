@@ -112,8 +112,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
       return FALSE;
    }
 
-   
-   app = new Application(__argc, __argv, hWnd);
+      
+   app = new Application(__argc, __wargv, hWnd);
 
    if(!app->init())
    {

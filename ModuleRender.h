@@ -59,17 +59,27 @@ public:
     ModuleRender(HWND hWnd);
     ~ModuleRender();
 
-    bool         init();
-    UpdateStatus preUpdate();
-    UpdateStatus update();
-    UpdateStatus postUpdate();
+    bool                        init();
+    UpdateStatus                preUpdate();
+    UpdateStatus                update();
+    UpdateStatus                postUpdate();
 
-    void resize();
-    void toogleFullscreen();
-    void flush();
+    void                        resize();
+    void                        toogleFullscreen();
+    void                        flush();
 
-    const TimeInfo& getTimeInfo() const { return timeInfo; }
+    const TimeInfo&             getTimeInfo() const   { return timeInfo; }
 
+    ID3D12Device2*              getDevice()           { return device.Get(); }
+    ID3D12GraphicsCommandList*  getCommandList()      { return commandList.Get(); }
+    ID3D12CommandAllocator*     getCommandAllocator() { return commandAllocators[currentBackBufferIdx].Get(); }
+    ID3D12CommandQueue*         getDrawCommandQueue() { return drawCommandQueue.Get(); }
+
+    void                        executeCommandList();
+    void                        signalDrawQueue();
+    void                        addClearCommand(float clearColor[4]);
+
+    void                        getWindowSize(unsigned& width, unsigned& height);
 private:
 
     void enableDebugLayer();
@@ -81,7 +91,4 @@ private:
     bool createRenderTargets();
     bool createCommandList();
     bool createDrawFence();
-
-    void getWindowSize(unsigned& width, unsigned& height);
-    void clear(float clearColor[4]);
 };
