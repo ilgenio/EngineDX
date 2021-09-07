@@ -22,7 +22,7 @@ bool Exercise1::init()
         XMFLOAT3(1.0f, 1.0f, 0.0f)     // 2
     };
 
-    bool ok = createVertexBuffer(&vertices[0], sizeof(vertices));
+    bool ok = createVertexBuffer(&vertices[0], sizeof(vertices), sizeof(Vertex));
     ok = ok && createShaders();
     ok = ok && createRootSignature();
     ok = ok && createPSO();
@@ -40,21 +40,32 @@ UpdateStatus Exercise1::update()
     ModuleRender* render  = app->getRender();
     ID3D12GraphicsCommandList *commandList = render->getCommandList();
 
-    commandList->Reset(render->getCommandAllocator(), nullptr);
+    commandList->Reset(render->getCommandAllocator(), pso.Get());
     float clearColor[] = { 0.2f, 0.2f, 0.2f, 1.0f };
     render->addClearCommand(clearColor);
 
+    unsigned width, height;
+    app->getRender()->getWindowSize(width, height);
 
     D3D12_VIEWPORT viewport;
     viewport.TopLeftX = viewport.TopLeftY = 0;
     viewport.MinDepth = 0.0f;
     viewport.MaxDepth = 1.0f;
-    app->getRender()->getWindowSize(viewport.Width, viewport.Height);
+    viewport.Width    = float(width); 
+    viewport.Height   = float(height);
+
+    D3D12_RECT scissor;
+    scissor.left = 0;
+    scissor.top = 0;
+    scissor.right = width;    
+    scissor.bottom = height;
 
     commandList->SetGraphicsRootSignature(rootSignature.Get());
     commandList->RSSetViewports(1, &viewport);
-    commandList->
-
+    commandList->RSSetScissorRects(1, &scissor);
+    commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);   // set the primitive topology
+    commandList->IASetVertexBuffers(0, 1, &vertexBufferView);                   // set the vertex buffer (using the vertex buffer view)
+    commandList->DrawInstanced(3, 1, 0, 0);                                     // finally draw 3 vertices (draw the triangle)
 
     if(SUCCEEDED(commandList->Close()))
     {
@@ -64,7 +75,7 @@ UpdateStatus Exercise1::update()
     return UPDATE_CONTINUE;
 }
 
-bool Exercise1::createVertexBuffer(void* bufferData, unsigned bufferSize)
+bool Exercise1::createVertexBuffer(void* bufferData, unsigned bufferSize, unsigned stride)
 {
     ModuleRender* render  = app->getRender();
     ID3D12Device2* device = render->getDevice();
@@ -98,6 +109,10 @@ bool Exercise1::createVertexBuffer(void* bufferData, unsigned bufferSize)
         commandList->Close();
 
         render->executeCommandList();
+
+        vertexBufferView.BufferLocation = vertexBuffer->GetGPUVirtualAddress();
+        vertexBufferView.StrideInBytes = stride;
+        vertexBufferView.SizeInBytes = bufferSize;
     }
 
     return ok;
