@@ -1,5 +1,7 @@
 #include "ModuleRender.h"
 
+#include "d3dx12.h"
+
 ModuleRender::ModuleRender(HWND wnd) : hWnd(wnd)
 {
 
@@ -53,6 +55,7 @@ UpdateStatus ModuleRender::preUpdate()
 
 UpdateStatus ModuleRender::update()
 {
+    // TODO: Make it working without update
     currentBackBufferIdx = swapChain->GetCurrentBackBufferIndex();
     if(drawFenceValues[currentBackBufferIdx] != 0)
     {
@@ -60,62 +63,37 @@ UpdateStatus ModuleRender::update()
         WaitForSingleObject(drawEvent, INFINITE);
     }
 
-    ComPtr<ID3D12CommandAllocator> commandAllocator = commandAllocators[currentBackBufferIdx];
-    
-    commandAllocator->Reset();
-    commandList->Reset(commandAllocator.Get(), nullptr);
-
-    float clearColor[] = {1.0f, 0.0f, 0.0f, 1.0f};
-    clear(clearColor);
-
-    bool ok = SUCCEEDED(commandList->Close());
-    
-    if(ok)
+    commandAllocators[currentBackBufferIdx]->Reset();
+    commandList->Reset(commandAllocators[currentBackBufferIdx].Get(), nullptr);
+    commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(backBuffers[currentBackBufferIdx].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+    if(SUCCEEDED(commandList->Close()))
     {
-        ID3D12CommandList* const gfxCommandList = commandList.Get();
-        drawCommandQueue->ExecuteCommandLists(1, &gfxCommandList);
-    }    
+        executeCommandList();
+    }
 
     return UPDATE_CONTINUE;
 }
 
 UpdateStatus ModuleRender::postUpdate()
 {
+    commandList->Reset(commandAllocators[currentBackBufferIdx].Get(), nullptr);
+    commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(backBuffers[currentBackBufferIdx].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
+    if(SUCCEEDED(commandList->Close()))
+    {
+        executeCommandList();
+    }
+    
     swapChain->Present(0, allowTearing ? DXGI_PRESENT_ALLOW_TEARING : 0);
 
-    drawFenceValues[currentBackBufferIdx] = ++drawFenceCounter;
-    drawCommandQueue->Signal(drawFence.Get(), drawFenceValues[currentBackBufferIdx]);
+    signalDrawQueue();
 
     return UPDATE_CONTINUE;
 }
 
-void ModuleRender::clear(float clearColor[4])
+void ModuleRender::signalDrawQueue()
 {
-    // Barrier to render target needed for clear
-    D3D12_RESOURCE_BARRIER barrier;
-    barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-    barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-    barrier.Transition.pResource = backBuffers[currentBackBufferIdx].Get();
-    barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT; 
-    barrier.Transition.StateAfter  = D3D12_RESOURCE_STATE_RENDER_TARGET;
-    barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-
-    commandList->ResourceBarrier(1, &barrier);
-
-    D3D12_CPU_DESCRIPTOR_HANDLE rtv;
-    rtv.ptr = rtDescriptorHeap->GetCPUDescriptorHandleForHeapStart().ptr + currentBackBufferIdx*device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-
-    commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
-
-    // Barrier to present needed for drawing
-    barrier.Type                   = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-    barrier.Flags                  = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-    barrier.Transition.pResource   = backBuffers[currentBackBufferIdx].Get();
-    barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET; 
-    barrier.Transition.StateAfter  = D3D12_RESOURCE_STATE_PRESENT;
-    barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-
-    commandList->ResourceBarrier(1, &barrier);
+    drawFenceValues[currentBackBufferIdx] = ++drawFenceCounter;
+    drawCommandQueue->Signal(drawFence.Get(), drawFenceValues[currentBackBufferIdx]);
 }
 
 void ModuleRender::resize()
@@ -382,7 +360,7 @@ bool ModuleRender::createCommandList()
     
     for(unsigned i = 0; ok && i < SWAP_BUFFER_COUNT; ++i)
     {
-        ok = SUCCEEDED(device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocators[i])));
+        ok = SUCCEEDED(device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT,IID_PPV_ARGS(&commandAllocators[i])));
     }
 
     ok = ok && SUCCEEDED(device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocators[0].Get(), nullptr, IID_PPV_ARGS(&commandList)));
@@ -402,6 +380,18 @@ bool ModuleRender::createDrawFence()
     }
 
     return ok;
+}
+
+void ModuleRender::addClearCommand(float clearColor[4])
+{
+    CD3DX12_CPU_DESCRIPTOR_HANDLE rtv(rtDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), currentBackBufferIdx, device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV));
+    commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
+}
+
+void ModuleRender::executeCommandList()
+{
+    ID3D12CommandList *const gfxCommandList = commandList.Get();
+    drawCommandQueue->ExecuteCommandLists(1, &gfxCommandList);
 }
 
 void ModuleRender::getWindowSize(unsigned &width, unsigned &height)

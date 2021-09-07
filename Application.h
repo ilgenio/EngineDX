@@ -12,7 +12,7 @@ class Application
 {
 public:
 
-	Application(int argc, char** argv, void* hWnd);
+	Application(int argc, wchar_t** argv, void* hWnd);
 	~Application();
 
 	bool         init();
