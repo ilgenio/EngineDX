@@ -95,27 +95,27 @@ bool Exercise1::createVertexBuffer(void* bufferData, unsigned bufferSize, unsign
         nullptr,
         IID_PPV_ARGS(&bufferUploadHeap)));
 
-    D3D12_SUBRESOURCE_DATA vertexData = {};
-    vertexData.pData = reinterpret_cast<BYTE *>(bufferData); 
-    vertexData.RowPitch = bufferSize;                 
-    vertexData.SlicePitch = bufferSize;
-
     ID3D12GraphicsCommandList* commandList = render->getCommandList();
     ok = ok && SUCCEEDED(commandList->Reset(render->getCommandAllocator(), nullptr));
 
     if (ok)
     {
-        // TODO: unroll this helper fuction, does allocations
-        UpdateSubresources(commandList, vertexBuffer.Get(), bufferUploadHeap.Get(), 0, 0, 1, &vertexData);
+        // Copy to intermediate
+        BYTE* pData = nullptr;
+        bufferUploadHeap->Map(0, nullptr, reinterpret_cast<void**>(&pData));
+        memcpy(pData, bufferData, bufferSize);
+        bufferUploadHeap->Unmap(0, nullptr);
 
+        // Copy to vram
+        commandList->CopyBufferRegion(vertexBuffer.Get(), 0, bufferUploadHeap.Get(), 0, bufferSize);
         commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(vertexBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER));
         commandList->Close();
 
         render->executeCommandList();
 
         vertexBufferView.BufferLocation = vertexBuffer->GetGPUVirtualAddress();
-        vertexBufferView.StrideInBytes = stride;
-        vertexBufferView.SizeInBytes = bufferSize;
+        vertexBufferView.StrideInBytes  = stride;
+        vertexBufferView.SizeInBytes    = bufferSize;
     }
 
     return ok;
