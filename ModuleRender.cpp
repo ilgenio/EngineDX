@@ -1,24 +1,17 @@
 #include "ModuleRender.h"
 
 #include "d3dx12.h"
-#include "dxgidebug.h"
 
 ModuleRender::ModuleRender(HWND wnd) : hWnd(wnd)
 {
 
 }
 
+typedef HRESULT(WINAPI* LPDXGIGETDEBUGINTERFACE)(REFIID, void**);
+
 ModuleRender::~ModuleRender()
 {
     flush();
-
-    /*
-    ComPtr<IDXGIDebug> lDebug;
-    if(SUCCEEDED(DXGIGetDebugInterface(IID_PPV_ARGS(&lDebug))))
-    {
-        lDebug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_ALL);
-    }
-    */
 }
 
 bool ModuleRender::init()

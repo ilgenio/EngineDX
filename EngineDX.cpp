@@ -1,6 +1,8 @@
 // EngineDX.cpp : Defines the entry point for the application.
 //
 
+#define INITGUID
+
 #include "framework.h"
 #include "EngineDX.h"
 
@@ -8,6 +10,8 @@
 #include "ModuleRender.h"
 
 #include <shellapi.h>
+
+#include "dxgidebug.h"
 
 #define MAX_LOADSTRING 100
 
@@ -60,6 +64,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     }
 
     delete app;
+
+    ComPtr<IDXGIDebug> dxgiControler;
+    if (SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(&dxgiControler))))
+    {
+        dxgiControler->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_ALL);
+    }
 
     return (int) msg.wParam;
 }

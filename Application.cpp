@@ -2,6 +2,7 @@
 #include "ModuleRender.h"
 #include "Exercise1.h"
 
+
 Application::Application(int argc, wchar_t** argv, void* hWnd)
 {
     modules.push_back(render = new ModuleRender((HWND)hWnd));
