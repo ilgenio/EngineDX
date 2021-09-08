@@ -74,10 +74,10 @@ public:
     ID3D12GraphicsCommandList*  getCommandList()      { return commandList.Get(); }
     ID3D12CommandAllocator*     getCommandAllocator() { return commandAllocators[currentBackBufferIdx].Get(); }
     ID3D12CommandQueue*         getDrawCommandQueue() { return drawCommandQueue.Get(); }
+    D3D12_CPU_DESCRIPTOR_HANDLE getRenderTarget();
 
     void                        executeCommandList();
     void                        signalDrawQueue();
-    void                        addClearCommand(float clearColor[4]);
 
     void                        getWindowSize(unsigned& width, unsigned& height);
 private:

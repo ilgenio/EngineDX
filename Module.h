@@ -10,6 +10,11 @@ public:
 	{
 	}
 
+    virtual ~Module()
+    {
+
+    }
+
 	virtual bool init() 
 	{
 		return true; 

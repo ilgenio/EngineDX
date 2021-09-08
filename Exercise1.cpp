@@ -19,7 +19,7 @@ bool Exercise1::init()
     {
         XMFLOAT3(-1.0f, -1.0f, 0.0f),  // 0
         XMFLOAT3(0.0f, 1.0f, 0.0f),    // 1
-        XMFLOAT3(1.0f, 1.0f, 0.0f)     // 2
+        XMFLOAT3(1.0f, -1.0f, 0.0f)    // 2
     };
 
     bool ok = createVertexBuffer(&vertices[0], sizeof(vertices), sizeof(Vertex));
@@ -41,9 +41,7 @@ UpdateStatus Exercise1::update()
     ID3D12GraphicsCommandList *commandList = render->getCommandList();
 
     commandList->Reset(render->getCommandAllocator(), pso.Get());
-    float clearColor[] = { 0.2f, 0.2f, 0.2f, 1.0f };
-    render->addClearCommand(clearColor);
-
+    
     unsigned width, height;
     app->getRender()->getWindowSize(width, height);
 
@@ -60,6 +58,11 @@ UpdateStatus Exercise1::update()
     scissor.right = width;    
     scissor.bottom = height;
 
+    float clearColor[] = { 0.2f, 0.2f, 0.2f, 1.0f };
+    D3D12_CPU_DESCRIPTOR_HANDLE rtv = render->getRenderTarget();
+
+    commandList->OMSetRenderTargets(1, &rtv, false, nullptr);
+    commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
     commandList->SetGraphicsRootSignature(rootSignature.Get());
     commandList->RSSetViewports(1, &viewport);
     commandList->RSSetScissorRects(1, &scissor);

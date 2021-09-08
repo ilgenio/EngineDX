@@ -1,6 +1,7 @@
 #include "ModuleRender.h"
 
 #include "d3dx12.h"
+#include "dxgidebug.h"
 
 ModuleRender::ModuleRender(HWND wnd) : hWnd(wnd)
 {
@@ -10,11 +11,18 @@ ModuleRender::ModuleRender(HWND wnd) : hWnd(wnd)
 ModuleRender::~ModuleRender()
 {
     flush();
+
+    /*
+    ComPtr<IDXGIDebug> lDebug;
+    if(SUCCEEDED(DXGIGetDebugInterface(IID_PPV_ARGS(&lDebug))))
+    {
+        lDebug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_ALL);
+    }
+    */
 }
 
 bool ModuleRender::init()
-{
-
+{   
 #if defined(_DEBUG)
     enableDebugLayer();
 #endif 
@@ -23,7 +31,7 @@ bool ModuleRender::init()
 
     bool ok = createFactory(); 
     ok = ok && createDevice(false);
-
+    
 #if defined(_DEBUG)
     ok = ok && setupInfoQueue();
 #endif 
@@ -41,6 +49,7 @@ bool ModuleRender::init()
     }
 
     return ok;
+
 }
 
 UpdateStatus ModuleRender::preUpdate()
@@ -165,10 +174,11 @@ void ModuleRender::toogleFullscreen()
 
 void ModuleRender::flush()
 {
+    
     drawCommandQueue->Signal(drawFence.Get(), ++drawFenceCounter);
 
     drawFence->SetEventOnCompletion(drawFenceCounter, drawEvent);
-    WaitForSingleObject(drawEvent, INFINITE);
+    WaitForSingleObject(drawEvent, INFINITE);    
 }
 
 void ModuleRender::enableDebugLayer()
@@ -382,10 +392,9 @@ bool ModuleRender::createDrawFence()
     return ok;
 }
 
-void ModuleRender::addClearCommand(float clearColor[4])
+D3D12_CPU_DESCRIPTOR_HANDLE ModuleRender::getRenderTarget()
 {
-    CD3DX12_CPU_DESCRIPTOR_HANDLE rtv(rtDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), currentBackBufferIdx, device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV));
-    commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
+    return CD3DX12_CPU_DESCRIPTOR_HANDLE(rtDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), currentBackBufferIdx, device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV));
 }
 
 void ModuleRender::executeCommandList()
