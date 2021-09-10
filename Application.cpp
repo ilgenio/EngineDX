@@ -1,16 +1,25 @@
 #include "Application.h"
 #include "ModuleRender.h"
-#include "Exercise1.h"
 
+#include "Exercise1.h"
+#include "Exercise2.h"
 
 Application::Application(int argc, wchar_t** argv, void* hWnd)
 {
     modules.push_back(render = new ModuleRender((HWND)hWnd));
 
-     if(argc > 1 && wcscmp(argv[1], L"Exercise1") == 0)
-     {
-         modules.push_back(new Exercise1);
-     }
+     if(argc > 1)
+	 {
+		 if(wcscmp(argv[1], L"Exercise1") == 0)
+		 {
+			 modules.push_back(new Exercise1);
+		 }
+		 else if(wcscmp(argv[1], L"Exercise2") == 0)
+		 {
+			 modules.push_back(new Exercise2);
+
+		 }
+	 }
 }
 
 Application::~Application()
