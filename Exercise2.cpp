@@ -22,16 +22,6 @@ bool Exercise2::init()
         XMFLOAT3(1.0f, -1.0f, 0.0f)    // 2
     };  
     
-    model = XMMatrixIdentity();
-    view  = XMMatrixLookAtLH(XMVectorSet(0.0f, 0.0f, -20.0f, 0.0f), XMVectorSet(0.0f, 0.0f, 0.0f, 0), XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f));
-
-    unsigned width, height;
-    app->getRender()->getWindowSize(width, height);
-
-    proj = XMMatrixPerspectiveFovLH(XM_PI / 4.0f, float(width) / float(height), 0.1f, 1000.0f);
-
-    XMStoreFloat4x4(&mvp, XMMatrixTranspose(model*view*proj));
-
     bool ok = createVertexBuffer(&vertices[0], sizeof(vertices), sizeof(Vertex));
     ok = ok && createShaders();
     ok = ok && createRootSignature();
@@ -54,6 +44,12 @@ UpdateStatus Exercise2::update()
     
     unsigned width, height;
     app->getRender()->getWindowSize(width, height);
+
+    XMMATRIX model = XMMatrixIdentity();
+    XMMATRIX view = XMMatrixLookAtLH(XMVectorSet(0.0f, 0.0f, -20.0f, 0.0f), XMVectorSet(0.0f, 0.0f, 0.0f, 0), XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f));
+    XMMATRIX proj = XMMatrixPerspectiveFovLH(XM_PI / 4.0f, float(width) / float(height), 0.1f, 1000.0f);
+
+    XMStoreFloat4x4(&mvp, XMMatrixTranspose(model * view * proj));
 
     D3D12_VIEWPORT viewport;
     viewport.TopLeftX = viewport.TopLeftY = 0;

@@ -4,7 +4,6 @@
 
 class Exercise2 : public Module
 {
-    
     ComPtr<ID3D12Resource>      vertexBuffer;
     D3D12_VERTEX_BUFFER_VIEW    vertexBufferView;
     ComPtr<ID3D12Resource>      bufferUploadHeap;
@@ -13,9 +12,6 @@ class Exercise2 : public Module
     ComPtr<ID3DBlob>            vertexShader;
     ComPtr<ID3DBlob>            pixelShader;
 
-    XMMATRIX                    model;
-    XMMATRIX                    view;
-    XMMATRIX                    proj;
     XMFLOAT4X4                  mvp;
 public:
 
