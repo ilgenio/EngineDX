@@ -3,6 +3,7 @@
 
 #include "Exercise1.h"
 #include "Exercise2.h"
+#include "Exercise3.h"
 
 Application::Application(int argc, wchar_t** argv, void* hWnd)
 {
@@ -17,7 +18,10 @@ Application::Application(int argc, wchar_t** argv, void* hWnd)
 		 else if(wcscmp(argv[1], L"Exercise2") == 0)
 		 {
 			 modules.push_back(new Exercise2);
-
+		 }
+		 else if(wcscmp(argv[1], L"Exercise3") == 0)
+		 {
+			 modules.push_back(new Exercise3);
 		 }
 	 }
 }
