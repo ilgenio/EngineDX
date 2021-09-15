@@ -30,7 +30,8 @@ bool Exercise3::init()
         0, 2, 3
     };
     
-    bool ok = createVertexBuffer(&vertices[0], sizeof(vertices), sizeof(Vertex));
+    bool ok = createMainDescriptorHeap();
+    ok = ok && createVertexBuffer(&vertices[0], sizeof(vertices), sizeof(Vertex));
     ok = ok && createIndexBuffer(&indices[0], sizeof(indices));
     ok = ok && createShaders();
     ok = ok && createRootSignature();
@@ -86,8 +87,12 @@ UpdateStatus Exercise3::update()
     commandList->IASetVertexBuffers(0, 1, &vertexBufferView);                   // set the vertex buffer (using the vertex buffer view)
     commandList->IASetIndexBuffer(&indexBufferView);                            // set the index buffer
 
-    commandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX)/sizeof(UINT32), &mvp, 0);
+    ID3D12DescriptorHeap *descriptorHeaps[] = {mainDescriptorHeap.Get()};
+    commandList->SetDescriptorHeaps(1, descriptorHeaps);
 
+    commandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX)/sizeof(UINT32), &mvp, 0);
+    commandList->SetGraphicsRootDescriptorTable(1, mainDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+    
     commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
 
     if(SUCCEEDED(commandList->Close()))
@@ -199,7 +204,7 @@ bool Exercise3::createRootSignature()
     // TODO: create root signature from HSLS
 
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-    CD3DX12_ROOT_PARAMETER rootParameters[1];
+    CD3DX12_ROOT_PARAMETER rootParameters[2];
 
     rootParameters[0].ParameterType            = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
     rootParameters[0].ShaderVisibility         = D3D12_SHADER_VISIBILITY_VERTEX;
@@ -207,7 +212,35 @@ bool Exercise3::createRootSignature()
     rootParameters[0].Constants.RegisterSpace  = 0;
     rootParameters[0].Constants.ShaderRegister = 0;
 
-    rootSignatureDesc.Init(1, rootParameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+    D3D12_DESCRIPTOR_RANGE tableRange;
+
+    tableRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+    tableRange.NumDescriptors = 1;
+    tableRange.BaseShaderRegister = 0;
+    tableRange.RegisterSpace = 0;
+    tableRange.OffsetInDescriptorsFromTableStart = 0;
+
+    rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+    rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+    rootParameters[1].DescriptorTable.NumDescriptorRanges = 1;
+    rootParameters[1].DescriptorTable.pDescriptorRanges = &tableRange;
+
+    D3D12_STATIC_SAMPLER_DESC sampler;
+    sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+    sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+    sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+    sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+    sampler.MipLODBias = 0;
+    sampler.MaxAnisotropy = 0;
+    sampler.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+    sampler.BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+    sampler.MinLOD = 0.0f;
+    sampler.MaxLOD = D3D12_FLOAT32_MAX;
+    sampler.ShaderRegister = 0;
+    sampler.RegisterSpace = 0;
+    sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+    rootSignatureDesc.Init(2, rootParameters, 1, &sampler, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
     ComPtr<ID3DBlob> rootSignatureBlob;
 
@@ -264,13 +297,12 @@ bool Exercise3::loadTextureFromFile(const wchar_t* fileName)
     ok = ok || SUCCEEDED(LoadFromHDRFile(fileName, nullptr, image));
     ok = ok || SUCCEEDED(LoadFromTGAFile(fileName, TGA_FLAGS_NONE, nullptr, image));
     
-
     ok = ok && loadTexture(image);
 
     return ok;
 }
 
-bool Exercise3::loadTexture(const DirectX::ScratchImage& image)
+bool Exercise3::loadTexture(const ScratchImage& image)
 {
     ModuleRender* render  = app->getRender();
     ID3D12Device2* device = render->getDevice();
@@ -298,7 +330,7 @@ bool Exercise3::loadTexture(const DirectX::ScratchImage& image)
         IID_PPV_ARGS(&texture)));
 
     UINT64 requiredSize = 0;
-    UINT64 rowSize = 0;
+    UINT64 rowSize      = 0;
 
     // \note: if mipmaps subresources are needed
     assert(desc.MipLevels == 1);
@@ -331,15 +363,39 @@ bool Exercise3::loadTexture(const DirectX::ScratchImage& image)
         }
 
         textureUploadHeap->Unmap(0, nullptr);
-
         commandList->CopyTextureRegion(&CD3DX12_TEXTURE_COPY_LOCATION(texture.Get(), 0), 0, 0, 0, 
                                        &CD3DX12_TEXTURE_COPY_LOCATION(textureUploadHeap.Get(), layout), 
                                        nullptr);
-        commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(texture.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
+        commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(texture.Get(), D3D12_RESOURCE_STATE_COPY_DEST,
+                                                                              D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
         commandList->Close();
-
         render->executeCommandList();
     }
 
+    if(ok)
+    {
+        // now we create a shader resource view (descriptor that points to the texture and describes it)
+        D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+        srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+        srvDesc.Format                  = desc.Format;
+        srvDesc.ViewDimension           = D3D12_SRV_DIMENSION_TEXTURE2D;
+        srvDesc.Texture2D.MipLevels     = 1;
+        device->CreateShaderResourceView(texture.Get(), &srvDesc, mainDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+    }
+
     return ok;
+}
+
+bool Exercise3::createMainDescriptorHeap()
+{ 
+    ModuleRender* render = app->getRender();
+    ID3D12Device2* device = render->getDevice();
+
+    // create the descriptor heap that will store our srv
+    D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
+    heapDesc.NumDescriptors = 1;
+    heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+    heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+
+    return SUCCEEDED(device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&mainDescriptorHeap)));
 }
