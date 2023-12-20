@@ -1,4 +1,3 @@
-
 cbuffer Transforms : register(b0)
 {
     float4x4 mvp;
@@ -25,7 +24,7 @@ VertexOutput exercise3VS(VertexInput input)
     return output;
 }
 
-Texture2D t1 : register(t0);
+Texture2D t1 : register(t1);
 SamplerState s1 : register(s0);
 
 float4 exercise3PS(VertexOutput input) : SV_TARGET

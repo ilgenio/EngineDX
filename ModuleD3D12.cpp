@@ -1,20 +1,20 @@
-#include "ModuleRender.h"
+#include "ModuleD3D12.h"
 
 #include "d3dx12.h"
 
-ModuleRender::ModuleRender(HWND wnd) : hWnd(wnd)
+ModuleD3D12::ModuleD3D12(HWND wnd) : hWnd(wnd)
 {
 
 }
 
 typedef HRESULT(WINAPI* LPDXGIGETDEBUGINTERFACE)(REFIID, void**);
 
-ModuleRender::~ModuleRender()
+ModuleD3D12::~ModuleD3D12()
 {
     flush();
 }
 
-bool ModuleRender::init()
+bool ModuleD3D12::init()
 {   
 #if defined(_DEBUG)
     enableDebugLayer();
@@ -37,7 +37,6 @@ bool ModuleRender::init()
 
     if (ok)
     {
-        lastTime = std::chrono::high_resolution_clock::now();
         currentBackBufferIdx = swapChain->GetCurrentBackBufferIndex();
     }
 
@@ -45,17 +44,12 @@ bool ModuleRender::init()
 
 }
 
-UpdateStatus ModuleRender::preUpdate()
+UpdateStatus ModuleD3D12::preUpdate()
 {
-    TimePoint currentTime = std::chrono::high_resolution_clock::now();
-    timeInfo.elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - lastTime);
-    ++timeInfo.frameCount;
-    lastTime = currentTime;
-
     return UPDATE_CONTINUE;
 }
 
-UpdateStatus ModuleRender::update()
+UpdateStatus ModuleD3D12::update()
 {
     // TODO: Make it working without update
     currentBackBufferIdx = swapChain->GetCurrentBackBufferIndex();
@@ -77,7 +71,7 @@ UpdateStatus ModuleRender::update()
     return UPDATE_CONTINUE;
 }
 
-UpdateStatus ModuleRender::postUpdate()
+UpdateStatus ModuleD3D12::postUpdate()
 {
     commandList->Reset(commandAllocators[currentBackBufferIdx].Get(), nullptr);
     CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(backBuffers[currentBackBufferIdx].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
@@ -94,13 +88,13 @@ UpdateStatus ModuleRender::postUpdate()
     return UPDATE_CONTINUE;
 }
 
-void ModuleRender::signalDrawQueue()
+void ModuleD3D12::signalDrawQueue()
 {
     drawFenceValues[currentBackBufferIdx] = ++drawFenceCounter;
     drawCommandQueue->Signal(drawFence.Get(), drawFenceValues[currentBackBufferIdx]);
 }
 
-void ModuleRender::resize()
+void ModuleD3D12::resize()
 {
     unsigned width, height;
     getWindowSize(width, height);
@@ -126,7 +120,7 @@ void ModuleRender::resize()
     }
 }
 
-void ModuleRender::toogleFullscreen()
+void ModuleD3D12::toogleFullscreen()
 {
     fullscreen = !fullscreen;
 
@@ -167,7 +161,7 @@ void ModuleRender::toogleFullscreen()
     }
 }
 
-void ModuleRender::flush()
+void ModuleD3D12::flush()
 {
     drawCommandQueue->Signal(drawFence.Get(), ++drawFenceCounter);
 
@@ -175,7 +169,7 @@ void ModuleRender::flush()
     WaitForSingleObject(drawEvent, INFINITE);    
 }
 
-void ModuleRender::enableDebugLayer()
+void ModuleD3D12::enableDebugLayer()
 {
     ComPtr<ID3D12Debug> debugInterface;
 
@@ -184,7 +178,7 @@ void ModuleRender::enableDebugLayer()
     debugInterface->EnableDebugLayer();
 }
 
-bool ModuleRender::createFactory()
+bool ModuleD3D12::createFactory()
 {
     UINT createFactoryFlags = 0;
 #if defined(_DEBUG)
@@ -194,7 +188,7 @@ bool ModuleRender::createFactory()
     return SUCCEEDED(CreateDXGIFactory2(createFactoryFlags, IID_PPV_ARGS(&factory)));
 }
 
-bool ModuleRender::createDevice(bool useWarp)
+bool ModuleD3D12::createDevice(bool useWarp)
 {
     ComPtr<IDXGIAdapter1> dxgiAdapter1;
     ComPtr<IDXGIAdapter4> dxgiAdapter4;
@@ -246,7 +240,7 @@ bool ModuleRender::createDevice(bool useWarp)
     return ok;
 }
 
-bool ModuleRender::setupInfoQueue()
+bool ModuleD3D12::setupInfoQueue()
 {
     ComPtr<ID3D12InfoQueue> pInfoQueue;
 
@@ -287,7 +281,7 @@ bool ModuleRender::setupInfoQueue()
     return ok;
 }
 
-bool ModuleRender::createDrawCommandQueue()
+bool ModuleD3D12::createDrawCommandQueue()
 {
     D3D12_COMMAND_QUEUE_DESC desc = {};
     desc.Type =     D3D12_COMMAND_LIST_TYPE_DIRECT;
@@ -298,7 +292,7 @@ bool ModuleRender::createDrawCommandQueue()
     return SUCCEEDED(device->CreateCommandQueue(&desc, IID_PPV_ARGS(&drawCommandQueue)));
 }
 
-bool ModuleRender::createSwapChain()
+bool ModuleD3D12::createSwapChain()
 {
     // TODO: handle resize
 
@@ -328,7 +322,7 @@ bool ModuleRender::createSwapChain()
     return ok;
 }
 
-bool ModuleRender::createRenderTargets()
+bool ModuleD3D12::createRenderTargets()
 {
     D3D12_DESCRIPTOR_HEAP_DESC desc = {};
     desc.NumDescriptors = SWAP_BUFFER_COUNT;
@@ -358,7 +352,7 @@ bool ModuleRender::createRenderTargets()
     return ok;
 }
 
-bool ModuleRender::createCommandList()
+bool ModuleD3D12::createCommandList()
 {
     bool ok = true;
     
@@ -373,7 +367,7 @@ bool ModuleRender::createCommandList()
     return ok;
 }
 
-bool ModuleRender::createDrawFence()
+bool ModuleD3D12::createDrawFence()
 {
     bool ok = SUCCEEDED(device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&drawFence)));
 
@@ -386,18 +380,13 @@ bool ModuleRender::createDrawFence()
     return ok;
 }
 
-D3D12_CPU_DESCRIPTOR_HANDLE ModuleRender::getRenderTarget()
-{
-    return CD3DX12_CPU_DESCRIPTOR_HANDLE(rtDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), currentBackBufferIdx, device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV));
-}
-
-void ModuleRender::executeCommandList()
+void ModuleD3D12::executeCommandList()
 {
     ID3D12CommandList *const gfxCommandList = commandList.Get();
     drawCommandQueue->ExecuteCommandLists(1, &gfxCommandList);
 }
 
-void ModuleRender::getWindowSize(unsigned &width, unsigned &height)
+void ModuleD3D12::getWindowSize(unsigned &width, unsigned &height)
 {
     RECT clientRect = {};
     GetClientRect(hWnd, &clientRect);
@@ -405,3 +394,9 @@ void ModuleRender::getWindowSize(unsigned &width, unsigned &height)
     width  = unsigned(clientRect.right - clientRect.left);
     height = unsigned(clientRect.bottom - clientRect.top);    
 }
+
+D3D12_CPU_DESCRIPTOR_HANDLE ModuleD3D12::getRenderTargetDescriptor()
+{
+    return CD3DX12_CPU_DESCRIPTOR_HANDLE(rtDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), currentBackBufferIdx, device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV));
+}
+

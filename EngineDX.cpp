@@ -7,11 +7,14 @@
 #include "EngineDX.h"
 
 #include "Application.h"
-#include "ModuleRender.h"
+#include "ModuleD3D12.h"
 
 #include <shellapi.h>
 
 #include "dxgidebug.h"
+
+#include "Keyboard.h"
+#include "Mouse.h"
 
 #define MAX_LOADSTRING 100
 
@@ -152,6 +155,25 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
     {
+    case WM_ACTIVATE:
+    case WM_ACTIVATEAPP:
+        Keyboard::ProcessMessage(message, wParam, lParam);
+        Mouse::ProcessMessage(message, wParam, lParam);
+        break;
+    case WM_INPUT:
+    case WM_MOUSEMOVE:
+    case WM_LBUTTONDOWN:
+    case WM_LBUTTONUP:
+    case WM_RBUTTONDOWN:
+    case WM_RBUTTONUP:
+    case WM_MBUTTONDOWN:
+    case WM_MBUTTONUP:
+    case WM_MOUSEWHEEL:
+    case WM_XBUTTONDOWN:
+    case WM_XBUTTONUP:
+    case WM_MOUSEHOVER:
+        Mouse::ProcessMessage(message, wParam, lParam);
+        break;
     case WM_COMMAND:
         {
             int wmId = LOWORD(wParam);
@@ -182,13 +204,26 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         PostQuitMessage(0);
         break;
     case WM_SIZE:
-        app->getRender()->resize();
+        app->getD3D12()->resize();
+        break;
+    case WM_SYSKEYDOWN:
+        if (wParam == VK_RETURN && (lParam & 0x60000000) == 0x20000000)
+        {
+            // This is where you'd implement the classic ALT+ENTER hotkey for fullscreen toggle
+        }
+        Keyboard::ProcessMessage(message, wParam, lParam);
         break;
     case WM_KEYDOWN:
         if (wParam == VK_F11)
         {
-            app->getRender()->toogleFullscreen();
+            app->getD3D12()->toogleFullscreen();
         }
+        Keyboard::ProcessMessage(message, wParam, lParam);
+        break;
+    case WM_KEYUP:
+    case WM_SYSKEYUP:
+        Keyboard::ProcessMessage(message, wParam, lParam);
+        break;
     default:
         return DefWindowProc(hWnd, message, wParam, lParam);
     }

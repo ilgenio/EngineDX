@@ -2,27 +2,28 @@
 #include "Exercise3.h"
 
 #include "Application.h"
-#include "ModuleRender.h"
+#include "ModuleD3D12.h"
 
 #include "DirectXTex.h"
 #include <d3d12.h>
 #include <d3dcompiler.h>
 #include "d3dx12.h"
 
+
 bool Exercise3::init() 
 {
     struct Vertex
     {
-        XMFLOAT3 position;
-        XMFLOAT2 uv;
+        Vector3 position;
+        Vector2 uv;
     };
 
     static Vertex vertices[4] = 
     {
-        { XMFLOAT3(-1.0f, -1.0f, 0.0f),  XMFLOAT2(0.0f, 1.0f) },
-        { XMFLOAT3(-1.0f, 1.0f, 0.0f),   XMFLOAT2(0.0f, 0.0f) },
-        { XMFLOAT3(1.0f, 1.0f, 0.0f),    XMFLOAT2(1.0f, 0.0f) },
-        { XMFLOAT3(1.0f, -1.0f, 0.0f),   XMFLOAT2(1.0f, 1.0f) }
+        { Vector3(-1.0f, -1.0f, 0.0f),  Vector2(0.0f, 1.0f) },
+        { Vector3(-1.0f, 1.0f, 0.0f),   Vector2(0.0f, 0.0f) },
+        { Vector3(1.0f, 1.0f, 0.0f),    Vector2(1.0f, 0.0f) },
+        { Vector3(1.0f, -1.0f, 0.0f),   Vector2(1.0f, 1.0f) }
     };
 
     static short indices[6] = 
@@ -37,11 +38,12 @@ bool Exercise3::init()
     ok = ok && createShaders();
     ok = ok && createRootSignature();
     ok = ok && createPSO();
-    ok = ok && loadTextureFromFile(L"Lenna.tga");
+    ok = ok && loadTextureFromFile(L"Lenna.tga", texture);
+    ok = ok && loadTextureFromFile(L"dog.tga", textureDog);
 
     if (ok)
     {
-        app->getRender()->signalDrawQueue();
+        app->getD3D12()->signalDrawQueue();
     }
 
     return true;
@@ -49,19 +51,20 @@ bool Exercise3::init()
 
 UpdateStatus Exercise3::update()
 {
-    ModuleRender* render  = app->getRender();
-    ID3D12GraphicsCommandList *commandList = render->getCommandList();
+    ModuleD3D12* d3d12  = app->getD3D12();
+    ID3D12GraphicsCommandList *commandList = d3d12->getCommandList();
 
-    commandList->Reset(render->getCommandAllocator(), pso.Get());
+    commandList->Reset(d3d12->getCommandAllocator(), pso.Get());
     
     unsigned width, height;
-    app->getRender()->getWindowSize(width, height);
+    d3d12->getWindowSize(width, height);
 
-    XMMATRIX model = XMMatrixIdentity();
-    XMMATRIX view  = XMMatrixLookAtLH(XMVectorSet(0.0f, 0.0f, -10.0f, 0.0f), XMVectorSet(0.0f, 0.0f, 0.0f, 0), XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f));
-    XMMATRIX proj  = XMMatrixPerspectiveFovLH(XM_PI / 4.0f, float(width) / float(height), 0.1f, 1000.0f);
+    Matrix model = Matrix::Identity;
+    Matrix view = Matrix::CreateLookAt(Vector3(0.0f, 0.0f, 10.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(0.0f, 1.0f, 0.0f));
+    Matrix proj = Matrix::CreatePerspectiveFieldOfView(XM_PIDIV4, float(width) / float(height), 0.1f, 1000.0f);
 
-    XMStoreFloat4x4(&mvp, XMMatrixTranspose(model * view * proj));
+    mvp = model * view * proj;;
+    mvp = mvp.Transpose();
 
     D3D12_VIEWPORT viewport;
     viewport.TopLeftX = viewport.TopLeftY = 0;
@@ -77,7 +80,7 @@ UpdateStatus Exercise3::update()
     scissor.bottom = height;
 
     float clearColor[] = { 0.2f, 0.2f, 0.2f, 1.0f };
-    D3D12_CPU_DESCRIPTOR_HANDLE rtv = render->getRenderTarget();
+    D3D12_CPU_DESCRIPTOR_HANDLE rtv = d3d12->getRenderTargetDescriptor();
 
     commandList->OMSetRenderTargets(1, &rtv, false, nullptr);
     commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
@@ -91,14 +94,14 @@ UpdateStatus Exercise3::update()
     ID3D12DescriptorHeap *descriptorHeaps[] = {mainDescriptorHeap.Get()};
     commandList->SetDescriptorHeaps(1, descriptorHeaps);
 
-    commandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX)/sizeof(UINT32), &mvp, 0);
+    commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix)/sizeof(UINT32), &mvp, 0);
     commandList->SetGraphicsRootDescriptorTable(1, mainDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
     
     commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
 
     if(SUCCEEDED(commandList->Close()))
     {
-        render->executeCommandList();
+        d3d12->executeCommandList();
     }
 
     return UPDATE_CONTINUE;
@@ -106,27 +109,32 @@ UpdateStatus Exercise3::update()
 
 bool Exercise3::createBuffer(void *bufferData, unsigned bufferSize, ComPtr<ID3D12Resource>& buffer, ComPtr<ID3D12Resource>& upload)
 {
-    ModuleRender* render  = app->getRender();
-    ID3D12Device2* device = render->getDevice();
+    ModuleD3D12* d3d12  = app->getD3D12();
+    ID3D12Device2* device = d3d12->getDevice();
 
+    CD3DX12_HEAP_PROPERTIES heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+    CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize);
     bool ok = SUCCEEDED(device->CreateCommittedResource(
-        &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), 
+        &heapProperties, 
         D3D12_HEAP_FLAG_NONE,
-        &CD3DX12_RESOURCE_DESC::Buffer(bufferSize),
+        &bufferDesc,
         D3D12_RESOURCE_STATE_COPY_DEST, 
         nullptr, 
         IID_PPV_ARGS(&buffer)));
 
+    heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+    bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize);
+
     ok = ok && SUCCEEDED(device->CreateCommittedResource(
-        &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), 
+        &heapProperties, 
         D3D12_HEAP_FLAG_NONE,                             
-        &CD3DX12_RESOURCE_DESC::Buffer(bufferSize),      
+        &bufferDesc,      
         D3D12_RESOURCE_STATE_GENERIC_READ,                
         nullptr,
         IID_PPV_ARGS(&upload)));
 
-    ID3D12GraphicsCommandList* commandList = render->getCommandList();
-    ok = ok && SUCCEEDED(commandList->Reset(render->getCommandAllocator(), nullptr));
+    ID3D12GraphicsCommandList* commandList = d3d12->getCommandList();
+    ok = ok && SUCCEEDED(commandList->Reset(d3d12->getCommandAllocator(), nullptr));
 
     if (ok)
     {
@@ -136,12 +144,13 @@ bool Exercise3::createBuffer(void *bufferData, unsigned bufferSize, ComPtr<ID3D1
         memcpy(pData, bufferData, bufferSize);
         upload->Unmap(0, nullptr);
 
+        CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(buffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
         // Copy to vram
         commandList->CopyBufferRegion(buffer.Get(), 0, upload.Get(), 0, bufferSize);
-        commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(buffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER));
+        commandList->ResourceBarrier(1, &barrier);
         commandList->Close();
 
-        render->executeCommandList();
+        d3d12->executeCommandList();
     }
 
     return ok;
@@ -209,14 +218,14 @@ bool Exercise3::createRootSignature()
 
     rootParameters[0].ParameterType            = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
     rootParameters[0].ShaderVisibility         = D3D12_SHADER_VISIBILITY_VERTEX;
-    rootParameters[0].Constants.Num32BitValues = sizeof(XMMATRIX) / sizeof(UINT32);
+    rootParameters[0].Constants.Num32BitValues = (sizeof(Matrix) / sizeof(UINT32));
     rootParameters[0].Constants.RegisterSpace  = 0;
     rootParameters[0].Constants.ShaderRegister = 0;
 
     D3D12_DESCRIPTOR_RANGE tableRange;
 
     tableRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-    tableRange.NumDescriptors = 1;
+    tableRange.NumDescriptors = 2;
     tableRange.BaseShaderRegister = 0;
     tableRange.RegisterSpace = 0;
     tableRange.OffsetInDescriptorsFromTableStart = 0;
@@ -250,7 +259,7 @@ bool Exercise3::createRootSignature()
         return false;
     }
 
-    if (FAILED(app->getRender()->getDevice()->CreateRootSignature(0, rootSignatureBlob->GetBufferPointer(), rootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature))))
+    if (FAILED(app->getD3D12()->getDevice()->CreateRootSignature(0, rootSignatureBlob->GetBufferPointer(), rootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature))))
     {
         return false;
     }
@@ -289,25 +298,25 @@ bool Exercise3::createPSO()
     psoDesc.NumRenderTargets = 1;                                           // we are only binding one render target
 
     // create the pso
-    return SUCCEEDED(app->getRender()->getDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pso)));
+    return SUCCEEDED(app->getD3D12()->getDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pso)));
 }
 
-bool Exercise3::loadTextureFromFile(const wchar_t* fileName) 
+bool Exercise3::loadTextureFromFile(const wchar_t* fileName, ComPtr<ID3D12Resource>& texResource)
 {
     ScratchImage image;
     bool ok = SUCCEEDED(LoadFromDDSFile(fileName, DDS_FLAGS_NONE, nullptr, image));
     ok = ok || SUCCEEDED(LoadFromHDRFile(fileName, nullptr, image));
     ok = ok || SUCCEEDED(LoadFromTGAFile(fileName, TGA_FLAGS_NONE, nullptr, image));
     
-    ok = ok && loadTexture(image);
+    ok = ok && loadTexture(image, texResource);    
 
     return ok;
 }
 
-bool Exercise3::loadTexture(const ScratchImage& image)
+bool Exercise3::loadTexture(const ScratchImage& image, ComPtr<ID3D12Resource>& texResource)
 {
-    ModuleRender* render  = app->getRender();
-    ID3D12Device2* device = render->getDevice();
+    ModuleD3D12* d3d12 = app->getD3D12();
+    ID3D12Device2* device = d3d12->getDevice();
 
     const TexMetadata& metaData = image.GetMetadata();
 
@@ -323,13 +332,14 @@ bool Exercise3::loadTexture(const ScratchImage& image)
     desc.SampleDesc.Count = 1;
     desc.Dimension        = static_cast<D3D12_RESOURCE_DIMENSION>(metaData.dimension);
 
+    CD3DX12_HEAP_PROPERTIES heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
     bool ok = SUCCEEDED(device->CreateCommittedResource(
-        &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+        &heapProperties,
         D3D12_HEAP_FLAG_NONE,
         &desc,
         D3D12_RESOURCE_STATE_COPY_DEST,
         nullptr,
-        IID_PPV_ARGS(&texture)));
+        IID_PPV_ARGS(&texResource)));
 
     UINT64 requiredSize = 0;
     UINT64 rowSize      = 0;
@@ -342,16 +352,21 @@ bool Exercise3::loadTexture(const ScratchImage& image)
     // \note: upload buffer rows are aligned to D3D12_TEXTURE_DATA_PITCH_ALIGNMENT
     device->GetCopyableFootprints(&desc, 0, 1, 0, &layout, nullptr, &rowSize, &requiredSize);
 
+    heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+    CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(requiredSize);
+
+    ComPtr<ID3D12Resource> textureUploadHeap;
+
     ok = ok && SUCCEEDED(device->CreateCommittedResource(
-        &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), 
+        &heapProperties, 
         D3D12_HEAP_FLAG_NONE,                             
-        &CD3DX12_RESOURCE_DESC::Buffer(requiredSize),      
+        &bufferDesc,      
         D3D12_RESOURCE_STATE_GENERIC_READ,                
         nullptr,
         IID_PPV_ARGS(&textureUploadHeap)));
 
-    ID3D12GraphicsCommandList* commandList = render->getCommandList();
-    ok = ok && SUCCEEDED(commandList->Reset(render->getCommandAllocator(), nullptr));
+    ID3D12GraphicsCommandList* commandList = d3d12->getCommandList();
+    ok = ok && SUCCEEDED(commandList->Reset(d3d12->getCommandAllocator(), nullptr));
 
     if (ok)
     {
@@ -364,14 +379,16 @@ bool Exercise3::loadTexture(const ScratchImage& image)
             memcpy(uploadData+i*layout.Footprint.RowPitch, image.GetPixels()+i*rowSize, rowSize);
         }
 
+        CD3DX12_TEXTURE_COPY_LOCATION dst = CD3DX12_TEXTURE_COPY_LOCATION(texResource.Get(), 0);
+        CD3DX12_TEXTURE_COPY_LOCATION src = CD3DX12_TEXTURE_COPY_LOCATION(textureUploadHeap.Get(), layout);
+        CD3DX12_RESOURCE_BARRIER barrier  = CD3DX12_RESOURCE_BARRIER::Transition(texResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
         textureUploadHeap->Unmap(0, nullptr);
-        commandList->CopyTextureRegion(&CD3DX12_TEXTURE_COPY_LOCATION(texture.Get(), 0), 0, 0, 0, 
-                                       &CD3DX12_TEXTURE_COPY_LOCATION(textureUploadHeap.Get(), layout), 
+        commandList->CopyTextureRegion(&dst, 0, 0, 0, 
+                                       &src, 
                                        nullptr);
-        commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(texture.Get(), D3D12_RESOURCE_STATE_COPY_DEST,
-                                                                              D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
+        commandList->ResourceBarrier(1, &barrier);
         commandList->Close();
-        render->executeCommandList();
+        d3d12->executeCommandList();
     }
 
     if(ok)
@@ -382,7 +399,14 @@ bool Exercise3::loadTexture(const ScratchImage& image)
         srvDesc.Format                  = desc.Format;
         srvDesc.ViewDimension           = D3D12_SRV_DIMENSION_TEXTURE2D;
         srvDesc.Texture2D.MipLevels     = 1;
-        device->CreateShaderResourceView(texture.Get(), &srvDesc, mainDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+
+        UINT srvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+        D3D12_CPU_DESCRIPTOR_HANDLE srvHandle(mainDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+        srvHandle.ptr += srvDescriptorSize * textureUploadHeaps.size();
+
+        device->CreateShaderResourceView(texResource.Get(), &srvDesc, srvHandle);
+
+        textureUploadHeaps.push_back(textureUploadHeap);
     }
 
     return ok;
@@ -390,14 +414,15 @@ bool Exercise3::loadTexture(const ScratchImage& image)
 
 bool Exercise3::createMainDescriptorHeap()
 { 
-    ModuleRender* render = app->getRender();
-    ID3D12Device2* device = render->getDevice();
+    ModuleD3D12* d3d12 = app->getD3D12();
+    ID3D12Device2* device = d3d12->getDevice();
 
     // create the descriptor heap that will store our srv
     D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
-    heapDesc.NumDescriptors = 1;
+    heapDesc.NumDescriptors = 2;
     heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
     heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 
     return SUCCEEDED(device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&mainDescriptorHeap)));
 }
+

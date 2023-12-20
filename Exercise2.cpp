@@ -2,7 +2,7 @@
 #include "Exercise2.h"
 
 #include "Application.h"
-#include "ModuleRender.h"
+#include "ModuleD3D12.h"
 
 #include <d3d12.h>
 #include <d3dcompiler.h>
@@ -29,7 +29,7 @@ bool Exercise2::init()
 
     if (ok)
     {
-        app->getRender()->signalDrawQueue();
+        app->getD3D12()->signalDrawQueue();
     }
 
     return true;
@@ -37,13 +37,13 @@ bool Exercise2::init()
 
 UpdateStatus Exercise2::update()
 {
-    ModuleRender* render  = app->getRender();
-    ID3D12GraphicsCommandList *commandList = render->getCommandList();
+    ModuleD3D12* d3d12 = app->getD3D12();
+    ID3D12GraphicsCommandList *commandList = d3d12->getCommandList();
 
-    commandList->Reset(render->getCommandAllocator(), pso.Get());
+    commandList->Reset(d3d12->getCommandAllocator(), pso.Get());
     
     unsigned width, height;
-    app->getRender()->getWindowSize(width, height);
+    app->getD3D12()->getWindowSize(width, height);
 
     XMMATRIX model = XMMatrixIdentity();
     XMMATRIX view = XMMatrixLookAtLH(XMVectorSet(0.0f, 0.0f, -20.0f, 0.0f), XMVectorSet(0.0f, 0.0f, 0.0f, 0), XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f));
@@ -65,7 +65,7 @@ UpdateStatus Exercise2::update()
     scissor.bottom = height;
 
     float clearColor[] = { 0.2f, 0.2f, 0.2f, 1.0f };
-    D3D12_CPU_DESCRIPTOR_HANDLE rtv = render->getRenderTarget();
+    D3D12_CPU_DESCRIPTOR_HANDLE rtv = d3d12->getRenderTargetDescriptor();
 
     commandList->OMSetRenderTargets(1, &rtv, false, nullptr);
     commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
@@ -81,7 +81,7 @@ UpdateStatus Exercise2::update()
 
     if(SUCCEEDED(commandList->Close()))
     {
-        render->executeCommandList();
+        d3d12->executeCommandList();
     }
 
     return UPDATE_CONTINUE;
@@ -89,17 +89,23 @@ UpdateStatus Exercise2::update()
 
 bool Exercise2::createVertexBuffer(void* bufferData, unsigned bufferSize, unsigned stride)
 {
-    ModuleRender* render  = app->getRender();
+    ModuleD3D12* render  = app->getD3D12();
     ID3D12Device2* device = render->getDevice();
 
-    bool ok = SUCCEEDED(device->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE, &CD3DX12_RESOURCE_DESC::Buffer(bufferSize),
+    CD3DX12_HEAP_PROPERTIES heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+    CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize);
+
+    bool ok = SUCCEEDED(device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &bufferDesc,
         D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&vertexBuffer)));
     
+    heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+    bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize);
+
     // TODO: use ring buffer for uploading resources
     ok = ok && SUCCEEDED(device->CreateCommittedResource(
-        &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), 
+        &heapProperties, 
         D3D12_HEAP_FLAG_NONE,                             
-        &CD3DX12_RESOURCE_DESC::Buffer(bufferSize),      
+        &bufferDesc,      
         D3D12_RESOURCE_STATE_GENERIC_READ,                
         nullptr,
         IID_PPV_ARGS(&bufferUploadHeap)));
@@ -115,9 +121,10 @@ bool Exercise2::createVertexBuffer(void* bufferData, unsigned bufferSize, unsign
         memcpy(pData, bufferData, bufferSize);
         bufferUploadHeap->Unmap(0, nullptr);
 
+        CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(vertexBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
         // Copy to vram
         commandList->CopyBufferRegion(vertexBuffer.Get(), 0, bufferUploadHeap.Get(), 0, bufferSize);
-        commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(vertexBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER));
+        commandList->ResourceBarrier(1, &barrier);
         commandList->Close();
 
         render->executeCommandList();
@@ -172,7 +179,7 @@ bool Exercise2::createRootSignature()
         return false;
     }
 
-    if (FAILED(app->getRender()->getDevice()->CreateRootSignature(0, rootSignatureBlob->GetBufferPointer(), rootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature))))
+    if (FAILED(app->getD3D12()->getDevice()->CreateRootSignature(0, rootSignatureBlob->GetBufferPointer(), rootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature))))
     {
         return false;
     }
@@ -210,5 +217,5 @@ bool Exercise2::createPSO()
     psoDesc.NumRenderTargets = 1;                                           // we are only binding one render target
 
     // create the pso
-    return SUCCEEDED(app->getRender()->getDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pso)));
+    return SUCCEEDED(app->getD3D12()->getDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pso)));
 }

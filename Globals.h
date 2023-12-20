@@ -1,8 +1,9 @@
 #pragma once
 
-#include <DirectXMath.h>
+#include "SimpleMath.h"
 
 using namespace DirectX;
+using namespace DirectX::SimpleMath;
 
 enum UpdateStatus
 {

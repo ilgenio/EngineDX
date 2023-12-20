@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ModuleRender.h"
+#include <vector>
 
 namespace DirectX
 {
@@ -10,20 +11,23 @@ namespace DirectX
 class Exercise3 : public Module
 {
     ComPtr<ID3D12Resource>       texture;
+    ComPtr<ID3D12Resource>       textureDog;
     ComPtr<ID3D12Resource>       vertexBuffer;
     ComPtr<ID3D12Resource>       indexBuffer;
     D3D12_VERTEX_BUFFER_VIEW     vertexBufferView;
     D3D12_INDEX_BUFFER_VIEW      indexBufferView;
     ComPtr<ID3D12Resource>       vBufferUploadHeap;
     ComPtr<ID3D12Resource>       iBufferUploadHeap;
-    ComPtr<ID3D12Resource>       textureUploadHeap;
     ComPtr<ID3D12DescriptorHeap> mainDescriptorHeap;
     ComPtr<ID3D12RootSignature>  rootSignature;
     ComPtr<ID3D12PipelineState>  pso;
     ComPtr<ID3DBlob>             vertexShader;
     ComPtr<ID3DBlob>             pixelShader;
 
-    XMFLOAT4X4                   mvp;
+    std::vector<ComPtr<ID3D12Resource> >    textureUploadHeaps;
+
+    //XMFLOAT4X4                   mvp;
+    Matrix mvp;
 public:
 
     virtual bool init() override;
@@ -38,6 +42,6 @@ private:
     bool createMainDescriptorHeap();
     bool createRootSignature();
     bool createPSO();
-    bool loadTextureFromFile(const wchar_t* fileName);
-    bool loadTexture(const ScratchImage& image);
+    bool loadTextureFromFile(const wchar_t* fileName, ComPtr<ID3D12Resource>& texResource);
+    bool loadTexture(const ScratchImage& image, ComPtr<ID3D12Resource>& texResource);
 };
