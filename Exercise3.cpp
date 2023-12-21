@@ -66,7 +66,7 @@ UpdateStatus Exercise3::update()
     const Matrix& view = camera->getView();
     const Matrix& proj = camera->getProj();
 
-    mvp = model * view * proj;;
+    mvp = model * view * proj;
     mvp = mvp.Transpose();
 
     D3D12_VIEWPORT viewport;

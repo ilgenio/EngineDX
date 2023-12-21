@@ -10,7 +10,7 @@ class ModuleInput : public Module
 {
 public:
 
-    ModuleInput();
+    ModuleInput(HWND hWnd);
 
 private:
     std::unique_ptr<Keyboard> keyboard;

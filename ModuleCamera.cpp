@@ -47,30 +47,32 @@ UpdateStatus ModuleCamera::update()
 
     if(mouseState.leftButton)
     {
-        if (mouseState.positionMode == Mouse::MODE_RELATIVE)
+        if (leftDrag)
         {
-            float sign_x = mouseState.x < 0.0f ? -1.0f : 1.0f;
-            float sign_y = mouseState.y < 0.0f ? -1.0f : 1.0f;
+            int relX = mouseState.x - dragPosX;
+            int relY = mouseState.y - dragPosY;
 
             if (keyState.LeftControl)
             {
-                dragging.panning.x += -getTranslationSpeed() * params.radius * mouseState.x;
-                dragging.panning.y += getTranslationSpeed() * params.radius * mouseState.y;
+                dragging.panning.x = -getTranslationSpeed() * params.radius * relX;
+                dragging.panning.y = getTranslationSpeed() * params.radius * relY;
             }
             else
             {
-                dragging.polar += -sign_x * XMConvertToRadians(getRotationSpeed() * mouseState.x);
-                dragging.azimuthal += sign_y * XMConvertToRadians(getRotationSpeed() * mouseState.x);
+                dragging.polar = XMConvertToRadians(getRotationSpeed() * relX);
+                dragging.azimuthal =  XMConvertToRadians(getRotationSpeed() * relY);
             }
         }
         else
         {
-            mouse.SetMode(Mouse::MODE_RELATIVE);
+            leftDrag = true;
+            dragPosX = mouseState.x;
+            dragPosY = mouseState.y;
         }
     }
     else
     {
-        mouse.SetMode(Mouse::MODE_ABSOLUTE);
+        leftDrag = false;
 
         Quaternion rotation_polar = Quaternion::CreateFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), dragging.polar + params.polar);
         Quaternion rotation_azimuthal = Quaternion::CreateFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), dragging.azimuthal + params.azimuthal);
@@ -78,17 +80,20 @@ UpdateStatus ModuleCamera::update()
 
         params.polar        += dragging.polar;
         params.azimuthal    += dragging.azimuthal;
-        params.panning      += rotation * dragging.panning;
+        
+        params.panning      += Vector3::Transform(dragging.panning, rotation);
         dragging.polar      = 0.0f;
         dragging.azimuthal  = 0.0f;
         dragging.panning    = Vector3(0.0f);
     }
 
-    if(mouseState.rightButton)
+    if(!leftDrag && mouseState.rightButton)
     {
-        if (mouseState.positionMode == Mouse::MODE_RELATIVE)
-        {
-            dragging.radius += getTranslationSpeed() * params.radius * mouseState.y;
+        if (rightDrag)
+        {            
+            int relY = mouseState.y - dragPosY;
+
+            dragging.radius = getTranslationSpeed() * params.radius * relY;
             if (dragging.radius < -params.radius)
             {
                 dragging.radius = -params.radius;
@@ -96,12 +101,13 @@ UpdateStatus ModuleCamera::update()
         }
         else
         {
-            mouse.SetMode(Mouse::MODE_RELATIVE);
+            rightDrag = true;
+            dragPosY = mouseState.y;
         }
     }
     else
     {
-        mouse.SetMode(Mouse::MODE_ABSOLUTE);
+        rightDrag = false;
         params.radius += dragging.radius;
         dragging.radius = 0.0f;
     }
