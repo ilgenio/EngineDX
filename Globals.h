@@ -1,5 +1,7 @@
 #pragma once
 
+#define NOMINMAX
+#define USING_XINPUT
 #include "SimpleMath.h"
 
 using namespace DirectX;
