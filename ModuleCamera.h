@@ -1,0 +1,34 @@
+#pragma once
+
+#include "Module.h"
+
+class ModuleCamera : public Module
+{
+	struct Params
+	{
+		float  radius;
+        float  polar;
+        float  azimuthal;
+        Vector3 panning;
+	};
+
+	Params    params = { 10.0f ,0.0f, 0.0f , {0.0f , 0.0f , 0.0f }};
+	Params    dragging = { 0.0f ,0.0f, 0.0f , {0.0f , 0.0f , 0.0f } };;
+
+    Quaternion rotation;
+    Vector3 position;
+    Matrix view;
+    Matrix proj;
+public:
+
+	bool init() override;
+	UpdateStatus update() override;
+
+    void windowResized(unsigned newWidth, unsigned newHeight);
+
+    const Matrix&     getView() const {return view;}
+    const Matrix&     getProj() const {return proj;}
+    const Vector3&    getPos() const  {return position;}
+    const Quaternion& getRot() const  {return rotation;}
+
+};

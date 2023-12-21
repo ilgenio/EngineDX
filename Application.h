@@ -8,6 +8,7 @@
 class Module;
 class ModuleRender;
 class ModuleD3D12;
+class ModuleCamera;
 
 class Application
 {
@@ -20,7 +21,8 @@ public:
 	UpdateStatus update();
 	bool         cleanUp();
 
-    ModuleD3D12* getD3D12() { return d3d12; }
+    ModuleD3D12*  getD3D12() { return d3d12; }
+    ModuleCamera* getCamera() { return camera;  }
 
     //float             getFPS() const { return 1000.0f * float(MAX_FPS_TICKS) / tickSum; }
     //float             getAvgElapsedMs() const { return tickSum / float(MAX_FPS_TICKS); }
@@ -33,6 +35,7 @@ private:
     std::vector<Module*> modules;
 
     ModuleD3D12* d3d12 = nullptr;
+    ModuleCamera* camera = nullptr;
 
     uint32_t        lastMilis = 0;
     TickList        tickList;

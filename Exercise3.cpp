@@ -3,6 +3,7 @@
 
 #include "Application.h"
 #include "ModuleD3D12.h"
+#include "ModuleCamera.h"
 
 #include "DirectXTex.h"
 #include <d3d12.h>
@@ -52,6 +53,8 @@ bool Exercise3::init()
 UpdateStatus Exercise3::update()
 {
     ModuleD3D12* d3d12  = app->getD3D12();
+    ModuleCamera* camera = app->getCamera();
+
     ID3D12GraphicsCommandList *commandList = d3d12->getCommandList();
 
     commandList->Reset(d3d12->getCommandAllocator(), pso.Get());
@@ -60,8 +63,8 @@ UpdateStatus Exercise3::update()
     d3d12->getWindowSize(width, height);
 
     Matrix model = Matrix::Identity;
-    Matrix view = Matrix::CreateLookAt(Vector3(0.0f, 0.0f, 10.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(0.0f, 1.0f, 0.0f));
-    Matrix proj = Matrix::CreatePerspectiveFieldOfView(XM_PIDIV4, float(width) / float(height), 0.1f, 1000.0f);
+    const Matrix& view = camera->getView();
+    const Matrix& proj = camera->getProj();
 
     mvp = model * view * proj;;
     mvp = mvp.Transpose();

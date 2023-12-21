@@ -2,6 +2,7 @@
 #include "ModuleRender.h"
 #include "ModuleD3D12.h"
 #include "ModuleInput.h"
+#include "ModuleCamera.h"
 
 #include "Exercise1.h"
 #include "Exercise2.h"
@@ -9,24 +10,25 @@
 
 Application::Application(int argc, wchar_t** argv, void* hWnd)
 {
-    modules.push_back(d3d12 = new ModuleD3D12((HWND)hWnd));
-    modules.push_back(new ModuleInput());
+     modules.push_back(d3d12 = new ModuleD3D12((HWND)hWnd));
+     modules.push_back(new ModuleInput());
+     modules.push_back(camera = new ModuleCamera());
 
-     if(argc > 1)
-	 {
-		 if(wcscmp(argv[1], L"Exercise1") == 0)
-		 {
-			 modules.push_back(new Exercise1);
-		 }
-		 else if(wcscmp(argv[1], L"Exercise2") == 0)
-		 {
-			 modules.push_back(new Exercise2);
-		 }
-		 else if(wcscmp(argv[1], L"Exercise3") == 0)
-		 {
-			 modules.push_back(new Exercise3);
-		 }
-	 }
+    if(argc > 1)
+    {
+        if(wcscmp(argv[1], L"Exercise1") == 0)
+        {
+            modules.push_back(new Exercise1);
+        }
+        else if(wcscmp(argv[1], L"Exercise2") == 0)
+        {
+            modules.push_back(new Exercise2);
+        }
+        else if(wcscmp(argv[1], L"Exercise3") == 0)
+        {
+            modules.push_back(new Exercise3);
+        }
+    }
 }
 
 Application::~Application()

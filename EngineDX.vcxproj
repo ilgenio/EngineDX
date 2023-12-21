@@ -171,6 +171,7 @@
     <ClInclude Include="Globals.h" />
     <ClInclude Include="Keyboard.h" />
     <ClInclude Include="Module.h" />
+    <ClInclude Include="ModuleCamera.h" />
     <ClInclude Include="ModuleD3D12.h" />
     <ClInclude Include="ModuleInput.h" />
     <ClInclude Include="ModuleRender.h" />
@@ -188,6 +189,7 @@
     <ClCompile Include="Exercise3.cpp" />
     <ClCompile Include="GamePad.cpp" />
     <ClCompile Include="Keyboard.cpp" />
+    <ClCompile Include="ModuleCamera.cpp" />
     <ClCompile Include="ModuleD3D12.cpp" />
     <ClCompile Include="ModuleInput.cpp" />
     <ClCompile Include="ModuleRender.cpp" />
