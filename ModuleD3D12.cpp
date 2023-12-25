@@ -44,6 +44,15 @@ bool ModuleD3D12::init()
 
 }
 
+bool ModuleD3D12::cleanUp()
+{
+    if(drawEvent) CloseHandle(drawEvent);
+    drawEvent = NULL;
+
+    return true;
+}
+
+
 UpdateStatus ModuleD3D12::preUpdate()
 {
     return UPDATE_CONTINUE;

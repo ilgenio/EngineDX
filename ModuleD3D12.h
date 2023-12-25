@@ -50,10 +50,12 @@ public:
     ModuleD3D12(HWND hWnd);
     ~ModuleD3D12();
 
-    bool                        init();
-    UpdateStatus                preUpdate();
-    UpdateStatus                update();
-    UpdateStatus                postUpdate();
+    bool                        init() override;
+    bool                        cleanUp() override;
+
+    UpdateStatus                preUpdate() override;
+    UpdateStatus                update() override;
+    UpdateStatus                postUpdate() override;
 
     void                        resize();
     void                        toogleFullscreen();

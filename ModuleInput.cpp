@@ -6,6 +6,8 @@
 #include "Mouse.h"
 #include "GamePad.h"
 
+#include <Xinput.h>
+
 ModuleInput::ModuleInput(HWND hWnd)
 {
     keyboard = std::make_unique<Keyboard>();

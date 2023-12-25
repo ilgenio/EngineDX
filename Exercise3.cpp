@@ -199,13 +199,13 @@ bool Exercise3::createShaders()
 
     if (FAILED(D3DCompileFromFile(L"Shaders/Exercise3.hlsl", nullptr, nullptr, "exercise3VS", "vs_5_0", flags, 0, &vertexShader, &errorBuff)))
     {
-        OutputDebugStringA((char*)errorBuff->GetBufferPointer());
+        LOG((char*)errorBuff->GetBufferPointer());
         return false;
     }
 
     if (FAILED(D3DCompileFromFile(L"Shaders/Exercise3.hlsl", nullptr, nullptr, "exercise3PS", "ps_5_0", flags, 0, &pixelShader, &errorBuff)))
     {
-        OutputDebugStringA((char*)errorBuff->GetBufferPointer());
+        LOG((char*)errorBuff->GetBufferPointer());
         return false;
     }
 
@@ -350,7 +350,7 @@ bool Exercise3::loadTexture(const ScratchImage& image, ComPtr<ID3D12Resource>& t
     // \note: if mipmaps subresources are needed
     assert(desc.MipLevels == 1);
 
-    D3D12_PLACED_SUBRESOURCE_FOOTPRINT layout;
+    D3D12_SUBRESOURCE_FOOTPRINT  layout;
 
     // \note: upload buffer rows are aligned to D3D12_TEXTURE_DATA_PITCH_ALIGNMENT
     device->GetCopyableFootprints(&desc, 0, 1, 0, &layout, nullptr, &rowSize, &requiredSize);
