@@ -6,9 +6,6 @@
 #include <d3dcompiler.h>
 #include <d3dx12.h>
 
-#include "debug_draw.hpp"
-
-using Microsoft::WRL::ComPtr;
 
 static const char linePointSource[] = R"(
     cbuffer Transforms : register(b0)
@@ -18,7 +15,7 @@ static const char linePointSource[] = R"(
 
     struct VertexInput
     {
-        float3 position : POSTIION;
+        float3 position : POSITION;
         float3 color    : COLOR;
     };
 
@@ -39,12 +36,11 @@ static const char linePointSource[] = R"(
 
     float4 linePointPS(VertexOutput input) : SV_TARGET
     {
-        return input.color;
+        return float4(input.color, 1.0);
     }
 )";
 
 static const char textSource[] = R"(
-
     cbuffer MyConstants : register(b0)
     {
         float2 screenDimensions;
@@ -70,8 +66,8 @@ static const char textSource[] = R"(
 
         float x = ((2.0 * (input.position.x - 0.5)) / screenDimensions.x) - 1.0;
         float y = 1.0 - ((2.0 * (screenDimensions.y - input.position.y - 0.5)) / screenDimensions.y);
-
-        output.color    = float4(x, y, 0.0, 1.0);
+        
+        output.position = float4(x, y, 0.0, 1.0);
         output.texCoord = input.texCoord;
         output.color    = input.color;
 
@@ -88,7 +84,6 @@ static const char textSource[] = R"(
     
 )";
 
-
 using namespace DirectX;
 
 class DDRenderInterfaceCoreD3D12 final : public dd::RenderInterface
@@ -101,9 +96,9 @@ public:
         device = _device;
         uploadQueue = _uploadQueue;
 
+        setupLinePointVertexBuffers();
         setupUploadCommandBuffer();
         setupLinePointPipeline();
-        setupLinePointVertexBuffers();
         setupTextPipeline();
         setupTextVertexBuffers();
     }
@@ -129,13 +124,13 @@ public:
 
         unsigned flags = D3DCOMPILE_OPTIMIZATION_LEVEL3 | D3DCOMPILE_ALL_RESOURCES_BOUND;
 
-        D3DCompile(textSource, sizeof(linePointVS), "TextVS", nullptr, nullptr, "textVS", "vs_5_0", flags, 0, &textVS, nullptr);
-        D3DCompile(textSource, sizeof(linePointVS), "TextPS", nullptr, nullptr, "textPS", "vs_5_0", flags, 0, &textVS, nullptr);
+        D3DCompile(textSource, sizeof(textSource), "TextVS", nullptr, nullptr, "textVS", "vs_5_0", flags, 0, &textVS, nullptr);
+        D3DCompile(textSource, sizeof(textSource), "TextPS", nullptr, nullptr, "textPS", "ps_5_0", flags, 0, &textPS, nullptr);
 
         CD3DX12_ROOT_PARAMETER textRootParams[2];
         D3D12_DESCRIPTOR_RANGE tableRange{ D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, 0 };
 
-        CD3DX12_ROOT_PARAMETER::InitAsConstants(textRootParams[0], sizeof(Vector2) / sizeof(UINT32), 0, D3D12_SHADER_VISIBILITY_VERTEX);
+        CD3DX12_ROOT_PARAMETER::InitAsConstants(textRootParams[0], sizeof(Vector2) / sizeof(UINT32), 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
         CD3DX12_ROOT_PARAMETER::InitAsDescriptorTable(textRootParams[1], 1, &tableRange, D3D12_SHADER_VISIBILITY_PIXEL);
 
         D3D12_STATIC_SAMPLER_DESC sampler = { D3D12_FILTER_MIN_MAG_MIP_LINEAR, D3D12_TEXTURE_ADDRESS_MODE_CLAMP , D3D12_TEXTURE_ADDRESS_MODE_CLAMP ,
@@ -143,7 +138,7 @@ public:
                                               0.0f, D3D12_FLOAT32_MAX , 0, 0, D3D12_SHADER_VISIBILITY_PIXEL };
 
         CD3DX12_ROOT_SIGNATURE_DESC textRootDesc;
-        textRootDesc.Init(2, &textRootParams[0], 1, &sampler, D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
+        textRootDesc.Init(2, &textRootParams[0], 1, &sampler, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT | D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
                                                               D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS | 
                                                               D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
                                                               D3D12_ROOT_SIGNATURE_FLAG_DENY_AMPLIFICATION_SHADER_ROOT_ACCESS | 
@@ -159,11 +154,12 @@ public:
 
         D3D12_GRAPHICS_PIPELINE_STATE_DESC textPSODesc = {};
         textPSODesc.InputLayout = { inputLayout, sizeof(inputLayout) / sizeof(D3D12_INPUT_ELEMENT_DESC) };
-        textPSODesc.pRootSignature = pointLineSignature.Get();
+        textPSODesc.pRootSignature = textSignature.Get();
         textPSODesc.VS = { textVS->GetBufferPointer(),  textVS->GetBufferSize() };
         textPSODesc.PS = { textPS->GetBufferPointer(), textPS->GetBufferSize() };
         textPSODesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
         textPSODesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+        textPSODesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
         textPSODesc.SampleDesc = { 1, 0 };
         textPSODesc.SampleMask = 0xffffffff;
         textPSODesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
@@ -180,16 +176,16 @@ public:
 
         unsigned flags = D3DCOMPILE_OPTIMIZATION_LEVEL3 | D3DCOMPILE_ALL_RESOURCES_BOUND;
 
-        D3DCompile(linePointSource, sizeof(linePointVS), "LinePointVS", nullptr, nullptr, "linePointVS", "vs_5_0", flags, 0, &linePointVS, nullptr);
-        D3DCompile(linePointSource, sizeof(linePointVS), "LinePointPS", nullptr, nullptr, "linePointPS", "vs_5_0", flags, 0, &linePointVS, nullptr);
-
+        D3DCompile(linePointSource, sizeof(linePointSource), "LinePointVS", nullptr, nullptr, "linePointVS", "vs_5_0", flags, 0, &linePointVS, &errorBuff);
+        D3DCompile(linePointSource, sizeof(linePointSource), "LinePointPS", nullptr, nullptr, "linePointPS", "ps_5_0", flags, 0, &linePointPS, &errorBuff);
 
         CD3DX12_ROOT_PARAMETER linePointRootParams[1];
 
-        CD3DX12_ROOT_PARAMETER::InitAsConstants(linePointRootParams[0], sizeof(Matrix) / sizeof(UINT32), 0, D3D12_SHADER_VISIBILITY_VERTEX);
+        CD3DX12_ROOT_PARAMETER::InitAsConstants(linePointRootParams[0], sizeof(Matrix) / sizeof(UINT32), 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
 
         CD3DX12_ROOT_SIGNATURE_DESC linePointRootDesc;
-        linePointRootDesc.Init(1, &linePointRootParams[0], 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
+        linePointRootDesc.Init(1, &linePointRootParams[0], 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
+                                                                       D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
                                                                        D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
                                                                        D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
                                                                        D3D12_ROOT_SIGNATURE_FLAG_DENY_AMPLIFICATION_SHADER_ROOT_ACCESS |
@@ -207,8 +203,9 @@ public:
         pointPSODesc.pRootSignature = pointLineSignature.Get();
         pointPSODesc.VS = { linePointVS->GetBufferPointer(),  linePointVS->GetBufferSize() };
         pointPSODesc.PS = { linePointPS->GetBufferPointer(), linePointPS->GetBufferSize() };
-        pointPSODesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
+        pointPSODesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
         pointPSODesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+        pointPSODesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
         pointPSODesc.SampleDesc = { 1, 0 };
         pointPSODesc.SampleMask = 0xffffffff;
         pointPSODesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
@@ -219,15 +216,8 @@ public:
         D3D12_GRAPHICS_PIPELINE_STATE_DESC pointPSODescNoDepth = pointPSODesc;
         pointPSODescNoDepth.DepthStencilState.DepthEnable = FALSE;
 
-        D3D12_GRAPHICS_PIPELINE_STATE_DESC linePSODesc = pointPSODesc;
-        linePSODesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
-        D3D12_GRAPHICS_PIPELINE_STATE_DESC linePSODescNoDepth = linePSODesc;
-        linePSODescNoDepth.DepthStencilState.DepthEnable = FALSE;
-
-        device->CreateGraphicsPipelineState(&pointPSODesc, IID_PPV_ARGS(&pointPSO));
-        device->CreateGraphicsPipelineState(&pointPSODescNoDepth, IID_PPV_ARGS(&pointPSONoDepth));
-        device->CreateGraphicsPipelineState(&linePSODesc, IID_PPV_ARGS(&linePSO));
-        device->CreateGraphicsPipelineState(&linePSODescNoDepth, IID_PPV_ARGS(&linePSONoDepth));
+        device->CreateGraphicsPipelineState(&pointPSODesc, IID_PPV_ARGS(&pointLinePSO));
+        device->CreateGraphicsPipelineState(&pointPSODescNoDepth, IID_PPV_ARGS(&pointLinePSONoDepth));
     }
      
     void createBuffer(unsigned bufferSize, ComPtr<ID3D12Resource>& buffer, D3D12_VERTEX_BUFFER_VIEW& view)
@@ -260,7 +250,7 @@ public:
 
     void recordCommands(const dd::DrawVertex* vertices, int count, ID3D12Resource* vertexBuffer, const D3D12_VERTEX_BUFFER_VIEW& vertexBufferView, 
                         ID3D12PipelineState* pso, ID3D12RootSignature* signature, void* rootConstants, uint32_t rootConstantsSize,
-                        ID3D12DescriptorHeap* descriptorHeap, size_t& memoryOffset)
+                        ID3D12DescriptorHeap* descriptorHeap, D3D_PRIMITIVE_TOPOLOGY topology, size_t& memoryOffset)
     {
         size_t freeSpace = DEBUG_DRAW_VERTEX_BUFFER_SIZE - memoryOffset;
         if (freeSpace < count)
@@ -291,12 +281,12 @@ public:
             scissor.right = width;
             scissor.bottom = height;
 
-            commandList->Reset(commandAllocator.Get(), pso);
+            commandList->SetPipelineState(pso);
+            commandList->SetGraphicsRootSignature(signature);
             commandList->RSSetViewports(1, &viewport);
             commandList->RSSetScissorRects(1, &scissor);
             commandList->IASetVertexBuffers(0, 1, &vertexBufferView);
-
-            // TODO: needed point/line commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);   // set the primitive topology
+            commandList->IASetPrimitiveTopology(topology);
             
             if (descriptorHeap != nullptr)
             {
@@ -306,39 +296,41 @@ public:
             }
             else
             {
-                commandList->SetDescriptorHeaps(0, nullptr);
+                //commandList->SetDescriptorHeaps(0, nullptr);
             }
 
             commandList->SetGraphicsRoot32BitConstants(0, rootConstantsSize, rootConstants, 0);
-            commandList->DrawIndexedInstanced(count, 1, 0, 0, 0);
+            commandList->DrawInstanced(count, 1, 0, 0);
         }
     }
 
     void drawPointList(const dd::DrawVertex * points, int count, bool depthEnabled) override
     {
-        ID3D12PipelineState* pso = depthEnabled ? pointPSO.Get() : pointPSONoDepth.Get();
-        recordCommands(points, count, pointBuffer.Get(), pointBufferView, pso, pointLineSignature.Get(), &mvpMatrix, sizeof(Matrix) / sizeof(UINT32), nullptr, pointOffset);
+        ID3D12PipelineState* pso = depthEnabled ? pointLinePSO.Get() : pointLinePSONoDepth.Get();
+
+        recordCommands(points, count, pointBuffer.Get(), pointBufferView, pso, pointLineSignature.Get(), &mvpMatrix, sizeof(Matrix) / sizeof(UINT32), nullptr, D3D_PRIMITIVE_TOPOLOGY_POINTLIST, pointOffset);
     }
 
 
     void drawLineList(const dd::DrawVertex * lines, int count, bool depthEnabled) override
     {
-        ID3D12PipelineState* pso = depthEnabled ? linePSO.Get() : linePSONoDepth.Get();
-        recordCommands(lines, count, lineBuffer.Get(), lineBufferView, pso, pointLineSignature.Get(), &mvpMatrix, sizeof(Matrix) / sizeof(UINT32), nullptr, lineOffset);
+        ID3D12PipelineState* pso = depthEnabled ? pointLinePSO.Get() : pointLinePSONoDepth.Get();
+
+        recordCommands(lines, count, lineBuffer.Get(), lineBufferView, pso, pointLineSignature.Get(), &mvpMatrix, sizeof(Matrix) / sizeof(UINT32), nullptr, D3D_PRIMITIVE_TOPOLOGY_LINELIST, lineOffset);
     }
 
     void drawGlyphList(const dd::DrawVertex * glyphs, int count, dd::GlyphTextureHandle glyphTex) override
     {
         Vector2 dim = Vector2(float(width), float(height));
 
-        recordCommands(glyphs, count, textBuffer.Get(), textBufferView, textPSO.Get(), textSignature.Get(), &dim, sizeof(Vector2) / sizeof(UINT32), textDescriptorHeap.Get(), textOffset);
+        recordCommands(glyphs, count, textBuffer.Get(), textBufferView, textPSO.Get(), textSignature.Get(), &dim, sizeof(Vector2) / sizeof(UINT32), textDescriptorHeap.Get(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, textOffset);
     }
 
     dd::GlyphTextureHandle createGlyphTexture(int width, int height, const void * pixels) override
     {
         // Create and upload texture
 
-        D3D12_RESOURCE_DESC desc = { D3D12_RESOURCE_DIMENSION_TEXTURE2D, 0, UINT64(width), UINT(height), 1, 1, DXGI_FORMAT_R8_UNORM, {1, 0}, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE };
+        D3D12_RESOURCE_DESC desc = { D3D12_RESOURCE_DIMENSION_TEXTURE2D, 0, UINT64(width), UINT(height), 1, 1, DXGI_FORMAT_R8_UNORM, {1, 0}, D3D12_TEXTURE_LAYOUT_UNKNOWN, D3D12_RESOURCE_FLAG_NONE };
 
         CD3DX12_HEAP_PROPERTIES defaultProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
         device->CreateCommittedResource(&defaultProperties, D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&glyphTexture));
@@ -364,9 +356,11 @@ public:
         staging->Unmap(0, nullptr);
 
         CD3DX12_TEXTURE_COPY_LOCATION dst = CD3DX12_TEXTURE_COPY_LOCATION(glyphTexture.Get());
-        CD3DX12_TEXTURE_COPY_LOCATION src = CD3DX12_TEXTURE_COPY_LOCATION(staging.Get());
+        CD3DX12_TEXTURE_COPY_LOCATION src = CD3DX12_TEXTURE_COPY_LOCATION(staging.Get(), footPrint);
         CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(glyphTexture.Get(), D3D12_RESOURCE_STATE_COPY_DEST, 
                                                                                 D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+
+        commandList->Reset(commandAllocator.Get(), nullptr);
         commandList->CopyTextureRegion(&dst, 0, 0, 0, &src, nullptr);
         commandList->ResourceBarrier(1, &barrier);
         commandList->Close();
@@ -441,11 +435,8 @@ private:
     size_t                       textOffset = 0;
 
     ComPtr<ID3D12RootSignature>  pointLineSignature;
-    ComPtr<ID3D12PipelineState>  pointPSO;
-    ComPtr<ID3D12PipelineState>  pointPSONoDepth;
-
-    ComPtr<ID3D12PipelineState>  linePSO;
-    ComPtr<ID3D12PipelineState>  linePSONoDepth;
+    ComPtr<ID3D12PipelineState>  pointLinePSO;
+    ComPtr<ID3D12PipelineState>  pointLinePSONoDepth;
 
     ComPtr<ID3D12RootSignature>  textSignature;
     ComPtr<ID3D12PipelineState>  textPSO;

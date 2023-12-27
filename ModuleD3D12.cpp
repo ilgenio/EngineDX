@@ -32,6 +32,7 @@ bool ModuleD3D12::init()
 
     ok = ok && createSwapChain();
     ok = ok && createRenderTargets();
+    ok = ok && createDepthStencil();
     ok = ok && createCommandList();
     ok = ok && createDrawFence();
 
@@ -69,27 +70,12 @@ UpdateStatus ModuleD3D12::update()
     }
 
     commandAllocators[currentBackBufferIdx]->Reset();
-    commandList->Reset(commandAllocators[currentBackBufferIdx].Get(), nullptr);
-    CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(backBuffers[currentBackBufferIdx].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-    commandList->ResourceBarrier(1, &barrier);
-    if(SUCCEEDED(commandList->Close()))
-    {
-        executeCommandList();
-    }
 
     return UPDATE_CONTINUE;
 }
 
 UpdateStatus ModuleD3D12::postUpdate()
 {
-    commandList->Reset(commandAllocators[currentBackBufferIdx].Get(), nullptr);
-    CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(backBuffers[currentBackBufferIdx].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-    commandList->ResourceBarrier(1, &barrier);
-    if(SUCCEEDED(commandList->Close()))
-    {
-        executeCommandList();
-    }
-    
     swapChain->Present(0, allowTearing ? DXGI_PRESENT_ALLOW_TEARING : 0);
 
     signalDrawQueue();
@@ -115,7 +101,7 @@ void ModuleD3D12::resize()
 
         flush();
 
-        for (unsigned i = 0; i < SWAP_BUFFER_COUNT; ++i)
+        for (unsigned i = 0; i < FRAMES_IN_FLIGHT; ++i)
         {
             backBuffers[i].Reset();
             drawFenceValues[i] = 0;
@@ -124,7 +110,7 @@ void ModuleD3D12::resize()
         DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
 
         bool ok = SUCCEEDED(swapChain->GetDesc(&swapChainDesc));
-        ok = ok && SUCCEEDED(swapChain->ResizeBuffers(SWAP_BUFFER_COUNT, windowWidth, windowHeight, swapChainDesc.BufferDesc.Format, swapChainDesc.Flags));
+        ok = ok && SUCCEEDED(swapChain->ResizeBuffers(FRAMES_IN_FLIGHT, windowWidth, windowHeight, swapChainDesc.BufferDesc.Format, swapChainDesc.Flags));
         ok = ok && createRenderTargets();
     }
 }
@@ -312,7 +298,7 @@ bool ModuleD3D12::createSwapChain()
     swapChainDesc.Stereo = FALSE;
     swapChainDesc.SampleDesc = { 1, 0 };
     swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    swapChainDesc.BufferCount = SWAP_BUFFER_COUNT;
+    swapChainDesc.BufferCount = FRAMES_IN_FLIGHT;
     swapChainDesc.Scaling = DXGI_SCALING_STRETCH;
     swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
     swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
@@ -331,10 +317,46 @@ bool ModuleD3D12::createSwapChain()
     return ok;
 }
 
+bool ModuleD3D12::createDepthStencil()
+{
+    D3D12_CLEAR_VALUE clearValue = {};
+    clearValue.Format = DXGI_FORMAT_D32_FLOAT;
+    clearValue.DepthStencil.Depth = 1.0f;
+    clearValue.DepthStencil.Stencil = 0;
+    CD3DX12_HEAP_PROPERTIES heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+    CD3DX12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, windowWidth, windowHeight, 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
+
+    bool ok = SUCCEEDED(device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &clearValue, IID_PPV_ARGS(&depthStencilBuffer)));
+
+    if (ok)
+    {
+        // create a depth stencil descriptor heap so we can get a pointer to the depth stencil buffer
+        D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
+        dsvHeapDesc.NumDescriptors = 1;
+        dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+        dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+        ok = SUCCEEDED(device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&dsDescriptorHeap)));
+
+        if (ok) dsDescriptorHeap->SetName(L"Depth/Stencil Resource Heap");
+    }
+
+    if (ok)
+    {
+        D3D12_DEPTH_STENCIL_VIEW_DESC depthStencilDesc = {};
+        depthStencilDesc.Format = DXGI_FORMAT_D32_FLOAT;
+        depthStencilDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+        depthStencilDesc.Flags = D3D12_DSV_FLAG_NONE;
+
+        device->CreateDepthStencilView(depthStencilBuffer.Get(), &depthStencilDesc, dsDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+    }
+
+    return ok;
+}
+
 bool ModuleD3D12::createRenderTargets()
 {
     D3D12_DESCRIPTOR_HEAP_DESC desc = {};
-    desc.NumDescriptors = SWAP_BUFFER_COUNT;
+    desc.NumDescriptors = FRAMES_IN_FLIGHT;
     desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
  
     bool ok = SUCCEEDED(device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&rtDescriptorHeap)));
@@ -345,7 +367,7 @@ bool ModuleD3D12::createRenderTargets()
 
         D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle(rtDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 
-        for (int i = 0; ok && i < SWAP_BUFFER_COUNT; ++i)
+        for (int i = 0; ok && i < FRAMES_IN_FLIGHT; ++i)
         {
             ok = SUCCEEDED(swapChain->GetBuffer(i, IID_PPV_ARGS(&backBuffers[i])));
 
@@ -365,7 +387,7 @@ bool ModuleD3D12::createCommandList()
 {
     bool ok = true;
     
-    for(unsigned i = 0; ok && i < SWAP_BUFFER_COUNT; ++i)
+    for(unsigned i = 0; ok && i < FRAMES_IN_FLIGHT; ++i)
     {
         ok = SUCCEEDED(device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT,IID_PPV_ARGS(&commandAllocators[i])));
     }
@@ -389,12 +411,6 @@ bool ModuleD3D12::createDrawFence()
     return ok;
 }
 
-void ModuleD3D12::executeCommandList()
-{
-    ID3D12CommandList *const gfxCommandList = commandList.Get();
-    drawCommandQueue->ExecuteCommandLists(1, &gfxCommandList);
-}
-
 void ModuleD3D12::getWindowSize(unsigned &width, unsigned &height)
 {
     RECT clientRect = {};
@@ -407,5 +423,10 @@ void ModuleD3D12::getWindowSize(unsigned &width, unsigned &height)
 D3D12_CPU_DESCRIPTOR_HANDLE ModuleD3D12::getRenderTargetDescriptor()
 {
     return CD3DX12_CPU_DESCRIPTOR_HANDLE(rtDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), currentBackBufferIdx, device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV));
+}
+
+D3D12_CPU_DESCRIPTOR_HANDLE ModuleD3D12::getDepthStencilDescriptor()
+{
+    return dsDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
 }
 

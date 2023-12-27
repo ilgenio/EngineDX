@@ -58,7 +58,10 @@ UpdateStatus Exercise3::update()
     ID3D12GraphicsCommandList *commandList = d3d12->getCommandList();
 
     commandList->Reset(d3d12->getCommandAllocator(), pso.Get());
-    
+
+    CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(d3d12->getBackBuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+    commandList->ResourceBarrier(1, &barrier);
+
     unsigned width, height;
     d3d12->getWindowSize(width, height);
 
@@ -86,7 +89,10 @@ UpdateStatus Exercise3::update()
     D3D12_CPU_DESCRIPTOR_HANDLE rtv = d3d12->getRenderTargetDescriptor();
 
     commandList->OMSetRenderTargets(1, &rtv, false, nullptr);
+
     commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
+
+
     commandList->SetGraphicsRootSignature(rootSignature.Get());
     commandList->RSSetViewports(1, &viewport);
     commandList->RSSetScissorRects(1, &scissor);
@@ -94,17 +100,23 @@ UpdateStatus Exercise3::update()
     commandList->IASetVertexBuffers(0, 1, &vertexBufferView);                   // set the vertex buffer (using the vertex buffer view)
     commandList->IASetIndexBuffer(&indexBufferView);                            // set the index buffer
 
+
     ID3D12DescriptorHeap *descriptorHeaps[] = {mainDescriptorHeap.Get()};
     commandList->SetDescriptorHeaps(1, descriptorHeaps);
 
     commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix)/sizeof(UINT32), &mvp, 0);
     commandList->SetGraphicsRootDescriptorTable(1, mainDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+
     
     commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
 
+    barrier = CD3DX12_RESOURCE_BARRIER::Transition(d3d12->getBackBuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+    commandList->ResourceBarrier(1, &barrier);
+
     if(SUCCEEDED(commandList->Close()))
     {
-        d3d12->executeCommandList();
+        ID3D12CommandList* commandLists[] = { commandList };
+        d3d12->getDrawCommandQueue()->ExecuteCommandLists(UINT(std::size(commandLists)), commandLists);
     }
 
     return UPDATE_CONTINUE;
@@ -153,7 +165,8 @@ bool Exercise3::createBuffer(void *bufferData, unsigned bufferSize, ComPtr<ID3D1
         commandList->ResourceBarrier(1, &barrier);
         commandList->Close();
 
-        d3d12->executeCommandList();
+        ID3D12CommandList* commandLists[] = { commandList };
+        d3d12->getDrawCommandQueue()->ExecuteCommandLists(UINT(std::size(commandLists)), commandLists);
     }
 
     return ok;
@@ -254,7 +267,7 @@ bool Exercise3::createRootSignature()
     sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
     rootSignatureDesc.Init(2, rootParameters, 1, &sampler, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-
+    
     ComPtr<ID3DBlob> rootSignatureBlob;
 
     if (FAILED(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &rootSignatureBlob, nullptr)))
@@ -350,7 +363,7 @@ bool Exercise3::loadTexture(const ScratchImage& image, ComPtr<ID3D12Resource>& t
     // \note: if mipmaps subresources are needed
     assert(desc.MipLevels == 1);
 
-    D3D12_SUBRESOURCE_FOOTPRINT  layout;
+    D3D12_PLACED_SUBRESOURCE_FOOTPRINT  layout;
 
     // \note: upload buffer rows are aligned to D3D12_TEXTURE_DATA_PITCH_ALIGNMENT
     device->GetCopyableFootprints(&desc, 0, 1, 0, &layout, nullptr, &rowSize, &requiredSize);
@@ -391,7 +404,9 @@ bool Exercise3::loadTexture(const ScratchImage& image, ComPtr<ID3D12Resource>& t
                                        nullptr);
         commandList->ResourceBarrier(1, &barrier);
         commandList->Close();
-        d3d12->executeCommandList();
+
+        ID3D12CommandList* commandLists[] = { commandList };
+        d3d12->getDrawCommandQueue()->ExecuteCommandLists(UINT(std::size(commandLists)), commandLists);
     }
 
     if(ok)

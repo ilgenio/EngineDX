@@ -42,6 +42,9 @@ UpdateStatus Exercise2::update()
 
     commandList->Reset(d3d12->getCommandAllocator(), pso.Get());
     
+    CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(d3d12->getBackBuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+    commandList->ResourceBarrier(1, &barrier);
+
     unsigned width, height;
     app->getD3D12()->getWindowSize(width, height);
 
@@ -79,9 +82,13 @@ UpdateStatus Exercise2::update()
 
     commandList->DrawInstanced(3, 1, 0, 0);                                     // finally draw 3 vertices (draw the triangle)
 
+    barrier = CD3DX12_RESOURCE_BARRIER::Transition(d3d12->getBackBuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+    commandList->ResourceBarrier(1, &barrier);
+
     if(SUCCEEDED(commandList->Close()))
     {
-        d3d12->executeCommandList();
+        ID3D12CommandList* commandLists[] = { commandList };
+        d3d12->getDrawCommandQueue()->ExecuteCommandLists(UINT(std::size(commandLists)), commandLists);
     }
 
     return UPDATE_CONTINUE;
@@ -89,8 +96,8 @@ UpdateStatus Exercise2::update()
 
 bool Exercise2::createVertexBuffer(void* bufferData, unsigned bufferSize, unsigned stride)
 {
-    ModuleD3D12* render  = app->getD3D12();
-    ID3D12Device2* device = render->getDevice();
+    ModuleD3D12* d3d12  = app->getD3D12();
+    ID3D12Device2* device = d3d12->getDevice();
 
     CD3DX12_HEAP_PROPERTIES heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
     CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize);
@@ -110,8 +117,8 @@ bool Exercise2::createVertexBuffer(void* bufferData, unsigned bufferSize, unsign
         nullptr,
         IID_PPV_ARGS(&bufferUploadHeap)));
 
-    ID3D12GraphicsCommandList* commandList = render->getCommandList();
-    ok = ok && SUCCEEDED(commandList->Reset(render->getCommandAllocator(), nullptr));
+    ID3D12GraphicsCommandList* commandList = d3d12->getCommandList();
+    ok = ok && SUCCEEDED(commandList->Reset(d3d12->getCommandAllocator(), nullptr));
 
     if (ok)
     {
@@ -127,7 +134,8 @@ bool Exercise2::createVertexBuffer(void* bufferData, unsigned bufferSize, unsign
         commandList->ResourceBarrier(1, &barrier);
         commandList->Close();
 
-        render->executeCommandList();
+        ID3D12CommandList* commandLists[] = { commandList };
+        d3d12->getDrawCommandQueue()->ExecuteCommandLists(UINT(std::size(commandLists)), commandLists);
 
         vertexBufferView.BufferLocation = vertexBuffer->GetGPUVirtualAddress();
         vertexBufferView.StrideInBytes  = stride;
