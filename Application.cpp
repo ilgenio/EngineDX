@@ -37,6 +37,8 @@ Application::Application(int argc, wchar_t** argv, void* hWnd)
 
 Application::~Application()
 {
+    cleanUp();
+
 	for(Module* module : modules)
     {
         delete module;
