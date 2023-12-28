@@ -45,8 +45,8 @@ UpdateStatus Exercise1::update()
     CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(d3d12->getBackBuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
     commandList->ResourceBarrier(1, &barrier);
     
-    unsigned width, height;
-    app->getD3D12()->getWindowSize(width, height);
+    unsigned width = d3d12->getWindowWidth();
+    unsigned height = d3d12->getWindowHeight();
 
     D3D12_VIEWPORT viewport;
     viewport.TopLeftX = viewport.TopLeftY = 0;

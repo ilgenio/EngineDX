@@ -62,8 +62,8 @@ UpdateStatus Exercise3::update()
     CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(d3d12->getBackBuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
     commandList->ResourceBarrier(1, &barrier);
 
-    unsigned width, height;
-    d3d12->getWindowSize(width, height);
+    unsigned width = d3d12->getWindowWidth();
+    unsigned height = d3d12->getWindowHeight();
 
     Matrix model = Matrix::Identity;
     const Matrix& view = camera->getView();

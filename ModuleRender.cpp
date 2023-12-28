@@ -10,8 +10,6 @@
 #include "ModuleD3D12.h"
 
 //#include <imgui.h>
-//#include <backends/imgui_impl_vulkan.h>
-//#include <backends/imgui_impl_sdl2.h>
 
 ModuleRender::ModuleRender()
 {
@@ -53,8 +51,8 @@ UpdateStatus ModuleRender::update()
     ModuleD3D12* d3d12 = app->getD3D12();
     ModuleCamera* camera = app->getCamera();
 
-    unsigned width, height;
-    d3d12->getWindowSize(width, height);
+    unsigned width = d3d12->getWindowWidth();
+    unsigned height = d3d12->getWindowHeight();
 
     ID3D12CommandAllocator* commandAllocator = d3d12->getCommandAllocator();
 
@@ -72,13 +70,14 @@ UpdateStatus ModuleRender::update()
 
     commandList->OMSetRenderTargets(1, &rtv, false, &dsv);
     commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
+    commandList->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 
     if(showGrid) dd::xzSquareGrid(-10.0f, 10.0f, 0.0f, 1.0f, dd::colors::LightGray);
     if(showAxis) dd::axisTriad(ddConvert(Matrix::Identity), 0.1f, 1.0f);
 
     char lTmp[1024];
-    //TODO: sprintf_s(lTmp, 1023, "FPS: [%d]. Avg. elapsed (Ms): [%g] ", uint32_t(app->getFPS()), App->getAvgElapsedMs());
-    dd::screenText(lTmp, ddConvert(Vector3(10.0f, 10.0f, 0.0f)), dd::colors::YellowGreen, 0.6f);
+    sprintf_s(lTmp, 1023, "FPS: [%d]. Avg. elapsed (Ms): [%g] ", uint32_t(app->getFPS()), app->getAvgElapsedMs());
+    dd::screenText(lTmp, ddConvert(Vector3(10.0f, 10.0f, 0.0f)), dd::colors::White, 0.6f);
 
     debugDrawPass->record(commandList.Get(), width, height, camera->getView(), camera->getProj());
 

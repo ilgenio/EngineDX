@@ -45,8 +45,8 @@ UpdateStatus Exercise2::update()
     CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(d3d12->getBackBuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
     commandList->ResourceBarrier(1, &barrier);
 
-    unsigned width, height;
-    app->getD3D12()->getWindowSize(width, height);
+    unsigned width = d3d12->getWindowWidth();
+    unsigned height = d3d12->getWindowHeight();
 
     XMMATRIX model = XMMatrixIdentity();
     XMMATRIX view = XMMatrixLookAtLH(XMVectorSet(0.0f, 0.0f, -20.0f, 0.0f), XMVectorSet(0.0f, 0.0f, 0.0f, 0), XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f));

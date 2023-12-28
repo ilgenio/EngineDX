@@ -65,9 +65,9 @@ static const char textSource[] = R"(
         VertexOutput output;
 
         float x = ((2.0 * (input.position.x - 0.5)) / screenDimensions.x) - 1.0;
-        float y = 1.0 - ((2.0 * (screenDimensions.y - input.position.y - 0.5)) / screenDimensions.y);
+        float y = 1.0-((input.position.y-0.5)/screenDimensions.y); 
         
-        output.position = float4(x, y, 0.0, 1.0);
+        output.position = float4(x, 2.0*y-1.0, 0.0, 1.0);
         output.texCoord = input.texCoord;
         output.color    = input.color;
 
@@ -79,7 +79,8 @@ static const char textSource[] = R"(
 
     float4 textPS(VertexOutput input) : SV_TARGET
     {
-        return float4(input.color, glyphTexture.Sample(glyphSampler, input.texCoord).r);
+        float alpha = glyphTexture.Sample(glyphSampler, input.texCoord).r;
+        return float4(1.0, 1.0, 1.0, alpha); 
     }
     
 )";
@@ -122,7 +123,7 @@ public:
     {
         ComPtr<ID3DBlob> errorBuff;
 
-        unsigned flags = D3DCOMPILE_OPTIMIZATION_LEVEL3 | D3DCOMPILE_ALL_RESOURCES_BOUND;
+        unsigned flags = D3DCOMPILE_DEBUG; // D3DCOMPILE_OPTIMIZATION_LEVEL3 | D3DCOMPILE_ALL_RESOURCES_BOUND;
 
         D3DCompile(textSource, sizeof(textSource), "TextVS", nullptr, nullptr, "textVS", "vs_5_0", flags, 0, &textVS, nullptr);
         D3DCompile(textSource, sizeof(textSource), "TextPS", nullptr, nullptr, "textPS", "ps_5_0", flags, 0, &textPS, nullptr);
@@ -148,7 +149,7 @@ public:
         D3D12SerializeRootSignature(&textRootDesc, D3D_ROOT_SIGNATURE_VERSION_1, &rootSignatureBlob, nullptr);
         device->CreateRootSignature(0, rootSignatureBlob->GetBufferPointer(), rootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&textSignature));
 
-        D3D12_INPUT_ELEMENT_DESC inputLayout[] = { {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+        D3D12_INPUT_ELEMENT_DESC inputLayout[] = { {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
                                                    {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}, 
                                                    {"COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0} };
 
@@ -163,9 +164,20 @@ public:
         textPSODesc.SampleDesc = { 1, 0 };
         textPSODesc.SampleMask = 0xffffffff;
         textPSODesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-        textPSODesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-        textPSODesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
         textPSODesc.NumRenderTargets = 1;
+
+        textPSODesc.BlendState.AlphaToCoverageEnable = FALSE;
+        textPSODesc.BlendState.IndependentBlendEnable = FALSE;
+        textPSODesc.BlendState.RenderTarget[0] = { TRUE, FALSE, D3D12_BLEND_SRC_ALPHA, D3D12_BLEND_INV_SRC_ALPHA, D3D12_BLEND_OP_ADD, 
+                                                   D3D12_BLEND_ZERO, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD, 
+                                                   D3D12_LOGIC_OP_NOOP, D3D12_COLOR_WRITE_ENABLE_ALL };
+
+        textPSODesc.DepthStencilState = { FALSE, D3D12_DEPTH_WRITE_MASK_ALL, D3D12_COMPARISON_FUNC_LESS, FALSE,
+                                          D3D12_DEFAULT_STENCIL_READ_MASK, D3D12_DEFAULT_STENCIL_WRITE_MASK,
+                                          { D3D12_STENCIL_OP_KEEP, D3D12_STENCIL_OP_KEEP, D3D12_STENCIL_OP_KEEP, D3D12_COMPARISON_FUNC_ALWAYS }, 
+                                          { D3D12_STENCIL_OP_KEEP, D3D12_STENCIL_OP_KEEP, D3D12_STENCIL_OP_KEEP, D3D12_COMPARISON_FUNC_ALWAYS } };
+
+        textPSODesc.RasterizerState.FrontCounterClockwise = TRUE;
 
         device->CreateGraphicsPipelineState(&textPSODesc, IID_PPV_ARGS(&textPSO));
     }
@@ -199,11 +211,11 @@ public:
                                                    {"COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0} };
 
         D3D12_GRAPHICS_PIPELINE_STATE_DESC pointPSODesc = {};
-        pointPSODesc.InputLayout = { inputLayout, sizeof(inputLayout) / sizeof(D3D12_INPUT_ELEMENT_DESC) };
+        pointPSODesc.InputLayout = { inputLayout, UINT(std::size(inputLayout)) };
         pointPSODesc.pRootSignature = pointLineSignature.Get();
         pointPSODesc.VS = { linePointVS->GetBufferPointer(),  linePointVS->GetBufferSize() };
         pointPSODesc.PS = { linePointPS->GetBufferPointer(), linePointPS->GetBufferSize() };
-        pointPSODesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
+        pointPSODesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
         pointPSODesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
         pointPSODesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
         pointPSODesc.SampleDesc = { 1, 0 };
@@ -216,8 +228,17 @@ public:
         D3D12_GRAPHICS_PIPELINE_STATE_DESC pointPSODescNoDepth = pointPSODesc;
         pointPSODescNoDepth.DepthStencilState.DepthEnable = FALSE;
 
-        device->CreateGraphicsPipelineState(&pointPSODesc, IID_PPV_ARGS(&pointLinePSO));
-        device->CreateGraphicsPipelineState(&pointPSODescNoDepth, IID_PPV_ARGS(&pointLinePSONoDepth));
+        device->CreateGraphicsPipelineState(&pointPSODesc, IID_PPV_ARGS(&pointPSO));
+        device->CreateGraphicsPipelineState(&pointPSODescNoDepth, IID_PPV_ARGS(&pointPSONoDepth));
+
+        D3D12_GRAPHICS_PIPELINE_STATE_DESC linePSODesc = pointPSODesc;
+        linePSODesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
+
+        D3D12_GRAPHICS_PIPELINE_STATE_DESC linePSODescNoDepth = linePSODesc;
+        linePSODescNoDepth.DepthStencilState.DepthEnable = FALSE;
+
+        device->CreateGraphicsPipelineState(&linePSODesc, IID_PPV_ARGS(&linePSO));
+        device->CreateGraphicsPipelineState(&linePSODescNoDepth, IID_PPV_ARGS(&linePSONoDepth));
     }
      
     void createBuffer(unsigned bufferSize, ComPtr<ID3D12Resource>& buffer, D3D12_VERTEX_BUFFER_VIEW& view)
@@ -229,9 +250,8 @@ public:
         device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,IID_PPV_ARGS(&buffer));
 
         view.BufferLocation = buffer->GetGPUVirtualAddress();
-        view.StrideInBytes = 0;
+        view.StrideInBytes = sizeof(dd::DrawVertex);
         view.SizeInBytes = bufferSize;
-
     }
 
     void setupTextVertexBuffers()
@@ -262,15 +282,16 @@ public:
         if (freeSpace > count)
         {
             BYTE* uploadData = nullptr;
-            vertexBuffer->Map(0, nullptr, (void**)&uploadData);
-            memcpy(&reinterpret_cast<dd::DrawVertex*>(uploadData)[memoryOffset], vertices, sizeof(dd::DrawVertex) * count);
+            D3D12_RANGE range = { memoryOffset * sizeof(dd::DrawVertex), memoryOffset * sizeof(dd::DrawVertex) + sizeof(dd::DrawVertex) * count };
+            vertexBuffer->Map(0, &range, (void**)&uploadData);
+            memcpy(uploadData, vertices, sizeof(dd::DrawVertex) * count);
             vertexBuffer->Unmap(0, nullptr);
 
             memoryOffset += count;
 
             D3D12_VIEWPORT viewport;
             viewport.TopLeftX = viewport.TopLeftY = 0;
-            viewport.MinDepth = 0.0f; // TODO: -1 ?? 
+            viewport.MinDepth = 0.0f; 
             viewport.MaxDepth = 1.0f;
             viewport.Width    = float(width);
             viewport.Height   = float(height);
@@ -294,10 +315,6 @@ public:
                 commandList->SetDescriptorHeaps(1, descriptorHeaps);
                 commandList->SetGraphicsRootDescriptorTable(1, descriptorHeap->GetGPUDescriptorHandleForHeapStart());
             }
-            else
-            {
-                //commandList->SetDescriptorHeaps(0, nullptr);
-            }
 
             commandList->SetGraphicsRoot32BitConstants(0, rootConstantsSize, rootConstants, 0);
             commandList->DrawInstanced(count, 1, 0, 0);
@@ -306,17 +323,19 @@ public:
 
     void drawPointList(const dd::DrawVertex * points, int count, bool depthEnabled) override
     {
-        ID3D12PipelineState* pso = depthEnabled ? pointLinePSO.Get() : pointLinePSONoDepth.Get();
+        ID3D12PipelineState* pso = depthEnabled ? pointPSO.Get() : pointPSONoDepth.Get();
 
-        recordCommands(points, count, pointBuffer.Get(), pointBufferView, pso, pointLineSignature.Get(), &mvpMatrix, sizeof(Matrix) / sizeof(UINT32), nullptr, D3D_PRIMITIVE_TOPOLOGY_POINTLIST, pointOffset);
+        Matrix mvp = mvpMatrix.Transpose();
+        recordCommands(points, count, pointBuffer.Get(), pointBufferView, pso, pointLineSignature.Get(), &mvp, sizeof(Matrix) / sizeof(UINT32), nullptr, D3D_PRIMITIVE_TOPOLOGY_POINTLIST, pointOffset);
     }
 
 
     void drawLineList(const dd::DrawVertex * lines, int count, bool depthEnabled) override
     {
-        ID3D12PipelineState* pso = depthEnabled ? pointLinePSO.Get() : pointLinePSONoDepth.Get();
+        ID3D12PipelineState* pso = depthEnabled ? linePSO.Get() : linePSONoDepth.Get();
 
-        recordCommands(lines, count, lineBuffer.Get(), lineBufferView, pso, pointLineSignature.Get(), &mvpMatrix, sizeof(Matrix) / sizeof(UINT32), nullptr, D3D_PRIMITIVE_TOPOLOGY_LINELIST, lineOffset);
+        Matrix mvp = mvpMatrix.Transpose();
+        recordCommands(lines, count, lineBuffer.Get(), lineBufferView, pso, pointLineSignature.Get(), &mvp, sizeof(Matrix) / sizeof(UINT32), nullptr, D3D_PRIMITIVE_TOPOLOGY_LINELIST, lineOffset);
     }
 
     void drawGlyphList(const dd::DrawVertex * glyphs, int count, dd::GlyphTextureHandle glyphTex) override
@@ -435,8 +454,10 @@ private:
     size_t                       textOffset = 0;
 
     ComPtr<ID3D12RootSignature>  pointLineSignature;
-    ComPtr<ID3D12PipelineState>  pointLinePSO;
-    ComPtr<ID3D12PipelineState>  pointLinePSONoDepth;
+    ComPtr<ID3D12PipelineState>  pointPSO;
+    ComPtr<ID3D12PipelineState>  pointPSONoDepth;
+    ComPtr<ID3D12PipelineState>  linePSO;
+    ComPtr<ID3D12PipelineState>  linePSONoDepth;
 
     ComPtr<ID3D12RootSignature>  textSignature;
     ComPtr<ID3D12PipelineState>  textPSO;
@@ -464,7 +485,7 @@ DebugDrawPass::~DebugDrawPass()
 
 void DebugDrawPass::record(ID3D12GraphicsCommandList* commandList, uint32_t width, uint32_t height, const Matrix& view, const Matrix& proj)
 {
-    implementation->mvpMatrix     = proj * view;
+    implementation->mvpMatrix     = view * proj;
     implementation->commandList   = commandList;
 
     implementation->width         = width;

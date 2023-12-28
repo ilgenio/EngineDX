@@ -20,8 +20,10 @@ namespace
 
 bool ModuleCamera::init()
 {
-    unsigned width, height;
-    app->getD3D12()->getWindowSize(width, height);
+    ModuleD3D12* d3d12 = app->getD3D12();
+
+    unsigned width = d3d12->getWindowWidth();
+    unsigned height = d3d12->getWindowHeight();
 
     position = Vector3(0.0f, 0.0f, 10.0f);
     rotation = Quaternion::CreateFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), XMConvertToRadians(0.0f));

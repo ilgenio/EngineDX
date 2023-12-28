@@ -67,6 +67,10 @@ public:
 
     void                        signalDrawQueue();
 
+    unsigned getWindowWidth() const { return windowWidth; }
+    unsigned getWindowHeight() const { return windowHeight; }
+
+private:
     void                        getWindowSize(unsigned& width, unsigned& height);
 private:
 

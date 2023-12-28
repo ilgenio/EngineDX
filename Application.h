@@ -4,6 +4,7 @@
 
 #include <array>
 #include <vector>
+#include <chrono>
 
 class Module;
 class ModuleRender;
@@ -26,13 +27,13 @@ public:
     ModuleCamera* getCamera() { return camera;  }
     ModuleRender* getRender() { return render;  }
 
-    //float             getFPS() const { return 1000.0f * float(MAX_FPS_TICKS) / tickSum; }
-    //float             getAvgElapsedMs() const { return tickSum / float(MAX_FPS_TICKS); }
-    //uint32_t          getElapsedMilis() const { return elapsedMilis; }
+    float             getFPS() const { return 1000.0f * float(MAX_FPS_TICKS) / tickSum; }
+    float             getAvgElapsedMs() const { return tickSum / float(MAX_FPS_TICKS); }
+    uint64_t          getElapsedMilis() const { return elapsedMilis; }
 
 private:
     enum { MAX_FPS_TICKS = 30 };
-    typedef std::array<uint32_t, MAX_FPS_TICKS> TickList;
+    typedef std::array<uint64_t, MAX_FPS_TICKS> TickList;
 
     std::vector<Module*> modules;
 
@@ -40,11 +41,11 @@ private:
     ModuleCamera* camera = nullptr;
     ModuleRender* render = nullptr;
 
-    uint32_t        lastMilis = 0;
-    TickList        tickList;
-    uint32_t        tickIndex;
-    uint32_t        tickSum = 0;
-    uint32_t        elapsedMilis = 0;
+    uint64_t  lastMilis = 0;
+    TickList  tickList;
+    uint64_t  tickIndex;
+    uint64_t  tickSum = 0;
+    uint64_t  elapsedMilis = 0;
 };
 
 extern Application* app;
