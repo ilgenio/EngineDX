@@ -41,7 +41,7 @@ static const char linePointSource[] = R"(
 )";
 
 static const char textSource[] = R"(
-    cbuffer MyConstants : register(b0)
+    cbuffer ScreenDimensions : register(b0)
     {
         float2 screenDimensions;
     };
@@ -65,9 +65,9 @@ static const char textSource[] = R"(
         VertexOutput output;
 
         float x = ((2.0 * (input.position.x - 0.5)) / screenDimensions.x) - 1.0;
-        float y = 1.0-((input.position.y-0.5)/screenDimensions.y); 
+        float y = 2.0*(1.0-((input.position.y-0.5)/screenDimensions.y))-1.0; 
         
-        output.position = float4(x, 2.0*y-1.0, 0.0, 1.0);
+        output.position = float4(x, y, 0.0, 1.0);
         output.texCoord = input.texCoord;
         output.color    = input.color;
 
@@ -123,7 +123,7 @@ public:
     {
         ComPtr<ID3DBlob> errorBuff;
 
-        unsigned flags = D3DCOMPILE_DEBUG; // D3DCOMPILE_OPTIMIZATION_LEVEL3 | D3DCOMPILE_ALL_RESOURCES_BOUND;
+        unsigned flags = D3DCOMPILE_OPTIMIZATION_LEVEL3 | D3DCOMPILE_ALL_RESOURCES_BOUND;
 
         D3DCompile(textSource, sizeof(textSource), "TextVS", nullptr, nullptr, "textVS", "vs_5_0", flags, 0, &textVS, nullptr);
         D3DCompile(textSource, sizeof(textSource), "TextPS", nullptr, nullptr, "textPS", "ps_5_0", flags, 0, &textPS, nullptr);

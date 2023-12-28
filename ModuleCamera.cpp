@@ -61,8 +61,8 @@ UpdateStatus ModuleCamera::update()
     {
         if (leftDrag)
         {
-            int relX = mouseState.x - dragPosX;
-            int relY = mouseState.y - dragPosY;
+            int relX = dragPosX-mouseState.x;
+            int relY = dragPosY-mouseState.y;
 
             if (keyState.LeftControl)
             {
@@ -128,14 +128,14 @@ UpdateStatus ModuleCamera::update()
 
     Quaternion rotation_polar     = Quaternion::CreateFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), dragging.polar + params.polar);
     Quaternion rotation_azimuthal = Quaternion::CreateFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), dragging.azimuthal + params.azimuthal);
-    rotation = rotation_polar*rotation_azimuthal;
+    rotation = rotation_azimuthal*rotation_polar;
     position = Vector3::Transform((Vector3(0.0f, 0.0f, dragging.radius + params.radius) + dragging.panning) + params.panning, rotation );
 
     Quaternion invRot;
     rotation.Inverse(invRot);
 
     view = Matrix::CreateFromQuaternion(invRot); 
-    view.Translation(-position); 
+    view.Translation(Vector3::Transform(-position, invRot));
     
     return UPDATE_CONTINUE;
 }
