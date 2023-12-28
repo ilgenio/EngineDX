@@ -73,3 +73,12 @@ Source/x64/Debug/EngineDX.res
 Source/x64/Debug/vc143.idb
 .vs/EngineDX/v17/fileList.bin
 .vs/EngineDX/v17/fileList.bin
+*.db-shm
+*.db-wal
+*.recipe
+Source/DirectXTex/Bin/Desktop_2019_Win10/x64/Release/DirectXTex_Desktop_2019_Win10.vcxproj.FileListAbsolute.txt
+*.iobj
+*.ipdb
+Source/x64/Release/EngineDX.vcxproj.FileListAbsolute.txt
+Source/x64/Release/EngineDX.res
+Source/x64/Release/EngineDX.exe
