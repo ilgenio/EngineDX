@@ -56,7 +56,6 @@ Source/DirectXTex/Bin/Desktop_2019_Win10/x64/Debug/DirectXTex.lib.recipe
 Source/DirectXTex/Bin/Desktop_2019_Win10/x64/Debug/DirectXTex_Desktop_2019_Win10.vcxproj.FileListAbsolute.txt
 Source/DirectXTex/Bin/GDK_2019/Gaming.Desktop.x64/Debug/DirectXTex_GDK_2019.vcxproj.FileListAbsolute.txt
 *.user
-*.filters
 Source/DirectXTex/Shaders/Compiled/BC6HEncode_EncodeBlockCS.inc
 Source/DirectXTex/Shaders/Compiled/BC6HEncode_TryModeG10CS.inc
 Source/DirectXTex/Shaders/Compiled/BC6HEncode_TryModeLE10CS.inc

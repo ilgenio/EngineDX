@@ -1,0 +1,156 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="EngineDX.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Application.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D12MemAlloc.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="DebugDrawPass.cpp">
+      <Filter>Passes</Filter>
+    </ClCompile>
+    <ClCompile Include="Exercise3.cpp">
+      <Filter>Exercises</Filter>
+    </ClCompile>
+    <ClCompile Include="Exercise2.cpp">
+      <Filter>Exercises</Filter>
+    </ClCompile>
+    <ClCompile Include="Exercise1.cpp">
+      <Filter>Exercises</Filter>
+    </ClCompile>
+    <ClCompile Include="GamePad.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Keyboard.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="log.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="ModuleCamera.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="ModuleD3D12.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="ModuleInput.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="ModuleRender.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="Mouse.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="SimpleMath.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="EngineDX.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Application.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D12MemAlloc.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="debug_draw.hpp">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="DebugDrawPass.h">
+      <Filter>Passes</Filter>
+    </ClInclude>
+    <ClInclude Include="framework.h">
+      <Filter>Win</Filter>
+    </ClInclude>
+    <ClInclude Include="Exercise3.h">
+      <Filter>Exercises</Filter>
+    </ClInclude>
+    <ClInclude Include="Exercise2.h">
+      <Filter>Exercises</Filter>
+    </ClInclude>
+    <ClInclude Include="Exercise1.h">
+      <Filter>Exercises</Filter>
+    </ClInclude>
+    <ClInclude Include="GamePad.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Globals.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Keyboard.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Module.h">
+      <Filter>Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="ModuleCamera.h">
+      <Filter>Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="ModuleD3D12.h">
+      <Filter>Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="ModuleInput.h">
+      <Filter>Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="ModuleRender.h">
+      <Filter>Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="Mouse.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="PlatformHelpers.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>Win</Filter>
+    </ClInclude>
+    <ClInclude Include="SimpleMath.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>Win</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="EngineDX.ico">
+      <Filter>Win</Filter>
+    </Image>
+    <Image Include="small.ico">
+      <Filter>Win</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Core">
+      <UniqueIdentifier>{0500fa9f-6a44-425e-bd2c-e2df31bf6709}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Win">
+      <UniqueIdentifier>{c488d9ce-58b7-4215-b854-4578f67d9888}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Exercises">
+      <UniqueIdentifier>{edbbc82e-1836-4001-bf0f-5a07b4ea07fe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Modules">
+      <UniqueIdentifier>{1431aa79-67d7-481e-99d8-65d04f27f554}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Passes">
+      <UniqueIdentifier>{35702044-ca9e-4bdd-9370-f5015d8e0b65}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="EngineDX.rc">
+      <Filter>Win</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="SimpleMath.inl">
+      <Filter>Core</Filter>
+    </None>
+  </ItemGroup>
+</Project>
