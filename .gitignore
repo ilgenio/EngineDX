@@ -6,7 +6,6 @@
 .vscode/c_cpp_properties.json
 Debug/*
 x64/Debug/*
-EngineDX.vcxproj.filters
 EngineDX.vcxproj.user
 DirectXTex/Bin/Desktop_2019/x64/Debug/*
 DirectXTex/Bin/Desktop_2019_Win10/x64/Debug/*
