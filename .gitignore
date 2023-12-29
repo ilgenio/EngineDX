@@ -82,3 +82,6 @@ Source/DirectXTex/Bin/Desktop_2019_Win10/x64/Release/DirectXTex_Desktop_2019_Win
 Source/x64/Release/EngineDX.vcxproj.FileListAbsolute.txt
 Source/x64/Release/EngineDX.res
 Source/x64/Release/EngineDX.exe
+Source/3rdParty/DirectXTex/Bin/Desktop_2019_Win10/x64/Debug/DirectXTex_Desktop_2019_Win10.vcxproj.FileListAbsolute.txt
+Source/3rdParty/DirectXTex/Bin/Desktop_2022_Win10/x64/Debug/DirectXTex_Desktop_2022_Win10.vcxproj.FileListAbsolute.txt
+Source/3rdParty/DirectXTex/Bin/Desktop_2022_Win10/x64/Release/DirectXTex_Desktop_2022_Win10.vcxproj.FileListAbsolute.txt

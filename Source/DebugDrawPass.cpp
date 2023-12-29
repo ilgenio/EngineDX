@@ -4,7 +4,7 @@
 #include "DebugDrawPass.h"
 
 #include <d3dcompiler.h>
-#include <d3dx12.h>
+#include "d3dx12.h"
 
 
 static const char linePointSource[] = R"(
