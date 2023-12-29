@@ -14,9 +14,11 @@
 #include "PlatformHelpers.h"
 
 #include <stdexcept>
+#include <cassert>
+#include <system_error>
 
 using namespace DirectX;
-//using Microsoft::WRL::ComPtr;
+using Microsoft::WRL::ComPtr;
 
 namespace
 {

@@ -1,3 +1,4 @@
+#include "Globals.h"
 #include "Application.h"
 #include "ModuleRender.h"
 #include "ModuleD3D12.h"

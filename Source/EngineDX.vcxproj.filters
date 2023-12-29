@@ -28,9 +28,6 @@
     <ClCompile Include="Keyboard.cpp">
       <Filter>Core</Filter>
     </ClCompile>
-    <ClCompile Include="log.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
     <ClCompile Include="ModuleCamera.cpp">
       <Filter>Modules</Filter>
     </ClCompile>
@@ -47,6 +44,9 @@
       <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="SimpleMath.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Globals.cpp">
       <Filter>Core</Filter>
     </ClCompile>
   </ItemGroup>

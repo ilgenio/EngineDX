@@ -49,14 +49,6 @@ UpdateStatus ModuleCamera::update()
     const Mouse::State& mouseState = mouse.GetState();
     const Keyboard::State& keyState = keyboard.GetState();
 
-    int padId = 0;
-    for (padId; padId < GamePad::MAX_PLAYER_COUNT ; ++padId)
-    {
-        if (pad.GetCapabilities(padId).connected) break;
-    }
-                
-    const GamePad::State& padState = pad.GetState(padId);
-
     if(mouseState.leftButton)
     {
         if (leftDrag)

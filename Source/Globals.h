@@ -1,17 +1,17 @@
 #pragma once
 
+#define USING_XINPUT
 #define NOMINMAX
 #include <windows.h>
 #include <wrl.h>
 #include <d3d12.h>
 #include "d3dx12.h"
 
-#define USING_XINPUT
 #include "SimpleMath.h"
 
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
-template<class T> using ComPtr = Microsoft::WRL::ComPtr<T>;
+using Microsoft::WRL::ComPtr;
 
 enum UpdateStatus
 {
