@@ -20,6 +20,7 @@
 // THE SOFTWARE.
 //
 
+#include "Globals.h"
 #include "D3D12MemAlloc.h"
 
 #include <combaseapi.h>

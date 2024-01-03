@@ -10,14 +10,16 @@ namespace DirectX
 
 class Exercise3 : public Module
 {
+    ComPtr<ID3D12Fence1>         uploadFence;
+    HANDLE                       uploadEvent = NULL;
+    unsigned                     uploadFenceCounter = 0;
+
     ComPtr<ID3D12Resource>       texture;
     ComPtr<ID3D12Resource>       textureDog;
     ComPtr<ID3D12Resource>       vertexBuffer;
     ComPtr<ID3D12Resource>       indexBuffer;
     D3D12_VERTEX_BUFFER_VIEW     vertexBufferView;
     D3D12_INDEX_BUFFER_VIEW      indexBufferView;
-    ComPtr<ID3D12Resource>       vBufferUploadHeap;
-    ComPtr<ID3D12Resource>       iBufferUploadHeap;
     ComPtr<ID3D12DescriptorHeap> mainDescriptorHeap;
     ComPtr<ID3D12RootSignature>  rootSignature;
     ComPtr<ID3D12PipelineState>  pso;
@@ -31,17 +33,19 @@ class Exercise3 : public Module
 public:
 
     virtual bool init() override;
+    virtual bool cleanUp() override;
     virtual UpdateStatus update() override;
 
 private:
 
     bool createVertexBuffer(void* bufferData, unsigned bufferSize, unsigned stride);
     bool createIndexBuffer(void* bufferData, unsigned bufferSize);
-    bool createBuffer(void* bufferData, unsigned bufferSize, ComPtr<ID3D12Resource>& buffer, ComPtr<ID3D12Resource>& upload);
+    bool createBuffer(void* bufferData, unsigned bufferSize, ComPtr<ID3D12Resource>& buffer, D3D12_RESOURCE_STATES initialState);
     bool createShaders();
     bool createMainDescriptorHeap();
     bool createRootSignature();
     bool createPSO();
+    bool createUploadFence();
     bool loadTextureFromFile(const wchar_t* fileName, ComPtr<ID3D12Resource>& texResource);
     bool loadTexture(const ScratchImage& image, ComPtr<ID3D12Resource>& texResource);
 };

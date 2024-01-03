@@ -1,6 +1,7 @@
 // EngineDX.cpp : Defines the entry point for the application.
 //
 
+#include "Globals.h"
 #define INITGUID
 
 #include "framework.h"

@@ -11,6 +11,8 @@ class ModuleRender;
 class ModuleD3D12;
 class ModuleCamera;
 class ModuleRender;
+class ModuleResources;
+class ModuleDescriptors;
 
 class Application
 {
@@ -23,9 +25,11 @@ public:
 	UpdateStatus update();
 	bool         cleanUp();
 
-    ModuleD3D12*  getD3D12() { return d3d12; }
-    ModuleCamera* getCamera() { return camera;  }
-    ModuleRender* getRender() { return render;  }
+    ModuleD3D12*        getD3D12() { return d3d12; }
+    ModuleCamera*       getCamera() { return camera;  }
+    ModuleRender*       getRender() { return render;  }
+    ModuleResources*    getResources() { return resources;  }
+    ModuleDescriptors* getDescriptors() { return descriptors;  }
 
     float             getFPS() const { return 1000.0f * float(MAX_FPS_TICKS) / tickSum; }
     float             getAvgElapsedMs() const { return tickSum / float(MAX_FPS_TICKS); }
@@ -40,6 +44,8 @@ private:
     ModuleD3D12* d3d12 = nullptr;
     ModuleCamera* camera = nullptr;
     ModuleRender* render = nullptr;
+    ModuleResources* resources = nullptr;
+    ModuleDescriptors* descriptors = nullptr;
 
     uint64_t  lastMilis = 0;
     TickList  tickList;

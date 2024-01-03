@@ -49,6 +49,30 @@
     <ClCompile Include="Globals.cpp">
       <Filter>Core</Filter>
     </ClCompile>
+    <ClCompile Include="ModuleLevel.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="Material.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Mesh.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Scene.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Skybox.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="ModuleResources.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="ModuleDescriptors.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="DescriptorHeaps.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EngineDX.h">
@@ -117,6 +141,36 @@
     <ClInclude Include="targetver.h">
       <Filter>Win</Filter>
     </ClInclude>
+    <ClInclude Include="ModuleLevel.h">
+      <Filter>Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="Material.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Mesh.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Skybox.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="3rdParty\mikktspace\mikktspace.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="3rdParty\mikktspace\weldmesh.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="ModuleResources.h">
+      <Filter>Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="ModuleDescriptors.h">
+      <Filter>Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="DescriptorHeaps.h">
+      <Filter>Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="EngineDX.ico">
@@ -141,6 +195,9 @@
     </Filter>
     <Filter Include="Passes">
       <UniqueIdentifier>{35702044-ca9e-4bdd-9370-f5015d8e0b65}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scene">
+      <UniqueIdentifier>{f2fccf36-ab7e-4a4c-a867-61cc3573c379}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

@@ -3,6 +3,8 @@
 #include "Globals.h"
 #include "DebugDrawPass.h"
 
+#include "SimpleMath.h"
+
 #include <d3dcompiler.h>
 #include "d3dx12.h"
 

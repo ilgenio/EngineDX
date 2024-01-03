@@ -1,3 +1,4 @@
+#include "Globals.h"
 #include "ModuleD3D12.h"
 
 #include "d3dx12.h"

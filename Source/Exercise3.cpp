@@ -34,6 +34,7 @@ bool Exercise3::init()
     };
     
     bool ok = createMainDescriptorHeap();
+    ok = ok && createUploadFence();
     ok = ok && createVertexBuffer(&vertices[0], sizeof(vertices), sizeof(Vertex));
     ok = ok && createIndexBuffer(&indices[0], sizeof(indices));
     ok = ok && createShaders();
@@ -46,6 +47,14 @@ bool Exercise3::init()
     {
         app->getD3D12()->signalDrawQueue();
     }
+
+    return true;
+}
+
+bool Exercise3::cleanUp()
+{
+    if (uploadEvent) CloseHandle(uploadEvent);
+    uploadEvent = NULL;
 
     return true;
 }
@@ -122,29 +131,32 @@ UpdateStatus Exercise3::update()
     return UPDATE_CONTINUE;
 }
 
-bool Exercise3::createBuffer(void *bufferData, unsigned bufferSize, ComPtr<ID3D12Resource>& buffer, ComPtr<ID3D12Resource>& upload)
+bool Exercise3::createBuffer(void* bufferData, unsigned bufferSize, ComPtr<ID3D12Resource>& buffer, D3D12_RESOURCE_STATES initialState)
 {
-    ModuleD3D12* d3d12  = app->getD3D12();
+    ModuleD3D12* d3d12 = app->getD3D12();
     ID3D12Device2* device = d3d12->getDevice();
+    ID3D12CommandQueue* queue = d3d12->getDrawCommandQueue();
 
     CD3DX12_HEAP_PROPERTIES heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
     CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize);
     bool ok = SUCCEEDED(device->CreateCommittedResource(
-        &heapProperties, 
+        &heapProperties,
         D3D12_HEAP_FLAG_NONE,
         &bufferDesc,
-        D3D12_RESOURCE_STATE_COPY_DEST, 
-        nullptr, 
+        D3D12_RESOURCE_STATE_COPY_DEST,
+        nullptr,
         IID_PPV_ARGS(&buffer)));
 
     heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
     bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize);
 
+    ComPtr<ID3D12Resource> upload;
+
     ok = ok && SUCCEEDED(device->CreateCommittedResource(
-        &heapProperties, 
-        D3D12_HEAP_FLAG_NONE,                             
-        &bufferDesc,      
-        D3D12_RESOURCE_STATE_GENERIC_READ,                
+        &heapProperties,
+        D3D12_HEAP_FLAG_NONE,
+        &bufferDesc,
+        D3D12_RESOURCE_STATE_GENERIC_READ,
         nullptr,
         IID_PPV_ARGS(&upload)));
 
@@ -159,14 +171,19 @@ bool Exercise3::createBuffer(void *bufferData, unsigned bufferSize, ComPtr<ID3D1
         memcpy(pData, bufferData, bufferSize);
         upload->Unmap(0, nullptr);
 
-        CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(buffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+        CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(buffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, initialState);
         // Copy to vram
         commandList->CopyBufferRegion(buffer.Get(), 0, upload.Get(), 0, bufferSize);
         commandList->ResourceBarrier(1, &barrier);
         commandList->Close();
 
         ID3D12CommandList* commandLists[] = { commandList };
-        d3d12->getDrawCommandQueue()->ExecuteCommandLists(UINT(std::size(commandLists)), commandLists);
+        queue->ExecuteCommandLists(UINT(std::size(commandLists)), commandLists);
+
+        ++uploadFenceCounter;
+        queue->Signal(uploadFence.Get(), uploadFenceCounter);
+        uploadFence->SetEventOnCompletion(uploadFenceCounter, uploadEvent);
+        WaitForSingleObject(uploadEvent, INFINITE);
     }
 
     return ok;
@@ -174,7 +191,7 @@ bool Exercise3::createBuffer(void *bufferData, unsigned bufferSize, ComPtr<ID3D1
 
 bool Exercise3::createIndexBuffer(void* bufferData, unsigned bufferSize)
 {
-    if(createBuffer(bufferData, bufferSize, indexBuffer, iBufferUploadHeap))
+    if(createBuffer(bufferData, bufferSize, indexBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER))
     {
         indexBufferView.BufferLocation = indexBuffer->GetGPUVirtualAddress();
         indexBufferView.Format         = DXGI_FORMAT_R16_UINT;
@@ -188,7 +205,7 @@ bool Exercise3::createIndexBuffer(void* bufferData, unsigned bufferSize)
 
 bool Exercise3::createVertexBuffer(void* bufferData, unsigned bufferSize, unsigned stride)
 {
-    if(createBuffer(bufferData, bufferSize, vertexBuffer, vBufferUploadHeap))
+    if (createBuffer(bufferData, bufferSize, vertexBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER))
     {
         vertexBufferView.BufferLocation = vertexBuffer->GetGPUVirtualAddress();
         vertexBufferView.StrideInBytes  = stride;
@@ -317,6 +334,19 @@ bool Exercise3::createPSO()
     return SUCCEEDED(app->getD3D12()->getDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pso)));
 }
 
+bool Exercise3::createUploadFence()
+{
+    bool ok = SUCCEEDED(app->getD3D12()->getDevice()->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&uploadFence)));
+
+    if (ok)
+    {
+        uploadEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+        ok = uploadEvent != NULL;
+    }
+
+    return ok;
+}
+
 bool Exercise3::loadTextureFromFile(const wchar_t* fileName, ComPtr<ID3D12Resource>& texResource)
 {
     ScratchImage image;
@@ -406,7 +436,14 @@ bool Exercise3::loadTexture(const ScratchImage& image, ComPtr<ID3D12Resource>& t
         commandList->Close();
 
         ID3D12CommandList* commandLists[] = { commandList };
-        d3d12->getDrawCommandQueue()->ExecuteCommandLists(UINT(std::size(commandLists)), commandLists);
+        ID3D12CommandQueue* queue = d3d12->getDrawCommandQueue();
+
+        queue->ExecuteCommandLists(UINT(std::size(commandLists)), commandLists);
+
+        ++uploadFenceCounter;
+        queue->Signal(uploadFence.Get(), uploadFenceCounter);
+        uploadFence->SetEventOnCompletion(uploadFenceCounter, uploadEvent);
+        WaitForSingleObject(uploadEvent, INFINITE);
     }
 
     if(ok)

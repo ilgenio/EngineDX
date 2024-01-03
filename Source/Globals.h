@@ -9,6 +9,8 @@
 
 #include "SimpleMath.h"
 
+#include <assert.h>
+
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
 using Microsoft::WRL::ComPtr;
