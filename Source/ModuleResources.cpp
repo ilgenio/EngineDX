@@ -171,26 +171,6 @@ ID3D12Resource* ModuleResources::createTextureFromMemory(const void* data, size_
     return nullptr;
 }
 
-ID3D12Resource* ModuleResources::createTextureFromMemory(const void* data, size_t size, const char* name, D3D12_SHADER_RESOURCE_VIEW_DESC& srvDesc)
-{
-    ScratchImage image;
-    bool ok = SUCCEEDED(LoadFromDDSMemory(data, size, DDS_FLAGS_NONE, nullptr, image));
-    ok = ok || SUCCEEDED(LoadFromHDRMemory(data, size, nullptr, image));
-    ok = ok || SUCCEEDED(LoadFromTGAMemory(data, size, TGA_FLAGS_NONE, nullptr, image));
-
-    // TODO: Check format support
-
-    ok = ok && createTextureFromImage(image, name);
-
-    if (ok)
-    {
-        createSRVDescFromMetadata(image.GetMetadata(), srvDesc);
-    }
-
-    return nullptr;
-
-}
-
 ID3D12Resource* ModuleResources::createTextureFromFile(const std::filesystem::path& path) 
 {
     const wchar_t* fileName = path.c_str();
@@ -205,27 +185,6 @@ ID3D12Resource* ModuleResources::createTextureFromFile(const std::filesystem::pa
 
     return nullptr;
 }
-
-ID3D12Resource* ModuleResources::createTextureFromFile(const std::filesystem::path& path, D3D12_SHADER_RESOURCE_VIEW_DESC& srvDesc)
-{
-    const wchar_t* fileName = path.c_str();
-    ScratchImage image;
-    bool ok = SUCCEEDED(LoadFromDDSFile(fileName, DDS_FLAGS_NONE, nullptr, image));
-    ok = ok || SUCCEEDED(LoadFromHDRFile(fileName, nullptr, image));
-    ok = ok || SUCCEEDED(LoadFromTGAFile(fileName, TGA_FLAGS_NONE, nullptr, image));
-
-    // TODO: Check format support
-
-    ok = ok && createTextureFromImage(image, path.string().c_str());
-
-    if (ok)
-    {
-        createSRVDescFromMetadata(image.GetMetadata(), srvDesc);
-    }
-
-    return nullptr;
-}
-
 
 ID3D12Resource* ModuleResources::createTextureFromImage(const ScratchImage& image, const char* name)
 {
@@ -337,60 +296,5 @@ ID3D12Resource* ModuleResources::getUploadHeap(size_t size)
     }
 
     return uploadHeap.Get();
-}
-
-void ModuleResources::createSRVDescFromMetadata(const TexMetadata& metadata, D3D12_SHADER_RESOURCE_VIEW_DESC& srvDesc)
-{
-    srvDesc.Format = metadata.format;
-    srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-
-    switch (metadata.dimension)
-    {
-    case TEX_DIMENSION_TEXTURE1D:
-        if (metadata.arraySize > 1)
-        {
-            srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE1DARRAY;
-            srvDesc.Texture1D = { 0, UINT(metadata.mipLevels), 0.0f };
-        }
-        else
-        {
-            srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE1D;
-            srvDesc.Texture1DArray = {0, UINT(metadata.mipLevels), 0, UINT(metadata.arraySize), 0.0f };
-        }
-        break;
-    case TEX_DIMENSION_TEXTURE2D:
-        if (metadata.IsCubemap())
-        {
-            assert(metadata.arraySize >= 6 && metadata.arraySize %6  == 0);
-            if (metadata.arraySize > 6)
-            {
-                srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBEARRAY;
-                srvDesc.TextureCubeArray = { 0, UINT(metadata.mipLevels), 0, UINT(metadata.arraySize / 6), 0.0f };
-            }
-            else
-            {
-                srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
-                srvDesc.TextureCube = { 0, UINT(metadata.mipLevels), 0.0f };
-            }
-        }
-        else
-        {
-            if (metadata.arraySize > 1)
-            {
-                srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
-                srvDesc.Texture2DArray = { 0, UINT(metadata.mipLevels), 0, UINT(metadata.arraySize), 0, 0.0f};
-            }
-            else
-            {
-                srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-                srvDesc.Texture2D = { 0, UINT(metadata.mipLevels), 0, 0.0f};
-            }
-        }
-        break;
-    case TEX_DIMENSION_TEXTURE3D:
-        srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE3D;
-        srvDesc.Texture3D = { 0, UINT(metadata.mipLevels), 0.0f};
-        break;
-    }
 }
 

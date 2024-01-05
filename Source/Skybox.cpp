@@ -4,7 +4,19 @@
 
 #include "Application.h"
 #include "ModuleResources.h"
-#include "ModuleVulkan.h"
+#include "ModuleDescriptors.h"
+
+namespace
+{
+    enum DescritporSlots
+    {
+        BACKGOURND_DESC_SLOT = 0,
+        DIFFUSE_DESC_SLOT,
+        SPECULAR_DESC_SLOT,
+        BRDF_DESC_SLOT,
+        NUM_DESC_SLOTS
+    };
+}
 
 Skybox::Skybox()
 {
@@ -12,36 +24,33 @@ Skybox::Skybox()
 
 Skybox::~Skybox()
 {
-    clean();
 }
 
 void Skybox::load(const char *backgroundFile, const char* diffuseFile, const char* specularFile, const char* brdfFile)
 {
-    clean();
-    ModuleResources* resources = App->getResources();
-    ModuleVulkan* vulkan = App->getVulkan();
+    ModuleResources* resources = app->getResources();
 
-    auto loadTexture = [=](const char* fileName, Texture& texture, const ImageMetadata** metadata, bool toCubemap, uint32_t cubemapSize)
+    auto loadTexture = [=](const char* fileName, ComPtr<ID3D12Resource>& texture)
     {
-        texture.path = resources->normalizeUniquePath(path(fileName));
-        resources->createUniqueImage(texture.path, texture.image, texture.allocation, texture.view, metadata, toCubemap, cubemapSize);
+        texture  = resources->createTextureFromFile(backgroundFile);
     };
 
-    const ImageMetadata* specularMeta = nullptr;
+    loadTexture(backgroundFile, background);
+    loadTexture(diffuseFile, diffuse);
+    loadTexture(specularFile, specular);
+    loadTexture(brdfFile, brdf);
 
-    loadTexture(backgroundFile, background, nullptr, true, 1024);
-    loadTexture(diffuseFile, diffuse, nullptr, false, 0);
-    loadTexture(specularFile, specular, &specularMeta, false, 0);
-    loadTexture(brdfFile, brdf, nullptr, false, 0);
+    if (specular)
+    {
+        iblMipLevels = specular->GetDesc().MipLevels;
+    }
 
-    iblMipLevels = specularMeta->mipCount;
+    ModuleDescriptors* descriptors  = app->getDescriptors();
+    descriptors->allocateDescGroup(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, NUM_DESC_SLOTS, descGroup);
+
+    descriptors->createTextureSRV(background.Get(), descGroup, BACKGOURND_DESC_SLOT);
+    descriptors->createTextureSRV(diffuse.Get(), descGroup, DIFFUSE_DESC_SLOT);
+    descriptors->createTextureSRV(specular.Get(), descGroup, SPECULAR_DESC_SLOT);
+    descriptors->createTextureSRV(brdf.Get(), descGroup, BRDF_DESC_SLOT);
 }
 
-void Skybox::clean()
-{
-    ModuleResources* resources = App->getResources();
-    if (!background.path.empty()) resources->destroyUniqueImage(background.path);
-    if (!diffuse.path.empty()) resources->destroyUniqueImage(diffuse.path);
-    if (!specular.path.empty()) resources->destroyUniqueImage(specular.path);
-    if (!brdf.path.empty()) resources->destroyUniqueImage(brdf.path);
-}

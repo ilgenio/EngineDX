@@ -2,7 +2,6 @@
 //
 
 #include "Globals.h"
-#define INITGUID
 
 #include "framework.h"
 #include "EngineDX.h"

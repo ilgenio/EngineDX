@@ -23,8 +23,6 @@ public:
 class StaticDescriptorHeap
 {
 public:
-    StaticDescriptorHeap();
-
     void init(D3D12_DESCRIPTOR_HEAP_TYPE heapType, uint32_t descriptorCount);
 
     bool allocate(uint32_t count, DescriptorGroup& descriptor);

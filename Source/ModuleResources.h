@@ -19,7 +19,7 @@ private:
     ComPtr<ID3D12Resource> uploadHeap;
     size_t uploadSize = 0;
 
-    // temporal data for loading textures (multithreading issues)
+    // temporal data for loading textures (note: multithreading issues)
     std::vector<D3D12_PLACED_SUBRESOURCE_FOOTPRINT> layouts;
     std::vector<UINT> numRows;
     std::vector<UINT64> rowSizes;
@@ -35,17 +35,12 @@ public:
     ID3D12Resource* createBuffer(void* data, size_t size, const char* name);
 
     ID3D12Resource* createRawTexture2D(const void* data, size_t rowSize, size_t width, size_t height, DXGI_FORMAT format);
-
     ID3D12Resource* createTextureFromMemory(const void* data, size_t size, const char* name);
-    ID3D12Resource* createTextureFromMemory(const void* data, size_t size, const char* name, D3D12_SHADER_RESOURCE_VIEW_DESC& srvDesc);
-
     ID3D12Resource* createTextureFromFile(const std::filesystem::path& path);
-    ID3D12Resource* createTextureFromFile(const std::filesystem::path& path, D3D12_SHADER_RESOURCE_VIEW_DESC& srvDesc);
 
 private:
 
     ID3D12Resource* createTextureFromImage(const ScratchImage& image, const char* name);
-    void            createSRVDescFromMetadata(const TexMetadata& metadata, D3D12_SHADER_RESOURCE_VIEW_DESC& srvDesc);
     ID3D12Resource* getUploadHeap(size_t size);
 };
 

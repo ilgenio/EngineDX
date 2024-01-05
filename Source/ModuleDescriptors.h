@@ -13,15 +13,12 @@ public:
     bool init() override;
     bool cleanUp() override;
 
-    bool allocate(D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t count, DescriptorGroup& descriptor);
+    bool allocateDescGroup(D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t count, DescriptorGroup& descGroup);
 
-    void writeView(const D3D12_CONSTANT_BUFFER_VIEW_DESC& viewDesc, const DescriptorGroup& descriptor, uint32_t index);
-    void writeView(ID3D12Resource* resource, const D3D12_SHADER_RESOURCE_VIEW_DESC& viewDesc, const DescriptorGroup& descriptor, uint32_t index);
-    void writeView(ID3D12Resource* resource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& viewDesc, const DescriptorGroup& descriptor, uint32_t index);
-    void writeView(ID3D12Resource* resource, const D3D12_RENDER_TARGET_VIEW_DESC& viewDesc, const DescriptorGroup& descriptor, uint32_t index);
-    void writeView(ID3D12Resource* resource, const D3D12_DEPTH_STENCIL_VIEW_DESC& viewDesc, const DescriptorGroup& descriptor, uint32_t index);
+    void createCBV(ID3D12Resource* resource, const DescriptorGroup& descriptor, uint32_t index);
 
-    void writeSampler(D3D12_SAMPLER_DESC& samplerDesc, const DescriptorGroup& descriptor, uint32_t index);
+    void createTextureSRV(ID3D12Resource* resource, const DescriptorGroup& descriptor, uint32_t index, bool isCubemap = false);
+    void createBufferSRV(ID3D12Resource* resource, const DescriptorGroup& descriptor, uint32_t index, uint32_t numStructuredElements, uint32_t structuredStride);
 
 private:
     

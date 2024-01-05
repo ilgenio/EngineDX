@@ -2,6 +2,8 @@
 
 #define USING_XINPUT
 #define NOMINMAX
+#define INITGUID
+
 #include <windows.h>
 #include <wrl.h>
 #include <d3d12.h>

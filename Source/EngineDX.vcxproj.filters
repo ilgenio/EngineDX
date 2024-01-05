@@ -73,6 +73,15 @@
     <ClCompile Include="DescriptorHeaps.cpp">
       <Filter>Core</Filter>
     </ClCompile>
+    <ClCompile Include="CubemapMesh.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="3rdParty\mikktspace\mikktspace.c">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="3rdParty\mikktspace\weldmesh.c">
+      <Filter>Scene</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EngineDX.h">
@@ -170,6 +179,9 @@
     </ClInclude>
     <ClInclude Include="DescriptorHeaps.h">
       <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="CubemapMesh.h">
+      <Filter>Scene</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

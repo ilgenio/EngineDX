@@ -62,16 +62,17 @@ public:
     ID3D12CommandAllocator*     getCommandAllocator() { return commandAllocators[currentBackBufferIdx].Get(); }
     ID3D12Resource*             getBackBuffer()       { return backBuffers[currentBackBufferIdx].Get(); }
     ID3D12CommandQueue*         getDrawCommandQueue() { return drawCommandQueue.Get(); }
+
     D3D12_CPU_DESCRIPTOR_HANDLE getRenderTargetDescriptor();
     D3D12_CPU_DESCRIPTOR_HANDLE getDepthStencilDescriptor();
 
     void                        signalDrawQueue();
 
-    unsigned getWindowWidth() const { return windowWidth; }
-    unsigned getWindowHeight() const { return windowHeight; }
+    unsigned                    getWindowWidth() const { return windowWidth; }
+    unsigned                    getWindowHeight() const { return windowHeight; }
 
 private:
-    void                        getWindowSize(unsigned& width, unsigned& height);
+    void getWindowSize(unsigned& width, unsigned& height);
 private:
 
     void enableDebugLayer();

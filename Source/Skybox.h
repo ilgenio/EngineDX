@@ -1,30 +1,11 @@
 #pragma once
 
-//#include "CubemapMesh.h"
-#include <filesystem>
+#include "CubemapMesh.h"
+#include "DescriptorHeaps.h"
+
 
 class Skybox
 {
-    struct Texture
-    {
-        std::filesystem::path path;
-        VkImage image = VK_NULL_HANDLE;
-        VmaAllocation allocation = VK_NULL_HANDLE;
-        VkImageView view = VK_NULL_HANDLE;
-    };
-
-    typedef std::filesystem::path path;
-
-    Texture                 background;
-    
-    Texture                 specular;
-    Texture                 diffuse;
-    Texture                 brdf;
-
-    CubemapMesh             mesh;
-
-    uint32_t                iblMipLevels = 0;
-
 public:
 
     Skybox();
@@ -36,16 +17,22 @@ public:
 
     uint32_t getSpecularIBLMipLevels() const {return iblMipLevels; }
 
-    VkImage getBackgroundImage() const {return background.image;}
-    VkImage getDiffuseImage() const {return diffuse.image;}
-    VkImage getSpecularImage() const {return specular.image;}
-    VkImage getBRDFImage() const {return brdf.image;}
+    ID3D12Resource* getBackgroundImage() const {return background.Get(); }
+    ID3D12Resource* getDiffuseImage() const {return diffuse.Get();}
+    ID3D12Resource* getSpecularImage() const {return specular.Get();}
+    ID3D12Resource* getBRDFImage() const {return brdf.Get();}
 
-    VkImageView getBackgroundView() const {return background.view;}
-    VkImageView getDiffuseView() const {return diffuse.view;}
-    VkImageView getSpecularView() const {return specular.view;}
-    VkImageView getBRDFView() const {return brdf.view;}
+    const DescriptorGroup getDescriptors() const { return descGroup; }
 
 private:
-    void clean();
+    ComPtr<ID3D12Resource>   background;
+
+    ComPtr<ID3D12Resource>  specular;
+    ComPtr<ID3D12Resource>  diffuse;
+    ComPtr<ID3D12Resource>  brdf;
+    DescriptorGroup         descGroup;
+
+    CubemapMesh             mesh;
+
+    uint32_t                iblMipLevels = 0;
 };

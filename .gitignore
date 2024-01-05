@@ -89,3 +89,4 @@ Source/build/x64/Release/EngineDX.exe
 Source/build/x64/Debug/EngineDX.exe
 Source/tmp/x64/Debug/EngineDX.ilk
 Source/tmp/x64/Debug/EngineDX.res
+Source/tmp/x64/Debug/EngineDX.vcxproj.FileListAbsolute.txt
