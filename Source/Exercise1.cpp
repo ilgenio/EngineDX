@@ -8,6 +8,18 @@
 #include <d3dcompiler.h>
 #include "d3dx12.h"
 
+static const char shaderSource[] = R"(
+    float4 exercise1VS(float3 pos : POSITION) : SV_POSITION
+    {
+        return float4(pos, 1.0);
+    }
+
+    float4 exercise1PS() : SV_TARGET
+    {
+        return float4(1.0, 0.0, 0.0, 1.0);
+    }
+)";
+
 bool Exercise1::init() 
 {
     struct Vertex
@@ -145,13 +157,13 @@ bool Exercise1::createShaders()
     unsigned flags = 0;
 #endif
 
-    if (FAILED(D3DCompileFromFile(L"Shaders/Exercise1.hlsl", nullptr, nullptr, "exercise1VS", "vs_5_0", flags, 0, &vertexShader, &errorBuff)))
+    if (FAILED(D3DCompile(shaderSource, sizeof(shaderSource), "exercise1VS", nullptr, nullptr, "exercise1VS", "vs_5_0", flags, 0, &vertexShader, &errorBuff)))
     {
         OutputDebugStringA((char*)errorBuff->GetBufferPointer());
         return false;
     }
 
-    if (FAILED(D3DCompileFromFile(L"Shaders/Exercise1.hlsl", nullptr, nullptr, "exercise1PS", "ps_5_0", flags, 0, &pixelShader, &errorBuff)))
+    if (FAILED(D3DCompile(shaderSource, sizeof(shaderSource), "exercise1PS", nullptr, nullptr, "exercise1PS", "ps_5_0", flags, 0, &pixelShader, &errorBuff)))
     {
         OutputDebugStringA((char*)errorBuff->GetBufferPointer());
         return false;

@@ -325,3 +325,4 @@ void Material::loadIORExt(const tinygltf::Material &material)
         }
     }
 }
+

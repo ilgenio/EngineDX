@@ -211,6 +211,9 @@
     <Filter Include="Scene">
       <UniqueIdentifier>{f2fccf36-ab7e-4a4c-a867-61cc3573c379}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{03dd5f68-5267-48e5-80d0-f0e44a44d4e8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="EngineDX.rc">
@@ -221,5 +224,37 @@
     <None Include="SimpleMath.inl">
       <Filter>Core</Filter>
     </None>
+    <None Include="..\Game\Shaders\global.hlsli">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Game\Shaders\brdf.hlsli">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Game\Shaders\common.hlsli">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Game\Shaders\iridescence.hlsli">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Game\Shaders\material.hlsli">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Game\Shaders\normal.hlsli">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Game\Shaders\tonemap.hlsli">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Game\Shaders\default.hlsli">
+      <Filter>Shaders</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="..\Game\Shaders\defaultPS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Game\Shaders\defaultVS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

@@ -8,6 +8,23 @@
 #include <d3dcompiler.h>
 #include "d3dx12.h"
 
+static const char shaderSource[] = R"(
+    cbuffer Transforms : register(b0)
+    {
+        float4x4 mvp;
+    };
+
+    float4 exercise2VS(float3 pos : POSITION) : SV_POSITION
+    {
+        return mul(float4(pos, 1.0f), mvp);
+    }
+
+    float4 exercise2PS() : SV_TARGET
+    {
+        return float4(1.0f, 0.0f, 0.0f, 1.0f);
+    }
+)";
+
 bool Exercise2::init() 
 {
     struct Vertex
@@ -155,13 +172,13 @@ bool Exercise2::createShaders()
     unsigned flags = 0;
 #endif
 
-    if (FAILED(D3DCompileFromFile(L"Shaders/Exercise2.hlsl", nullptr, nullptr, "exercise1VS", "vs_5_0", flags, 0, &vertexShader, &errorBuff)))
+    if (FAILED(D3DCompile(shaderSource, sizeof(shaderSource), "exercise2VS", nullptr, nullptr, "exercise2VS", "vs_5_0", flags, 0, &vertexShader, &errorBuff)))
     {
         OutputDebugStringA((char*)errorBuff->GetBufferPointer());
         return false;
     }
 
-    if (FAILED(D3DCompileFromFile(L"Shaders/Exercise2.hlsl", nullptr, nullptr, "exercise1PS", "ps_5_0", flags, 0, &pixelShader, &errorBuff)))
+    if (FAILED(D3DCompile(shaderSource, sizeof(shaderSource), "exercise2PS", nullptr, nullptr, "exercise2PS", "ps_5_0", flags, 0, &pixelShader, &errorBuff)))
     {
         OutputDebugStringA((char*)errorBuff->GetBufferPointer());
         return false;

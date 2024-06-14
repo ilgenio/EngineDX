@@ -18,14 +18,6 @@ namespace
     };
 }
 
-Skybox::Skybox()
-{
-}
-
-Skybox::~Skybox()
-{
-}
-
 void Skybox::load(const char *backgroundFile, const char* diffuseFile, const char* specularFile, const char* brdfFile)
 {
     ModuleResources* resources = app->getResources();

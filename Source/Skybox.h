@@ -8,9 +8,6 @@ class Skybox
 {
 public:
 
-    Skybox();
-    ~Skybox();
-
     void load(const char* backgroundFile, const char* specularFile, const char* diffuseFile, const char* brdfFile);
 
     const CubemapMesh& getCubemapMesh() const { return mesh;  }
@@ -33,6 +30,5 @@ private:
     DescriptorGroup         descGroup;
 
     CubemapMesh             mesh;
-
     uint32_t                iblMipLevels = 0;
 };

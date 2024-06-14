@@ -10,6 +10,41 @@
 #include <d3dcompiler.h>
 #include "d3dx12.h"
 
+static const char shaderSource[] = R"(
+    cbuffer Transforms : register(b0)
+    {
+        float4x4 mvp;
+    };
+
+    struct VertexInput
+    {
+        float3 position : POSITION;
+        float2 texCoord : TEXCOORD;
+    };
+
+    struct VertexOutput
+    {
+        float4 position : SV_POSITION;
+        float2 texCoord : TEXCOORD;
+    };
+
+    VertexOutput exercise3VS(VertexInput input) 
+    {
+        VertexOutput output;
+        output.position = mul(float4(input.position, 1.0f), mvp);
+        output.texCoord = input.texCoord;
+
+        return output;
+    }
+
+    Texture2D t1 : register(t1);
+    SamplerState s1 : register(s0);
+
+    float4 exercise3PS(VertexOutput input) : SV_TARGET
+    {
+        return t1.Sample(s1, input.texCoord);
+    }
+)";
 
 bool Exercise3::init() 
 {
@@ -64,7 +99,7 @@ UpdateStatus Exercise3::update()
     ModuleD3D12* d3d12  = app->getD3D12();
     ModuleCamera* camera = app->getCamera();
 
-    ID3D12GraphicsCommandList *commandList = d3d12->getCommandList();
+    ID3D12GraphicsCommandList* commandList = d3d12->getCommandList();
 
     commandList->Reset(d3d12->getCommandAllocator(), pso.Get());
 
@@ -227,13 +262,13 @@ bool Exercise3::createShaders()
     unsigned flags = 0;
 #endif
 
-    if (FAILED(D3DCompileFromFile(L"Shaders/Exercise3.hlsl", nullptr, nullptr, "exercise3VS", "vs_5_0", flags, 0, &vertexShader, &errorBuff)))
+    if (FAILED(D3DCompile(shaderSource, sizeof(shaderSource), "exercise3VS", nullptr, nullptr, "exercise3VS", "vs_5_0", flags, 0, &vertexShader, &errorBuff)))
     {
         LOG((char*)errorBuff->GetBufferPointer());
         return false;
     }
 
-    if (FAILED(D3DCompileFromFile(L"Shaders/Exercise3.hlsl", nullptr, nullptr, "exercise3PS", "ps_5_0", flags, 0, &pixelShader, &errorBuff)))
+    if (FAILED(D3DCompile(shaderSource, sizeof(shaderSource), "exercise3PS", nullptr, nullptr, "exercise3PS", "ps_5_0", flags, 0, &pixelShader, &errorBuff)))
     {
         LOG((char*)errorBuff->GetBufferPointer());
         return false;
