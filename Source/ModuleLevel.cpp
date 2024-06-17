@@ -28,20 +28,20 @@ ModuleLevel::~ModuleLevel()
 
 bool ModuleLevel::init() 
 {
-    //Material::createSharedData();
+    Material::createSharedData();
 
     //const char* assetFileName = "Assets/Models/IridescenceSuzanne/IridescenceSuzanne.gltf"; 
     //const char* basePath = "Assets/Models/IridescenceSuzanne/";
     //const char* assetFileName = "Assets/Models/SciFiHelmet/SciFiHelmet.gltf";
     //const char* basePath = "Assets/Models/SciFiHelmet/";
-    //const char* assetFileName = "Assets/Models/MetalRoughSpheres/MetalRoughSpheres.gltf";
-    //const char* basePath = "Assets/Models/MetalRoughSpheres/";
-    const char* assetFileName = "Assets/Models/IridescenceMetallicSpheres/IridescenceMetallicSpheres.gltf";
-    const char* basePath = "Assets/Models/IridescenceMetallicSpheres/";
+    const char* assetFileName = "Assets/Models/MetalRoughSpheres/MetalRoughSpheres.gltf";
+    const char* basePath = "Assets/Models/MetalRoughSpheres/";
+    //const char* assetFileName = "Assets/Models/IridescenceMetallicSpheres/IridescenceMetallicSpheres.gltf";
+    //const char* basePath = "Assets/Models/IridescenceMetallicSpheres/";
     //const char* assetFileName = "Assets/Models/IridescenceDielectricSpheres/IridescenceDielectricSpheres.gltf";
     //const char* basePath = "Assets/Models/IridescenceDielectricSpheres/";
 
-    loadScene(assetFileName, basePath);
+    //loadScene(assetFileName, basePath);
 
 
     return true;
@@ -51,7 +51,7 @@ bool ModuleLevel::cleanUp()
 {
     scene.reset();
 
-    //Material::destroySharedData();
+    Material::destroySharedData();
 
     return true;
 }

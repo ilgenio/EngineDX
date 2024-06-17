@@ -46,6 +46,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     LoadStringW(hInstance, IDC_ENGINEDX, szWindowClass, MAX_LOADSTRING);
     MyRegisterClass(hInstance);
 
+    CoInitialize(nullptr);
+
     // Perform application initialization:
     if (!InitInstance (hInstance, nCmdShow))
     {

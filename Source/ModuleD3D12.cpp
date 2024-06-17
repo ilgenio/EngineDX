@@ -291,8 +291,6 @@ bool ModuleD3D12::createDrawCommandQueue()
 
 bool ModuleD3D12::createSwapChain()
 {
-    // TODO: handle resize
-
     DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
     swapChainDesc.Width = windowWidth;
     swapChainDesc.Height = windowHeight;

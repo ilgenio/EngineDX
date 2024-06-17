@@ -44,7 +44,7 @@ void StaticDescriptorHeap::init(D3D12_DESCRIPTOR_HEAP_TYPE heapType, uint32_t de
     size = device->GetDescriptorHandleIncrementSize(heapType);
 
     D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
-    heapDesc.NumDescriptors = 2;
+    heapDesc.NumDescriptors = descriptorCount;
     heapDesc.Flags = shaderVisible ? D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE : D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
     heapDesc.Type = heapType;
 

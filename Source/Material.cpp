@@ -32,8 +32,6 @@ ComPtr<ID3D12Resource> Material::whiteFallback;
 ComPtr<ID3D12Resource> Material::blackFallback;
 ComPtr<ID3D12Resource> Material::normalFallback;
 
-
-
 Material::Material()
 {
 }
@@ -151,7 +149,7 @@ void Material::load(const tinygltf::Model& model, const tinygltf::Material &mate
     }
 
     // Metallic Roughness Texture
-    if (material.pbrMetallicRoughness.metallicRoughnessTexture.index >= 0 || loadTexture(model, base, material.pbrMetallicRoughness.metallicRoughnessTexture.index, metRougTex))
+    if (material.pbrMetallicRoughness.metallicRoughnessTexture.index >= 0 && loadTexture(model, base, material.pbrMetallicRoughness.metallicRoughnessTexture.index, metRougTex))
     {
         descriptors->createTextureSRV(metRougTex.Get(), descGroup, METROUGH_DESC_SLOT);
     }
@@ -161,7 +159,7 @@ void Material::load(const tinygltf::Model& model, const tinygltf::Material &mate
     }
 
     // Normals Texture
-    if (material.normalTexture.index >= 0 || loadTexture(model, base, material.normalTexture.index, normalTex))
+    if (material.normalTexture.index >= 0 && loadTexture(model, base, material.normalTexture.index, normalTex))
     {
         descriptors->createTextureSRV(normalTex.Get(), descGroup, NORMAL_DESC_SLOT);
     }
@@ -173,7 +171,7 @@ void Material::load(const tinygltf::Model& model, const tinygltf::Material &mate
     data.normalScale = float(material.normalTexture.scale);
 
     // Occlusion Texture
-    if (material.occlusionTexture.index < 0 || !loadTexture(model, base, material.occlusionTexture.index, occlusionTex))
+    if (material.occlusionTexture.index >= 0 && loadTexture(model, base, material.occlusionTexture.index, occlusionTex))
     {
         descriptors->createTextureSRV(occlusionTex.Get(), descGroup, OCCLUSION_DESC_SLOT);
     }

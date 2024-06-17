@@ -7,6 +7,7 @@
 #include "ModuleRender.h"
 #include "ModuleResources.h"
 #include "ModuleDescriptors.h"
+#include "ModuleLevel.h"
 
 #include "Exercise1.h"
 #include "Exercise2.h"
@@ -36,7 +37,7 @@ Application::Application(int argc, wchar_t** argv, void* hWnd)
         modules.push_back(resources = new ModuleResources());
         modules.push_back(descriptors = new ModuleDescriptors());
         modules.push_back(render = new ModuleRender());
-
+        modules.push_back(level = new ModuleLevel());
     }
 }
 

@@ -13,6 +13,7 @@ class ModuleCamera;
 class ModuleRender;
 class ModuleResources;
 class ModuleDescriptors;
+class ModuleLevel;
 
 class Application
 {
@@ -46,6 +47,7 @@ private:
     ModuleRender* render = nullptr;
     ModuleResources* resources = nullptr;
     ModuleDescriptors* descriptors = nullptr;
+    ModuleLevel* level = nullptr;
 
     uint64_t  lastMilis = 0;
     TickList  tickList;

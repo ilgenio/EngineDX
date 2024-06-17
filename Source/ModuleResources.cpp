@@ -53,6 +53,8 @@ ID3D12Resource* ModuleResources::createBuffer(void* data, size_t size, const cha
     ID3D12Device2* device = d3d12->getDevice();
     ID3D12CommandQueue* queue = d3d12->getDrawCommandQueue();
 
+    size = alignUp(size, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
+
     ID3D12Resource* buffer = nullptr;
     
     CD3DX12_HEAP_PROPERTIES heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
@@ -178,10 +180,14 @@ ID3D12Resource* ModuleResources::createTextureFromFile(const std::filesystem::pa
     bool ok = SUCCEEDED(LoadFromDDSFile(fileName, DDS_FLAGS_NONE, nullptr, image));
     ok = ok || SUCCEEDED(LoadFromHDRFile(fileName, nullptr, image));
     ok = ok || SUCCEEDED(LoadFromTGAFile(fileName, TGA_FLAGS_NONE, nullptr, image));
+    ok = ok || SUCCEEDED(LoadFromWICFile(fileName, DirectX::WIC_FLAGS_NONE, nullptr, image));
 
     // TODO: Check format support
 
-    ok = ok && createTextureFromImage(image, path.string().c_str());
+    if (ok)
+    {
+        return createTextureFromImage(image, path.string().c_str());
+    }
 
     return nullptr;
 }
