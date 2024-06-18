@@ -14,7 +14,7 @@ private:
     HWND                                hWnd = NULL ;
     ComPtr<IDXGIFactory5>               factory;
     ComPtr<IDXGIAdapter4>               adapter;
-    ComPtr<ID3D12Device2>               device;
+    ComPtr<ID3D12Device5>               device;
 
     ComPtr<IDXGISwapChain4>             swapChain;
     ComPtr<ID3D12DescriptorHeap>        rtDescriptorHeap;
@@ -23,7 +23,7 @@ private:
     ComPtr<ID3D12Resource>              depthStencilBuffer;
 
     ComPtr<ID3D12CommandAllocator>      commandAllocators[FRAMES_IN_FLIGHT];
-    ComPtr<ID3D12GraphicsCommandList>   commandList;
+    ComPtr<ID3D12GraphicsCommandList4>  commandList;
     ComPtr<ID3D12CommandQueue>          drawCommandQueue;
 
     ComPtr<ID3D12Fence1>                drawFence;
@@ -32,6 +32,7 @@ private:
     unsigned                            drawFenceValues[FRAMES_IN_FLIGHT] = { 0, 0, 0 };
 
     bool                                allowTearing = false;
+    bool                                supportsRT = false;
     unsigned                            currentBackBufferIdx = 0;
 
     unsigned                            windowWidth  = 0;

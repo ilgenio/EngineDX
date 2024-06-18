@@ -189,7 +189,7 @@ bool ModuleD3D12::createDevice(bool useWarp)
 {
     ComPtr<IDXGIAdapter1> dxgiAdapter1;
     ComPtr<IDXGIAdapter4> dxgiAdapter4;
-    ComPtr<ID3D12Device2> d3d12Device2;
+    ComPtr<ID3D12Device5> d3d12Device5;
 
     bool ok = true;
 
@@ -197,7 +197,7 @@ bool ModuleD3D12::createDevice(bool useWarp)
     {
         ok = ok && SUCCEEDED(factory->EnumWarpAdapter(IID_PPV_ARGS(&dxgiAdapter1)));
         ok = ok && SUCCEEDED(dxgiAdapter1.As(&dxgiAdapter4));
-        ok = ok && SUCCEEDED(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&d3d12Device2)));
+        ok = ok && SUCCEEDED(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&d3d12Device5)));
     }
     else
     {
@@ -207,7 +207,7 @@ bool ModuleD3D12::createDevice(bool useWarp)
             DXGI_ADAPTER_DESC1 dxgiAdapterDesc1;
             dxgiAdapter1->GetDesc1(&dxgiAdapterDesc1);
 
-            ComPtr<ID3D12Device2> tmpDevice;
+            ComPtr<ID3D12Device5> tmpDevice;
 
             // Check to see if the adapter can create a D3D12 device without actually 
             // creating it. The adapter with the largest dedicated video memory
@@ -218,7 +218,7 @@ bool ModuleD3D12::createDevice(bool useWarp)
             {
                 maxDedicatedVideoMemory = dxgiAdapterDesc1.DedicatedVideoMemory;
                 ok = SUCCEEDED(dxgiAdapter1.As(&dxgiAdapter4));
-                d3d12Device2 = tmpDevice;
+                d3d12Device5 = tmpDevice;
             }
         }
     }
@@ -230,8 +230,16 @@ bool ModuleD3D12::createDevice(bool useWarp)
         factory->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &tearing, sizeof(tearing));
 
         allowTearing = tearing == TRUE;
+
+        D3D12_FEATURE_DATA_D3D12_OPTIONS5 features5;
+        HRESULT hr = d3d12Device5->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &features5, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS5));
+        if (SUCCEEDED(hr) && features5.RaytracingTier != D3D12_RAYTRACING_TIER_NOT_SUPPORTED)
+        {
+            supportsRT = true;
+        }
+
         adapter = dxgiAdapter4;
-        device = d3d12Device2;
+        device = d3d12Device5;
     }
 
     return ok;

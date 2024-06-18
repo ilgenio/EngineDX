@@ -151,7 +151,6 @@ UpdateStatus Exercise3::update()
     commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix)/sizeof(UINT32), &mvp, 0);
     commandList->SetGraphicsRootDescriptorTable(1, mainDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 
-    
     commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
 
     barrier = CD3DX12_RESOURCE_BARRIER::Transition(d3d12->getBackBuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);

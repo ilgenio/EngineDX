@@ -32,15 +32,15 @@ public:
     bool init() override;
     bool cleanUp() override;
 
-    ID3D12Resource* createBuffer(void* data, size_t size, const char* name);
+    ComPtr<ID3D12Resource> createBuffer(void* data, size_t size, const char* name, size_t alignment = 1);
 
-    ID3D12Resource* createRawTexture2D(const void* data, size_t rowSize, size_t width, size_t height, DXGI_FORMAT format);
-    ID3D12Resource* createTextureFromMemory(const void* data, size_t size, const char* name);
-    ID3D12Resource* createTextureFromFile(const std::filesystem::path& path);
+    ComPtr<ID3D12Resource> createRawTexture2D(const void* data, size_t rowSize, size_t width, size_t height, DXGI_FORMAT format);
+    ComPtr<ID3D12Resource> createTextureFromMemory(const void* data, size_t size, const char* name);
+    ComPtr<ID3D12Resource> createTextureFromFile(const std::filesystem::path& path);
 
 private:
 
-    ID3D12Resource* createTextureFromImage(const ScratchImage& image, const char* name);
+    ComPtr<ID3D12Resource> createTextureFromImage(const ScratchImage& image, const char* name);
     ID3D12Resource* getUploadHeap(size_t size);
 };
 
