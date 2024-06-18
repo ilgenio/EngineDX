@@ -41,7 +41,7 @@ bool ModuleLevel::init()
     //const char* assetFileName = "Assets/Models/IridescenceDielectricSpheres/IridescenceDielectricSpheres.gltf";
     //const char* basePath = "Assets/Models/IridescenceDielectricSpheres/";
 
-    //loadScene(assetFileName, basePath);
+    loadScene(assetFileName, basePath);
 
 
     return true;

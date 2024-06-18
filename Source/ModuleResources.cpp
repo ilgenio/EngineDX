@@ -47,15 +47,15 @@ bool ModuleResources::cleanUp()
     return true;
 }
 
-ID3D12Resource* ModuleResources::createBuffer(void* data, size_t size, const char* name)
+ComPtr<ID3D12Resource> ModuleResources::createBuffer(void* data, size_t size, const char* name, size_t alignment)
 {
     ModuleD3D12* d3d12 = app->getD3D12();
     ID3D12Device2* device = d3d12->getDevice();
     ID3D12CommandQueue* queue = d3d12->getDrawCommandQueue();
 
-    size = alignUp(size, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
+    ComPtr<ID3D12Resource> buffer;
 
-    ID3D12Resource* buffer = nullptr;
+    size = alignUp(size, alignment);
     
     CD3DX12_HEAP_PROPERTIES heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
     CD3DX12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Buffer(size);
@@ -75,9 +75,9 @@ ID3D12Resource* ModuleResources::createBuffer(void* data, size_t size, const cha
         memcpy(pData, data, size);
         upload->Unmap(0, nullptr);
 
-        CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(buffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER | D3D12_RESOURCE_STATE_INDEX_BUFFER);
+        CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(buffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER | D3D12_RESOURCE_STATE_INDEX_BUFFER);
 
-        commandList->CopyBufferRegion(buffer, 0, upload, 0, size);
+        commandList->CopyBufferRegion(buffer.Get(), 0, upload, 0, size);
         commandList->ResourceBarrier(1, &barrier);
         commandList->Close();
 
@@ -96,7 +96,7 @@ ID3D12Resource* ModuleResources::createBuffer(void* data, size_t size, const cha
     return buffer;
 }
 
-ID3D12Resource* ModuleResources::createRawTexture2D(const void* data, size_t rowSize, size_t width, size_t height, DXGI_FORMAT format)
+ComPtr<ID3D12Resource> ModuleResources::createRawTexture2D(const void* data, size_t rowSize, size_t width, size_t height, DXGI_FORMAT format)
 {
     ModuleD3D12* d3d12 = app->getD3D12();
     ID3D12Device2* device = d3d12->getDevice();
@@ -111,10 +111,11 @@ ID3D12Resource* ModuleResources::createRawTexture2D(const void* data, size_t row
     desc.SampleDesc.Count = 1;
     desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 
-    ID3D12Resource* texture = nullptr;
+    ComPtr<ID3D12Resource> texture = nullptr;
 
     CD3DX12_HEAP_PROPERTIES heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
     bool ok = SUCCEEDED(device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&texture)));
+
 
     UINT64 requiredSize = 0;
 
@@ -137,11 +138,11 @@ ID3D12Resource* ModuleResources::createRawTexture2D(const void* data, size_t row
 
         upload->Unmap(0, nullptr);
 
-        CD3DX12_TEXTURE_COPY_LOCATION Dst(texture, 0);
+        CD3DX12_TEXTURE_COPY_LOCATION Dst(texture.Get(), 0);
         CD3DX12_TEXTURE_COPY_LOCATION Src(upload, layout);
         commandList->CopyTextureRegion(&Dst, 0, 0, 0, &Src, nullptr);
 
-        CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(texture, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(texture.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
         commandList->ResourceBarrier(1, &barrier);
         commandList->Close();
 
@@ -159,7 +160,7 @@ ID3D12Resource* ModuleResources::createRawTexture2D(const void* data, size_t row
     return texture;
 }
 
-ID3D12Resource* ModuleResources::createTextureFromMemory(const void* data, size_t size, const char* name)
+ComPtr<ID3D12Resource> ModuleResources::createTextureFromMemory(const void* data, size_t size, const char* name)
 {
     ScratchImage image;
     bool ok = SUCCEEDED(LoadFromDDSMemory(data, size, DDS_FLAGS_NONE, nullptr, image));
@@ -173,7 +174,7 @@ ID3D12Resource* ModuleResources::createTextureFromMemory(const void* data, size_
     return nullptr;
 }
 
-ID3D12Resource* ModuleResources::createTextureFromFile(const std::filesystem::path& path) 
+ComPtr<ID3D12Resource> ModuleResources::createTextureFromFile(const std::filesystem::path& path) 
 {
     const wchar_t* fileName = path.c_str();
     ScratchImage image;
@@ -192,7 +193,7 @@ ID3D12Resource* ModuleResources::createTextureFromFile(const std::filesystem::pa
     return nullptr;
 }
 
-ID3D12Resource* ModuleResources::createTextureFromImage(const ScratchImage& image, const char* name)
+ComPtr<ID3D12Resource> ModuleResources::createTextureFromImage(const ScratchImage& image, const char* name)
 {
     ModuleD3D12* d3d12 = app->getD3D12();
     ID3D12Device2* device = d3d12->getDevice();
@@ -209,7 +210,7 @@ ID3D12Resource* ModuleResources::createTextureFromImage(const ScratchImage& imag
     desc.SampleDesc.Count = 1;
     desc.Dimension = static_cast<D3D12_RESOURCE_DIMENSION>(metaData.dimension);
 
-    ID3D12Resource* texture = nullptr;
+    ComPtr<ID3D12Resource> texture;
 
     CD3DX12_HEAP_PROPERTIES heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
     bool ok = SUCCEEDED(device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&texture)));
@@ -257,12 +258,12 @@ ID3D12Resource* ModuleResources::createTextureFromImage(const ScratchImage& imag
 
         for (UINT i = 0; i < numSubresources; ++i)
         {
-            CD3DX12_TEXTURE_COPY_LOCATION Dst(texture, i);
+            CD3DX12_TEXTURE_COPY_LOCATION Dst(texture.Get(), i);
             CD3DX12_TEXTURE_COPY_LOCATION Src(upload, layouts[i]);
             commandList->CopyTextureRegion(&Dst, 0, 0, 0, &Src, nullptr);
         }
 
-        CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(texture, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(texture.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
         commandList->ResourceBarrier(1, &barrier);
         commandList->Close();
 
@@ -287,8 +288,6 @@ ID3D12Resource* ModuleResources::createTextureFromImage(const ScratchImage& imag
 
 ID3D12Resource* ModuleResources::getUploadHeap(size_t size)
 {
-    size = alignUp(size, 256);
-
     if (size > uploadSize)
     {
         ModuleD3D12* d3d12 = app->getD3D12();

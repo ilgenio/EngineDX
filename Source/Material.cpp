@@ -106,7 +106,7 @@ void Material::createSharedData()
 
     uint32_t fallbackValue = uint32_t(0xFFFFFFFFu);
     whiteFallback = resources->createRawTexture2D(&fallbackValue, sizeof(fallbackValue), 1, 1, DXGI_FORMAT_B8G8R8A8_UNORM);
-    
+   
 
     fallbackValue = uint32_t(0x00000000u);
     blackFallback = resources->createRawTexture2D(&fallbackValue, sizeof(fallbackValue), 1, 1, DXGI_FORMAT_B8G8R8A8_UNORM);
@@ -118,6 +118,11 @@ void Material::createSharedData()
 void Material::destroySharedData()
 {
     rootSignature.Reset();
+    whiteFallback.Reset();
+
+    blackFallback.Reset();
+    normalFallback.Reset();
+
 }
 
 void Material::load(const tinygltf::Model& model, const tinygltf::Material &material, const char* basePath)
@@ -201,7 +206,8 @@ void Material::load(const tinygltf::Model& model, const tinygltf::Material &mate
     loadIORExt(material);
 
     // Material Buffer
-    materialBuffer = app->getResources()->createBuffer(&data, sizeof(data), name.c_str());
+
+    materialBuffer = app->getResources()->createBuffer(&data, sizeof(data), name.c_str(), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
     descriptors->createCBV(materialBuffer.Get(), descGroup, MATERIAL_DESC_SLOT);
 }
 
