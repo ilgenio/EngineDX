@@ -57,8 +57,9 @@ public:
     void                        toogleFullscreen();
     void                        flush();
 
+    HWND                        getHWnd()             { return hWnd; }
     IDXGISwapChain4*            getSwapChain()        { return swapChain.Get();  }
-    ID3D12Device2*              getDevice()           { return device.Get(); }
+    ID3D12Device5*              getDevice()           { return device.Get(); }
     ID3D12GraphicsCommandList*  getCommandList()      { return commandList.Get(); }
     ID3D12CommandAllocator*     getCommandAllocator() { return commandAllocators[currentBackBufferIdx].Get(); }
     ID3D12Resource*             getBackBuffer()       { return backBuffers[currentBackBufferIdx].Get(); }

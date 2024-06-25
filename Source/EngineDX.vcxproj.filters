@@ -82,6 +82,30 @@
     <ClCompile Include="3rdParty\mikktspace\weldmesh.c">
       <Filter>Scene</Filter>
     </ClCompile>
+    <ClCompile Include="ImGuiPass.cpp">
+      <Filter>Passes</Filter>
+    </ClCompile>
+    <ClCompile Include="3rdParty\imgui-1.89.8\backends\imgui_impl_dx12.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="3rdParty\imgui-1.89.8\backends\imgui_impl_win32.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="3rdParty\imgui-1.89.8\imgui.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="3rdParty\imgui-1.89.8\imgui_demo.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="3rdParty\imgui-1.89.8\imgui_tables.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="3rdParty\imgui-1.89.8\imgui_widgets.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="3rdParty\imgui-1.89.8\imgui_draw.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EngineDX.h">
@@ -183,6 +207,15 @@
     <ClInclude Include="CubemapMesh.h">
       <Filter>Scene</Filter>
     </ClInclude>
+    <ClInclude Include="ImGuiPass.h">
+      <Filter>Passes</Filter>
+    </ClInclude>
+    <ClInclude Include="3rdParty\imgui-1.89.8\backends\imgui_impl_dx12.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="3rdParty\imgui-1.89.8\backends\imgui_impl_win32.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="EngineDX.ico">
@@ -213,6 +246,9 @@
     </Filter>
     <Filter Include="Shaders">
       <UniqueIdentifier>{03dd5f68-5267-48e5-80d0-f0e44a44d4e8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="imgui">
+      <UniqueIdentifier>{d31bd066-260e-4cf0-bb22-161b53a5d311}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

@@ -25,6 +25,7 @@ private:
 private:
 
     std::unique_ptr<DebugDrawPass> debugDrawPass;
+    std::unique_ptr<ImGuiPass> imguiPass;
 
 	// commands
     ComPtr<ID3D12GraphicsCommandList>   commandList;

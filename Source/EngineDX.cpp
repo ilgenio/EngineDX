@@ -16,6 +16,10 @@
 #include "Keyboard.h"
 #include "Mouse.h"
 
+#include "backends/imgui_impl_win32.h"
+
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
 #define MAX_LOADSTRING 100
 
 // Global Variables:
@@ -46,7 +50,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     LoadStringW(hInstance, IDC_ENGINEDX, szWindowClass, MAX_LOADSTRING);
     MyRegisterClass(hInstance);
 
-    CoInitialize(nullptr);
+    if (CoInitialize(nullptr) != S_OK)
+    {
+        return FALSE;
+    }
 
     // Perform application initialization:
     if (!InitInstance (hInstance, nCmdShow))
@@ -155,6 +162,9 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 //
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+    if (ImGui_ImplWin32_WndProcHandler(hWnd, message, wParam, lParam))
+        return true;
+
     switch (message)
     {
     case WM_ACTIVATE:

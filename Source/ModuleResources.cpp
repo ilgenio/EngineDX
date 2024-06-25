@@ -55,7 +55,7 @@ ComPtr<ID3D12Resource> ModuleResources::createBuffer(void* data, size_t size, co
 
     ComPtr<ID3D12Resource> buffer;
 
-    size = alignUp(size, alignment);
+    size = alignUp(size, alignment); // NOTE: 256 Only for constant buffers
     
     CD3DX12_HEAP_PROPERTIES heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
     CD3DX12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Buffer(size);
@@ -166,6 +166,7 @@ ComPtr<ID3D12Resource> ModuleResources::createTextureFromMemory(const void* data
     bool ok = SUCCEEDED(LoadFromDDSMemory(data, size, DDS_FLAGS_NONE, nullptr, image));
     ok = ok || SUCCEEDED(LoadFromHDRMemory(data, size, nullptr, image));
     ok = ok || SUCCEEDED(LoadFromTGAMemory(data, size, TGA_FLAGS_NONE, nullptr, image));
+    ok = ok || SUCCEEDED(LoadFromWICMemory(data, size, DirectX::WIC_FLAGS_NONE, nullptr, image));
 
     // TODO: Check format support
 

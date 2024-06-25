@@ -16,6 +16,7 @@ public:
     virtual UpdateStatus update() override;
 
 private:
-    AccelerationStructureBuffers createBottomLevelAS(ID3D12Device5* pDevice, ID3D12GraphicsCommandList4* pCmdList, ID3D12Resource* pVB);
-    
+    AccelerationStructureBuffers createBottomLevelAS(ID3D12GraphicsCommandList4* pCmdList, ID3D12Resource* pVB, DXGI_FORMAT format, size_t stride, size_t vertexCount);
+    AccelerationStructureBuffers createTopLevelAS(ComPtr<ID3D12Resource>* pBottomLevelAS, size_t bottomLevelCount, uint64_t& tlasSize);
+    ComPtr<ID3D12Resource> createBuffer(uint64_t size, D3D12_RESOURCE_FLAGS flags, D3D12_RESOURCE_STATES initState, const D3D12_HEAP_PROPERTIES &heapProps);
 };

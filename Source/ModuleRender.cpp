@@ -4,12 +4,13 @@
 #include "ModuleCamera.h"
 
 #include "DebugDrawPass.h"
-//#include "ImGuiPass.h"
+#include "ImGuiPass.h"
 
 #include "Application.h"
 #include "ModuleD3D12.h"
+#include "ModuleDescriptors.h"
 
-//#include <imgui.h>
+#include <imgui.h>
 
 ModuleRender::ModuleRender()
 {
@@ -30,14 +31,14 @@ bool ModuleRender::init()
     bool ok = SUCCEEDED(device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, d3d12->getCommandAllocator(), nullptr, IID_PPV_ARGS(&commandList)));
     ok = ok && SUCCEEDED(commandList->Close());
 
-    //imguiPass     = std::make_unique<ImGuiPass>(renderPass);
+    imguiPass     = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd());
 
     return ok;
 }
 
 UpdateStatus ModuleRender::preUpdate()
 {
-    //imguiPass->startFrame();
+    imguiPass->startFrame();
 
     return UPDATE_CONTINUE;
 }
@@ -81,7 +82,7 @@ UpdateStatus ModuleRender::update()
 
     debugDrawPass->record(commandList.Get(), width, height, camera->getView(), camera->getProj());
 
-    //TODO: imguiPass->record(commandBuffer);
+    imguiPass->record(commandList.Get());
 
     barrier = CD3DX12_RESOURCE_BARRIER::Transition(d3d12->getBackBuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
     commandList->ResourceBarrier(1, &barrier);
@@ -92,29 +93,26 @@ UpdateStatus ModuleRender::update()
         d3d12->getDrawCommandQueue()->ExecuteCommandLists(UINT(std::size(commandLists)), commandLists);
     }
 
-
     return UPDATE_CONTINUE;
 }
 
 void ModuleRender::updateImGui()
 {
-    /*
     ImGui::Begin("DebugDraw");
     ImGui::Checkbox("Show Grid", &showGrid);
     ImGui::Checkbox("Show Axis", &showAxis);
-    ImGui::Checkbox("Disable Iridescene", &disableIridescene);
-    ImGui::Combo("Debug Render",  (int*)&debugRender, "None\0Iridiscene Fresnel\0");
+    //ImGui::Checkbox("Disable Iridescene", &disableIridescene);
+    //ImGui::Combo("Debug Render",  (int*)&debugRender, "None\0Iridiscene Fresnel\0");
     ImGui::End();
 
-    App->getLevel()->updateImGui();
-    */
+    //App->getLevel()->updateImGui();
 }
 
 // Called before quitting
 bool ModuleRender::cleanUp()
 {    
     debugDrawPass.reset();
-    //imguiPass.reset();
+    imguiPass.reset();
 
     /*
     vulkan->destroy(commandPool);
