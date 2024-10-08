@@ -90,3 +90,9 @@ Source/build/x64/Debug/EngineDX.exe
 Source/tmp/x64/Debug/EngineDX.ilk
 Source/tmp/x64/Debug/EngineDX.res
 Source/tmp/x64/Debug/EngineDX.vcxproj.FileListAbsolute.txt
+/.vs/EngineDX/v17
+/Source/.vs/EngineDX/v17
+/Source/build/x64/Debug/defaultPS.cso
+/Source/build/x64/Debug/defaultVS.cso
+/.vs/VSWorkspaceState.json
+/.vs/slnx.sqlite
