@@ -95,3 +95,4 @@ Source/tmp/x64/Debug/EngineDX.vcxproj.FileListAbsolute.txt
 /Source/build/x64/Debug/defaultPS.cso
 /Source/build/x64/Debug/defaultVS.cso
 /.vs/VSWorkspaceState.json
+/.vs/slnx.sqlite
