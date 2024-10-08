@@ -47,7 +47,7 @@ bool Exercise1::init()
     return true;
 }
 
-UpdateStatus Exercise1::update()
+void Exercise1::update()
 {
     ModuleD3D12* d3d12  = app->getD3D12();
     ID3D12GraphicsCommandList *commandList = d3d12->getCommandList();
@@ -93,8 +93,6 @@ UpdateStatus Exercise1::update()
         ID3D12CommandList* commandLists[] = { commandList };
         d3d12->getDrawCommandQueue()->ExecuteCommandLists(UINT(std::size(commandLists)), commandLists);
     }
-
-    return UPDATE_CONTINUE;
 }
 
 bool Exercise1::createVertexBuffer(void* bufferData, unsigned bufferSize, unsigned stride)

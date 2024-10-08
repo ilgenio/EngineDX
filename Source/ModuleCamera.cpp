@@ -40,7 +40,7 @@ bool ModuleCamera::init()
     return true;
 }
 
-UpdateStatus ModuleCamera::update()
+void ModuleCamera::update()
 {
     Mouse& mouse = Mouse::Get();
     Keyboard& keyboard = Keyboard::Get();
@@ -128,8 +128,6 @@ UpdateStatus ModuleCamera::update()
 
     view = Matrix::CreateFromQuaternion(invRot); 
     view.Translation(Vector3::Transform(-position, invRot));
-    
-    return UPDATE_CONTINUE;
 }
 
 void ModuleCamera::windowResized(unsigned newWidth, unsigned newHeight)

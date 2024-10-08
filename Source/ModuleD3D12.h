@@ -49,9 +49,8 @@ public:
     bool                        init() override;
     bool                        cleanUp() override;
 
-    UpdateStatus                preUpdate() override;
-    UpdateStatus                update() override;
-    UpdateStatus                postUpdate() override;
+    void                        render() override;
+    void                        postRender() override;
 
     void                        resize();
     void                        toogleFullscreen();

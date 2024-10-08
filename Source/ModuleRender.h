@@ -13,8 +13,8 @@ public:
 	~ModuleRender();
 
 	bool init() override;
-    UpdateStatus preUpdate() override;
-    UpdateStatus update() override;
+    void preRender() override;
+    void render() override;
 	bool cleanUp() override;
 
 

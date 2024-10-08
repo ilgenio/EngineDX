@@ -20,22 +20,23 @@ public:
 		return true; 
 	}
 
-	virtual UpdateStatus preUpdate()
+	virtual void update()
 	{
-		return UPDATE_CONTINUE;
 	}
 
-	virtual UpdateStatus update()
+    virtual void preRender()
+    {
+    }
+
+    virtual void postRender()
 	{
-		return UPDATE_CONTINUE;
 	}
 
-	virtual UpdateStatus postUpdate()
-	{
-		return UPDATE_CONTINUE;
-	}
+    virtual void render()
+    {
+    }
 
-	virtual bool cleanUp() 
+    virtual bool cleanUp()
 	{ 
 		return true; 
 	}

@@ -36,16 +36,14 @@ bool ModuleRender::init()
     return ok;
 }
 
-UpdateStatus ModuleRender::preUpdate()
+void ModuleRender::preRender()
 {
     imguiPass->startFrame();
-
-    return UPDATE_CONTINUE;
 }
 
 
 // Called every draw update
-UpdateStatus ModuleRender::update()
+void ModuleRender::render()
 {
     updateImGui();
 
@@ -92,8 +90,6 @@ UpdateStatus ModuleRender::update()
         ID3D12CommandList* commandLists[] = { commandList.Get() };
         d3d12->getDrawCommandQueue()->ExecuteCommandLists(UINT(std::size(commandLists)), commandLists);
     }
-
-    return UPDATE_CONTINUE;
 }
 
 void ModuleRender::updateImGui()

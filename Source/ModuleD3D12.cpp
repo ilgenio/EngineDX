@@ -55,12 +55,8 @@ bool ModuleD3D12::cleanUp()
 }
 
 
-UpdateStatus ModuleD3D12::preUpdate()
-{
-    return UPDATE_CONTINUE;
-}
 
-UpdateStatus ModuleD3D12::update()
+void ModuleD3D12::render()
 {
     // TODO: Make it working without update
     currentBackBufferIdx = swapChain->GetCurrentBackBufferIndex();
@@ -71,17 +67,13 @@ UpdateStatus ModuleD3D12::update()
     }
 
     commandAllocators[currentBackBufferIdx]->Reset();
-
-    return UPDATE_CONTINUE;
 }
 
-UpdateStatus ModuleD3D12::postUpdate()
+void ModuleD3D12::postRender()
 {
     swapChain->Present(0, allowTearing ? DXGI_PRESENT_ALLOW_TEARING : 0);
 
     signalDrawQueue();
-
-    return UPDATE_CONTINUE;
 }
 
 void ModuleD3D12::signalDrawQueue()

@@ -26,7 +26,7 @@ class ModuleCamera : public Module
 public:
 
 	bool init() override;
-	UpdateStatus update() override;
+	void update() override;
 
     void windowResized(unsigned newWidth, unsigned newHeight);
 

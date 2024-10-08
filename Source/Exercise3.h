@@ -34,7 +34,7 @@ public:
 
     virtual bool init() override;
     virtual bool cleanUp() override;
-    virtual UpdateStatus update() override;
+    virtual void update() override;
 
 private:
 

@@ -16,7 +16,7 @@ class Exercise2 : public Module
 public:
 
     virtual bool init() override;
-    virtual UpdateStatus update() override;
+    virtual void update() override;
 
 private:
 

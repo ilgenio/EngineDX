@@ -61,10 +61,8 @@ bool Application::init()
 	return ret;
 }
 
-UpdateStatus Application::update()
+void Application::update()
 {
-	UpdateStatus ret = UPDATE_CONTINUE;
-
     using namespace std::chrono_literals;
 
     
@@ -78,16 +76,17 @@ UpdateStatus Application::update()
     tickList[tickIndex] = elapsedMilis;
     tickIndex = (tickIndex + 1) % MAX_FPS_TICKS;
 
-	for(auto it = modules.begin(); it != modules.end() && ret == UPDATE_CONTINUE; ++it)
-		ret = (*it)->preUpdate();
+    for (auto it = modules.begin(); it != modules.end(); ++it)
+        (*it)->update();
+    
+    for(auto it = modules.begin(); it != modules.end(); ++it)
+		(*it)->preRender();
 
-	for(auto it = modules.begin(); it != modules.end() && ret == UPDATE_CONTINUE; ++it)
-		ret = (*it)->update();
-
-	for(auto it = modules.begin(); it != modules.end() && ret == UPDATE_CONTINUE; ++it)
-		ret = (*it)->postUpdate();
-
-	return ret;
+    for (auto it = modules.begin(); it != modules.end(); ++it)
+        (*it)->render();
+    
+    for(auto it = modules.begin(); it != modules.end(); ++it)
+		(*it)->postRender();
 }
 
 bool Application::cleanUp()

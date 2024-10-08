@@ -94,7 +94,7 @@ bool Exercise3::cleanUp()
     return true;
 }
 
-UpdateStatus Exercise3::update()
+void Exercise3::update()
 {
     ModuleD3D12* d3d12  = app->getD3D12();
     ModuleCamera* camera = app->getCamera();
@@ -161,8 +161,6 @@ UpdateStatus Exercise3::update()
         ID3D12CommandList* commandLists[] = { commandList };
         d3d12->getDrawCommandQueue()->ExecuteCommandLists(UINT(std::size(commandLists)), commandLists);
     }
-
-    return UPDATE_CONTINUE;
 }
 
 bool Exercise3::createBuffer(void* bufferData, unsigned bufferSize, ComPtr<ID3D12Resource>& buffer, D3D12_RESOURCE_STATES initialState)
