@@ -47,7 +47,7 @@ bool Exercise1::init()
     return true;
 }
 
-void Exercise1::update()
+void Exercise1::render()
 {
     ModuleD3D12* d3d12  = app->getD3D12();
     ID3D12GraphicsCommandList *commandList = d3d12->getCommandList();

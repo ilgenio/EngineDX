@@ -94,7 +94,7 @@ bool Exercise3::cleanUp()
     return true;
 }
 
-void Exercise3::update()
+void Exercise3::render()
 {
     ModuleD3D12* d3d12  = app->getD3D12();
     ModuleCamera* camera = app->getCamera();

@@ -15,7 +15,7 @@ class Exercise1 : public Module
 public:
 
     virtual bool init() override;
-    virtual void update() override;
+    virtual void render() override;
 
 private:
 
