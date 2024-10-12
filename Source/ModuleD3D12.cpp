@@ -8,8 +8,6 @@ ModuleD3D12::ModuleD3D12(HWND wnd) : hWnd(wnd)
 
 }
 
-typedef HRESULT(WINAPI* LPDXGIGETDEBUGINTERFACE)(REFIID, void**);
-
 ModuleD3D12::~ModuleD3D12()
 {
     flush();
@@ -56,9 +54,8 @@ bool ModuleD3D12::cleanUp()
 
 
 
-void ModuleD3D12::render()
+void ModuleD3D12::preRender()
 {
-    // TODO: Make it working without update
     currentBackBufferIdx = swapChain->GetCurrentBackBufferIndex();
     if(drawFenceValues[currentBackBufferIdx] != 0)
     {
@@ -179,40 +176,21 @@ bool ModuleD3D12::createFactory()
 
 bool ModuleD3D12::createDevice(bool useWarp)
 {
-    ComPtr<IDXGIAdapter1> dxgiAdapter1;
-    ComPtr<IDXGIAdapter4> dxgiAdapter4;
-    ComPtr<ID3D12Device5> d3d12Device5;
-
+    
     bool ok = true;
 
     if (useWarp)
     {
-        ok = ok && SUCCEEDED(factory->EnumWarpAdapter(IID_PPV_ARGS(&dxgiAdapter1)));
-        ok = ok && SUCCEEDED(dxgiAdapter1.As(&dxgiAdapter4));
-        ok = ok && SUCCEEDED(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&d3d12Device5)));
+        ComPtr<IDXGIAdapter1> adapter;
+        ok = ok && SUCCEEDED(factory->EnumWarpAdapter(IID_PPV_ARGS(&adapter)));
+        ok = ok && SUCCEEDED(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&device)));
     }
     else
     {
+        ComPtr<IDXGIAdapter4> adapter;
         SIZE_T maxDedicatedVideoMemory = 0;
-        for (UINT i = 0; ok && factory->EnumAdapters1(i, &dxgiAdapter1) != DXGI_ERROR_NOT_FOUND; ++i)
-        {
-            DXGI_ADAPTER_DESC1 dxgiAdapterDesc1;
-            dxgiAdapter1->GetDesc1(&dxgiAdapterDesc1);
-
-            ComPtr<ID3D12Device5> tmpDevice;
-
-            // Check to see if the adapter can create a D3D12 device without actually 
-            // creating it. The adapter with the largest dedicated video memory
-            // is favored.
-            if ((dxgiAdapterDesc1.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) == 0 &&
-                dxgiAdapterDesc1.DedicatedVideoMemory > maxDedicatedVideoMemory &&
-                SUCCEEDED(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&tmpDevice))))
-            {
-                maxDedicatedVideoMemory = dxgiAdapterDesc1.DedicatedVideoMemory;
-                ok = SUCCEEDED(dxgiAdapter1.As(&dxgiAdapter4));
-                d3d12Device5 = tmpDevice;
-            }
-        }
+        factory->EnumAdapterByGpuPreference(0, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(&adapter));
+        ok = SUCCEEDED(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&device)));        
     }
 
     if(ok)
@@ -224,14 +202,11 @@ bool ModuleD3D12::createDevice(bool useWarp)
         allowTearing = tearing == TRUE;
 
         D3D12_FEATURE_DATA_D3D12_OPTIONS5 features5;
-        HRESULT hr = d3d12Device5->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &features5, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS5));
+        HRESULT hr = device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &features5, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS5));
         if (SUCCEEDED(hr) && features5.RaytracingTier != D3D12_RAYTRACING_TIER_NOT_SUPPORTED)
         {
             supportsRT = true;
         }
-
-        adapter = dxgiAdapter4;
-        device = d3d12Device5;
     }
 
     return ok;

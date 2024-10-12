@@ -12,7 +12,7 @@ class ModuleD3D12 : public Module
 private:
 
     HWND                                hWnd = NULL ;
-    ComPtr<IDXGIFactory5>               factory;
+    ComPtr<IDXGIFactory6>               factory;
     ComPtr<IDXGIAdapter4>               adapter;
     ComPtr<ID3D12Device5>               device;
 
@@ -49,7 +49,7 @@ public:
     bool                        init() override;
     bool                        cleanUp() override;
 
-    void                        render() override;
+    void                        preRender() override;
     void                        postRender() override;
 
     void                        resize();
