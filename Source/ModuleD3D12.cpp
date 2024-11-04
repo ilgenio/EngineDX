@@ -52,8 +52,6 @@ bool ModuleD3D12::cleanUp()
     return true;
 }
 
-
-
 void ModuleD3D12::preRender()
 {
     currentBackBufferIdx = swapChain->GetCurrentBackBufferIndex();
@@ -256,9 +254,9 @@ bool ModuleD3D12::setupInfoQueue()
 bool ModuleD3D12::createDrawCommandQueue()
 {
     D3D12_COMMAND_QUEUE_DESC desc = {};
-    desc.Type =     D3D12_COMMAND_LIST_TYPE_DIRECT;
+    desc.Type     = D3D12_COMMAND_LIST_TYPE_DIRECT;
     desc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
-    desc.Flags =    D3D12_COMMAND_QUEUE_FLAG_NONE;
+    desc.Flags    = D3D12_COMMAND_QUEUE_FLAG_NONE;
     desc.NodeMask = 0;
  
     return SUCCEEDED(device->CreateCommandQueue(&desc, IID_PPV_ARGS(&drawCommandQueue)));

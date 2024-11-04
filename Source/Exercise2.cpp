@@ -9,19 +9,14 @@
 #include "d3dx12.h"
 
 static const char shaderSource[] = R"(
-    cbuffer Transforms : register(b0)
+    float4 exercise1VS(float3 pos : POSITION) : SV_POSITION
     {
-        float4x4 mvp;
-    };
-
-    float4 exercise2VS(float3 pos : POSITION) : SV_POSITION
-    {
-        return mul(float4(pos, 1.0f), mvp);
+        return float4(pos, 1.0);
     }
 
-    float4 exercise2PS() : SV_TARGET
+    float4 exercise1PS() : SV_TARGET
     {
-        return float4(1.0f, 0.0f, 0.0f, 1.0f);
+        return float4(1.0, 0.0, 0.0, 1.0);
     }
 )";
 
@@ -37,8 +32,8 @@ bool Exercise2::init()
         XMFLOAT3(-1.0f, -1.0f, 0.0f),  // 0
         XMFLOAT3(0.0f, 1.0f, 0.0f),    // 1
         XMFLOAT3(1.0f, -1.0f, 0.0f)    // 2
-    };  
-    
+    };
+
     bool ok = createVertexBuffer(&vertices[0], sizeof(vertices), sizeof(Vertex));
     ok = ok && createShaders();
     ok = ok && createRootSignature();
@@ -54,22 +49,16 @@ bool Exercise2::init()
 
 void Exercise2::render()
 {
-    ModuleD3D12* d3d12 = app->getD3D12();
+    ModuleD3D12* d3d12  = app->getD3D12();
     ID3D12GraphicsCommandList *commandList = d3d12->getCommandList();
 
     commandList->Reset(d3d12->getCommandAllocator(), pso.Get());
-    
+
     CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(d3d12->getBackBuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
     commandList->ResourceBarrier(1, &barrier);
-
+    
     unsigned width = d3d12->getWindowWidth();
     unsigned height = d3d12->getWindowHeight();
-
-    XMMATRIX model = XMMatrixIdentity();
-    XMMATRIX view = XMMatrixLookAtLH(XMVectorSet(0.0f, 0.0f, -20.0f, 0.0f), XMVectorSet(0.0f, 0.0f, 0.0f, 0), XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f));
-    XMMATRIX proj = XMMatrixPerspectiveFovLH(XM_PI / 4.0f, float(width) / float(height), 0.1f, 1000.0f);
-
-    XMStoreFloat4x4(&mvp, XMMatrixTranspose(model * view * proj));
 
     D3D12_VIEWPORT viewport;
     viewport.TopLeftX = viewport.TopLeftY = 0;
@@ -94,9 +83,6 @@ void Exercise2::render()
     commandList->RSSetScissorRects(1, &scissor);
     commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);   // set the primitive topology
     commandList->IASetVertexBuffers(0, 1, &vertexBufferView);                   // set the vertex buffer (using the vertex buffer view)
-
-    commandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX)/sizeof(UINT32), &mvp, 0);
-
     commandList->DrawInstanced(3, 1, 0, 0);                                     // finally draw 3 vertices (draw the triangle)
 
     barrier = CD3DX12_RESOURCE_BARRIER::Transition(d3d12->getBackBuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
@@ -114,9 +100,8 @@ bool Exercise2::createVertexBuffer(void* bufferData, unsigned bufferSize, unsign
     ModuleD3D12* d3d12  = app->getD3D12();
     ID3D12Device2* device = d3d12->getDevice();
 
-    CD3DX12_HEAP_PROPERTIES heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
     CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize);
-
+    CD3DX12_HEAP_PROPERTIES heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
     bool ok = SUCCEEDED(device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &bufferDesc,
         D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&vertexBuffer)));
     
@@ -143,8 +128,8 @@ bool Exercise2::createVertexBuffer(void* bufferData, unsigned bufferSize, unsign
         memcpy(pData, bufferData, bufferSize);
         bufferUploadHeap->Unmap(0, nullptr);
 
-        CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(vertexBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
         // Copy to vram
+        CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(vertexBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
         commandList->CopyBufferRegion(vertexBuffer.Get(), 0, bufferUploadHeap.Get(), 0, bufferSize);
         commandList->ResourceBarrier(1, &barrier);
         commandList->Close();
@@ -170,13 +155,13 @@ bool Exercise2::createShaders()
     unsigned flags = 0;
 #endif
 
-    if (FAILED(D3DCompile(shaderSource, sizeof(shaderSource), "exercise2VS", nullptr, nullptr, "exercise2VS", "vs_5_0", flags, 0, &vertexShader, &errorBuff)))
+    if (FAILED(D3DCompile(shaderSource, sizeof(shaderSource), "exercise1VS", nullptr, nullptr, "exercise1VS", "vs_5_0", flags, 0, &vertexShader, &errorBuff)))
     {
         OutputDebugStringA((char*)errorBuff->GetBufferPointer());
         return false;
     }
 
-    if (FAILED(D3DCompile(shaderSource, sizeof(shaderSource), "exercise2PS", nullptr, nullptr, "exercise2PS", "ps_5_0", flags, 0, &pixelShader, &errorBuff)))
+    if (FAILED(D3DCompile(shaderSource, sizeof(shaderSource), "exercise1PS", nullptr, nullptr, "exercise1PS", "ps_5_0", flags, 0, &pixelShader, &errorBuff)))
     {
         OutputDebugStringA((char*)errorBuff->GetBufferPointer());
         return false;
@@ -190,10 +175,7 @@ bool Exercise2::createRootSignature()
     // TODO: create root signature from HSLS
 
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-    CD3DX12_ROOT_PARAMETER rootParameters[1];
-
-    rootParameters[0].InitAsConstants(sizeof(XMMATRIX) / sizeof(UINT32), 0);
-    rootSignatureDesc.Init(1, rootParameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+    rootSignatureDesc.Init(0, nullptr, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
     ComPtr<ID3DBlob> rootSignatureBlob;
 

@@ -94,7 +94,7 @@ class DDRenderInterfaceCoreD3D12 final : public dd::RenderInterface
 public:
     friend class DebugDrawPass;
 
-    DDRenderInterfaceCoreD3D12(ID3D12Device2* _device, ID3D12CommandQueue* _uploadQueue)
+    DDRenderInterfaceCoreD3D12(ID3D12Device4* _device, ID3D12CommandQueue* _uploadQueue)
     {
         device = _device;
         uploadQueue = _uploadQueue;
@@ -114,8 +114,7 @@ public:
     void setupUploadCommandBuffer()
     {
         device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator));
-        device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator.Get(), nullptr, IID_PPV_ARGS(&commandList));
-        commandList->Close();
+        device->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&commandList));
 
         device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&uploadFence));
         uploadEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
@@ -424,7 +423,7 @@ private:
     Matrix                  mvpMatrix;
     uint32_t                width = 1;
     uint32_t                height = 1;
-    ComPtr<ID3D12Device2>   device;
+    ComPtr<ID3D12Device4>   device;
     ComPtr<ID3DBlob>        linePointVS;
     ComPtr<ID3DBlob>        linePointPS;
     ComPtr<ID3DBlob>        textVS;
@@ -471,7 +470,7 @@ private:
 
 DDRenderInterfaceCoreD3D12* DebugDrawPass::implementation = 0;
 
-DebugDrawPass::DebugDrawPass(ID3D12Device2* device, ID3D12CommandQueue* uploadQueue)
+DebugDrawPass::DebugDrawPass(ID3D12Device4* device, ID3D12CommandQueue* uploadQueue)
 {    
     implementation = new DDRenderInterfaceCoreD3D12(device, uploadQueue);
     dd::initialize(implementation);

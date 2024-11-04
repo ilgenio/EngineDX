@@ -11,7 +11,7 @@ class DebugDrawPass
 
 public:
 
-    DebugDrawPass(ID3D12Device2* device, ID3D12CommandQueue* uploadQueue);
+    DebugDrawPass(ID3D12Device4* device, ID3D12CommandQueue* uploadQueue);
 
     ~DebugDrawPass();
 
