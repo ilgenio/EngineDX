@@ -26,17 +26,18 @@ ModuleResources::~ModuleResources()
 bool ModuleResources::init()
 {
     ModuleD3D12* d3d12   = app->getD3D12();
-    ID3D12Device* device = d3d12->getDevice();
+    ID3D12Device4* device = d3d12->getDevice();
 
     bool ok SUCCEEDED(device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator)));
-    ok = ok && SUCCEEDED(device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator.Get(), nullptr, IID_PPV_ARGS(&commandList)));
-    ok = ok && SUCCEEDED(commandList->Close());
+    ok = ok && SUCCEEDED(device->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&commandList)));
+
     ok = ok && SUCCEEDED(device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&uploadFence)));
 
     uploadEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
     ok = uploadEvent != NULL;
 
-    return true;
+
+    return ok;
 }
 
 bool ModuleResources::cleanUp()
@@ -47,7 +48,7 @@ bool ModuleResources::cleanUp()
     return true;
 }
 
-ComPtr<ID3D12Resource> ModuleResources::createBuffer(void* data, size_t size, const char* name, size_t alignment)
+ComPtr<ID3D12Resource> ModuleResources::createUploadBuffer(void* data, size_t size, const char* name, size_t alignment)
 {
     ModuleD3D12* d3d12 = app->getD3D12();
     ID3D12Device2* device = d3d12->getDevice();
@@ -55,14 +56,31 @@ ComPtr<ID3D12Resource> ModuleResources::createBuffer(void* data, size_t size, co
 
     ComPtr<ID3D12Resource> buffer;
 
-    size = alignUp(size, alignment); // NOTE: 256 Only for constant buffers
-    
-    CD3DX12_HEAP_PROPERTIES heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+    size = alignUp(size, alignment);
+
+    CD3DX12_HEAP_PROPERTIES heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
     CD3DX12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Buffer(size);
-    bool ok = SUCCEEDED(device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&buffer)));
+    device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&buffer));
+
+    return buffer;
+}
+
+
+ComPtr<ID3D12Resource> ModuleResources::createDefaultBuffer(void* data, size_t size, const char* name, size_t alignment)
+{
+    ModuleD3D12* d3d12 = app->getD3D12();
+    ID3D12Device2* device = d3d12->getDevice();
+    ID3D12CommandQueue* queue = d3d12->getDrawCommandQueue();
+
+    ComPtr<ID3D12Resource> buffer;
+
+    size = alignUp(size, alignment);
+
+    CD3DX12_HEAP_PROPERTIES heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+    CD3DX12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Buffer(alignUp(size, alignment));
+    bool ok = SUCCEEDED(device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&buffer)));
 
     heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-    desc = CD3DX12_RESOURCE_DESC::Buffer(size);
 
     ID3D12Resource* upload = getUploadHeap(size);
 
@@ -71,14 +89,12 @@ ComPtr<ID3D12Resource> ModuleResources::createBuffer(void* data, size_t size, co
     if (ok)
     {
         BYTE* pData = nullptr;
-        upload->Map(0, nullptr, reinterpret_cast<void**>(&pData));
+        CD3DX12_RANGE readRange(0, 0);
+        upload->Map(0, &readRange, reinterpret_cast<void**>(&pData));
         memcpy(pData, data, size);
         upload->Unmap(0, nullptr);
 
-        CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(buffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER | D3D12_RESOURCE_STATE_INDEX_BUFFER);
-
         commandList->CopyBufferRegion(buffer.Get(), 0, upload, 0, size);
-        commandList->ResourceBarrier(1, &barrier);
         commandList->Close();
 
         ID3D12CommandList* commandLists[] = { commandList.Get()};
@@ -86,8 +102,6 @@ ComPtr<ID3D12Resource> ModuleResources::createBuffer(void* data, size_t size, co
 
         ++uploadCounter;
         queue->Signal(uploadFence.Get(), uploadCounter);
-        uploadFence->SetEventOnCompletion(uploadCounter, uploadEvent);
-        WaitForSingleObject(uploadEvent, INFINITE);
 
         std::wstring convertStr(name, name + strlen(name));
         buffer->SetName(convertStr.c_str());
@@ -130,7 +144,8 @@ ComPtr<ID3D12Resource> ModuleResources::createRawTexture2D(const void* data, siz
     if (ok)
     {
         BYTE* uploadData = nullptr;
-        upload->Map(0, nullptr, reinterpret_cast<void**>(&uploadData));
+        CD3DX12_RANGE readRange(0, 0);
+        upload->Map(0, &readRange, reinterpret_cast<void**>(&uploadData));
         for (uint32_t i = 0; i < height; ++i)
         {
             memcpy(uploadData + layout.Offset + layout.Footprint.RowPitch *i, (BYTE*)data + rowSize * i , rowSize);
@@ -153,8 +168,6 @@ ComPtr<ID3D12Resource> ModuleResources::createRawTexture2D(const void* data, siz
 
         ++uploadCounter;
         queue->Signal(uploadFence.Get(), uploadCounter);
-        uploadFence->SetEventOnCompletion(uploadCounter, uploadEvent);
-        WaitForSingleObject(uploadEvent, INFINITE);
     }
 
     return texture;
@@ -232,7 +245,8 @@ ComPtr<ID3D12Resource> ModuleResources::createTextureFromImage(const ScratchImag
     if (ok)
     {
         BYTE* uploadData = nullptr;
-        upload->Map(0, nullptr, reinterpret_cast<void**>(&uploadData));
+        CD3DX12_RANGE readRange(0, 0);
+        upload->Map(0, &readRange, reinterpret_cast<void**>(&uploadData));
 
         for (UINT i = 0; i < numSubresources; ++i)
         {
@@ -275,8 +289,6 @@ ComPtr<ID3D12Resource> ModuleResources::createTextureFromImage(const ScratchImag
 
         ++uploadCounter;
         queue->Signal(uploadFence.Get(), uploadCounter);
-        uploadFence->SetEventOnCompletion(uploadCounter, uploadEvent);
-        WaitForSingleObject(uploadEvent, INFINITE);
     }
 
     if (ok)
@@ -291,12 +303,20 @@ ID3D12Resource* ModuleResources::getUploadHeap(size_t size)
 {
     if (size > uploadSize)
     {
+        if (uploadHeap.Get())
+        {
+            // wait for previous uploads to finish
+            uploadFence->SetEventOnCompletion(uploadCounter, uploadEvent);
+            WaitForSingleObject(uploadEvent, INFINITE);
+        }
+
         ModuleD3D12* d3d12 = app->getD3D12();
         ID3D12Device* device = d3d12->getDevice();
 
         CD3DX12_HEAP_PROPERTIES heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
         CD3DX12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Buffer(size);
 
+        // TODO: Can't remove before finish previous execution
         device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&uploadHeap));
         uploadSize = size;
     }

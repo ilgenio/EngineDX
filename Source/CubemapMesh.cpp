@@ -71,7 +71,7 @@ const D3D12_INPUT_LAYOUT_DESC CubemapMesh::inputLayoutDesc = { &CubemapMesh::inp
 
 CubemapMesh::CubemapMesh()
 {
-    vertexBuffer = app->getResources()->createBuffer(&vertices[0], sizeof(vertices), "CubemapMesh");
+    vertexBuffer = app->getResources()->createDefaultBuffer(&vertices[0], sizeof(vertices), "CubemapMesh");
 }
 
 CubemapMesh::~CubemapMesh()

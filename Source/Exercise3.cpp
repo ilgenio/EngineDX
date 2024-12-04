@@ -118,7 +118,7 @@ bool Exercise3::createVertexBuffer(void* bufferData, unsigned bufferSize, unsign
     CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize);
 
     bool ok = SUCCEEDED(device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &bufferDesc,
-        D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&vertexBuffer)));
+        D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&vertexBuffer)));
     
     heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
     bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize);
@@ -139,14 +139,13 @@ bool Exercise3::createVertexBuffer(void* bufferData, unsigned bufferSize, unsign
     {
         // Copy to intermediate
         BYTE* pData = nullptr;
-        bufferUploadHeap->Map(0, nullptr, reinterpret_cast<void**>(&pData));
+        CD3DX12_RANGE readRange(0, 0);
+        bufferUploadHeap->Map(0, &readRange, reinterpret_cast<void**>(&pData));
         memcpy(pData, bufferData, bufferSize);
         bufferUploadHeap->Unmap(0, nullptr);
 
-        CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(vertexBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
         // Copy to vram
-        commandList->CopyBufferRegion(vertexBuffer.Get(), 0, bufferUploadHeap.Get(), 0, bufferSize);
-        commandList->ResourceBarrier(1, &barrier);
+        commandList->CopyResource(vertexBuffer.Get(), bufferUploadHeap.Get());
         commandList->Close();
 
         ID3D12CommandList* commandLists[] = { commandList };

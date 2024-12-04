@@ -96,3 +96,8 @@ Source/tmp/x64/Debug/EngineDX.vcxproj.FileListAbsolute.txt
 /Source/build/x64/Debug/defaultVS.cso
 /.vs/VSWorkspaceState.json
 /.vs/slnx.sqlite
+*.cso
+Source/build/x64/Release/EngineDX.exe.lastcodeanalysissucceeded
+*.cso
+/Source/tmp
+Source/EngineDX.vcxproj.filters

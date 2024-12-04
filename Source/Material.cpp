@@ -8,6 +8,7 @@
 
 #include "tiny_gltf.h"
 #include <filesystem>
+#include <algorithm>
 
 namespace
 {
@@ -207,7 +208,7 @@ void Material::load(const tinygltf::Model& model, const tinygltf::Material &mate
 
     // Material Buffer
 
-    materialBuffer = app->getResources()->createBuffer(&data, sizeof(data), name.c_str(), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
+    materialBuffer = app->getResources()->createDefaultBuffer(&data, sizeof(data), name.c_str(), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
     descriptors->createCBV(materialBuffer.Get(), descGroup, MATERIAL_DESC_SLOT);
 }
 

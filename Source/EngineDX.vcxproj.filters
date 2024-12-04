@@ -222,6 +222,9 @@
     <ClInclude Include="Exercise4.h">
       <Filter>Exercises</Filter>
     </ClInclude>
+    <ClInclude Include="ReadData.h">
+      <Filter>Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="EngineDX.ico">
@@ -266,36 +269,12 @@
     <None Include="SimpleMath.inl">
       <Filter>Core</Filter>
     </None>
-    <None Include="..\Game\Shaders\global.hlsli">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Game\Shaders\brdf.hlsli">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Game\Shaders\common.hlsli">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Game\Shaders\iridescence.hlsli">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Game\Shaders\material.hlsli">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Game\Shaders\normal.hlsli">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Game\Shaders\tonemap.hlsli">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Game\Shaders\default.hlsli">
-      <Filter>Shaders</Filter>
-    </None>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="..\Game\Shaders\defaultPS.hlsl">
+    <FxCompile Include="Shaders\Exercise2PS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="..\Game\Shaders\defaultVS.hlsl">
+    <FxCompile Include="Shaders\Exercise2VS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>

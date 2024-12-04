@@ -154,8 +154,8 @@ void Mesh::load(const tinygltf::Model& model, const tinygltf::Mesh& mesh, const 
 
             ModuleResources* resources = app->getResources();
 
-            vertexBuffer = resources->createBuffer(vertices.get(), numVertices * sizeof(Vertex), name.c_str());
-            indexBuffer  = resources->createBuffer(indices.get(), numIndices * sizeof(uint32_t), name.c_str());
+            vertexBuffer = resources->createDefaultBuffer(vertices.get(), numVertices * sizeof(Vertex), name.c_str());
+            indexBuffer  = resources->createDefaultBuffer(indices.get(), numIndices * sizeof(uint32_t), name.c_str());
 
             vertexBufferView.BufferLocation = vertexBuffer->GetGPUVirtualAddress();
             vertexBufferView.StrideInBytes = sizeof(Vertex);

@@ -3,46 +3,18 @@
 
 #include "Application.h"
 #include "ModuleD3D12.h"
+#include "ModuleResources.h"
+#include "ReadData.h"
 
 #include <d3d12.h>
 #include <d3dcompiler.h>
 #include "d3dx12.h"
 
-static const char shaderSource[] = R"(
-    float4 exercise1VS(float3 pos : POSITION) : SV_POSITION
-    {
-        return float4(pos, 1.0);
-    }
-
-    float4 exercise1PS() : SV_TARGET
-    {
-        return float4(1.0, 0.0, 0.0, 1.0);
-    }
-)";
-
 bool Exercise2::init() 
 {
-    struct Vertex
-    {
-        XMFLOAT3 position;
-    };
-
-    static Vertex vertices[3] = 
-    {
-        XMFLOAT3(-1.0f, -1.0f, 0.0f),  // 0
-        XMFLOAT3(0.0f, 1.0f, 0.0f),    // 1
-        XMFLOAT3(1.0f, -1.0f, 0.0f)    // 2
-    };
-
-    bool ok = createVertexBuffer(&vertices[0], sizeof(vertices), sizeof(Vertex));
-    ok = ok && createShaders();
+    bool ok = createVertexBuffer();
     ok = ok && createRootSignature();
     ok = ok && createPSO();
-
-    if (ok)
-    {
-        app->getD3D12()->signalDrawQueue();
-    }
 
     return true;
 }
@@ -57,30 +29,20 @@ void Exercise2::render()
     CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(d3d12->getBackBuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
     commandList->ResourceBarrier(1, &barrier);
     
-    unsigned width = d3d12->getWindowWidth();
-    unsigned height = d3d12->getWindowHeight();
+    LONG width = (LONG)d3d12->getWindowWidth();
+    LONG height = (LONG)d3d12->getWindowHeight();
 
-    D3D12_VIEWPORT viewport;
-    viewport.TopLeftX = viewport.TopLeftY = 0;
-    viewport.MinDepth = 0.0f;
-    viewport.MaxDepth = 1.0f;
-    viewport.Width    = float(width); 
-    viewport.Height   = float(height);
-
-    D3D12_RECT scissor;
-    scissor.left = 0;
-    scissor.top = 0;
-    scissor.right = width;    
-    scissor.bottom = height;
+    D3D12_VIEWPORT viewport{ 0.0, 0.0, float(width),  float(height) , 0.0, 1.0 };
+    D3D12_RECT scissor{ 0, 0, width, height };
 
     float clearColor[] = { 0.2f, 0.2f, 0.2f, 1.0f };
     D3D12_CPU_DESCRIPTOR_HANDLE rtv = d3d12->getRenderTargetDescriptor();
 
+    commandList->RSSetViewports(1, &viewport); 
+    commandList->RSSetScissorRects(1, &scissor);
     commandList->OMSetRenderTargets(1, &rtv, false, nullptr);
     commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
     commandList->SetGraphicsRootSignature(rootSignature.Get());
-    commandList->RSSetViewports(1, &viewport);
-    commandList->RSSetScissorRects(1, &scissor);
     commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);   // set the primitive topology
     commandList->IASetVertexBuffers(0, 1, &vertexBufferView);                   // set the vertex buffer (using the vertex buffer view)
     commandList->DrawInstanced(3, 1, 0, 0);                                     // finally draw 3 vertices (draw the triangle)
@@ -95,77 +57,25 @@ void Exercise2::render()
     }
 }
 
-bool Exercise2::createVertexBuffer(void* bufferData, unsigned bufferSize, unsigned stride)
+bool Exercise2::createVertexBuffer()
 {
-    ModuleD3D12* d3d12  = app->getD3D12();
-    ID3D12Device2* device = d3d12->getDevice();
-
-    CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize);
-    CD3DX12_HEAP_PROPERTIES heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-    bool ok = SUCCEEDED(device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &bufferDesc,
-        D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&vertexBuffer)));
-    
-    heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-    bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize);
-
-    // TODO: use ring buffer for uploading resources
-    ok = ok && SUCCEEDED(device->CreateCommittedResource(
-        &heapProperties, 
-        D3D12_HEAP_FLAG_NONE,                             
-        &bufferDesc,      
-        D3D12_RESOURCE_STATE_GENERIC_READ,                
-        nullptr,
-        IID_PPV_ARGS(&bufferUploadHeap)));
-
-    ID3D12GraphicsCommandList* commandList = d3d12->getCommandList();
-    ok = ok && SUCCEEDED(commandList->Reset(d3d12->getCommandAllocator(), nullptr));
-
-    if (ok)
+    struct Vertex
     {
-        // Copy to intermediate
-        BYTE* pData = nullptr;
-        bufferUploadHeap->Map(0, nullptr, reinterpret_cast<void**>(&pData));
-        memcpy(pData, bufferData, bufferSize);
-        bufferUploadHeap->Unmap(0, nullptr);
+        float x, y, z;
+    };
 
-        // Copy to vram
-        CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(vertexBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-        commandList->CopyBufferRegion(vertexBuffer.Get(), 0, bufferUploadHeap.Get(), 0, bufferSize);
-        commandList->ResourceBarrier(1, &barrier);
-        commandList->Close();
-
-        ID3D12CommandList* commandLists[] = { commandList };
-        d3d12->getDrawCommandQueue()->ExecuteCommandLists(UINT(std::size(commandLists)), commandLists);
-
-        vertexBufferView.BufferLocation = vertexBuffer->GetGPUVirtualAddress();
-        vertexBufferView.StrideInBytes  = stride;
-        vertexBufferView.SizeInBytes    = bufferSize;
-    }
-
-    return ok;
-}
-
-bool Exercise2::createShaders()
-{
-    ComPtr<ID3DBlob> errorBuff;
-
-#ifdef _DEBUG
-    unsigned flags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
-#else 
-    unsigned flags = 0;
-#endif
-
-    if (FAILED(D3DCompile(shaderSource, sizeof(shaderSource), "exercise1VS", nullptr, nullptr, "exercise1VS", "vs_5_0", flags, 0, &vertexShader, &errorBuff)))
+    static Vertex vertices[3] =
     {
-        OutputDebugStringA((char*)errorBuff->GetBufferPointer());
-        return false;
-    }
+        {-1.0f, -1.0f, 0.0f },  // 0
+        { 0.0f, 1.0f, 0.0f  },  // 1
+        { 1.0f, -1.0f, 0.0f }   // 2
+    };
 
-    if (FAILED(D3DCompile(shaderSource, sizeof(shaderSource), "exercise1PS", nullptr, nullptr, "exercise1PS", "ps_5_0", flags, 0, &pixelShader, &errorBuff)))
-    {
-        OutputDebugStringA((char*)errorBuff->GetBufferPointer());
-        return false;
-    }
+    vertexBuffer = app->getResources()->createDefaultBuffer(vertices, sizeof(vertices), "Exercise2");
+
+    vertexBufferView.BufferLocation = vertexBuffer->GetGPUVirtualAddress();
+    vertexBufferView.StrideInBytes = sizeof(Vertex);
+    vertexBufferView.SizeInBytes = sizeof(vertices);
 
     return true;
 }
@@ -174,7 +84,7 @@ bool Exercise2::createRootSignature()
 {
     // TODO: create root signature from HSLS
 
-    CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
+    CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc = {};
     rootSignatureDesc.Init(0, nullptr, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
     ComPtr<ID3DBlob> rootSignatureBlob;
@@ -194,32 +104,23 @@ bool Exercise2::createRootSignature()
 
 bool Exercise2::createPSO()
 {
-    D3D12_INPUT_ELEMENT_DESC inputLayout[] = {{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}};
+    D3D12_INPUT_ELEMENT_DESC inputLayout[] = {{"MY_POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}};
 
-    D3D12_INPUT_LAYOUT_DESC inputLayoutDesc = {};
-    inputLayoutDesc.NumElements = sizeof(inputLayout) / sizeof(D3D12_INPUT_ELEMENT_DESC);
-    inputLayoutDesc.pInputElementDescs = inputLayout;
-
-    D3D12_SHADER_BYTECODE vertexShaderBytecode = {};
-    vertexShaderBytecode.BytecodeLength = vertexShader->GetBufferSize();
-    vertexShaderBytecode.pShaderBytecode = vertexShader->GetBufferPointer();
-
-    D3D12_SHADER_BYTECODE pixelShaderBytecode = {};
-    pixelShaderBytecode.BytecodeLength = pixelShader->GetBufferSize();
-    pixelShaderBytecode.pShaderBytecode = pixelShader->GetBufferPointer();
+    auto dataVS = DX::ReadData(L"Exercise2VS.cso");
+    auto dataPS = DX::ReadData(L"Exercise2PS.cso");
 
     D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
-    psoDesc.InputLayout = inputLayoutDesc;                                  // the structure describing our input layout
-    psoDesc.pRootSignature = rootSignature.Get();                           // the root signature that describes the input data this pso needs
-    psoDesc.VS = vertexShaderBytecode;                                      // structure describing where to find the vertex shader bytecode and how large it is
-    psoDesc.PS = pixelShaderBytecode;                                       // same as VS but for pixel shader
-    psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE; // type of topology we are drawing
-    psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;                     // format of the render target
-    psoDesc.SampleDesc = {1, 0};                                            // must be the same sample description as the swapchain and depth/stencil buffer
-    psoDesc.SampleMask = 0xffffffff;                                        // sample mask has to do with multi-sampling. 0xffffffff means point sampling is done
-    psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);       // a default rasterizer state.
-    psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);                 // a default blend state.
-    psoDesc.NumRenderTargets = 1;                                           // we are only binding one render target
+    psoDesc.InputLayout = { inputLayout, sizeof(inputLayout) / sizeof(D3D12_INPUT_ELEMENT_DESC) };  // the structure describing our input layout
+    psoDesc.pRootSignature = rootSignature.Get();                                                   // the root signature that describes the input data this pso needs
+    psoDesc.VS = { dataVS.data(), dataVS.size() };                                                  // structure describing where to find the vertex shader bytecode and how large it is
+    psoDesc.PS = { dataPS.data(), dataPS.size() };                                                  // same as VS but for pixel shader
+    psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;                         // type of topology we are drawing
+    psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;                                             // format of the render target
+    psoDesc.SampleDesc = {1, 0};                                                                    // must be the same sample description as the swapchain and depth/stencil buffer
+    psoDesc.SampleMask = 0xffffffff;                                                                // sample mask has to do with multi-sampling. 0xffffffff means point sampling is done
+    psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);                               // a default rasterizer state.
+    psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);                                         // a default blend state.
+    psoDesc.NumRenderTargets = 1;                                                                   // we are only binding one render target
 
     // create the pso
     return SUCCEEDED(app->getD3D12()->getDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pso)));

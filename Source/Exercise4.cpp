@@ -175,7 +175,7 @@ bool Exercise4::createBuffer(void* bufferData, unsigned bufferSize, ComPtr<ID3D1
         &heapProperties,
         D3D12_HEAP_FLAG_NONE,
         &bufferDesc,
-        D3D12_RESOURCE_STATE_COPY_DEST,
+        D3D12_RESOURCE_STATE_COMMON,
         nullptr,
         IID_PPV_ARGS(&buffer)));
 
@@ -199,14 +199,13 @@ bool Exercise4::createBuffer(void* bufferData, unsigned bufferSize, ComPtr<ID3D1
     {
         // Copy to intermediate
         BYTE* pData = nullptr;
-        upload->Map(0, nullptr, reinterpret_cast<void**>(&pData));
+        CD3DX12_RANGE readRange(0, 0);
+        upload->Map(0, &readRange, reinterpret_cast<void**>(&pData));
         memcpy(pData, bufferData, bufferSize);
         upload->Unmap(0, nullptr);
 
-        CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(buffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, initialState);
         // Copy to vram
-        commandList->CopyBufferRegion(buffer.Get(), 0, upload.Get(), 0, bufferSize);
-        commandList->ResourceBarrier(1, &barrier);
+        commandList->CopyResource(buffer.Get(), upload.Get());
         commandList->Close();
 
         ID3D12CommandList* commandLists[] = { commandList };

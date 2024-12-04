@@ -19,8 +19,7 @@ public:
 
 private:
 
-    bool createVertexBuffer(void* bufferData, unsigned bufferSize, unsigned stride);
-    bool createShaders();
+    bool createVertexBuffer();
     bool createRootSignature();
     bool createPSO();
 };
