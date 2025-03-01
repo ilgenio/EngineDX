@@ -110,14 +110,5 @@ bool ModuleRender::cleanUp()
     debugDrawPass.reset();
     imguiPass.reset();
 
-    /*
-    vulkan->destroy(commandPool);
-    for (int i = 0; i < FRAMES_IN_FLIGHT; ++i) vulkan->destroy(commandFences[i]);
-
-    vulkan->destroy(globalDescLayout);
-    vulkan->destroy(globalDescPool);
-    vulkan->destroy(globalBuffer, globalAllocation);
-    */
-
     return true;
 }

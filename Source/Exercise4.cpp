@@ -15,6 +15,8 @@
 #include <d3dcompiler.h>
 #include "d3dx12.h"
 
+#include <imgui.h>
+
 bool Exercise4::init() 
 {
     struct Vertex
@@ -58,6 +60,12 @@ bool Exercise4::init()
 
         descriptors->allocateDescGroup(1, srvDog);
         descriptors->createTextureSRV(textureDog.Get(), srvDog);
+
+        ModuleD3D12* d3d12 = app->getD3D12();
+
+        debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue());
+
+        imguiPass = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd());
     }
      
     return true;
@@ -67,12 +75,24 @@ bool Exercise4::cleanUp()
 {
     if (uploadEvent) CloseHandle(uploadEvent);
     uploadEvent = NULL;
+    imguiPass.reset();
 
     return true;
 }
 
+void Exercise4::preRender()
+{
+    imguiPass->startFrame();
+}
+
 void Exercise4::render()
 {
+
+    ImGui::Begin("Texture Viewer Options");
+ 
+    ImGui::End();
+
+
     ModuleD3D12* d3d12  = app->getD3D12();
     ModuleCamera* camera = app->getCamera();
     ModuleDescriptors* descriptors = app->getDescriptors();
@@ -110,11 +130,13 @@ void Exercise4::render()
 
     float clearColor[] = { 0.2f, 0.2f, 0.2f, 1.0f };
     D3D12_CPU_DESCRIPTOR_HANDLE rtv = d3d12->getRenderTargetDescriptor();
+    D3D12_CPU_DESCRIPTOR_HANDLE dsv = d3d12->getDepthStencilDescriptor();
 
-    commandList->OMSetRenderTargets(1, &rtv, false, nullptr);
+
+    commandList->OMSetRenderTargets(1, &rtv, false, &dsv);
 
     commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
-
+    commandList->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 
     commandList->SetGraphicsRootSignature(rootSignature.Get());
     commandList->RSSetViewports(1, &viewport);
@@ -132,6 +154,12 @@ void Exercise4::render()
     commandList->SetGraphicsRootDescriptorTable(2, samplers->getDefaultGPUHandle());
 
     commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
+
+    dd::xzSquareGrid(-10.0f, 10.0f, 0.0f, 1.0f, dd::colors::LightGray);
+    dd::axisTriad(ddConvert(Matrix::Identity), 0.1f, 1.0f);
+
+    debugDrawPass->record(commandList, width, height, view, proj);
+    imguiPass->record(commandList);
 
     barrier = CD3DX12_RESOURCE_BARRIER::Transition(d3d12->getBackBuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
     commandList->ResourceBarrier(1, &barrier);
@@ -223,9 +251,11 @@ bool Exercise4::createPSO()
     psoDesc.PS = { dataPS.data(), dataPS.size() };                                                  // same as VS but for pixel shader
     psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;                         // type of topology we are drawing
     psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;                                             // format of the render target
+    psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
     psoDesc.SampleDesc = {1, 0};                                                                    // must be the same sample description as the swapchain and depth/stencil buffer
     psoDesc.SampleMask = 0xffffffff;                                                                // sample mask has to do with multi-sampling. 0xffffffff means point sampling is done
     psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);                               // a default rasterizer state.
+    psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
     psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);                                         // a default blend state.
     psoDesc.NumRenderTargets = 1;                                                                   // we are only binding one render target
 
