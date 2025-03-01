@@ -94,10 +94,12 @@ class DDRenderInterfaceCoreD3D12 final : public dd::RenderInterface
 public:
     friend class DebugDrawPass;
 
-    DDRenderInterfaceCoreD3D12(ID3D12Device4* _device, ID3D12CommandQueue* _uploadQueue)
+    DDRenderInterfaceCoreD3D12(ID3D12Device4* _device, ID3D12CommandQueue* _uploadQueue, D3D12_CPU_DESCRIPTOR_HANDLE cpuText, D3D12_GPU_DESCRIPTOR_HANDLE gpuText)
     {
         device = _device;
         uploadQueue = _uploadQueue;
+        cpuTextHandle = cpuText;
+        gpuTextHandle = gpuText;
 
         setupLinePointVertexBuffers();
         setupUploadCommandBuffer();
@@ -271,7 +273,7 @@ public:
 
     void recordCommands(const dd::DrawVertex* vertices, int count, ID3D12Resource* vertexBuffer, const D3D12_VERTEX_BUFFER_VIEW& vertexBufferView, 
                         ID3D12PipelineState* pso, ID3D12RootSignature* signature, void* rootConstants, uint32_t rootConstantsSize,
-                        ID3D12DescriptorHeap* descriptorHeap, D3D_PRIMITIVE_TOPOLOGY topology, size_t& memoryOffset)
+                        D3D_PRIMITIVE_TOPOLOGY topology, size_t& memoryOffset, bool isText)
     {
         size_t freeSpace = DEBUG_DRAW_VERTEX_BUFFER_SIZE - memoryOffset;
         if (freeSpace < count)
@@ -310,14 +312,11 @@ public:
             commandList->IASetVertexBuffers(0, 1, &vertexBufferView);
             commandList->IASetPrimitiveTopology(topology);
             
-            if (descriptorHeap != nullptr)
-            {
-                ID3D12DescriptorHeap* descriptorHeaps[] = { descriptorHeap };
-                commandList->SetDescriptorHeaps(1, descriptorHeaps);
-                commandList->SetGraphicsRootDescriptorTable(1, descriptorHeap->GetGPUDescriptorHandleForHeapStart());
-            }
-
             commandList->SetGraphicsRoot32BitConstants(0, rootConstantsSize, rootConstants, 0);
+            if (isText)
+            {
+                commandList->SetGraphicsRootDescriptorTable(1, gpuTextHandle);
+            }
             commandList->DrawInstanced(count, 1, 0, 0);
         }
     }
@@ -327,7 +326,7 @@ public:
         ID3D12PipelineState* pso = depthEnabled ? pointPSO.Get() : pointPSONoDepth.Get();
 
         Matrix mvp = mvpMatrix.Transpose();
-        recordCommands(points, count, pointBuffer.Get(), pointBufferView, pso, pointLineSignature.Get(), &mvp, sizeof(Matrix) / sizeof(UINT32), nullptr, D3D_PRIMITIVE_TOPOLOGY_POINTLIST, pointOffset);
+        recordCommands(points, count, pointBuffer.Get(), pointBufferView, pso, pointLineSignature.Get(), &mvp, sizeof(Matrix) / sizeof(UINT32), D3D_PRIMITIVE_TOPOLOGY_POINTLIST, pointOffset, false);
     }
 
     void drawLineList(const dd::DrawVertex * lines, int count, bool depthEnabled) override
@@ -335,14 +334,14 @@ public:
         ID3D12PipelineState* pso = depthEnabled ? linePSO.Get() : linePSONoDepth.Get();
 
         Matrix mvp = mvpMatrix.Transpose();
-        recordCommands(lines, count, lineBuffer.Get(), lineBufferView, pso, pointLineSignature.Get(), &mvp, sizeof(Matrix) / sizeof(UINT32), nullptr, D3D_PRIMITIVE_TOPOLOGY_LINELIST, lineOffset);
+        recordCommands(lines, count, lineBuffer.Get(), lineBufferView, pso, pointLineSignature.Get(), &mvp, sizeof(Matrix) / sizeof(UINT32), D3D_PRIMITIVE_TOPOLOGY_LINELIST, lineOffset, false);
     }
 
     void drawGlyphList(const dd::DrawVertex * glyphs, int count, dd::GlyphTextureHandle glyphTex) override
     {
         Vector2 dim = Vector2(float(width), float(height));
 
-        recordCommands(glyphs, count, textBuffer.Get(), textBufferView, textPSO.Get(), textSignature.Get(), &dim, sizeof(Vector2) / sizeof(UINT32), textDescriptorHeap.Get(), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, textOffset);
+        recordCommands(glyphs, count, textBuffer.Get(), textBufferView, textPSO.Get(), textSignature.Get(), &dim, sizeof(Vector2) / sizeof(UINT32), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, textOffset, true);
     }
 
     dd::GlyphTextureHandle createGlyphTexture(int width, int height, const void * pixels) override
@@ -395,23 +394,7 @@ public:
 
         // Create descriptors 
         
-        // TODO: Do we need a descriptor heap?, can be provided by the application ? 
-        D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
-        heapDesc.NumDescriptors = 1;
-        heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-        heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-
-        device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&textDescriptorHeap));
-
-        D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-        srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-        srvDesc.Format = DXGI_FORMAT_R8_UNORM;
-        srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-        srvDesc.Texture2D.MipLevels = 1;
-
-        D3D12_CPU_DESCRIPTOR_HANDLE srvHandle(textDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
-
-        device->CreateShaderResourceView(glyphTexture.Get(), &srvDesc, srvHandle);
+        device->CreateShaderResourceView(glyphTexture.Get(), nullptr, cpuTextHandle);
 
         return dd::GlyphTextureHandle(0xFFFFFF);
     }
@@ -435,6 +418,8 @@ private:
     ComPtr<ID3D12Fence1>              uploadFence;
     HANDLE                            uploadEvent = NULL;
     uint32_t                          uploadFenceValue = 0;
+    D3D12_CPU_DESCRIPTOR_HANDLE       cpuTextHandle;
+    D3D12_GPU_DESCRIPTOR_HANDLE       gpuTextHandle;
 
 private:
 
@@ -462,16 +447,16 @@ private:
     ComPtr<ID3D12RootSignature>  textSignature;
     ComPtr<ID3D12PipelineState>  textPSO;
 
-    ComPtr<ID3D12DescriptorHeap> textDescriptorHeap;
     ComPtr<ID3D12Resource>       glyphTexture;
 
 }; // class DDRenderInterfaceCoreD3D12
 
 DDRenderInterfaceCoreD3D12* DebugDrawPass::implementation = 0;
 
-DebugDrawPass::DebugDrawPass(ID3D12Device4* device, ID3D12CommandQueue* uploadQueue)
+DebugDrawPass::DebugDrawPass(ID3D12Device4* device, ID3D12CommandQueue* uploadQueue, 
+                             D3D12_CPU_DESCRIPTOR_HANDLE cpuText, D3D12_GPU_DESCRIPTOR_HANDLE gpuText)
 {    
-    implementation = new DDRenderInterfaceCoreD3D12(device, uploadQueue);
+    implementation = new DDRenderInterfaceCoreD3D12(device, uploadQueue, cpuText, gpuText);
     dd::initialize(implementation);
 }
 

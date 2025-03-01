@@ -49,7 +49,7 @@ bool Exercise4::init()
     {
         ModuleResources* resources = app->getResources();
 
-        textureDog = resources->createTextureFromFile(std::wstring(L"dog.tga"));
+        textureDog = resources->createTextureFromFile(std::wstring(L"Assets/Textures/dog.dds"));
 
         ok = textureDog;
     }
@@ -58,14 +58,15 @@ bool Exercise4::init()
     {
         ModuleDescriptors* descriptors = app->getDescriptors();
 
+        descriptors->allocateDescGroup(2, debugFonts);
         descriptors->allocateDescGroup(1, srvDog);
         descriptors->createTextureSRV(textureDog.Get(), srvDog);
 
         ModuleD3D12* d3d12 = app->getD3D12();
 
-        debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue());
+        debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue(), debugFonts.getCPU(0), debugFonts.getGPU(0));
 
-        imguiPass = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd());
+        imguiPass = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd(), debugFonts.getCPU(1), debugFonts.getGPU(1));
     }
      
     return true;
@@ -87,11 +88,10 @@ void Exercise4::preRender()
 
 void Exercise4::render()
 {
-
     ImGui::Begin("Texture Viewer Options");
- 
+    ImGui::Checkbox("Show grid", &showGrid);
+    ImGui::Checkbox("Show axis", &showAxis);
     ImGui::End();
-
 
     ModuleD3D12* d3d12  = app->getD3D12();
     ModuleCamera* camera = app->getCamera();
@@ -132,7 +132,6 @@ void Exercise4::render()
     D3D12_CPU_DESCRIPTOR_HANDLE rtv = d3d12->getRenderTargetDescriptor();
     D3D12_CPU_DESCRIPTOR_HANDLE dsv = d3d12->getDepthStencilDescriptor();
 
-
     commandList->OMSetRenderTargets(1, &rtv, false, &dsv);
 
     commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
@@ -155,8 +154,8 @@ void Exercise4::render()
 
     commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
 
-    dd::xzSquareGrid(-10.0f, 10.0f, 0.0f, 1.0f, dd::colors::LightGray);
-    dd::axisTriad(ddConvert(Matrix::Identity), 0.1f, 1.0f);
+    if(showGrid) dd::xzSquareGrid(-10.0f, 10.0f, 0.0f, 1.0f, dd::colors::LightGray);
+    if(showAxis) dd::axisTriad(ddConvert(Matrix::Identity), 0.1f, 1.0f);
 
     debugDrawPass->record(commandList, width, height, view, proj);
     imguiPass->record(commandList);
@@ -209,7 +208,7 @@ bool Exercise4::createVertexBuffer(void* bufferData, unsigned bufferSize, unsign
 bool Exercise4::createRootSignature()
 {
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-    CD3DX12_ROOT_PARAMETER rootParameters[3];
+    CD3DX12_ROOT_PARAMETER rootParameters[3] = {};
     CD3DX12_DESCRIPTOR_RANGE srvRange, sampRange;
 
     srvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);   

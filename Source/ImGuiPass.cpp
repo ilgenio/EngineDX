@@ -8,7 +8,7 @@
 #include "backends/imgui_impl_win32.h"
 #include "backends/imgui_impl_dx12.h"
 
-ImGuiPass::ImGuiPass(ID3D12Device2* device, HWND hWnd)
+ImGuiPass::ImGuiPass(ID3D12Device2* device, HWND hWnd, D3D12_CPU_DESCRIPTOR_HANDLE cpuFont, D3D12_GPU_DESCRIPTOR_HANDLE gpuFont)
 {
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
@@ -21,11 +21,9 @@ ImGuiPass::ImGuiPass(ID3D12Device2* device, HWND hWnd)
     ImGui::StyleColorsDark();
     //ImGui::StyleColorsLight();
 
-    app->getDescriptors()->allocateDescGroup(1, fontGroup);
-
     // Setup Platform/Renderer backends
     ImGui_ImplWin32_Init(hWnd);
-    ImGui_ImplDX12_Init(device, FRAMES_IN_FLIGHT, DXGI_FORMAT_R8G8B8A8_UNORM, nullptr, fontGroup.getCPU(0), fontGroup.getGPU(0));
+    ImGui_ImplDX12_Init(device, FRAMES_IN_FLIGHT, DXGI_FORMAT_R8G8B8A8_UNORM, nullptr, cpuFont, gpuFont);
 
     // Load Fonts
     // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
@@ -66,10 +64,6 @@ void ImGuiPass::startFrame()
 void ImGuiPass::record(ID3D12GraphicsCommandList* commandList)
 {
     ImGui::Render();
-
-    // TODO: Change debugDraw descriptors ? 
-    ID3D12DescriptorHeap* descriptorHeaps[] = { app->getDescriptors()->getHeap() };
-    commandList->SetDescriptorHeaps(1, descriptorHeaps);    
 
     ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList);
 }

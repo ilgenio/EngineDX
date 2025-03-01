@@ -30,6 +30,9 @@ class Exercise4 : public Module
     ComPtr<ID3DBlob>                pixelShader;
     std::unique_ptr<DebugDrawPass>  debugDrawPass;
     std::unique_ptr<ImGuiPass>      imguiPass;
+    DescriptorGroup                 debugFonts;
+    bool                            showAxis = true;
+    bool                            showGrid = true;
 
     Matrix mvp;
 

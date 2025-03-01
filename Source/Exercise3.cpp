@@ -32,8 +32,11 @@ bool Exercise3::init()
     if (ok)
     {
         ModuleD3D12* d3d12 = app->getD3D12();
+        ModuleDescriptors* descriptors = app->getDescriptors();
 
-        debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue());
+        descriptors->allocateDescGroup(1, debugDrawText);
+
+        debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue(), debugDrawText.getCPU(0), debugDrawText.getGPU(0));
     }
 
     return true;

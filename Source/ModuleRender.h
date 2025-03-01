@@ -1,6 +1,7 @@
 #pragma once
 #include "Module.h"
 
+#include "ModuleDescriptors.h"
 #include <memory>
 
 class DebugDrawPass;
@@ -25,6 +26,8 @@ private:
 private:
 
     std::unique_ptr<DebugDrawPass> debugDrawPass;
+    DescriptorGroup                debugFont;
+
     std::unique_ptr<ImGuiPass> imguiPass;
 
 	// commands

@@ -25,13 +25,15 @@ bool ModuleRender::init()
 {
     ModuleD3D12* d3d12 = app->getD3D12();
     ID3D12Device2* device = d3d12->getDevice();
+    ModuleDescriptors* descriptors = app->getDescriptors();
 
-    debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue());
+    descriptors->allocateDescGroup(2, debugFont);
+    debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue(), debugFont.getCPU(0), debugFont.getGPU(0));
 
     bool ok = SUCCEEDED(device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, d3d12->getCommandAllocator(), nullptr, IID_PPV_ARGS(&commandList)));
     ok = ok && SUCCEEDED(commandList->Close());
 
-    imguiPass     = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd());
+    imguiPass     = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd(), debugFont.getCPU(0), debugFont.getGPU(0));
 
     return ok;
 }

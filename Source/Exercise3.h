@@ -2,7 +2,7 @@
 
 #include "ModuleRender.h"
 #include "DebugDrawPass.h"
-
+#include "ModuleDescriptors.h"
 
 class Exercise3 : public Module
 {
@@ -14,6 +14,7 @@ class Exercise3 : public Module
     ComPtr<ID3DBlob>                vertexShader;
     ComPtr<ID3DBlob>                pixelShader;
     std::unique_ptr<DebugDrawPass>  debugDrawPass;
+    DescriptorGroup                 debugDrawText;
 
     Matrix                      mvp;
 public:
