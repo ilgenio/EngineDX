@@ -7,6 +7,7 @@
 #include "ModuleRender.h"
 #include "ModuleResources.h"
 #include "ModuleDescriptors.h"
+#include "ModuleSamplers.h"
 #include "ModuleLevel.h"
 
 #include "Exercise1.h"
@@ -21,6 +22,7 @@ Application::Application(int argc, wchar_t** argv, void* hWnd)
     modules.push_back(camera = new ModuleCamera());
     modules.push_back(resources = new ModuleResources());
     modules.push_back(descriptors = new ModuleDescriptors());
+    modules.push_back(samplers = new ModuleSamplers());
 
     if(argc > 1 && wcscmp(argv[1], L"Exercise1") == 0)
      {
@@ -69,7 +71,6 @@ void Application::update()
 {
     using namespace std::chrono_literals;
 
-    
     // Update milis
     uint64_t currentMilis = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
@@ -96,8 +97,6 @@ void Application::update()
 bool Application::cleanUp()
 {
 	bool ret = true;
-
-    //if (vulkan) vulkan->SyncCleanUp();
 
 	for(auto it = modules.rbegin(); it != modules.rend() && ret; ++it)
 		ret = (*it)->cleanUp();

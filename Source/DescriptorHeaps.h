@@ -28,6 +28,7 @@ public:
     bool allocate(uint32_t count, DescriptorGroup& descriptor);
 
     ID3D12DescriptorHeap* getHeap() {return heap.Get();}
+    uint32_t getCount() const {return count;}
 
 private:
     uint32_t current = 0;

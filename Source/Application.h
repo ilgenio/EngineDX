@@ -14,6 +14,7 @@ class ModuleRender;
 class ModuleResources;
 class ModuleDescriptors;
 class ModuleLevel;
+class ModuleSamplers;
 
 class Application
 {
@@ -31,6 +32,7 @@ public:
     ModuleRender*      getRender() { return render;  }
     ModuleResources*   getResources() { return resources;  }
     ModuleDescriptors* getDescriptors() { return descriptors;  }
+    ModuleSamplers*    getSamplers() { return samplers;  }
 
     float              getFPS() const { return 1000.0f * float(MAX_FPS_TICKS) / tickSum; }
     float              getAvgElapsedMs() const { return tickSum / float(MAX_FPS_TICKS); }
@@ -47,6 +49,7 @@ private:
     ModuleRender* render = nullptr;
     ModuleResources* resources = nullptr;
     ModuleDescriptors* descriptors = nullptr;
+    ModuleSamplers* samplers = nullptr;
     ModuleLevel* level = nullptr;
 
     uint64_t  lastMilis = 0;
