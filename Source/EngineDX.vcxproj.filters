@@ -109,6 +109,9 @@
     <ClCompile Include="Exercise4.cpp">
       <Filter>Exercises</Filter>
     </ClCompile>
+    <ClCompile Include="ModuleSamplers.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EngineDX.h">
@@ -225,6 +228,9 @@
     <ClInclude Include="ReadData.h">
       <Filter>Core</Filter>
     </ClInclude>
+    <ClInclude Include="ModuleSamplers.h">
+      <Filter>Modules</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="EngineDX.ico">
@@ -275,6 +281,18 @@
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\Exercise2VS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\Exercise3PS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\Exercise3VS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\Exercise4PS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\Exercise4VS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>

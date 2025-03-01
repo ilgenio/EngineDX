@@ -330,7 +330,6 @@ public:
         recordCommands(points, count, pointBuffer.Get(), pointBufferView, pso, pointLineSignature.Get(), &mvp, sizeof(Matrix) / sizeof(UINT32), nullptr, D3D_PRIMITIVE_TOPOLOGY_POINTLIST, pointOffset);
     }
 
-
     void drawLineList(const dd::DrawVertex * lines, int count, bool depthEnabled) override
     {
         ID3D12PipelineState* pso = depthEnabled ? linePSO.Get() : linePSONoDepth.Get();

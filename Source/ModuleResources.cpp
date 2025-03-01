@@ -30,6 +30,7 @@ bool ModuleResources::init()
 
     bool ok SUCCEEDED(device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator)));
     ok = ok && SUCCEEDED(device->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&commandList)));
+    ok = ok && SUCCEEDED(commandList->Reset(commandAllocator.Get(), nullptr));
 
     ok = ok && SUCCEEDED(device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&uploadFence)));
 
@@ -84,8 +85,6 @@ ComPtr<ID3D12Resource> ModuleResources::createDefaultBuffer(void* data, size_t s
 
     ID3D12Resource* upload = getUploadHeap(size);
 
-    ok = ok && SUCCEEDED(commandList->Reset(commandAllocator.Get(), nullptr));
-
     if (ok)
     {
         BYTE* pData = nullptr;
@@ -96,12 +95,17 @@ ComPtr<ID3D12Resource> ModuleResources::createDefaultBuffer(void* data, size_t s
 
         commandList->CopyBufferRegion(buffer.Get(), 0, upload, 0, size);
         commandList->Close();
-
+                          
         ID3D12CommandList* commandLists[] = { commandList.Get()};
         queue->ExecuteCommandLists(UINT(std::size(commandLists)), commandLists);
 
         ++uploadCounter;
         queue->Signal(uploadFence.Get(), uploadCounter);
+        uploadFence->SetEventOnCompletion(uploadCounter, uploadEvent);
+        WaitForSingleObject(uploadEvent, INFINITE);
+
+        commandAllocator->Reset();
+        ok = SUCCEEDED(commandList->Reset(commandAllocator.Get(), nullptr));
 
         std::wstring convertStr(name, name + strlen(name));
         buffer->SetName(convertStr.c_str());
@@ -139,8 +143,6 @@ ComPtr<ID3D12Resource> ModuleResources::createRawTexture2D(const void* data, siz
 
     ID3D12Resource* upload = getUploadHeap(requiredSize);
 
-    ok = ok && SUCCEEDED(commandList->Reset(commandAllocator.Get(), nullptr));
-
     if (ok)
     {
         BYTE* uploadData = nullptr;
@@ -168,6 +170,11 @@ ComPtr<ID3D12Resource> ModuleResources::createRawTexture2D(const void* data, siz
 
         ++uploadCounter;
         queue->Signal(uploadFence.Get(), uploadCounter);
+        uploadFence->SetEventOnCompletion(uploadCounter, uploadEvent);
+        WaitForSingleObject(uploadEvent, INFINITE);
+
+        commandAllocator->Reset();
+        ok = SUCCEEDED(commandList->Reset(commandAllocator.Get(), nullptr));
     }
 
     return texture;
@@ -180,8 +187,6 @@ ComPtr<ID3D12Resource> ModuleResources::createTextureFromMemory(const void* data
     ok = ok || SUCCEEDED(LoadFromHDRMemory(data, size, nullptr, image));
     ok = ok || SUCCEEDED(LoadFromTGAMemory(data, size, TGA_FLAGS_NONE, nullptr, image));
     ok = ok || SUCCEEDED(LoadFromWICMemory(data, size, DirectX::WIC_FLAGS_NONE, nullptr, image));
-
-    // TODO: Check format support
 
     ok = ok && createTextureFromImage(image, name);
 
@@ -197,8 +202,6 @@ ComPtr<ID3D12Resource> ModuleResources::createTextureFromFile(const std::filesys
     ok = ok || SUCCEEDED(LoadFromTGAFile(fileName, TGA_FLAGS_NONE, nullptr, image));
     ok = ok || SUCCEEDED(LoadFromWICFile(fileName, DirectX::WIC_FLAGS_NONE, nullptr, image));
 
-    // TODO: Check format support
-
     if (ok)
     {
         return createTextureFromImage(image, path.string().c_str());
@@ -212,111 +215,85 @@ ComPtr<ID3D12Resource> ModuleResources::createTextureFromImage(const ScratchImag
     ModuleD3D12* d3d12 = app->getD3D12();
     ID3D12Device2* device = d3d12->getDevice();
 
+    ComPtr<ID3D12Resource> texture;
     const TexMetadata& metaData = image.GetMetadata();
 
-    D3D12_RESOURCE_DESC desc = {};
-    desc.Width = UINT(metaData.width);
-    desc.Height = UINT(metaData.height);
-    desc.MipLevels = UINT16(metaData.mipLevels);
-    desc.DepthOrArraySize = (metaData.dimension == TEX_DIMENSION_TEXTURE3D) ? UINT16(metaData.depth) : UINT16(metaData.arraySize);
-    desc.Format = metaData.format;
-    desc.Flags = D3D12_RESOURCE_FLAG_NONE;
-    desc.SampleDesc.Count = 1;
-    desc.Dimension = static_cast<D3D12_RESOURCE_DIMENSION>(metaData.dimension);
+    _ASSERTE(metaData.dimension == TEX_DIMENSION_TEXTURE2D);
 
-    ComPtr<ID3D12Resource> texture;
-
-    CD3DX12_HEAP_PROPERTIES heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-    bool ok = SUCCEEDED(device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&texture)));
-
-    UINT64 requiredSize = 0;
-    UINT numSubresources = UINT(metaData.mipLevels * metaData.arraySize);
-
-    layouts.resize(numSubresources);
-    numRows.resize(numSubresources);
-    rowSizes.resize(numSubresources);
-
-    device->GetCopyableFootprints(&desc, 0, numSubresources, 0, layouts.data(), numRows.data(), rowSizes.data(), &requiredSize);
-
-    ID3D12Resource* upload = getUploadHeap(requiredSize);
-        
-    ok = ok && SUCCEEDED(commandList->Reset(commandAllocator.Get(), nullptr));
-
-    if (ok)
+    if (metaData.dimension == TEX_DIMENSION_TEXTURE2D)
     {
-        BYTE* uploadData = nullptr;
-        CD3DX12_RANGE readRange(0, 0);
-        upload->Map(0, &readRange, reinterpret_cast<void**>(&uploadData));
+        D3D12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Tex2D(metaData.format, UINT64(metaData.width), UINT(metaData.height),
+            UINT16(metaData.arraySize), UINT16(metaData.mipLevels));
 
-        for (UINT i = 0; i < numSubresources; ++i)
+        CD3DX12_HEAP_PROPERTIES heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+        bool ok = SUCCEEDED(device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &desc, 
+                                                            D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&texture)));
+
+        ID3D12Resource* upload = nullptr;
+        if (ok)
         {
-            const D3D12_PLACED_SUBRESOURCE_FOOTPRINT& layout = layouts[i];
-            UINT rows = numRows[i];
-            UINT64 rowSize = rowSizes[i];
-            UINT64 depthSize = rowSize * rows;
+            _ASSERTE(metaData.mipLevels * metaData.arraySize == image.GetImageCount());
+            upload = getUploadHeap(GetRequiredIntermediateSize(texture.Get(), 0, UINT(image.GetImageCount())));
+            ok = upload != nullptr;
+        }
 
-            size_t mip = i % metaData.mipLevels;
-            size_t item = i / metaData.mipLevels;
+        if (ok)
+        {
+            std::vector<D3D12_SUBRESOURCE_DATA> subData;
+            subData.reserve(image.GetImageCount());
 
-            for (UINT j = 0; j < layout.Footprint.Depth; ++j)
+            for (size_t item = 0; item < metaData.arraySize; ++item)
             {
-                const Image* subImg = image.GetImage(mip, item, j);
+                for (size_t level = 0; level < metaData.mipLevels; ++level)
+                {
+                    const DirectX::Image* subImg = image.GetImage(level, item, 0);
 
-                for (UINT k = 0; k < rows; ++k)
-                {                    
-                    memcpy(uploadData+layout.Offset + j * depthSize + k * rowSize, subImg->pixels + i * subImg->rowPitch, rowSize);
+                    D3D12_SUBRESOURCE_DATA data = { subImg->pixels, (LONG_PTR)subImg->rowPitch, (LONG_PTR)subImg->slicePitch };
+
+                    subData.push_back(data);
                 }
             }
+
+            ok = UpdateSubresources(commandList.Get(), texture.Get(), upload, 0, 0, UINT(image.GetImageCount()), subData.data()) != 0;
         }
 
-        upload->Unmap(0, nullptr);
-
-        for (UINT i = 0; i < numSubresources; ++i)
+        if(ok)
         {
-            CD3DX12_TEXTURE_COPY_LOCATION Dst(texture.Get(), i);
-            CD3DX12_TEXTURE_COPY_LOCATION Src(upload, layouts[i]);
-            commandList->CopyTextureRegion(&Dst, 0, 0, 0, &Src, nullptr);
+            CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(texture.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+            commandList->ResourceBarrier(1, &barrier);
+            commandList->Close();
+
+            ID3D12CommandList* commandLists[] = { commandList.Get() };
+            ID3D12CommandQueue* queue = d3d12->getDrawCommandQueue();
+
+            queue->ExecuteCommandLists(UINT(std::size(commandLists)), commandLists);
+
+            ++uploadCounter;
+            queue->Signal(uploadFence.Get(), uploadCounter);
+            uploadFence->SetEventOnCompletion(uploadCounter, uploadEvent);
+            WaitForSingleObject(uploadEvent, INFINITE);
+
+            commandAllocator->Reset();
+            ok = SUCCEEDED(commandList->Reset(commandAllocator.Get(), nullptr));
+
+            texture->SetName(std::wstring(name, name + strlen(name)).c_str());
+            return texture;
         }
-
-        CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(texture.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-        commandList->ResourceBarrier(1, &barrier);
-        commandList->Close();
-
-        ID3D12CommandList* commandLists[] = { commandList.Get() };
-        ID3D12CommandQueue* queue = d3d12->getDrawCommandQueue();
-
-        queue->ExecuteCommandLists(UINT(std::size(commandLists)), commandLists);
-
-        ++uploadCounter;
-        queue->Signal(uploadFence.Get(), uploadCounter);
     }
 
-    if (ok)
-    {
-        texture->SetName(std::wstring(name, name+strlen(name)).c_str());
-    }
-
-    return texture;
+    return ComPtr<ID3D12Resource>();
 }
 
 ID3D12Resource* ModuleResources::getUploadHeap(size_t size)
 {
     if (size > uploadSize)
     {
-        if (uploadHeap.Get())
-        {
-            // wait for previous uploads to finish
-            uploadFence->SetEventOnCompletion(uploadCounter, uploadEvent);
-            WaitForSingleObject(uploadEvent, INFINITE);
-        }
-
         ModuleD3D12* d3d12 = app->getD3D12();
         ID3D12Device* device = d3d12->getDevice();
 
         CD3DX12_HEAP_PROPERTIES heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
         CD3DX12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Buffer(size);
 
-        // TODO: Can't remove before finish previous execution
         device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&uploadHeap));
         uploadSize = size;
     }

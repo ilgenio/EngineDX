@@ -142,7 +142,7 @@ void Material::load(const tinygltf::Model& model, const tinygltf::Material &mate
 
     // Descriptors
     ModuleDescriptors* descriptors = app->getDescriptors();
-    descriptors->allocateDescGroup(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, NUM_DESC_SLOTS, descGroup);
+    descriptors->allocateDescGroup(NUM_DESC_SLOTS, descGroup);
 
     // Base Color Texture
     if (material.pbrMetallicRoughness.baseColorTexture.index >= 0 && loadTexture(model, base, material.pbrMetallicRoughness.baseColorTexture.index, baseColorTex))

@@ -38,7 +38,7 @@ void Skybox::load(const char *backgroundFile, const char* diffuseFile, const cha
     }
 
     ModuleDescriptors* descriptors  = app->getDescriptors();
-    descriptors->allocateDescGroup(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, NUM_DESC_SLOTS, descGroup);
+    descriptors->allocateDescGroup(NUM_DESC_SLOTS, descGroup);
 
     descriptors->createTextureSRV(background.Get(), descGroup, BACKGOURND_DESC_SLOT);
     descriptors->createTextureSRV(diffuse.Get(), descGroup, DIFFUSE_DESC_SLOT);

@@ -21,7 +21,7 @@ ImGuiPass::ImGuiPass(ID3D12Device2* device, HWND hWnd)
     ImGui::StyleColorsDark();
     //ImGui::StyleColorsLight();
 
-    app->getDescriptors()->allocateDescGroup(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, fontGroup);
+    app->getDescriptors()->allocateDescGroup(1, fontGroup);
 
     // Setup Platform/Renderer backends
     ImGui_ImplWin32_Init(hWnd);
@@ -68,7 +68,7 @@ void ImGuiPass::record(ID3D12GraphicsCommandList* commandList)
     ImGui::Render();
 
     // TODO: Change debugDraw descriptors ? 
-    ID3D12DescriptorHeap* descriptorHeaps[] = { app->getDescriptors()->getHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV) };
+    ID3D12DescriptorHeap* descriptorHeaps[] = { app->getDescriptors()->getHeap() };
     commandList->SetDescriptorHeaps(1, descriptorHeaps);    
 
     ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList);

@@ -20,6 +20,7 @@ Application::Application(int argc, wchar_t** argv, void* hWnd)
     modules.push_back(new ModuleInput((HWND)hWnd));
     modules.push_back(camera = new ModuleCamera());
     modules.push_back(resources = new ModuleResources());
+    modules.push_back(descriptors = new ModuleDescriptors());
 
     if(argc > 1 && wcscmp(argv[1], L"Exercise1") == 0)
      {
@@ -39,7 +40,6 @@ Application::Application(int argc, wchar_t** argv, void* hWnd)
     }
     else
     {
-        modules.push_back(descriptors = new ModuleDescriptors());
         modules.push_back(render = new ModuleRender());
         modules.push_back(level = new ModuleLevel());
     }

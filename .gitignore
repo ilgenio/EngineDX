@@ -101,3 +101,6 @@ Source/build/x64/Release/EngineDX.exe.lastcodeanalysissucceeded
 *.cso
 /Source/tmp
 Source/EngineDX.vcxproj.filters
+Source/tmp/x64/Debug/material.obj.enc
+Source/tmp/x64/Debug/material.obj.enc
+Source/tmp/x64/Debug/material.obj.enc

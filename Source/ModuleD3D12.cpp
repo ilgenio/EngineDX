@@ -315,12 +315,7 @@ bool ModuleD3D12::createDepthStencil()
 
     if (ok)
     {
-        D3D12_DEPTH_STENCIL_VIEW_DESC depthStencilDesc = {};
-        depthStencilDesc.Format = DXGI_FORMAT_D32_FLOAT;
-        depthStencilDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-        depthStencilDesc.Flags = D3D12_DSV_FLAG_NONE;
-
-        device->CreateDepthStencilView(depthStencilBuffer.Get(), &depthStencilDesc, dsDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+        device->CreateDepthStencilView(depthStencilBuffer.Get(), nullptr, dsDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
     }
 
     return ok;
