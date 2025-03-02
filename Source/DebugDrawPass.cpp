@@ -341,60 +341,65 @@ public:
     {
         Vector2 dim = Vector2(float(width), float(height));
 
-        recordCommands(glyphs, count, textBuffer.Get(), textBufferView, textPSO.Get(), textSignature.Get(), &dim, sizeof(Vector2) / sizeof(UINT32), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, textOffset, true);
+        if (cpuTextHandle.ptr)
+        {
+            recordCommands(glyphs, count, textBuffer.Get(), textBufferView, textPSO.Get(), textSignature.Get(), &dim, sizeof(Vector2) / sizeof(UINT32), D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, textOffset, true);
+        }
     }
 
     dd::GlyphTextureHandle createGlyphTexture(int width, int height, const void * pixels) override
     {
         // Create and upload texture
 
-        D3D12_RESOURCE_DESC desc = { D3D12_RESOURCE_DIMENSION_TEXTURE2D, 0, UINT64(width), UINT(height), 1, 1, DXGI_FORMAT_R8_UNORM, {1, 0}, D3D12_TEXTURE_LAYOUT_UNKNOWN, D3D12_RESOURCE_FLAG_NONE };
-
-        CD3DX12_HEAP_PROPERTIES defaultProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-        device->CreateCommittedResource(&defaultProperties, D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&glyphTexture));
-
-        UINT64 requiredSize = 0;
-        UINT64 rowSize = 0;
-
-        D3D12_PLACED_SUBRESOURCE_FOOTPRINT footPrint;
-        device->GetCopyableFootprints(&desc, 0, 1, 0, &footPrint, nullptr, &rowSize, &requiredSize);
-
-        ComPtr<ID3D12Resource> staging;
-        CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(requiredSize);
-        CD3DX12_HEAP_PROPERTIES uploadProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-        device->CreateCommittedResource(&uploadProperties, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&staging));
-
-        BYTE* uploadData = nullptr;
-        staging->Map(0, nullptr, reinterpret_cast<void**>(&uploadData));
-
-        for (size_t i = 0; i < height; ++i)
+        if (cpuTextHandle.ptr != 0)
         {
-            memcpy(uploadData + i * footPrint.Footprint.RowPitch, reinterpret_cast<const uint8_t*>(pixels) + i * rowSize, rowSize);
+            D3D12_RESOURCE_DESC desc = { D3D12_RESOURCE_DIMENSION_TEXTURE2D, 0, UINT64(width), UINT(height), 1, 1, DXGI_FORMAT_R8_UNORM, {1, 0}, D3D12_TEXTURE_LAYOUT_UNKNOWN, D3D12_RESOURCE_FLAG_NONE };
+
+            CD3DX12_HEAP_PROPERTIES defaultProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+            device->CreateCommittedResource(&defaultProperties, D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&glyphTexture));
+
+            UINT64 requiredSize = 0;
+            UINT64 rowSize = 0;
+
+            D3D12_PLACED_SUBRESOURCE_FOOTPRINT footPrint;
+            device->GetCopyableFootprints(&desc, 0, 1, 0, &footPrint, nullptr, &rowSize, &requiredSize);
+
+            ComPtr<ID3D12Resource> staging;
+            CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(requiredSize);
+            CD3DX12_HEAP_PROPERTIES uploadProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+            device->CreateCommittedResource(&uploadProperties, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&staging));
+
+            BYTE* uploadData = nullptr;
+            staging->Map(0, nullptr, reinterpret_cast<void**>(&uploadData));
+
+            for (size_t i = 0; i < height; ++i)
+            {
+                memcpy(uploadData + i * footPrint.Footprint.RowPitch, reinterpret_cast<const uint8_t*>(pixels) + i * rowSize, rowSize);
+            }
+            staging->Unmap(0, nullptr);
+
+            CD3DX12_TEXTURE_COPY_LOCATION dst = CD3DX12_TEXTURE_COPY_LOCATION(glyphTexture.Get());
+            CD3DX12_TEXTURE_COPY_LOCATION src = CD3DX12_TEXTURE_COPY_LOCATION(staging.Get(), footPrint);
+            CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(glyphTexture.Get(), D3D12_RESOURCE_STATE_COPY_DEST, 
+                                                                                    D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+
+            commandList->Reset(commandAllocator.Get(), nullptr);
+            commandList->CopyTextureRegion(&dst, 0, 0, 0, &src, nullptr);
+            commandList->ResourceBarrier(1, &barrier);
+            commandList->Close();
+        
+            ID3D12CommandList* const gfxCommandList = commandList.Get();
+            uploadQueue->ExecuteCommandLists(1, &gfxCommandList);
+
+            ++uploadFenceValue;
+            uploadQueue->Signal(uploadFence.Get(), uploadFenceValue);
+
+            uploadFence->SetEventOnCompletion(uploadFenceValue, uploadEvent);
+            WaitForSingleObject(uploadEvent, INFINITE);
+
+            // Create descriptors 
+            device->CreateShaderResourceView(glyphTexture.Get(), nullptr, cpuTextHandle);
         }
-        staging->Unmap(0, nullptr);
-
-        CD3DX12_TEXTURE_COPY_LOCATION dst = CD3DX12_TEXTURE_COPY_LOCATION(glyphTexture.Get());
-        CD3DX12_TEXTURE_COPY_LOCATION src = CD3DX12_TEXTURE_COPY_LOCATION(staging.Get(), footPrint);
-        CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(glyphTexture.Get(), D3D12_RESOURCE_STATE_COPY_DEST, 
-                                                                                D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-
-        commandList->Reset(commandAllocator.Get(), nullptr);
-        commandList->CopyTextureRegion(&dst, 0, 0, 0, &src, nullptr);
-        commandList->ResourceBarrier(1, &barrier);
-        commandList->Close();
-        
-        ID3D12CommandList* const gfxCommandList = commandList.Get();
-        uploadQueue->ExecuteCommandLists(1, &gfxCommandList);
-
-        ++uploadFenceValue;
-        uploadQueue->Signal(uploadFence.Get(), uploadFenceValue);
-
-        uploadFence->SetEventOnCompletion(uploadFenceValue, uploadEvent);
-        WaitForSingleObject(uploadEvent, INFINITE);
-
-        // Create descriptors 
-        
-        device->CreateShaderResourceView(glyphTexture.Get(), nullptr, cpuTextHandle);
 
         return dd::GlyphTextureHandle(0xFFFFFF);
     }

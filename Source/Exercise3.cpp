@@ -32,11 +32,8 @@ bool Exercise3::init()
     if (ok)
     {
         ModuleD3D12* d3d12 = app->getD3D12();
-        ModuleDescriptors* descriptors = app->getDescriptors();
 
-        descriptors->allocateDescGroup(1, debugDrawText);
-
-        debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue(), debugDrawText.getCPU(0), debugDrawText.getGPU(0));
+        debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue());
     }
 
     return true;
@@ -126,8 +123,6 @@ bool Exercise3::createVertexBuffer(void* bufferData, unsigned bufferSize, unsign
 
 bool Exercise3::createRootSignature()
 {
-    // TODO: create root signature from HSLS
-
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
     CD3DX12_ROOT_PARAMETER rootParameters[1];
 
