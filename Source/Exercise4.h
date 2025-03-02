@@ -14,6 +14,15 @@ namespace DirectX
 
 class Exercise4 : public Module
 {
+    enum ESamplers
+    {
+        SAMPLER_LINEAR_WRAP = 0,
+        SAMPLER_POINT_WRAP,
+        SAMPLER_LINEAR_CLAMP,
+        SAMPLER_POINT_CLAMP,
+        SAMPLER_COUNT
+    };
+
     ComPtr<ID3D12Fence1>            uploadFence;
     HANDLE                          uploadEvent = NULL;
     unsigned                        uploadFenceCounter = 0;
@@ -33,6 +42,7 @@ class Exercise4 : public Module
     DescriptorGroup                 debugFonts;
     bool                            showAxis = true;
     bool                            showGrid = true;
+    int                             sampler = int(SAMPLER_LINEAR_WRAP);
 
     Matrix mvp;
 

@@ -27,10 +27,10 @@ bool Exercise4::init()
 
     static Vertex vertices[4] = 
     {
-        { Vector3(-1.0f, -1.0f, 0.0f),  Vector2(0.0f, 1.0f) },
-        { Vector3(-1.0f, 1.0f, 0.0f),   Vector2(0.0f, 0.0f) },
-        { Vector3(1.0f, 1.0f, 0.0f),    Vector2(1.0f, 0.0f) },
-        { Vector3(1.0f, -1.0f, 0.0f),   Vector2(1.0f, 1.0f) }
+        { Vector3(-1.0f, -1.0f, 0.0f),  Vector2(-0.2f, 1.2f) },
+        { Vector3(-1.0f, 1.0f, 0.0f),   Vector2(-0.2f, -0.2f) },
+        { Vector3(1.0f, 1.0f, 0.0f),    Vector2(1.2f, -0.2f) },
+        { Vector3(1.0f, -1.0f, 0.0f),   Vector2(1.2f, 1.2f) }
     };
 
     static short indices[6] = 
@@ -91,6 +91,7 @@ void Exercise4::render()
     ImGui::Begin("Texture Viewer Options");
     ImGui::Checkbox("Show grid", &showGrid);
     ImGui::Checkbox("Show axis", &showAxis);
+    ImGui::Combo("Sampler", &sampler, "Linear/Wrap\0Point/Wrap\0Linear/Clamp\0Point/Clamp", SAMPLER_COUNT);
     ImGui::End();
 
     ModuleD3D12* d3d12  = app->getD3D12();
@@ -150,7 +151,7 @@ void Exercise4::render()
 
     commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix)/sizeof(UINT32), &mvp, 0);
     commandList->SetGraphicsRootDescriptorTable(1, srvDog.getGPU(0));
-    commandList->SetGraphicsRootDescriptorTable(2, samplers->getDefaultGPUHandle());
+    commandList->SetGraphicsRootDescriptorTable(2, samplers->getDefaultGroup().getGPU(sampler));
 
     commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
 
@@ -212,7 +213,7 @@ bool Exercise4::createRootSignature()
     CD3DX12_DESCRIPTOR_RANGE srvRange, sampRange;
 
     srvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);   
-    sampRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, app->getSamplers()->getNumDefaultSamplers(), 0);
+    sampRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, app->getSamplers()->getDefaultGroup().getCount(), 0);
 
     rootParameters[0].InitAsConstants((sizeof(Matrix) / sizeof(UINT32)), 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
     rootParameters[1].InitAsDescriptorTable(1, &srvRange, D3D12_SHADER_VISIBILITY_PIXEL);

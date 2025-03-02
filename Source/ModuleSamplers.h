@@ -13,8 +13,7 @@ public:
     bool init() override;
     bool cleanUp() override;
 
-    uint32_t getNumDefaultSamplers() const {return defaultSamplers.getCount(); }
-    D3D12_GPU_DESCRIPTOR_HANDLE getDefaultGPUHandle() const { return defaultSamplers.getGPU(0); }
+    const DescriptorGroup& getDefaultGroup() const { return defaultSamplers; }
 
     ID3D12DescriptorHeap* getHeap() { return heap.getHeap(); }
 
