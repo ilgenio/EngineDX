@@ -23,10 +23,6 @@ class Exercise4 : public Module
         SAMPLER_COUNT
     };
 
-    ComPtr<ID3D12Fence1>            uploadFence;
-    HANDLE                          uploadEvent = NULL;
-    unsigned                        uploadFenceCounter = 0;
-
     ComPtr<ID3D12Resource>          textureDog;
     UINT                            dogDescriptor = 0;
     ComPtr<ID3D12Resource>          vertexBuffer;

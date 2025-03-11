@@ -35,8 +35,7 @@ bool Exercise4::init()
         { Vector3(1.0f, -1.0f, 0.0f),   Vector2(1.2f, 1.2f) }
     };
         
-    bool ok = createUploadFence();
-    ok = ok && createVertexBuffer(&vertices[0], sizeof(vertices), sizeof(Vertex));
+    bool ok = createVertexBuffer(&vertices[0], sizeof(vertices), sizeof(Vertex));
     ok = ok && createRootSignature();
     ok = ok && createPSO();
 
@@ -66,8 +65,6 @@ bool Exercise4::init()
 
 bool Exercise4::cleanUp()
 {
-    if (uploadEvent) CloseHandle(uploadEvent);
-    uploadEvent = NULL;
     imguiPass.reset();
 
     return true;
@@ -237,16 +234,4 @@ bool Exercise4::createPSO()
     return SUCCEEDED(app->getD3D12()->getDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pso)));
 }
 
-bool Exercise4::createUploadFence()
-{
-    bool ok = SUCCEEDED(app->getD3D12()->getDevice()->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&uploadFence)));
-
-    if (ok)
-    {
-        uploadEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
-        ok = uploadEvent != NULL;
-    }
-
-    return ok;
-}
 
