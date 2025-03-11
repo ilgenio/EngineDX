@@ -28,11 +28,8 @@ public:
     uint32_t getNumVertices() const {return numVertices; }
     uint32_t getNumIndices() const {return numIndices; }
 
-    const Vertex* getVertices() const {return vertices.get();}
-    const uint32_t* getIndices() const {return indices.get();}
-
-    ID3D12Resource* getVertexBuffer() const {return vertexBuffer.Get(); }
-    ID3D12Resource* getIndexBuffer() const {return indexBuffer.Get(); }
+    const D3D12_VERTEX_BUFFER_VIEW& getVertexBufferView() const {return vertexBufferView; }
+    const D3D12_INDEX_BUFFER_VIEW&  getIndexBufferView() const {return indexBufferView; }
 
     uint32_t getMaterialIndex() const {return materialIndex;}
 
@@ -50,8 +47,9 @@ private:
 
 private:
 
+
     typedef std::unique_ptr<Vertex[]> VertexArray;
-    typedef std::unique_ptr<uint32_t[]> IndexArray;
+    typedef std::unique_ptr<uint8_t[]> IndexArray;
 
     // Name
     std::string name;
@@ -59,6 +57,7 @@ private:
     // Vertex Data
     uint32_t numVertices = 0;
     uint32_t numIndices = 0;
+    uint32_t indexElementSize = 0;
     uint32_t materialIndex = 0;
 
     VertexArray vertices;

@@ -15,7 +15,22 @@ ModuleDescriptors::~ModuleDescriptors()
 
 bool ModuleDescriptors::init()
 {
-    heap.init(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 16384);
+    ModuleD3D12* d3d12 = app->getD3D12();
+    ID3D12Device2* device = d3d12->getDevice();
+
+    count          = 16384;
+    current        = 0;
+    descriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+    D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
+    heapDesc.NumDescriptors = count;
+    heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+    heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+
+    device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&heap));
+
+    cpuStart = heap->GetCPUDescriptorHandleForHeapStart();
+    gpuStart = heap->GetGPUDescriptorHandleForHeapStart();
 
     return true;
 }
@@ -25,28 +40,43 @@ bool ModuleDescriptors::cleanUp()
     return true;
 }
 
-bool ModuleDescriptors::allocateDescGroup(uint32_t count, DescriptorGroup& descriptor)
+UINT ModuleDescriptors::createCBV(ID3D12Resource *resource)
 {
-    return heap.allocate(count, descriptor);
-}
+    _ASSERTE(current < count);
 
-void ModuleDescriptors::createCBV(ID3D12Resource *resource, const DescriptorGroup &descriptor, uint32_t index)
-{
-    D3D12_CONSTANT_BUFFER_VIEW_DESC viewDesc = {};
-    if (resource)
+    if(current < count)
     {
-        D3D12_RESOURCE_DESC desc = resource->GetDesc();
-        assert(desc.Dimension == D3D12_RESOURCE_DIMENSION_BUFFER);
+        D3D12_CONSTANT_BUFFER_VIEW_DESC viewDesc = {};
+        if (resource)
+        {
+            D3D12_RESOURCE_DESC desc = resource->GetDesc();
+            assert(desc.Dimension == D3D12_RESOURCE_DIMENSION_BUFFER);
 
-        viewDesc.BufferLocation = resource->GetGPUVirtualAddress();
-        viewDesc.SizeInBytes = UINT(desc.Width);
+            viewDesc.BufferLocation = resource->GetGPUVirtualAddress();
+            viewDesc.SizeInBytes = UINT(desc.Width);
+        }
+
+        UINT index = current++;
+        app->getD3D12()->getDevice()->CreateConstantBufferView(&viewDesc, CD3DX12_CPU_DESCRIPTOR_HANDLE(cpuStart, index, descriptorSize));
+
+        return index;
     }
 
-    app->getD3D12()->getDevice()->CreateConstantBufferView(&viewDesc, descriptor.getCPU(index));
+    return current;
 }
 
-void ModuleDescriptors::createTextureSRV(ID3D12Resource* resource, const DescriptorGroup& descriptor, uint32_t index) 
+UINT ModuleDescriptors::createTextureSRV(ID3D12Resource* resource) 
 {
-    app->getD3D12()->getDevice()->CreateShaderResourceView(resource, nullptr, descriptor.getCPU(index));
+    _ASSERTE(current < count);
+
+    if(current < count)
+    {
+        UINT index = current++;
+        app->getD3D12()->getDevice()->CreateShaderResourceView(resource, nullptr, CD3DX12_CPU_DESCRIPTOR_HANDLE(cpuStart, index, descriptorSize));
+
+        return index;
+    }
+
+    return current;
 }
 

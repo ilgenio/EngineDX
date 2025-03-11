@@ -10,24 +10,6 @@
 #include <filesystem>
 #include <algorithm>
 
-namespace
-{
-    enum DescritporSlots
-    {
-        MATERIAL_DESC_SLOT = 0,
-        BASECOLOR_DESC_SLOT,
-        METROUGH_DESC_SLOT,
-        NORMAL_DESC_SLOT,
-        OCCLUSION_DESC_SLOT,
-        IRIDISCENCE_DESC_SLOT,
-        IRIDISCENCE_THICK_DESC_SLOT,
-        TRANSMISSION_DESC_SLOT,
-
-        NUM_DESC_SLOTS
-    };
-
-}
-
 ComPtr<ID3D12RootSignature> Material::rootSignature;
 ComPtr<ID3D12Resource> Material::whiteFallback;
 ComPtr<ID3D12Resource> Material::blackFallback;
@@ -139,39 +121,37 @@ void Material::load(const tinygltf::Model& model, const tinygltf::Material &mate
 
     std::string base = basePath;
 
-
     // Descriptors
     ModuleDescriptors* descriptors = app->getDescriptors();
-    descriptors->allocateDescGroup(NUM_DESC_SLOTS, descGroup);
 
     // Base Color Texture
     if (material.pbrMetallicRoughness.baseColorTexture.index >= 0 && loadTexture(model, base, material.pbrMetallicRoughness.baseColorTexture.index, baseColorTex))
     {
-        descriptors->createTextureSRV(baseColorTex.Get(), descGroup, BASECOLOR_DESC_SLOT);
+        baseColourDesc = descriptors->createTextureSRV(baseColorTex.Get());
     }
     else
     {
-        descriptors->createTextureSRV(blackFallback.Get(), descGroup, BASECOLOR_DESC_SLOT);
+        baseColourDesc = descriptors->createTextureSRV(blackFallback.Get());
     }
 
     // Metallic Roughness Texture
     if (material.pbrMetallicRoughness.metallicRoughnessTexture.index >= 0 && loadTexture(model, base, material.pbrMetallicRoughness.metallicRoughnessTexture.index, metRougTex))
     {
-        descriptors->createTextureSRV(metRougTex.Get(), descGroup, METROUGH_DESC_SLOT);
+        metalRoughDesc = descriptors->createTextureSRV(metRougTex.Get());
     }
     else
     {
-        descriptors->createTextureSRV(blackFallback.Get(), descGroup, METROUGH_DESC_SLOT);
+        metalRoughDesc = descriptors->createTextureSRV(blackFallback.Get());
     }
 
     // Normals Texture
     if (material.normalTexture.index >= 0 && loadTexture(model, base, material.normalTexture.index, normalTex))
     {
-        descriptors->createTextureSRV(normalTex.Get(), descGroup, NORMAL_DESC_SLOT);
+        normalDesc = descriptors->createTextureSRV(normalTex.Get());
     }
     else
     {
-        descriptors->createTextureSRV(normalFallback.Get(), descGroup, NORMAL_DESC_SLOT);
+        normalDesc = descriptors->createTextureSRV(normalFallback.Get());
     }
 
     data.normalScale = float(material.normalTexture.scale);
@@ -179,11 +159,11 @@ void Material::load(const tinygltf::Model& model, const tinygltf::Material &mate
     // Occlusion Texture
     if (material.occlusionTexture.index >= 0 && loadTexture(model, base, material.occlusionTexture.index, occlusionTex))
     {
-        descriptors->createTextureSRV(occlusionTex.Get(), descGroup, OCCLUSION_DESC_SLOT);
+        occlusionDesc = descriptors->createTextureSRV(occlusionTex.Get());
     }
     else
     {
-        descriptors->createTextureSRV(whiteFallback.Get(), descGroup, OCCLUSION_DESC_SLOT);
+        occlusionDesc = descriptors->createTextureSRV(whiteFallback.Get());
     }
 
     // \todo: occlusion strength
@@ -209,7 +189,7 @@ void Material::load(const tinygltf::Model& model, const tinygltf::Material &mate
     // Material Buffer
 
     materialBuffer = app->getResources()->createDefaultBuffer(&data, sizeof(data), name.c_str(), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
-    descriptors->createCBV(materialBuffer.Get(), descGroup, MATERIAL_DESC_SLOT);
+    materialDesc = descriptors->createCBV(materialBuffer.Get());
 }
 
 
@@ -269,7 +249,7 @@ void Material::loadIridescenceExt(const tinygltf::Model& model, const tinygltf::
             int index = texture.Get(std::string("index")).GetNumberAsInt();
             if (index >= 0 && loadTexture(model, basePath, index, iridescenceTex))
             {
-                descriptors->createTextureSRV(iridescenceTex.Get(), descGroup, IRIDISCENCE_DESC_SLOT);
+                iridiscenceDesc = descriptors->createTextureSRV(iridescenceTex.Get());
                 data.flags |= MATERIAL_FLAGS_IRIDESCENCE_TEX;
             }
         }
@@ -280,7 +260,7 @@ void Material::loadIridescenceExt(const tinygltf::Model& model, const tinygltf::
             int index = thickTexture.Get(std::string("index")).GetNumberAsInt();
             if (index >= 0 && loadTexture(model, basePath, index, iridescenceThicknessTex))
             {
-                descriptors->createTextureSRV(iridescenceThicknessTex.Get(), descGroup, IRIDISCENCE_THICK_DESC_SLOT);
+                iridiscenceThicknessDesc = descriptors->createTextureSRV(iridescenceThicknessTex.Get());
                 data.flags |= MATERIAL_FLAGS_IRIDESCENCE_THICKNESS_TEX;
             }
         }
@@ -308,7 +288,7 @@ void Material::loadTransmissionExt(const tinygltf::Model &model, const tinygltf:
             int index = texture.Get(std::string("index")).GetNumberAsInt();
             if (index >= 0 && loadTexture(model, basePath, index, transmissionTex))
             {
-                app->getDescriptors()->createTextureSRV(transmissionTex.Get(), descGroup, TRANSMISSION_DESC_SLOT);
+                transmissionDesc = app->getDescriptors()->createTextureSRV(transmissionTex.Get());
                 data.flags |= MATERIAL_FLAGS_TRANSMISSION_TEX;
             }
         }

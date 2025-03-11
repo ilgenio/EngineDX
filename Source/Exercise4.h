@@ -28,7 +28,7 @@ class Exercise4 : public Module
     unsigned                        uploadFenceCounter = 0;
 
     ComPtr<ID3D12Resource>          textureDog;
-    DescriptorGroup                 srvDog;
+    UINT                            dogDescriptor = 0;
     ComPtr<ID3D12Resource>          vertexBuffer;
     ComPtr<ID3D12Resource>          indexBuffer;
     D3D12_VERTEX_BUFFER_VIEW        vertexBufferView;
@@ -39,7 +39,6 @@ class Exercise4 : public Module
     ComPtr<ID3DBlob>                pixelShader;
     std::unique_ptr<DebugDrawPass>  debugDrawPass;
     std::unique_ptr<ImGuiPass>      imguiPass;
-    DescriptorGroup                 debugFonts;
     bool                            showAxis = true;
     bool                            showGrid = true;
     int                             sampler = int(SAMPLER_LINEAR_WRAP);

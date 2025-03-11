@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Module.h"
-#include "DescriptorHeaps.h"
 
 class ModuleDescriptors : public Module
 {
@@ -13,15 +12,39 @@ public:
     bool init() override;
     bool cleanUp() override;
 
-    bool allocateDescGroup(uint32_t count, DescriptorGroup& descGroup);
+    UINT createCBV(ID3D12Resource* resource);
+    UINT createTextureSRV(ID3D12Resource* resource); 
 
-    void createCBV(ID3D12Resource* resource, const DescriptorGroup& descriptor, uint32_t index = 0);
-    void createTextureSRV(ID3D12Resource* resource, const DescriptorGroup& descriptor, uint32_t index = 0); 
+    UINT allocateDescriptor()
+    {
+        _ASSERTE(current < count);
 
-    ID3D12DescriptorHeap* getHeap() { return heap.getHeap(); }
+        return (current < count) ? current++ : count;         
+    }
+
+    D3D12_CPU_DESCRIPTOR_HANDLE getCPUHanlde(UINT index) const
+    {
+        _ASSERTE(index < current);
+        
+        return CD3DX12_CPU_DESCRIPTOR_HANDLE(cpuStart, index, descriptorSize);
+    }
+
+    D3D12_GPU_DESCRIPTOR_HANDLE getGPUHanlde(UINT index) const
+    {
+        _ASSERTE(index < current);
+        
+        return CD3DX12_GPU_DESCRIPTOR_HANDLE(gpuStart, index, descriptorSize);
+    }
+
+    ID3D12DescriptorHeap* getHeap() { return heap.Get(); }
 
 private:
     
-    StaticDescriptorHeap heap;
+    ComPtr<ID3D12DescriptorHeap> heap;
+    D3D12_CPU_DESCRIPTOR_HANDLE cpuStart = {0};
+    D3D12_GPU_DESCRIPTOR_HANDLE gpuStart = {0};
+    UINT descriptorSize = 0;
+    UINT count = 0;
+    UINT current = 0;
 };
 

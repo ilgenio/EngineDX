@@ -19,15 +19,16 @@ public:
     ID3D12Resource* getSpecularImage() const {return specular.Get();}
     ID3D12Resource* getBRDFImage() const {return brdf.Get();}
 
-    const DescriptorGroup getDescriptors() const { return descGroup; }
-
 private:
     ComPtr<ID3D12Resource>   background;
 
     ComPtr<ID3D12Resource>  specular;
     ComPtr<ID3D12Resource>  diffuse;
     ComPtr<ID3D12Resource>  brdf;
-    DescriptorGroup         descGroup;
+    UINT                    backgroundDesc = UINT32_MAX;
+    UINT                    specularDesc = UINT32_MAX;
+    UINT                    diffuseDesc = UINT32_MAX;
+    UINT                    brdfDesc = UINT32_MAX;
 
     CubemapMesh             mesh;
     uint32_t                iblMipLevels = 0;

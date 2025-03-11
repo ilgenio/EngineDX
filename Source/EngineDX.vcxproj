@@ -181,10 +181,12 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="GamePad.h" />
     <ClInclude Include="Globals.h" />
+    <ClInclude Include="gltf_utils.h" />
     <ClInclude Include="ImGuiPass.h" />
     <ClInclude Include="Keyboard.h" />
     <ClInclude Include="Material.h" />
     <ClInclude Include="Mesh.h" />
+    <ClInclude Include="Model.h" />
     <ClInclude Include="Module.h" />
     <ClInclude Include="ModuleCamera.h" />
     <ClInclude Include="ModuleD3D12.h" />
@@ -290,6 +292,7 @@
     <ClCompile Include="Keyboard.cpp" />
     <ClCompile Include="Material.cpp" />
     <ClCompile Include="Mesh.cpp" />
+    <ClCompile Include="Model.cpp" />
     <ClCompile Include="ModuleCamera.cpp" />
     <ClCompile Include="ModuleD3D12.cpp" />
     <ClCompile Include="ModuleDescriptors.cpp" />

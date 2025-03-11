@@ -6,18 +6,6 @@
 #include "ModuleResources.h"
 #include "ModuleDescriptors.h"
 
-namespace
-{
-    enum DescritporSlots
-    {
-        BACKGOURND_DESC_SLOT = 0,
-        DIFFUSE_DESC_SLOT,
-        SPECULAR_DESC_SLOT,
-        BRDF_DESC_SLOT,
-        NUM_DESC_SLOTS
-    };
-}
-
 void Skybox::load(const char *backgroundFile, const char* diffuseFile, const char* specularFile, const char* brdfFile)
 {
     ModuleResources* resources = app->getResources();
@@ -38,11 +26,10 @@ void Skybox::load(const char *backgroundFile, const char* diffuseFile, const cha
     }
 
     ModuleDescriptors* descriptors  = app->getDescriptors();
-    descriptors->allocateDescGroup(NUM_DESC_SLOTS, descGroup);
 
-    descriptors->createTextureSRV(background.Get(), descGroup, BACKGOURND_DESC_SLOT);
-    descriptors->createTextureSRV(diffuse.Get(), descGroup, DIFFUSE_DESC_SLOT);
-    descriptors->createTextureSRV(specular.Get(), descGroup, SPECULAR_DESC_SLOT);
-    descriptors->createTextureSRV(brdf.Get(), descGroup, BRDF_DESC_SLOT);
+    backgroundDesc = descriptors->createTextureSRV(background.Get());
+    diffuseDesc = descriptors->createTextureSRV(diffuse.Get());
+    specularDesc = descriptors->createTextureSRV(specular.Get());
+    brdfDesc  = descriptors->createTextureSRV(brdf.Get());
 }
 

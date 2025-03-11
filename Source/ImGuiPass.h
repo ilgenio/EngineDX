@@ -1,12 +1,12 @@
 #pragma once
 
-#include "DescriptorHeaps.h"
 
 class ImGuiPass
 {
-    DescriptorGroup fontGroup;
+    ComPtr<ID3D12DescriptorHeap> heap;
+
 public:
-    ImGuiPass(ID3D12Device2* device, HWND hWnd, D3D12_CPU_DESCRIPTOR_HANDLE cpuFont, D3D12_GPU_DESCRIPTOR_HANDLE gpuFont);
+    ImGuiPass(ID3D12Device2* device, HWND hWnd);
     ~ImGuiPass();
 
     void startFrame();

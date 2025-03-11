@@ -4,13 +4,10 @@
 #include "Application.h"
 #include "ModuleResources.h"
 
-#include "tiny_gltf.h"
+#include "gltf_utils.h"
 
 #include "mikktspace.h"
 #include "weldmesh.h"
-
-//#define BUILD_TANGENTS_IF_NEEDED
-//#define FORCE_WELD
 
 const D3D12_INPUT_ELEMENT_DESC Mesh::inputLayout[numVertexAttribs] = { {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,                           D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
                                                                        {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, offsetof(Vertex, texCoord0), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
@@ -32,142 +29,58 @@ void Mesh::load(const tinygltf::Model& model, const tinygltf::Mesh& mesh, const 
 {
     name = mesh.name;
 
-    // TODO: Support not indicexed meshes (weld them ?)
-    if (primitive.indices >= 0)
+    const auto& itPos = primitive.attributes.find("POSITION");
+
+    if (itPos != primitive.attributes.end())
     {
-        // NOTE: All our meshes are forced to have positions and normals. They could not have texture coordinates and tangents but will be initialized with them
-        const auto& itPos       = primitive.attributes.find("POSITION");
-        const auto& itTexCoord  = primitive.attributes.find("TEXCOORD_0");
-        const auto& itNormal    = primitive.attributes.find("NORMAL");
-        const auto& itTangent   = primitive.attributes.find("TANGENT");
+        ModuleResources* resources = app->getResources();
 
-        if (itPos != primitive.attributes.end() && itNormal != primitive.attributes.end() )
+        const tinygltf::Accessor& posAcc = model.accessors[itPos->second];
+
+        numVertices = uint32_t(posAcc.count);
+
+        vertices = std::make_unique<Vertex[]>(numVertices);
+        uint8_t* vertexData = reinterpret_cast<uint8_t*>(vertices.get());
+
+        loadAccessorData(vertexData + offsetof(Vertex, position), sizeof(Vector3), sizeof(Vertex), numVertices, model, itPos->second);
+        loadAccessorData(vertexData + offsetof(Vertex, texCoord0), sizeof(Vector2), sizeof(Vertex), numVertices, model, primitive.attributes, "TEXCOORD_0");
+        loadAccessorData(vertexData + offsetof(Vertex, normal), sizeof(Vector3), sizeof(Vertex), numVertices, model, primitive.attributes, "NORMAL");
+        loadAccessorData(vertexData + offsetof(Vertex, tangent), sizeof(Vector4), sizeof(Vertex), numVertices, model, primitive.attributes, "TANGENT");
+   
+        vertexBuffer = resources->createDefaultBuffer(vertices.get(), numVertices * sizeof(Vertex), name.c_str());
+
+        vertexBufferView.BufferLocation = vertexBuffer->GetGPUVirtualAddress();
+        vertexBufferView.StrideInBytes  = sizeof(Vertex);
+        vertexBufferView.SizeInBytes    = numVertices * sizeof(Mesh::Vertex);
+
+        if (primitive.indices >= 0)
         {
-            const tinygltf::Accessor& indAcc     = model.accessors[primitive.indices];
-            const tinygltf::Accessor& posAcc     = model.accessors[itPos->second];
-            const tinygltf::Accessor& normalAcc  = model.accessors[itNormal->second];
+            const tinygltf::Accessor& indAcc = model.accessors[primitive.indices];
 
-            assert(posAcc.count == normalAcc.count);
-            assert(posAcc.type == TINYGLTF_TYPE_VEC3);
-            assert(normalAcc.type == TINYGLTF_TYPE_VEC3);
+            _ASSERT_EXPR(indAcc.componentType == TINYGLTF_PARAMETER_TYPE_UNSIGNED_INT || 
+                         indAcc.componentType == TINYGLTF_PARAMETER_TYPE_UNSIGNED_SHORT || 
+                         indAcc.componentType == TINYGLTF_PARAMETER_TYPE_UNSIGNED_BYTE, "Unsupported index format");
 
-            const tinygltf::BufferView& indView         = model.bufferViews[indAcc.bufferView];
-            const tinygltf::BufferView& posView         = model.bufferViews[posAcc.bufferView];
-            const tinygltf::BufferView& normalView      = model.bufferViews[normalAcc.bufferView];
-
-            const uint8_t* bufferPos      = reinterpret_cast<const uint8_t*>(&(model.buffers[posView.buffer].data[posAcc.byteOffset + posView.byteOffset]));
-            const uint8_t* bufferTexCoord = nullptr; 
-            const uint8_t* bufferNormal   = reinterpret_cast<const uint8_t*>(&(model.buffers[normalView.buffer].data[normalAcc.byteOffset + normalView.byteOffset]));
-            const uint8_t* bufferTangent  = nullptr;
-
-            size_t posStride = posView.byteStride == 0 ? sizeof(Vector3) : posView.byteStride;
-            size_t normalStride = normalView.byteStride == 0 ? sizeof(Vector3) : normalView.byteStride;
-            size_t texCoordStride = 0; 
-            size_t tangentStride = 0;
-
-            if(itTexCoord != primitive.attributes.end())
+            if(indAcc.componentType == TINYGLTF_PARAMETER_TYPE_UNSIGNED_INT ||
+               indAcc.componentType == TINYGLTF_PARAMETER_TYPE_UNSIGNED_SHORT ||
+               indAcc.componentType == TINYGLTF_PARAMETER_TYPE_UNSIGNED_BYTE)
             {
-                const tinygltf::Accessor &texCoordAcc = model.accessors[itTexCoord->second];
-                assert(posAcc.count == texCoordAcc.count);
-                assert(posAcc.type == TINYGLTF_TYPE_VEC3);
-                assert(texCoordAcc.type == TINYGLTF_TYPE_VEC2);
+                static const DXGI_FORMAT formats[3] = { DXGI_FORMAT_R8_UINT, DXGI_FORMAT_R16_UINT, DXGI_FORMAT_R32_UINT };
 
-                const tinygltf::BufferView &texCoordView = model.bufferViews[texCoordAcc.bufferView];
+                indexElementSize = tinygltf::GetComponentSizeInBytes(indAcc.componentType);
+                numIndices = uint32_t(indAcc.count);
 
-                bufferTexCoord = reinterpret_cast<const uint8_t *>(&(model.buffers[texCoordView.buffer].data[texCoordAcc.byteOffset + texCoordView.byteOffset]));
-                texCoordStride = texCoordView.byteStride == 0 ? sizeof(Vector2) : texCoordView.byteStride;
+                indices = std::make_unique<uint8_t[]>(numIndices*indexElementSize);
+                loadAccessorData(indices.get(), indexElementSize, indexElementSize, numIndices, model, primitive.indices);
+                indexBuffer = resources->createDefaultBuffer(indices.get(), numIndices * indexElementSize, name.c_str());
+
+                indexBufferView.BufferLocation = indexBuffer->GetGPUVirtualAddress();
+                indexBufferView.Format = formats[indexElementSize >> 1];
+                indexBufferView.SizeInBytes = indexElementSize;
             }
-
-            if (itTangent != primitive.attributes.end())
-            {
-                const tinygltf::Accessor &tangentAcc = model.accessors[itTangent->second];
-                assert(tangentAcc.count == normalAcc.count);
-                assert(tangentAcc.type == TINYGLTF_TYPE_VEC4);
-
-                const tinygltf::BufferView& tangentView = model.bufferViews[tangentAcc.bufferView];
-                bufferTangent = reinterpret_cast<const uint8_t *>(&(model.buffers[tangentView.buffer].data[tangentAcc.byteOffset + tangentView.byteOffset]));
-                tangentStride = tangentView.byteStride == 0 ? tangentStride = sizeof(Vector4) : tangentView.byteStride;
-            }
-
-            numVertices = uint32_t(posAcc.count);
-            numIndices  = uint32_t(indAcc.count);
-            vertices    = std::make_unique<Vertex[]>(numVertices);
-            indices     = std::make_unique<uint32_t[]>(numIndices);
-
-            // Vertices
-            for (uint32_t i = 0; i < numVertices; ++i)
-            {
-                Vertex& vtx = vertices[i];
-
-                vtx.position = *reinterpret_cast<const Vector3*>(bufferPos);
-                vtx.texCoord0 = bufferTexCoord ? *reinterpret_cast<const Vector2*>(bufferTexCoord) : Vector2(0.0f, 0.0f);
-                vtx.normal = *reinterpret_cast<const Vector3*>(bufferNormal);
-                vtx.tangent = bufferTangent ? *reinterpret_cast<const Vector4*>(bufferTangent) : Vector4(1.0f, 0.0f, 0.0f, 1.0f);
-
-                bufferPos += posStride;
-                bufferTexCoord += texCoordStride;
-                bufferNormal += normalStride;
-                bufferTangent += tangentStride;
-            }
-
-            // Indices
-            switch(indAcc.componentType)
-            {
-                case TINYGLTF_PARAMETER_TYPE_UNSIGNED_INT:
-                {
-                    const uint32_t* bufferInd = reinterpret_cast<const uint32_t*>(&(model.buffers[indView.buffer].data[indAcc.byteOffset + indView.byteOffset]));
-                    for (uint32_t i = 0; i < numIndices; ++i)
-                    {
-                        indices[i] = bufferInd[i];
-                    }
-                    break;
-                }
-                case TINYGLTF_PARAMETER_TYPE_UNSIGNED_SHORT:
-                {
-                    const uint16_t* bufferInd = reinterpret_cast<const uint16_t*>(&(model.buffers[indView.buffer].data[indAcc.byteOffset + indView.byteOffset]));
-                    for (uint32_t i = 0; i < numIndices; ++i)
-                    {
-                        indices[i] = bufferInd[i];
-                    }
-                    break;
-                }
-                case TINYGLTF_PARAMETER_TYPE_UNSIGNED_BYTE:
-                {
-                    const uint8_t* bufferInd = reinterpret_cast<const uint8_t*>(&(model.buffers[indView.buffer].data[indAcc.byteOffset + indView.byteOffset]));
-                    for (uint32_t i = 0; i < numIndices; ++i)
-                    {
-                        indices[i] = bufferInd[i];
-                    }
-                    break;
-                }
-            }
-
-#ifdef BUILD_TANGENTS_IF_NEEDED
-            if (itTangent == primitive.attributes.end())
-            {
-                computeTSpace();
-            }
-#endif 
-#ifdef FORCE_WELD
-            weld();
-#endif 
-
-            ModuleResources* resources = app->getResources();
-
-            vertexBuffer = resources->createDefaultBuffer(vertices.get(), numVertices * sizeof(Vertex), name.c_str());
-            indexBuffer  = resources->createDefaultBuffer(indices.get(), numIndices * sizeof(uint32_t), name.c_str());
-
-            vertexBufferView.BufferLocation = vertexBuffer->GetGPUVirtualAddress();
-            vertexBufferView.StrideInBytes = sizeof(Vertex);
-            vertexBufferView.SizeInBytes = numVertices * sizeof(Mesh::Vertex);
-
-            indexBufferView.BufferLocation = indexBuffer->GetGPUVirtualAddress();
-            indexBufferView.Format = DXGI_FORMAT_R32_UINT;
-            indexBufferView.SizeInBytes = sizeof(uint32_t);
-
-            // TODO Material Index only in scene
-            materialIndex = primitive.material;
         }
+
+        materialIndex = primitive.material;
     }
 }
 

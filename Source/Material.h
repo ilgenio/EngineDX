@@ -31,8 +31,6 @@ public:
 
     ALPHAMODE getAlphaMode() const {return alphaMode;}
 
-    const DescriptorGroup& getDescriptors() const { return descGroup; }
-
     static ID3D12RootSignature* getRootSignature() { return rootSignature.Get(); }
 
     static void createSharedData();
@@ -90,7 +88,14 @@ private:
     ComPtr<ID3D12Resource>  transmissionTex;
     ALPHAMODE               alphaMode = ALPHA_MODE_OPAQUE;
     float                   alphaCutoff = 0.5f;
-    DescriptorGroup         descGroup;
+    UINT                    baseColourDesc = UINT32_MAX;
+    UINT                    metalRoughDesc = UINT32_MAX;
+    UINT                    normalDesc = UINT32_MAX;
+    UINT                    occlusionDesc = UINT32_MAX;
+    UINT                    iridiscenceDesc = UINT32_MAX;
+    UINT                    iridiscenceThicknessDesc = UINT32_MAX;
+    UINT                    transmissionDesc = UINT32_MAX;
+    UINT                    materialDesc = UINT32_MAX;
 
     static ComPtr<ID3D12RootSignature> rootSignature;
     static ComPtr<ID3D12Resource> whiteFallback;

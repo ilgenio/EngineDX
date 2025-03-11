@@ -58,15 +58,12 @@ bool Exercise4::init()
     {
         ModuleDescriptors* descriptors = app->getDescriptors();
 
-        descriptors->allocateDescGroup(2, debugFonts);
-        descriptors->allocateDescGroup(1, srvDog);
-        descriptors->createTextureSRV(textureDog.Get(), srvDog);
+        dogDescriptor = descriptors->createTextureSRV(textureDog.Get());
 
         ModuleD3D12* d3d12 = app->getD3D12();
 
-        debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue(), debugFonts.getCPU(0), debugFonts.getGPU(0));
-
-        imguiPass = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd(), debugFonts.getCPU(1), debugFonts.getGPU(1));
+        debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue());
+        imguiPass = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd());
     }
      
     return true;
@@ -150,7 +147,7 @@ void Exercise4::render()
     commandList->SetDescriptorHeaps(2, descriptorHeaps);
 
     commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix)/sizeof(UINT32), &mvp, 0);
-    commandList->SetGraphicsRootDescriptorTable(1, srvDog.getGPU(0));
+    commandList->SetGraphicsRootDescriptorTable(1, descriptors->getGPUHanlde(dogDescriptor));
     commandList->SetGraphicsRootDescriptorTable(2, samplers->getDefaultGroup().getGPU(sampler));
 
     commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);

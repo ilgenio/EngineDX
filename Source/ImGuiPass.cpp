@@ -8,8 +8,20 @@
 #include "backends/imgui_impl_win32.h"
 #include "backends/imgui_impl_dx12.h"
 
-ImGuiPass::ImGuiPass(ID3D12Device2* device, HWND hWnd, D3D12_CPU_DESCRIPTOR_HANDLE cpuFont, D3D12_GPU_DESCRIPTOR_HANDLE gpuFont)
+ImGuiPass::ImGuiPass(ID3D12Device2* device, HWND hWnd)
 {
+
+    // It's not optimal but makes ImGuiPass independent from ModuleDescriptor slides
+    D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
+    heapDesc.NumDescriptors = 1;
+    heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+    heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+
+    device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&heap));
+
+    D3D12_CPU_DESCRIPTOR_HANDLE cpuFont = heap->GetCPUDescriptorHandleForHeapStart();
+    D3D12_GPU_DESCRIPTOR_HANDLE gpuFont = heap->GetGPUDescriptorHandleForHeapStart();
+
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -64,6 +76,11 @@ void ImGuiPass::startFrame()
 void ImGuiPass::record(ID3D12GraphicsCommandList* commandList)
 {
     ImGui::Render();
+
+    // It's not optimal but makes ImGuiPass independent from ModuleDescriptor slides
+
+    ID3D12DescriptorHeap* descriptorHeaps[] = { heap.Get()};
+    commandList->SetDescriptorHeaps(1, descriptorHeaps);
 
     ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList);
 }

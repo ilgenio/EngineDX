@@ -112,6 +112,9 @@
     <ClCompile Include="ModuleSamplers.cpp">
       <Filter>Modules</Filter>
     </ClCompile>
+    <ClCompile Include="Model.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EngineDX.h">
@@ -230,6 +233,12 @@
     </ClInclude>
     <ClInclude Include="ModuleSamplers.h">
       <Filter>Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="gltf_utils.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Model.h">
+      <Filter>Scene</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
