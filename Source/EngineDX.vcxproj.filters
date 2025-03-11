@@ -115,6 +115,9 @@
     <ClCompile Include="Model.cpp">
       <Filter>Scene</Filter>
     </ClCompile>
+    <ClCompile Include="Exercise5.cpp">
+      <Filter>Exercises</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EngineDX.h">
@@ -240,6 +243,9 @@
     <ClInclude Include="Model.h">
       <Filter>Scene</Filter>
     </ClInclude>
+    <ClInclude Include="Exercise5.h">
+      <Filter>Exercises</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="EngineDX.ico">
@@ -302,6 +308,12 @@
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\Exercise4VS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\Exercise5PS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\Exercise5VS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>

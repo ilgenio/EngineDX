@@ -1,11 +1,14 @@
 #include "Globals.h"
-#include "Exercise4.h"
+#include "Exercise5.h"
 
 #include "Application.h"
 #include "ModuleD3D12.h"
 #include "ModuleCamera.h"
 #include "ModuleResources.h"
 #include "ModuleDescriptors.h"
+#include "ModuleSamplers.h"
+#include "Model.h"
+#include "Mesh.h"
 
 #include "ReadData.h"
 
@@ -16,39 +19,25 @@
 
 #include <imgui.h>
 
-bool Exercise4::init() 
+Exercise5::Exercise5()
 {
-    struct Vertex
-    {
-        Vector3 position;
-        Vector2 uv;
-    };
 
-    static Vertex vertices[6] =
-    {
-        { Vector3(-1.0f, -1.0f, 0.0f),  Vector2(-0.2f, 1.2f) },
-        { Vector3(-1.0f, 1.0f, 0.0f),   Vector2(-0.2f, -0.2f) },
-        { Vector3(1.0f, 1.0f, 0.0f),    Vector2(1.2f, -0.2f) },
-        { Vector3(-1.0f, -1.0f, 0.0f),  Vector2(-0.2f, 1.2f) },
-        { Vector3(1.0f, 1.0f, 0.0f),    Vector2(1.2f, -0.2f) },
-        { Vector3(1.0f, -1.0f, 0.0f),   Vector2(1.2f, 1.2f) }
-    };
-        
-    bool ok = createVertexBuffer(&vertices[0], sizeof(vertices), sizeof(Vertex));
-    ok = ok && createRootSignature();
+}
+
+Exercise5::~Exercise5()
+{
+
+}
+
+bool Exercise5::init() 
+{
+    bool ok = createRootSignature();
     ok = ok && createPSO();
 
-    if (ok)
+    if(ok)
     {
-        ModuleResources* resources = app->getResources();
-        ModuleDescriptors* descriptors = app->getDescriptors();
-
-        textureDog = resources->createTextureFromFile(std::wstring(L"Assets/Textures/dog.dds"));
-
-        if((ok = textureDog) == true)
-        {
-            dogDescriptor = descriptors->createTextureSRV(textureDog.Get());
-        }
+        model = std::make_unique<Model>();
+        model->load("Assets/Models/Duck/duck.gltf", "Assets/Models/Duck/");
     }
 
     if(ok)
@@ -62,26 +51,20 @@ bool Exercise4::init()
     return true;
 }
 
-bool Exercise4::cleanUp()
+bool Exercise5::cleanUp()
 {
     imguiPass.reset();
 
     return true;
 }
 
-void Exercise4::preRender()
+void Exercise5::preRender()
 {
     imguiPass->startFrame();
 }
 
-void Exercise4::render()
+void Exercise5::render()
 {
-    ImGui::Begin("Texture Viewer Options");
-    ImGui::Checkbox("Show grid", &showGrid);
-    ImGui::Checkbox("Show axis", &showAxis);
-    ImGui::Combo("Sampler", &sampler, "Linear/Wrap\0Point/Wrap\0Linear/Clamp\0Point/Clamp", ModuleSamplers::COUNT);
-    ImGui::End();
-
     ModuleD3D12* d3d12  = app->getD3D12();
     ModuleCamera* camera = app->getCamera();
     ModuleDescriptors* descriptors = app->getDescriptors();
@@ -97,11 +80,10 @@ void Exercise4::render()
     unsigned width = d3d12->getWindowWidth();
     unsigned height = d3d12->getWindowHeight();
 
-    Matrix model = Matrix::Identity;
     const Matrix& view = camera->getView();
     const Matrix& proj = camera->getProj();
 
-    Matrix mvp = model * view * proj;
+    Matrix mvp = view * proj;
     mvp = mvp.Transpose();
 
     D3D12_VIEWPORT viewport;
@@ -130,15 +112,18 @@ void Exercise4::render()
     commandList->RSSetViewports(1, &viewport);
     commandList->RSSetScissorRects(1, &scissor);
     commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);   // set the primitive topology
-    commandList->IASetVertexBuffers(0, 1, &vertexBufferView);                   // set the vertex buffer (using the vertex buffer view)
-
-
-    ID3D12DescriptorHeap *descriptorHeaps[] = {descriptors->getHeap(), samplers->getHeap()};
+    ID3D12DescriptorHeap* descriptorHeaps[] = { descriptors->getHeap(), samplers->getHeap() };
     commandList->SetDescriptorHeaps(2, descriptorHeaps);
 
-    commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix)/sizeof(UINT32), &mvp, 0);
-    commandList->SetGraphicsRootDescriptorTable(1, descriptors->getGPUHanlde(dogDescriptor));
-    commandList->SetGraphicsRootDescriptorTable(2, samplers->getGPUHanlde(ModuleSamplers::Type(sampler)));
+    for (uint32_t i = 0; i < model->getNumMeshes(); ++i)
+    {
+        const Mesh& mesh = model->getMesh(i);
+        commandList->IASetVertexBuffers(0, 1, &mesh.getVertexBufferView());                   // set the vertex buffer (using the vertex buffer view)
+        commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &mvp, 0);
+
+        //commandList->SetGraphicsRootDescriptorTable(1, descriptors->getGPUHanlde(dogDescriptor));
+        commandList->SetGraphicsRootDescriptorTable(2, samplers->getGPUHanlde(ModuleSamplers::LINEAR_WRAP));
+    }
 
     commandList->DrawInstanced(6, 1, 0, 0);
 
@@ -158,32 +143,13 @@ void Exercise4::render()
     }
 }
 
-bool Exercise4::createVertexBuffer(void* bufferData, unsigned bufferSize, unsigned stride)
-{
-    ModuleResources* resources = app->getResources();
-    vertexBuffer = resources->createDefaultBuffer(bufferData, bufferSize, "QuadVB");
-
-    if(vertexBuffer)
-    {
-        vertexBufferView.BufferLocation = vertexBuffer->GetGPUVirtualAddress();
-        vertexBufferView.StrideInBytes  = stride;
-        vertexBufferView.SizeInBytes    = bufferSize;
-
-        return true;
-#include "Module.h"
-    }
-
-    return false;
-}
-
-
-bool Exercise4::createRootSignature()
+bool Exercise5::createRootSignature()
 {
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
     CD3DX12_ROOT_PARAMETER rootParameters[3] = {};
     CD3DX12_DESCRIPTOR_RANGE srvRange, sampRange;
 
-    srvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);   
+    srvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
     sampRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, ModuleSamplers::COUNT, 0);
 
     rootParameters[0].InitAsConstants((sizeof(Matrix) / sizeof(UINT32)), 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
@@ -207,13 +173,13 @@ bool Exercise4::createRootSignature()
     return true;
 }
 
-bool Exercise4::createPSO()
+bool Exercise5::createPSO()
 {
     D3D12_INPUT_ELEMENT_DESC inputLayout[] = {{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
                                               {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}};
 
-    auto dataVS = DX::ReadData(L"Exercise4VS.cso");
-    auto dataPS = DX::ReadData(L"Exercise4PS.cso");
+    auto dataVS = DX::ReadData(L"Exercise5VS.cso");
+    auto dataPS = DX::ReadData(L"Exercise5PS.cso");
 
     D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
     psoDesc.InputLayout = { inputLayout, sizeof(inputLayout) / sizeof(D3D12_INPUT_ELEMENT_DESC) };  // the structure describing our input layout

@@ -21,7 +21,7 @@ Model::~Model()
 {
 }
 
-void Model::load(const char* fileName)
+void Model::load(const char* fileName, const char* basePath)
 {
     tinygltf::TinyGLTF gltfContext;
     tinygltf::Model model;
@@ -31,7 +31,7 @@ void Model::load(const char* fileName)
 
     if (loadOk)
     {
-        loadMaterials(model);
+        loadMaterials(model, basePath);
         loadMeshes(model);
     }
     else
@@ -43,7 +43,8 @@ void Model::load(const char* fileName)
 
 void Model::loadMeshes(const tinygltf::Model& model)
 {
-    meshes = std::make_unique<Mesh[]>(model.meshes.size());
+    numMeshes = model.meshes.size();
+    meshes = std::make_unique<Mesh[]>(numMeshes);
     int meshIndex = 0;
 
     for(const tinygltf::Mesh& mesh : model.meshes)
@@ -55,13 +56,13 @@ void Model::loadMeshes(const tinygltf::Model& model)
     }
 }
 
-void Model::loadMaterials(const tinygltf::Model& model)
+void Model::loadMaterials(const tinygltf::Model& model, const char* basePath)
 {
     ModuleDescriptors* descriptors = app->getDescriptors();
     ModuleResources* resources = app->getResources();
 
-
-    textures = std::make_unique<TextureInfo[]>(model.materials.size());
+    numTextures = model.materials.size();
+    textures = std::make_unique<TextureInfo[]>(numTextures);
     int materialIndex = 0;
 
     for(const tinygltf::Material& material : model.materials)
@@ -74,7 +75,7 @@ void Model::loadMaterials(const tinygltf::Model& model)
 
             if (!image.uri.empty())
             {
-                textures[materialIndex].resource = resources->createTextureFromFile(image.uri);
+                textures[materialIndex].resource = resources->createTextureFromFile(std::string(basePath)+image.uri);
                 textures[materialIndex].desc = descriptors->createTextureSRV(textures[materialIndex].resource.Get());
             }
         }

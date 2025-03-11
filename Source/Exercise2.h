@@ -10,8 +10,6 @@ class Exercise2 : public Module
     ComPtr<ID3D12Resource>      bufferUploadHeap;
     ComPtr<ID3D12RootSignature> rootSignature;
     ComPtr<ID3D12PipelineState> pso;
-    ComPtr<ID3DBlob>            vertexShader;
-    ComPtr<ID3DBlob>            pixelShader;
 public:
 
     virtual bool init() override;

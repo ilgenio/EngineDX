@@ -11,9 +11,6 @@
 #include <algorithm>
 
 ComPtr<ID3D12RootSignature> Material::rootSignature;
-ComPtr<ID3D12Resource> Material::whiteFallback;
-ComPtr<ID3D12Resource> Material::blackFallback;
-ComPtr<ID3D12Resource> Material::normalFallback;
 
 Material::Material()
 {
@@ -84,28 +81,11 @@ void Material::createSharedData()
 
     D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &rootSignatureBlob, nullptr);
     app->getD3D12()->getDevice()->CreateRootSignature(0, rootSignatureBlob->GetBufferPointer(), rootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
-
-    ModuleResources* resources = app->getResources();
-
-    uint32_t fallbackValue = uint32_t(0xFFFFFFFFu);
-    whiteFallback = resources->createRawTexture2D(&fallbackValue, sizeof(fallbackValue), 1, 1, DXGI_FORMAT_B8G8R8A8_UNORM);
-   
-
-    fallbackValue = uint32_t(0x00000000u);
-    blackFallback = resources->createRawTexture2D(&fallbackValue, sizeof(fallbackValue), 1, 1, DXGI_FORMAT_B8G8R8A8_UNORM);
-
-    fallbackValue = uint32_t(0xFF000000u);
-    normalFallback = resources->createRawTexture2D(&fallbackValue, sizeof(fallbackValue), 1, 1, DXGI_FORMAT_B8G8R8A8_UNORM);
 }
 
 void Material::destroySharedData()
 {
     rootSignature.Reset();
-    whiteFallback.Reset();
-
-    blackFallback.Reset();
-    normalFallback.Reset();
-
 }
 
 void Material::load(const tinygltf::Model& model, const tinygltf::Material &material, const char* basePath)
@@ -129,29 +109,17 @@ void Material::load(const tinygltf::Model& model, const tinygltf::Material &mate
     {
         baseColourDesc = descriptors->createTextureSRV(baseColorTex.Get());
     }
-    else
-    {
-        baseColourDesc = descriptors->createTextureSRV(blackFallback.Get());
-    }
 
     // Metallic Roughness Texture
     if (material.pbrMetallicRoughness.metallicRoughnessTexture.index >= 0 && loadTexture(model, base, material.pbrMetallicRoughness.metallicRoughnessTexture.index, metRougTex))
     {
         metalRoughDesc = descriptors->createTextureSRV(metRougTex.Get());
     }
-    else
-    {
-        metalRoughDesc = descriptors->createTextureSRV(blackFallback.Get());
-    }
 
     // Normals Texture
     if (material.normalTexture.index >= 0 && loadTexture(model, base, material.normalTexture.index, normalTex))
     {
         normalDesc = descriptors->createTextureSRV(normalTex.Get());
-    }
-    else
-    {
-        normalDesc = descriptors->createTextureSRV(normalFallback.Get());
     }
 
     data.normalScale = float(material.normalTexture.scale);
@@ -160,10 +128,6 @@ void Material::load(const tinygltf::Model& model, const tinygltf::Material &mate
     if (material.occlusionTexture.index >= 0 && loadTexture(model, base, material.occlusionTexture.index, occlusionTex))
     {
         occlusionDesc = descriptors->createTextureSRV(occlusionTex.Get());
-    }
-    else
-    {
-        occlusionDesc = descriptors->createTextureSRV(whiteFallback.Get());
     }
 
     // \todo: occlusion strength

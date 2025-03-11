@@ -1,25 +1,24 @@
 #pragma once
 
-#include "Module.h"
 #include "DebugDrawPass.h"
 #include "ImGuiPass.h"
-#include "ModuleSamplers.h"
+#include "Module.h"
 
-class Exercise4 : public Module
+class Model;
+
+class Exercise5 : public Module
 {
-    ComPtr<ID3D12Resource>          textureDog;
-    UINT                            dogDescriptor = 0;
-    ComPtr<ID3D12Resource>          vertexBuffer;
-    D3D12_VERTEX_BUFFER_VIEW        vertexBufferView;
     ComPtr<ID3D12RootSignature>     rootSignature;
     ComPtr<ID3D12PipelineState>     pso;
     std::unique_ptr<DebugDrawPass>  debugDrawPass;
     std::unique_ptr<ImGuiPass>      imguiPass;
     bool                            showAxis = true;
     bool                            showGrid = true;
-    int                             sampler = int(ModuleSamplers::LINEAR_WRAP);
+    std::unique_ptr<Model>          model;
 
 public:
+    Exercise5();
+    ~Exercise5();
 
     virtual bool init() override;
     virtual bool cleanUp() override;
@@ -28,8 +27,6 @@ public:
 
 private:
 
-    bool createVertexBuffer(void* bufferData, unsigned bufferSize, unsigned stride);
-    bool createIndexBuffer(void* bufferData, unsigned bufferSize);
     bool createRootSignature();
     bool createPSO();
     bool createUploadFence();
