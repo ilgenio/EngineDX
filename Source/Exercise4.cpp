@@ -25,23 +25,18 @@ bool Exercise4::init()
         Vector2 uv;
     };
 
-    static Vertex vertices[4] = 
+    static Vertex vertices[6] =
     {
         { Vector3(-1.0f, -1.0f, 0.0f),  Vector2(-0.2f, 1.2f) },
         { Vector3(-1.0f, 1.0f, 0.0f),   Vector2(-0.2f, -0.2f) },
         { Vector3(1.0f, 1.0f, 0.0f),    Vector2(1.2f, -0.2f) },
+        { Vector3(-1.0f, -1.0f, 0.0f),  Vector2(-0.2f, 1.2f) },
+        { Vector3(1.0f, 1.0f, 0.0f),    Vector2(1.2f, -0.2f) },
         { Vector3(1.0f, -1.0f, 0.0f),   Vector2(1.2f, 1.2f) }
     };
-
-    static short indices[6] = 
-    {
-        0, 1, 2,
-        0, 2, 3
-    };
-    
+        
     bool ok = createUploadFence();
     ok = ok && createVertexBuffer(&vertices[0], sizeof(vertices), sizeof(Vertex));
-    ok = ok && createIndexBuffer(&indices[0], sizeof(indices));
     ok = ok && createRootSignature();
     ok = ok && createPSO();
 
@@ -140,7 +135,6 @@ void Exercise4::render()
     commandList->RSSetScissorRects(1, &scissor);
     commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);   // set the primitive topology
     commandList->IASetVertexBuffers(0, 1, &vertexBufferView);                   // set the vertex buffer (using the vertex buffer view)
-    commandList->IASetIndexBuffer(&indexBufferView);                            // set the index buffer
 
 
     ID3D12DescriptorHeap *descriptorHeaps[] = {descriptors->getHeap(), samplers->getHeap()};
@@ -150,7 +144,7 @@ void Exercise4::render()
     commandList->SetGraphicsRootDescriptorTable(1, descriptors->getGPUHanlde(dogDescriptor));
     commandList->SetGraphicsRootDescriptorTable(2, samplers->getDefaultGroup().getGPU(sampler));
 
-    commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
+    commandList->DrawInstanced(6, 1, 0, 0);
 
     if(showGrid) dd::xzSquareGrid(-10.0f, 10.0f, 0.0f, 1.0f, dd::colors::LightGray);
     if(showAxis) dd::axisTriad(ddConvert(Matrix::Identity), 0.1f, 1.0f);
@@ -166,23 +160,6 @@ void Exercise4::render()
         ID3D12CommandList* commandLists[] = { commandList };
         d3d12->getDrawCommandQueue()->ExecuteCommandLists(UINT(std::size(commandLists)), commandLists);
     }
-}
-
-bool Exercise4::createIndexBuffer(void* bufferData, unsigned bufferSize)
-{
-    ModuleResources* resources = app->getResources();
-    indexBuffer = resources->createDefaultBuffer(bufferData, bufferSize, "QuadIB");
-
-    if(indexBuffer)
-    {
-        indexBufferView.BufferLocation = indexBuffer->GetGPUVirtualAddress();
-        indexBufferView.Format         = DXGI_FORMAT_R16_UINT;
-        indexBufferView.SizeInBytes    = bufferSize;
-
-        return true;
-    }
-
-    return false;
 }
 
 bool Exercise4::createVertexBuffer(void* bufferData, unsigned bufferSize, unsigned stride)
