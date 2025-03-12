@@ -76,7 +76,16 @@ void Model::loadMaterials(const tinygltf::Model& model, const char* basePath)
             if (!image.uri.empty())
             {
                 textures[materialIndex].resource = resources->createTextureFromFile(std::string(basePath)+image.uri);
-                textures[materialIndex].desc = descriptors->createTextureSRV(textures[materialIndex].resource.Get());
+
+                if (textures[materialIndex].resource)
+                {
+                    textures[materialIndex].desc = descriptors->createTextureSRV(textures[materialIndex].resource.Get());
+
+                }
+                else
+                {
+                    textures[materialIndex].desc = descriptors->getNullTexture2D();
+                }
             }
         }
 

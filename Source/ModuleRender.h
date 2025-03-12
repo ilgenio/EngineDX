@@ -26,7 +26,6 @@ private:
 private:
 
     std::unique_ptr<DebugDrawPass> debugDrawPass;
-    UINT                           debugFontImGUI = 0;
     UINT                           debugFontDebugDraw = 0;
 
     std::unique_ptr<ImGuiPass> imguiPass;

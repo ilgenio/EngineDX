@@ -4,7 +4,6 @@
 #include "Application.h"
 #include "ModuleD3D12.h"
 #include "ModuleCamera.h"
-#include "ModuleResources.h"
 #include "ModuleDescriptors.h"
 #include "ModuleSamplers.h"
 #include "Model.h"
@@ -119,13 +118,21 @@ void Exercise5::render()
     {
         const Mesh& mesh = model->getMesh(i);
         commandList->IASetVertexBuffers(0, 1, &mesh.getVertexBufferView());                   // set the vertex buffer (using the vertex buffer view)
+        commandList->IASetIndexBuffer(&mesh.getIndexBufferView());
         commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &mvp, 0);
 
-        //commandList->SetGraphicsRootDescriptorTable(1, descriptors->getGPUHanlde(dogDescriptor));
-        commandList->SetGraphicsRootDescriptorTable(2, samplers->getGPUHanlde(ModuleSamplers::LINEAR_WRAP));
-    }
+        if (mesh.getMaterialIndex() < model->getNumTextures())
+        {
+            commandList->SetGraphicsRootDescriptorTable(1, descriptors->getGPUHanlde(model->getTextureDescriptor(mesh.getMaterialIndex())));
+        }
+        else
+        { 
+            commandList->SetGraphicsRootDescriptorTable(1, descriptors->getGPUHanlde(descriptors->getNullTexture2D()));
+        }
 
-    commandList->DrawInstanced(6, 1, 0, 0);
+        commandList->SetGraphicsRootDescriptorTable(2, samplers->getGPUHanlde(ModuleSamplers::LINEAR_WRAP));
+        commandList->DrawIndexedInstanced(mesh.getNumIndices(), 1, 0, 0, 0);
+    }
 
     if(showGrid) dd::xzSquareGrid(-10.0f, 10.0f, 0.0f, 1.0f, dd::colors::LightGray);
     if(showAxis) dd::axisTriad(ddConvert(Matrix::Identity), 0.1f, 1.0f);
@@ -192,6 +199,7 @@ bool Exercise5::createPSO()
     psoDesc.SampleDesc = {1, 0};                                                                    // must be the same sample description as the swapchain and depth/stencil buffer
     psoDesc.SampleMask = 0xffffffff;                                                                // sample mask has to do with multi-sampling. 0xffffffff means point sampling is done
     psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);                               // a default rasterizer state.
+    psoDesc.RasterizerState.FrontCounterClockwise = TRUE;                                           // our models are counter clock wise
     psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
     psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);                                         // a default blend state.
     psoDesc.NumRenderTargets = 1;                                                                   // we are only binding one render target
@@ -199,5 +207,4 @@ bool Exercise5::createPSO()
     // create the pso
     return SUCCEEDED(app->getD3D12()->getDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pso)));
 }
-
 

@@ -36,7 +36,7 @@ inline bool loadAccessorData(uint8_t* data, size_t elemSize, size_t stride, size
     const auto& it = attributes.find(accesorName);
     if (it != attributes.end())
     {
-        return loadAccessorData(data, elemSize, count, stride, model, it->second);
+        return loadAccessorData(data, elemSize, stride, count, model, it->second);
     }
 
     return false;

@@ -76,7 +76,7 @@ void Mesh::load(const tinygltf::Model& model, const tinygltf::Mesh& mesh, const 
 
                 indexBufferView.BufferLocation = indexBuffer->GetGPUVirtualAddress();
                 indexBufferView.Format = formats[indexElementSize >> 1];
-                indexBufferView.SizeInBytes = indexElementSize;
+                indexBufferView.SizeInBytes = numIndices*indexElementSize;
             }
         }
 

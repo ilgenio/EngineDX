@@ -33,8 +33,7 @@ bool ModuleRender::init()
     bool ok = SUCCEEDED(device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, d3d12->getCommandAllocator(), nullptr, IID_PPV_ARGS(&commandList)));
     ok = ok && SUCCEEDED(commandList->Close());
 
-    debugFontImGUI = descriptors->allocateDescriptor();
-    imguiPass     = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd());
+    imguiPass = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd());
 
     return ok;
 }

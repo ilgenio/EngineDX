@@ -18,21 +18,20 @@ public:
     UINT allocateDescriptor()
     {
         _ASSERTE(current < count);
-
         return (current < count) ? current++ : count;         
     }
+
+    UINT getNullTexture2D() const { return nullTexture2D;  }
 
     D3D12_CPU_DESCRIPTOR_HANDLE getCPUHanlde(UINT index) const
     {
         _ASSERTE(index < current);
-        
         return CD3DX12_CPU_DESCRIPTOR_HANDLE(cpuStart, index, descriptorSize);
     }
 
     D3D12_GPU_DESCRIPTOR_HANDLE getGPUHanlde(UINT index) const
     {
         _ASSERTE(index < current);
-        
         return CD3DX12_GPU_DESCRIPTOR_HANDLE(gpuStart, index, descriptorSize);
     }
 
@@ -46,5 +45,6 @@ private:
     UINT descriptorSize = 0;
     UINT count = 0;
     UINT current = 0;
+    UINT nullTexture2D = 0;
 };
 
