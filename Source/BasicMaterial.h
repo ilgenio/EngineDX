@@ -11,8 +11,7 @@ public:
 
     void load(const tinygltf::Model& model, const tinygltf::Material& material, const char* basePath);
 
-    UINT getColourSRV() const {return baseColourSRV; }
-    UINT getMaterialCBV() const {return materialCBV; }
+    UINT getTableStartDescriptor() const { return baseColourSRV;  }
 
 private:
 

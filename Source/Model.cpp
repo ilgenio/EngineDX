@@ -30,6 +30,7 @@ void Model::load(const char* fileName, const char* basePath)
 
     if (loadOk)
     {
+        srcFile = fileName;
         loadMaterials(model, basePath);
         loadMeshes(model);
     }
@@ -37,7 +38,6 @@ void Model::load(const char* fileName, const char* basePath)
     {
         LOG("Error loading %s: %s", fileName, error.c_str());
     }
-
 }
 
 void Model::loadMeshes(const tinygltf::Model& model)

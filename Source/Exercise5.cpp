@@ -25,7 +25,6 @@ Exercise5::Exercise5()
 
 Exercise5::~Exercise5()
 {
-
 }
 
 bool Exercise5::init() 
@@ -37,6 +36,7 @@ bool Exercise5::init()
     {
         model = std::make_unique<Model>();
         model->load("Assets/Models/Duck/duck.gltf", "Assets/Models/Duck/");
+        model->setMatrix(Matrix::CreateScale(0.01f, 0.01f, 0.01f));
     }
 
     if(ok)
@@ -64,6 +64,18 @@ void Exercise5::preRender()
 
 void Exercise5::render()
 {
+    ImGui::Begin("Geometry Viewer Options");
+    ImGui::Checkbox("Show grid", &showGrid);
+    ImGui::Checkbox("Show axis", &showAxis);
+    ImGui::Text("Model loaded %s with %d meshes and %d materials", model->getSrcFile().c_str(), model->getNumMeshes(), model->getNumMaterials());
+
+    for (const Mesh& mesh : model->getMeshes())
+    {
+        ImGui::Text("Mesh %s with %d vertices and %d triangles", mesh.getName().c_str(), mesh.getNumVertices(), mesh.getNumIndices() / 3);
+    }
+
+    ImGui::End();
+
     ModuleD3D12* d3d12  = app->getD3D12();
     ModuleCamera* camera = app->getCamera();
     ModuleDescriptors* descriptors = app->getDescriptors();
@@ -122,8 +134,8 @@ void Exercise5::render()
 
         if (mesh.getMaterialIndex() < model->getNumMaterials())
         {
-            UINT colourSRV = model->getMaterials()[mesh.getMaterialIndex()].getColourSRV();
-            commandList->SetGraphicsRootDescriptorTable(1, descriptors->getGPUHanlde(colourSRV));
+            UINT tableStartDesc = model->getMaterials()[mesh.getMaterialIndex()].getTableStartDescriptor();
+            commandList->SetGraphicsRootDescriptorTable(1, descriptors->getGPUHanlde(tableStartDesc));
         }
         else
         { 
@@ -153,14 +165,16 @@ void Exercise5::render()
 bool Exercise5::createRootSignature()
 {
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-    CD3DX12_ROOT_PARAMETER rootParameters[3] = {};
-    CD3DX12_DESCRIPTOR_RANGE srvRange, sampRange;
+    CD3DX12_ROOT_PARAMETER rootParameters[4] = {};
+    CD3DX12_DESCRIPTOR_RANGE tableRanges[2];
+    CD3DX12_DESCRIPTOR_RANGE sampRange;
 
-    srvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
+    tableRanges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
+    tableRanges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1);
     sampRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, ModuleSamplers::COUNT, 0);
 
     rootParameters[0].InitAsConstants((sizeof(Matrix) / sizeof(UINT32)), 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
-    rootParameters[1].InitAsDescriptorTable(1, &srvRange, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[1].InitAsDescriptorTable(2, &tableRanges[0], D3D12_SHADER_VISIBILITY_PIXEL);
     rootParameters[2].InitAsDescriptorTable(1, &sampRange, D3D12_SHADER_VISIBILITY_PIXEL);
 
     rootSignatureDesc.Init(3, rootParameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);

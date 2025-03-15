@@ -85,7 +85,7 @@ void ModuleCamera::update()
         params.polar        += dragging.polar;
         params.azimuthal    += dragging.azimuthal;
         
-        params.panning      += Vector3::Transform(dragging.panning, rotation);
+        params.panning     += dragging.panning;
         dragging.polar      = 0.0f;
         dragging.azimuthal  = 0.0f;
         dragging.panning    = Vector3(0.0f);

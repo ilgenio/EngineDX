@@ -24,6 +24,8 @@ public:
     const Matrix& getMatrix() const { return matrix; }
     void setMatrix(const Matrix& m) { matrix = m; }
 
+    const std::string& getSrcFile() const { return srcFile; }
+
 private:
 
     void loadMeshes(const tinygltf::Model& model);
@@ -42,4 +44,5 @@ private:
     std::unique_ptr<Mesh[]> meshes;
     uint32_t numMeshes = 0;
     uint32_t numMaterials = 0;
+    std::string srcFile;
 };

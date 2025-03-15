@@ -1,8 +1,15 @@
-Texture2D colorTex : register(t0);
-SamplerState colorSamp : register(s0);
+
+cbuffer Material : register(b1)
+{
+    float4 colour;
+    uint hasColourTex;
+};
+
+Texture2D colourTex : register(t0);
+SamplerState colourSamp : register(s0);
 
 float4 exercise5PS(float2 coord : TEXCOORD) : SV_TARGET
 {
-    return colorTex.Sample(colorSamp, coord);
+    return hasColourTex ? colourTex.Sample(colourSamp, coord)*colour : colour;
 }
 
