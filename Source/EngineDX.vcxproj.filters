@@ -118,6 +118,9 @@
     <ClCompile Include="Exercise5.cpp">
       <Filter>Exercises</Filter>
     </ClCompile>
+    <ClCompile Include="BasicMaterial.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EngineDX.h">
@@ -245,6 +248,9 @@
     </ClInclude>
     <ClInclude Include="Exercise5.h">
       <Filter>Exercises</Filter>
+    </ClInclude>
+    <ClInclude Include="BasicMaterial.h">
+      <Filter>Scene</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

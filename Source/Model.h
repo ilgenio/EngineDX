@@ -1,26 +1,31 @@
 #pragma once
 
-#include "DescriptorHeaps.h"
-
-class Mesh;
+#include <span>
+#include "Mesh.h"
+#include "BasicMaterial.h"
 
 namespace tinygltf { class Model; }
 
 class Model
 {
 public:
+
     Model();
     ~Model();
 
     void load(const char* fileName, const char* basePath);
 
     uint32_t getNumMeshes() const { return numMeshes; }
-    uint32_t getNumTextures() const { return numTextures;  }
+    uint32_t getNumMaterials() const { return numMaterials;  }
 
-    const Mesh& getMesh(uint32_t index) const { _ASSERTE(index < numMeshes); return meshes[index]; }
-    UINT getTextureDescriptor(uint32_t index) const { _ASSERTE(index < numTextures); return textures[index].desc; }
+    std::span<const Mesh> getMeshes() const { return std::span<const Mesh>(meshes.get(), numMeshes); }
+    std::span<const BasicMaterial> getMaterials() const { return std::span<const BasicMaterial>(materials.get(), numMaterials); }
+
+    const Matrix& getMatrix() const { return matrix; }
+    void setMatrix(const Matrix& m) { matrix = m; }
 
 private:
+
     void loadMeshes(const tinygltf::Model& model);
     void loadMaterials(const tinygltf::Model& model, const char* basePath);
 
@@ -29,10 +34,12 @@ private:
     {
         ComPtr<ID3D12Resource> resource;
         UINT desc = 0;
+        Vector4 colour;
     };
 
-    std::unique_ptr<TextureInfo[]> textures;
+    Matrix matrix;
+    std::unique_ptr<BasicMaterial[]> materials;
     std::unique_ptr<Mesh[]> meshes;
     uint32_t numMeshes = 0;
-    uint32_t numTextures = 0;
+    uint32_t numMaterials = 0;
 };

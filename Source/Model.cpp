@@ -4,7 +4,6 @@
 #include "Application.h"
 #include "ModuleDescriptors.h"
 #include "ModuleResources.h"
-#include "Mesh.h"
 
 #define TINYGLTF_NO_STB_IMAGE_WRITE
 #define TINYGLTF_NO_STB_IMAGE
@@ -13,7 +12,7 @@
 #include "tiny_gltf.h"
 
 
-Model::Model()
+Model::Model() : matrix(Matrix::Identity)
 {
 }
 
@@ -61,35 +60,13 @@ void Model::loadMaterials(const tinygltf::Model& model, const char* basePath)
     ModuleDescriptors* descriptors = app->getDescriptors();
     ModuleResources* resources = app->getResources();
 
-    numTextures = model.materials.size();
-    textures = std::make_unique<TextureInfo[]>(numTextures);
+    numMaterials = model.materials.size();
+    materials = std::make_unique<BasicMaterial[]>(numMaterials);
     int materialIndex = 0;
 
     for(const tinygltf::Material& material : model.materials)
     {
-        int textureIndex = material.pbrMetallicRoughness.baseColorTexture.index;
-        if (textureIndex >= 0)
-        {
-            const tinygltf::Texture& texture = model.textures[textureIndex];
-            const tinygltf::Image& image = model.images[texture.source];
-
-            if (!image.uri.empty())
-            {
-                textures[materialIndex].resource = resources->createTextureFromFile(std::string(basePath)+image.uri);
-
-                if (textures[materialIndex].resource)
-                {
-                    textures[materialIndex].desc = descriptors->createTextureSRV(textures[materialIndex].resource.Get());
-
-                }
-                else
-                {
-                    textures[materialIndex].desc = descriptors->getNullTexture2D();
-                }
-            }
-        }
-
-        ++materialIndex;
+        materials[materialIndex++].load(model, material, basePath);
     }
 }
 

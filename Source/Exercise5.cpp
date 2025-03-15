@@ -82,7 +82,7 @@ void Exercise5::render()
     const Matrix& view = camera->getView();
     const Matrix& proj = camera->getProj();
 
-    Matrix mvp = view * proj;
+    Matrix mvp = model->getMatrix() * view * proj;
     mvp = mvp.Transpose();
 
     D3D12_VIEWPORT viewport;
@@ -110,20 +110,20 @@ void Exercise5::render()
     commandList->SetGraphicsRootSignature(rootSignature.Get());
     commandList->RSSetViewports(1, &viewport);
     commandList->RSSetScissorRects(1, &scissor);
-    commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);   // set the primitive topology
+    commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);  // set the primitive topology
     ID3D12DescriptorHeap* descriptorHeaps[] = { descriptors->getHeap(), samplers->getHeap() };
     commandList->SetDescriptorHeaps(2, descriptorHeaps);
 
-    for (uint32_t i = 0; i < model->getNumMeshes(); ++i)
+    for (const Mesh& mesh : model->getMeshes())
     {
-        const Mesh& mesh = model->getMesh(i);
-        commandList->IASetVertexBuffers(0, 1, &mesh.getVertexBufferView());                   // set the vertex buffer (using the vertex buffer view)
+        commandList->IASetVertexBuffers(0, 1, &mesh.getVertexBufferView());    // set the vertex buffer (using the vertex buffer view)
         commandList->IASetIndexBuffer(&mesh.getIndexBufferView());
         commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &mvp, 0);
 
-        if (mesh.getMaterialIndex() < model->getNumTextures())
+        if (mesh.getMaterialIndex() < model->getNumMaterials())
         {
-            commandList->SetGraphicsRootDescriptorTable(1, descriptors->getGPUHanlde(model->getTextureDescriptor(mesh.getMaterialIndex())));
+            UINT colourSRV = model->getMaterials()[mesh.getMaterialIndex()].getColourSRV();
+            commandList->SetGraphicsRootDescriptorTable(1, descriptors->getGPUHanlde(colourSRV));
         }
         else
         { 

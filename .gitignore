@@ -104,3 +104,4 @@ Source/EngineDX.vcxproj.filters
 Source/tmp/x64/Debug/material.obj.enc
 Source/tmp/x64/Debug/material.obj.enc
 Source/tmp/x64/Debug/material.obj.enc
+/Source/3rdParty/DirectXTex/Shaders/Compiled
