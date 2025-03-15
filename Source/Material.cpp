@@ -152,7 +152,7 @@ void Material::load(const tinygltf::Model& model, const tinygltf::Material &mate
 
     // Material Buffer
 
-    materialBuffer = app->getResources()->createDefaultBuffer(&data, sizeof(data), name.c_str(), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
+    materialBuffer = app->getResources()->createDefaultBuffer(&data, alignUp(sizeof(data), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT), name.c_str());
     materialDesc = descriptors->createCBV(materialBuffer.Get());
 }
 

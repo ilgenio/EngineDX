@@ -41,12 +41,19 @@ void BasicMaterial::load(const tinygltf::Model& model, const tinygltf::Material&
         }
     }
 
+    materialBuffer = app->getResources()->createDefaultBuffer(&materialData, alignUp(sizeof(MaterialData), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT), name.c_str());
+
+    // Descriptors 
+
     if (materialData.hasColourTexture)
     {
         baseColourSRV = app->getDescriptors()->createTextureSRV(baseColourTex.Get());
     }
-
-    materialBuffer = app->getResources()->createDefaultBuffer(&materialData, sizeof(MaterialData), name.c_str(), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
+    else
+    {
+        baseColourSRV = app->getDescriptors()->createNullTexture2DSRV();
+    }
+ 
     materialCBV = app->getDescriptors()->createCBV(materialBuffer.Get());
 }
 

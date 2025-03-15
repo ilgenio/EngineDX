@@ -7,13 +7,6 @@
 
 #include "DirectXTex.h"
 
-namespace
-{
-    size_t alignUp(size_t value, size_t alignment)
-    {
-        return (value + alignment - 1) & ~(alignment - 1);
-    }
-}
 
 ModuleResources::ModuleResources()
 {
@@ -49,15 +42,13 @@ bool ModuleResources::cleanUp()
     return true;
 }
 
-ComPtr<ID3D12Resource> ModuleResources::createUploadBuffer(void* data, size_t size, const char* name, size_t alignment)
+ComPtr<ID3D12Resource> ModuleResources::createUploadBuffer(void* data, size_t size, const char* name)
 {
     ModuleD3D12* d3d12 = app->getD3D12();
     ID3D12Device2* device = d3d12->getDevice();
     ID3D12CommandQueue* queue = d3d12->getDrawCommandQueue();
 
     ComPtr<ID3D12Resource> buffer;
-
-    size = alignUp(size, alignment);
 
     CD3DX12_HEAP_PROPERTIES heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
     CD3DX12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Buffer(size);
@@ -67,7 +58,7 @@ ComPtr<ID3D12Resource> ModuleResources::createUploadBuffer(void* data, size_t si
 }
 
 
-ComPtr<ID3D12Resource> ModuleResources::createDefaultBuffer(void* data, size_t size, const char* name, size_t alignment)
+ComPtr<ID3D12Resource> ModuleResources::createDefaultBuffer(void* data, size_t size, const char* name)
 {
     ModuleD3D12* d3d12 = app->getD3D12();
     ID3D12Device2* device = d3d12->getDevice();
@@ -75,10 +66,8 @@ ComPtr<ID3D12Resource> ModuleResources::createDefaultBuffer(void* data, size_t s
 
     ComPtr<ID3D12Resource> buffer;
 
-    size = alignUp(size, alignment);
-
     CD3DX12_HEAP_PROPERTIES heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-    CD3DX12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Buffer(alignUp(size, alignment));
+    CD3DX12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Buffer(size);
     bool ok = SUCCEEDED(device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&buffer)));
 
     heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);

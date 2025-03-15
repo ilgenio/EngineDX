@@ -35,6 +35,8 @@ bool Exercise5::init()
     if(ok)
     {
         model = std::make_unique<Model>();
+        //model->load("Assets/Models/BoxInterleaved/BoxInterleaved.gltf", "Assets/Models/BoxInterleaved/");
+        //model->load("Assets/Models/BoxTextured/BoxTextured.gltf", "Assets/Models/BoxTextured/");
         model->load("Assets/Models/Duck/duck.gltf", "Assets/Models/Duck/");
         model->setMatrix(Matrix::CreateScale(0.01f, 0.01f, 0.01f));
     }
@@ -129,21 +131,26 @@ void Exercise5::render()
     for (const Mesh& mesh : model->getMeshes())
     {
         commandList->IASetVertexBuffers(0, 1, &mesh.getVertexBufferView());    // set the vertex buffer (using the vertex buffer view)
-        commandList->IASetIndexBuffer(&mesh.getIndexBufferView());
-        commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &mvp, 0);
 
         if (mesh.getMaterialIndex() < model->getNumMaterials())
         {
-            UINT tableStartDesc = model->getMaterials()[mesh.getMaterialIndex()].getTableStartDescriptor();
-            commandList->SetGraphicsRootDescriptorTable(1, descriptors->getGPUHanlde(tableStartDesc));
-        }
-        else
-        { 
-            commandList->SetGraphicsRootDescriptorTable(1, descriptors->getGPUHanlde(descriptors->getNullTexture2D()));
-        }
+            const BasicMaterial& material = model->getMaterials()[mesh.getMaterialIndex()];
 
-        commandList->SetGraphicsRootDescriptorTable(2, samplers->getGPUHanlde(ModuleSamplers::LINEAR_WRAP));
-        commandList->DrawIndexedInstanced(mesh.getNumIndices(), 1, 0, 0, 0);
+            UINT tableStartDesc = material.getTableStartDescriptor();
+            commandList->SetGraphicsRootDescriptorTable(1, descriptors->getGPUHanlde(tableStartDesc));
+            commandList->SetGraphicsRootDescriptorTable(2, samplers->getGPUHanlde(ModuleSamplers::LINEAR_WRAP));
+            commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &mvp, 0);
+
+            if (mesh.getNumIndices() > 0)
+            {
+                commandList->IASetIndexBuffer(&mesh.getIndexBufferView());
+                commandList->DrawIndexedInstanced(mesh.getNumIndices(), 1, 0, 0, 0);
+            }
+            else
+            {
+                commandList->DrawInstanced(mesh.getNumVertices(), 1, 0, 0);
+            }
+        }
     }
 
     if(showGrid) dd::xzSquareGrid(-10.0f, 10.0f, 0.0f, 1.0f, dd::colors::LightGray);

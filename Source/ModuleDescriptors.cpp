@@ -32,10 +32,6 @@ bool ModuleDescriptors::init()
     cpuStart = heap->GetCPUDescriptorHandleForHeapStart();
     gpuStart = heap->GetGPUDescriptorHandleForHeapStart();
 
-    nullTexture2D = current++;
-    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{ DXGI_FORMAT_R32G32B32A32_UINT,  D3D12_SRV_DIMENSION_TEXTURE2D, D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING, {} };
-    device->CreateShaderResourceView(nullptr, &srvDesc, CD3DX12_CPU_DESCRIPTOR_HANDLE(cpuStart, nullTexture2D, descriptorSize));
-
     return true;
 }
 
@@ -77,6 +73,22 @@ UINT ModuleDescriptors::createTextureSRV(ID3D12Resource* resource)
     {
         UINT index = current++;
         app->getD3D12()->getDevice()->CreateShaderResourceView(resource, nullptr, CD3DX12_CPU_DESCRIPTOR_HANDLE(cpuStart, index, descriptorSize));
+
+        return index;
+    }
+
+    return current;
+}
+
+UINT ModuleDescriptors::createNullTexture2DSRV()
+{
+    _ASSERTE(current < count);
+
+    if (current < count)
+    {
+        UINT index = current++;
+        D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{ DXGI_FORMAT_R32G32B32A32_UINT,  D3D12_SRV_DIMENSION_TEXTURE2D, D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING, {} };
+        app->getD3D12()->getDevice()->CreateShaderResourceView(nullptr, &srvDesc, CD3DX12_CPU_DESCRIPTOR_HANDLE(cpuStart, index, descriptorSize));
 
         return index;
     }

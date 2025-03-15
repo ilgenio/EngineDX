@@ -14,14 +14,15 @@ public:
 
     UINT createCBV(ID3D12Resource* resource);
     UINT createTextureSRV(ID3D12Resource* resource); 
+    UINT createNullTexture2DSRV();
 
-    UINT allocateDescriptor()
+    UINT allocateDescriptors(UINT numDescriptors = 0)
     {
-        _ASSERTE(current < count);
-        return (current < count) ? current++ : count;         
+        _ASSERTE(current + numDescriptors <= count);
+        UINT index = current;
+        current += numDescriptors;
+        return index;         
     }
-
-    UINT getNullTexture2D() const { return nullTexture2D;  }
 
     D3D12_CPU_DESCRIPTOR_HANDLE getCPUHanlde(UINT index) const
     {
@@ -45,6 +46,5 @@ private:
     UINT descriptorSize = 0;
     UINT count = 0;
     UINT current = 0;
-    UINT nullTexture2D = 0;
 };
 

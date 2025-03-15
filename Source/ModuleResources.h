@@ -32,8 +32,8 @@ public:
     bool init() override;
     bool cleanUp() override;
 
-    ComPtr<ID3D12Resource> createUploadBuffer(void* data, size_t size, const char* name, size_t alignment = D3D12_STANDARD_MAXIMUM_ELEMENT_ALIGNMENT_BYTE_MULTIPLE);
-    ComPtr<ID3D12Resource> createDefaultBuffer(void* data, size_t size, const char* name, size_t alignment = D3D12_STANDARD_MAXIMUM_ELEMENT_ALIGNMENT_BYTE_MULTIPLE);
+    ComPtr<ID3D12Resource> createUploadBuffer(void* data, size_t size, const char* name);
+    ComPtr<ID3D12Resource> createDefaultBuffer(void* data, size_t size, const char* name);
 
     ComPtr<ID3D12Resource> createRawTexture2D(const void* data, size_t rowSize, size_t width, size_t height, DXGI_FORMAT format);
     ComPtr<ID3D12Resource> createTextureFromMemory(const void* data, size_t size, const char* name);
