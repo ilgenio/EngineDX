@@ -2,7 +2,7 @@
 cbuffer Material : register(b1)
 {
     float4 colour;
-    uint hasColourTex;
+    bool hasColourTex;
 };
 
 Texture2D colourTex : register(t0);

@@ -266,6 +266,8 @@ public:
     {
         createBuffer(DEBUG_DRAW_VERTEX_BUFFER_SIZE * sizeof(dd::DrawVertex), lineBuffer, lineBufferView);
         createBuffer(DEBUG_DRAW_VERTEX_BUFFER_SIZE * sizeof(dd::DrawVertex), pointBuffer, pointBufferView);
+        lineBuffer->SetName(L"DebugDraw LineBuffer");
+        pointBuffer->SetName(L"DebugDraw PointBuffer");
     }
 
     void beginDraw() override { }    
@@ -357,7 +359,8 @@ public:
 
             CD3DX12_HEAP_PROPERTIES defaultProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
             device->CreateCommittedResource(&defaultProperties, D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&glyphTexture));
-
+            glyphTexture->SetName(L"Debug Draw glyph texture");
+            
             UINT64 requiredSize = 0;
             UINT64 rowSize = 0;
 
@@ -475,6 +478,8 @@ DebugDrawPass::~DebugDrawPass()
 
 void DebugDrawPass::record(ID3D12GraphicsCommandList* commandList, uint32_t width, uint32_t height, const Matrix& view, const Matrix& proj)
 {
+    BEGIN_EVENT(commandList, "DebugDraw Pass");
+
     implementation->mvpMatrix     = view * proj;
     implementation->commandList   = commandList;
 
@@ -482,4 +487,6 @@ void DebugDrawPass::record(ID3D12GraphicsCommandList* commandList, uint32_t widt
     implementation->height        = height;
 
     dd::flush();
+
+    END_EVENT(commandList);
 }

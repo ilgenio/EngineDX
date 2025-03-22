@@ -4,12 +4,22 @@
 #define NOMINMAX
 #define INITGUID
 
+#ifdef _DEBUG
+#define USE_PIX 1
+#else
+#define USE_PIX 0
+#endif 
+
 #include <windows.h>
 #include <wrl.h>
 #include <d3d12.h>
 #include "d3dx12.h"
 
 #include "SimpleMath.h"
+
+#if USE_PIX
+#include "WinPixEventRuntime/pix3.h"
+#endif 
 
 #include <assert.h>
 
@@ -30,3 +40,11 @@ inline size_t alignUp(size_t value, size_t alignment)
 {
     return (value + alignment - 1) & ~(alignment - 1);
 }
+
+#if USE_PIX
+#define BEGIN_EVENT(commandList, text)  PIXBeginEvent(commandList, PIX_COLOR_DEFAULT, text)
+#define END_EVENT(commandList) PIXEndEvent(commandList)
+#else
+#define BEGIN_EVENT(commandList, text)
+#define END_EVENT()
+#endif 

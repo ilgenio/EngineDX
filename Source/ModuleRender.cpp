@@ -28,7 +28,7 @@ bool ModuleRender::init()
     ModuleDescriptors* descriptors = app->getDescriptors();
 
     debugFontDebugDraw = descriptors->allocateDescriptors();
-    debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue(), descriptors->getCPUHanlde(debugFontDebugDraw), descriptors->getGPUHanlde(debugFontDebugDraw));
+    debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue(), descriptors->getCPUHandle(debugFontDebugDraw), descriptors->getGPUHandle(debugFontDebugDraw));
 
     bool ok = SUCCEEDED(device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, d3d12->getCommandAllocator(), nullptr, IID_PPV_ARGS(&commandList)));
     ok = ok && SUCCEEDED(commandList->Close());

@@ -8,6 +8,7 @@
 #include "backends/imgui_impl_win32.h"
 #include "backends/imgui_impl_dx12.h"
 
+
 ImGuiPass::ImGuiPass(ID3D12Device2* device, HWND hWnd)
 {
 
@@ -75,6 +76,8 @@ void ImGuiPass::startFrame()
 
 void ImGuiPass::record(ID3D12GraphicsCommandList* commandList)
 {
+    BEGIN_EVENT(commandList, "ImGui Pass");
+
     ImGui::Render();
 
     // It's not optimal but makes ImGuiPass independent from ModuleDescriptor slides
@@ -83,4 +86,6 @@ void ImGuiPass::record(ID3D12GraphicsCommandList* commandList)
     commandList->SetDescriptorHeaps(1, descriptorHeaps);
 
     ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList);
+
+    END_EVENT(commandList);
 }

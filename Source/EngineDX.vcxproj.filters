@@ -121,6 +121,9 @@
     <ClCompile Include="BasicMaterial.cpp">
       <Filter>Scene</Filter>
     </ClCompile>
+    <ClCompile Include="3rdParty\ImGuizmo\ImGuizmo.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EngineDX.h">
@@ -251,6 +254,9 @@
     </ClInclude>
     <ClInclude Include="BasicMaterial.h">
       <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="3rdParty\ImGuizmo\ImGuizmo.h">
+      <Filter>imgui</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

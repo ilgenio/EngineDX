@@ -18,7 +18,7 @@ private:
     struct MaterialData
     {
         Vector4 baseColour       = Vector4::One;
-        UINT    hasColourTexture = 0;
+        BOOL    hasColourTexture = 0;
     };
 
     MaterialData            materialData;

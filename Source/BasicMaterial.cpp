@@ -20,12 +20,13 @@ BasicMaterial::~BasicMaterial()
 void BasicMaterial::load(const tinygltf::Model& model, const tinygltf::Material& material, const char* basePath)
 {
     name = material.name;
+
     materialData.baseColour = Vector4(float(material.pbrMetallicRoughness.baseColorFactor[0]),
                                       float(material.pbrMetallicRoughness.baseColorFactor[1]),
                                       float(material.pbrMetallicRoughness.baseColorFactor[2]),
                                       float(material.pbrMetallicRoughness.baseColorFactor[3]));
 
-    materialData.hasColourTexture = 0;
+    materialData.hasColourTexture = FALSE;
     int textureIndex = material.pbrMetallicRoughness.baseColorTexture.index;
 
     if (textureIndex >= 0)
@@ -37,7 +38,7 @@ void BasicMaterial::load(const tinygltf::Model& model, const tinygltf::Material&
         {
             baseColourTex = app->getResources()->createTextureFromFile(std::string(basePath) + image.uri);
 
-            materialData.hasColourTexture = 1;
+            materialData.hasColourTexture = TRUE;
         }
     }
 

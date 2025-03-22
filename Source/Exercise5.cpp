@@ -16,7 +16,6 @@
 #include <d3dcompiler.h>
 #include "d3dx12.h"
 
-#include <imgui.h>
 
 Exercise5::Exercise5()
 {
@@ -62,13 +61,24 @@ bool Exercise5::cleanUp()
 void Exercise5::preRender()
 {
     imguiPass->startFrame();
+    ImGuizmo::BeginFrame();
+
+    ModuleD3D12* d3d12 = app->getD3D12();
+
+    unsigned width = d3d12->getWindowWidth();
+    unsigned height = d3d12->getWindowHeight();
+
+    // Set the viewport size (adjust based on your application)
+    ImGuizmo::SetRect(0, 0, float(width), float(height));
+
 }
 
-void Exercise5::render()
+void Exercise5::imGuiCommands()
 {
     ImGui::Begin("Geometry Viewer Options");
     ImGui::Checkbox("Show grid", &showGrid);
     ImGui::Checkbox("Show axis", &showAxis);
+    ImGui::Checkbox("Show guizmo", &showGuizmo);
     ImGui::Text("Model loaded %s with %d meshes and %d materials", model->getSrcFile().c_str(), model->getNumMeshes(), model->getNumMaterials());
 
     for (const Mesh& mesh : model->getMeshes())
@@ -76,7 +86,60 @@ void Exercise5::render()
         ImGui::Text("Mesh %s with %d vertices and %d triangles", mesh.getName().c_str(), mesh.getNumVertices(), mesh.getNumIndices() / 3);
     }
 
+    Matrix objectMatrix = model->getMatrix();
+
+    ImGui::Separator();
+    // Set ImGuizmo operation mode (TRANSLATE, ROTATE, SCALE)
+    static ImGuizmo::OPERATION gizmoOperation = ImGuizmo::TRANSLATE;
+    if (ImGui::IsKeyPressed(ImGuiKey_T)) gizmoOperation = ImGuizmo::TRANSLATE;
+    if (ImGui::IsKeyPressed(ImGuiKey_R)) gizmoOperation = ImGuizmo::ROTATE;
+    if (ImGui::IsKeyPressed(ImGuiKey_S)) gizmoOperation = ImGuizmo::SCALE;
+
+    ImGui::RadioButton("Translate", (int*)&gizmoOperation, (int)ImGuizmo::TRANSLATE);
+    ImGui::SameLine();
+    ImGui::RadioButton("Rotate", (int*)&gizmoOperation, ImGuizmo::ROTATE);
+    ImGui::SameLine();
+    ImGui::RadioButton("Scale", (int*)&gizmoOperation, ImGuizmo::SCALE);
+
+    float translation[3], rotation[3], scale[3];
+    ImGuizmo::DecomposeMatrixToComponents((float*)&objectMatrix, translation, rotation, scale);
+    bool transform_changed = ImGui::DragFloat3("Tr", translation, 0.1f);
+    transform_changed = transform_changed || ImGui::DragFloat3("Rt", rotation, 0.1f);
+    transform_changed = transform_changed || ImGui::DragFloat3("Sc", scale, 0.1f);
+
+    if (transform_changed)
+    {
+        ImGuizmo::RecomposeMatrixFromComponents(translation, rotation, scale, (float*)&objectMatrix);
+
+        model->setMatrix(objectMatrix);
+    }
+
     ImGui::End();
+
+    ModuleCamera* camera = app->getCamera();
+
+    if (showGuizmo)
+    {
+        const Matrix& viewMatrix = camera->getView();
+        const Matrix& projMatrix = camera->getProj();
+
+        // Manipulate the object
+        ImGuizmo::Manipulate((const float*)&viewMatrix, (const float*)&projMatrix, gizmoOperation, ImGuizmo::LOCAL, (float*)&objectMatrix);
+    }
+
+    ImGuiIO& io = ImGui::GetIO();
+
+    camera->setEnable(!io.WantCaptureMouse && !ImGuizmo::IsUsing());
+
+    if (ImGuizmo::IsUsing())
+    {
+        model->setMatrix(objectMatrix);
+    }
+}
+
+void Exercise5::render()
+{
+    imGuiCommands();
 
     ModuleD3D12* d3d12  = app->getD3D12();
     ModuleCamera* camera = app->getCamera();
@@ -127,19 +190,20 @@ void Exercise5::render()
     commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);  // set the primitive topology
     ID3D12DescriptorHeap* descriptorHeaps[] = { descriptors->getHeap(), samplers->getHeap() };
     commandList->SetDescriptorHeaps(2, descriptorHeaps);
+    commandList->SetGraphicsRootDescriptorTable(2, samplers->getGPUHanlde(ModuleSamplers::LINEAR_WRAP));
+    commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &mvp, 0);
+
+    BEGIN_EVENT(commandList, "Model Render Pass");
 
     for (const Mesh& mesh : model->getMeshes())
     {
-        commandList->IASetVertexBuffers(0, 1, &mesh.getVertexBufferView());    // set the vertex buffer (using the vertex buffer view)
-
         if (mesh.getMaterialIndex() < model->getNumMaterials())
         {
+            commandList->IASetVertexBuffers(0, 1, &mesh.getVertexBufferView());    // set the vertex buffer (using the vertex buffer view)
             const BasicMaterial& material = model->getMaterials()[mesh.getMaterialIndex()];
 
             UINT tableStartDesc = material.getTableStartDescriptor();
-            commandList->SetGraphicsRootDescriptorTable(1, descriptors->getGPUHanlde(tableStartDesc));
-            commandList->SetGraphicsRootDescriptorTable(2, samplers->getGPUHanlde(ModuleSamplers::LINEAR_WRAP));
-            commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &mvp, 0);
+            commandList->SetGraphicsRootDescriptorTable(1, descriptors->getGPUHandle(tableStartDesc));
 
             if (mesh.getNumIndices() > 0)
             {
@@ -152,6 +216,8 @@ void Exercise5::render()
             }
         }
     }
+
+    END_EVENT(commandList);
 
     if(showGrid) dd::xzSquareGrid(-10.0f, 10.0f, 0.0f, 1.0f, dd::colors::LightGray);
     if(showAxis) dd::axisTriad(ddConvert(Matrix::Identity), 0.1f, 1.0f);

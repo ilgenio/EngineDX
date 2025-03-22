@@ -24,13 +24,13 @@ public:
         return index;         
     }
 
-    D3D12_CPU_DESCRIPTOR_HANDLE getCPUHanlde(UINT index) const
+    D3D12_CPU_DESCRIPTOR_HANDLE getCPUHandle(UINT index) const
     {
         _ASSERTE(index < current);
         return CD3DX12_CPU_DESCRIPTOR_HANDLE(cpuStart, index, descriptorSize);
     }
 
-    D3D12_GPU_DESCRIPTOR_HANDLE getGPUHanlde(UINT index) const
+    D3D12_GPU_DESCRIPTOR_HANDLE getGPUHandle(UINT index) const
     {
         _ASSERTE(index < current);
         return CD3DX12_GPU_DESCRIPTOR_HANDLE(gpuStart, index, descriptorSize);

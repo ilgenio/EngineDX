@@ -87,8 +87,15 @@ UINT ModuleDescriptors::createNullTexture2DSRV()
     if (current < count)
     {
         UINT index = current++;
-        D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{ DXGI_FORMAT_R32G32B32A32_UINT,  D3D12_SRV_DIMENSION_TEXTURE2D, D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING, {} };
-        app->getD3D12()->getDevice()->CreateShaderResourceView(nullptr, &srvDesc, CD3DX12_CPU_DESCRIPTOR_HANDLE(cpuStart, index, descriptorSize));
+        D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+        srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; // Standard format
+        srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+        srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+        srvDesc.Texture2D.MostDetailedMip = 0;
+        srvDesc.Texture2D.MipLevels = 1;
+        srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+        CD3DX12_CPU_DESCRIPTOR_HANDLE handle(cpuStart, index, descriptorSize);
+        app->getD3D12()->getDevice()->CreateShaderResourceView(nullptr, &srvDesc, handle);
 
         return index;
     }

@@ -303,6 +303,8 @@ bool ModuleD3D12::createDepthStencil()
 
     if (ok)
     {
+        depthStencilBuffer->SetName(L"Depth/Stencil Texture");
+
         // create a depth stencil descriptor heap so we can get a pointer to the depth stencil buffer
         D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
         dsvHeapDesc.NumDescriptors = 1;
@@ -341,6 +343,8 @@ bool ModuleD3D12::createRenderTargets()
 
             if (ok)
             {
+                backBuffers[i]->SetName(L"BackBuffer");
+
                 device->CreateRenderTargetView(backBuffers[i].Get(), nullptr, rtvHandle);
             }
 
