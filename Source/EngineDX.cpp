@@ -223,7 +223,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         Keyboard::ProcessMessage(message, wParam, lParam);
         break;
     case WM_KEYDOWN:
-        if (wParam == VK_F11)
+        if (wParam == VK_F1)
         {
             app->getD3D12()->toogleFullscreen();
         }

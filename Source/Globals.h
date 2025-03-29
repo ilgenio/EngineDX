@@ -44,7 +44,9 @@ inline size_t alignUp(size_t value, size_t alignment)
 #if USE_PIX
 #define BEGIN_EVENT(commandList, text)  PIXBeginEvent(commandList, PIX_COLOR_DEFAULT, text)
 #define END_EVENT(commandList) PIXEndEvent(commandList)
+#define SET_MARKER(commandList, text) PIXSetMarker(commandList, PIX_COLOR_DEFAULT, text)
 #else
 #define BEGIN_EVENT(commandList, text)
 #define END_EVENT()
+#define SET_MARKER(commandList, text) 
 #endif 
