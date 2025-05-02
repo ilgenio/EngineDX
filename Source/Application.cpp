@@ -7,6 +7,7 @@
 #include "ModuleResources.h"
 #include "ModuleDescriptors.h"
 #include "ModuleSamplers.h"
+#include "ModuleRingBuffer.h"
 #include "ModuleLevel.h"
 
 #include "Exercise1.h"
@@ -25,6 +26,7 @@ Application::Application(int argc, wchar_t** argv, void* hWnd)
     modules.push_back(resources = new ModuleResources());
     modules.push_back(descriptors = new ModuleDescriptors());
     modules.push_back(samplers = new ModuleSamplers());
+    modules.push_back(ringBuffer = new ModuleRingBuffer());
 
     if(argc > 1 && wcscmp(argv[1], L"Exercise1") == 0)
      {

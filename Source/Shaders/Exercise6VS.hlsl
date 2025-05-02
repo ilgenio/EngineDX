@@ -4,10 +4,16 @@ cbuffer MVP : register(b0)
     float4x4 mvp;  
 };
 
-cbuffer Transforms : register(b1)
+cbuffer PerObject : register(b1)
 {
     float4x4 modelMat;
     float3x3 normalMat;
+    
+    float4 diffuseColour;
+    float Kd;
+    float Ks;
+    float shininess;
+    bool hasDiffuseTex;
 };
 
 struct VertexOutput

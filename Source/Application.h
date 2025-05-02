@@ -15,6 +15,7 @@ class ModuleResources;
 class ModuleDescriptors;
 class ModuleLevel;
 class ModuleSamplers;
+class ModuleRingBuffer;
 
 class Application
 {
@@ -50,6 +51,7 @@ private:
     ModuleResources* resources = nullptr;
     ModuleDescriptors* descriptors = nullptr;
     ModuleSamplers* samplers = nullptr;
+    ModuleRingBuffer* ringBuffer = nullptr;
     ModuleLevel* level = nullptr;
 
     uint64_t  lastMilis = 0;

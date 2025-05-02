@@ -127,6 +127,9 @@
     <ClCompile Include="Exercise6.cpp">
       <Filter>Exercises</Filter>
     </ClCompile>
+    <ClCompile Include="ModuleRingBuffer.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EngineDX.h">
@@ -263,6 +266,9 @@
     </ClInclude>
     <ClInclude Include="Exercise6.h">
       <Filter>Exercises</Filter>
+    </ClInclude>
+    <ClInclude Include="ModuleRingBuffer.h">
+      <Filter>Modules</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

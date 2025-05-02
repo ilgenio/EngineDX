@@ -35,7 +35,7 @@ bool Exercise6::init()
     {
         model = std::make_unique<Model>();
         model->load("Assets/Models/Duck/duck.gltf", "Assets/Models/Duck/");
-        model->setMatrix(Matrix::CreateScale(0.01f, 0.01f, 0.01f));
+        model->setModelMatrix(Matrix::CreateScale(0.01f, 0.01f, 0.01f));
     }
 
     if(ok)
@@ -84,7 +84,7 @@ void Exercise6::imGuiCommands()
         ImGui::Text("Mesh %s with %d vertices and %d triangles", mesh.getName().c_str(), mesh.getNumVertices(), mesh.getNumIndices() / 3);
     }
 
-    Matrix objectMatrix = model->getMatrix();
+    Matrix objectMatrix = model->getModelMatrix();
 
     ImGui::Separator();
     // Set ImGuizmo operation mode (TRANSLATE, ROTATE, SCALE)
@@ -109,7 +109,7 @@ void Exercise6::imGuiCommands()
     {
         ImGuizmo::RecomposeMatrixFromComponents(translation, rotation, scale, (float*)&objectMatrix);
 
-        model->setMatrix(objectMatrix);
+        model->setModelMatrix(objectMatrix);
     }
 
     ImGui::End();
@@ -131,7 +131,7 @@ void Exercise6::imGuiCommands()
 
     if (ImGuizmo::IsUsing())
     {
-        model->setMatrix(objectMatrix);
+        model->setModelMatrix(objectMatrix);
     }
 }
 
@@ -157,7 +157,7 @@ void Exercise6::render()
     const Matrix& view = camera->getView();
     const Matrix& proj = camera->getProj();
 
-    Matrix mvp = model->getMatrix() * view * proj;
+    Matrix mvp = model->getModelMatrix() * view * proj;
     mvp = mvp.Transpose();
 
     D3D12_VIEWPORT viewport;

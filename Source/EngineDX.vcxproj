@@ -199,6 +199,7 @@
     <ClInclude Include="ModuleLevel.h" />
     <ClInclude Include="ModuleRender.h" />
     <ClInclude Include="ModuleResources.h" />
+    <ClInclude Include="ModuleRingBuffer.h" />
     <ClInclude Include="ModuleSamplers.h" />
     <ClInclude Include="Mouse.h" />
     <ClInclude Include="PlatformHelpers.h" />
@@ -311,6 +312,7 @@
     <ClCompile Include="ModuleLevel.cpp" />
     <ClCompile Include="ModuleRender.cpp" />
     <ClCompile Include="ModuleResources.cpp" />
+    <ClCompile Include="ModuleRingBuffer.cpp" />
     <ClCompile Include="ModuleSamplers.cpp" />
     <ClCompile Include="Mouse.cpp" />
     <ClCompile Include="Scene.cpp" />

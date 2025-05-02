@@ -17,6 +17,7 @@ public:
     ~BasicMaterial();
 
     void load(const tinygltf::Model& model, const tinygltf::Material& material, Type materialType, const char* basePath);
+    void updateImGui();
 
     UINT getTableStartDescriptor() const { return baseColourSRV;  }
 

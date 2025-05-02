@@ -21,8 +21,9 @@ public:
     std::span<const Mesh> getMeshes() const { return std::span<const Mesh>(meshes.get(), numMeshes); }
     std::span<const BasicMaterial> getMaterials() const { return std::span<const BasicMaterial>(materials.get(), numMaterials); }
 
-    const Matrix& getMatrix() const { return matrix; }
-    void setMatrix(const Matrix& m) { matrix = m; }
+    const Matrix& getModelMatrix() const { return matrix; }
+    void setModelMatrix(const Matrix& m) { matrix = m; }
+    const Matrix& getNormalMatrix() const { return matrix; }
 
     const std::string& getSrcFile() const { return srcFile; }
 
@@ -32,11 +33,18 @@ private:
     void loadMaterials(const tinygltf::Model& model, const char* basePath);
 
 private:
+
     struct TextureInfo
     {
         ComPtr<ID3D12Resource> resource;
         UINT desc = 0;
         Vector4 colour;
+    };
+
+    struct Transforms
+    {
+        XMFLOAT4X4 model;
+        XMFLOAT3X3 normal;
     };
 
     Matrix matrix;
@@ -45,4 +53,6 @@ private:
     uint32_t numMeshes = 0;
     uint32_t numMaterials = 0;
     std::string srcFile;
+
+    ComPtr<ID3D12Resource> transformBuffer;
 };

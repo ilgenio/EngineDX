@@ -7,6 +7,8 @@
 
 #include "tiny_gltf.h"
 
+#include <imgui.h>
+
 
 BasicMaterial::BasicMaterial()
 {
@@ -76,4 +78,13 @@ void BasicMaterial::load(const tinygltf::Model& model, const tinygltf::Material&
     materialCBV = app->getDescriptors()->createCBV(materialBuffer.Get());
 }
 
+void BasicMaterial::updateImGui()
+{
+    if (ImGui::CollapsingHeader(name.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        ImGui::Text("Type %s", materialType == BASIC ? "Basic" : "Phong");
+
+        // TODO:
+    }
+}
 

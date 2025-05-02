@@ -64,6 +64,8 @@ public:
     ID3D12Resource*             getBackBuffer()       { return backBuffers[currentBackBufferIdx].Get(); }
     ID3D12CommandQueue*         getDrawCommandQueue() { return drawCommandQueue.Get(); }
 
+    unsigned                    getCurrentBackBufferIdx() const {return currentBackBufferIdx; }
+
     D3D12_CPU_DESCRIPTOR_HANDLE getRenderTargetDescriptor();
     D3D12_CPU_DESCRIPTOR_HANDLE getDepthStencilDescriptor();
 
