@@ -29,8 +29,7 @@ public:
 private:
 
     bool createVertexBuffer(void* bufferData, unsigned bufferSize, unsigned stride);
-    bool createIndexBuffer(void* bufferData, unsigned bufferSize);
     bool createRootSignature();
     bool createPSO();
-    bool createUploadFence();
+
 };

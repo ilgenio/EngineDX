@@ -66,7 +66,7 @@ void Model::loadMaterials(const tinygltf::Model& model, const char* basePath)
 
     for(const tinygltf::Material& material : model.materials)
     {
-        materials[materialIndex++].load(model, material, basePath);
+        materials[materialIndex++].load(model, material, BasicMaterial::BASIC, basePath);
     }
 }
 

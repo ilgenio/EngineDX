@@ -8,7 +8,7 @@
 
 class Model;
 
-class Exercise5 : public Module
+class Exercise6 : public Module
 {
     ComPtr<ID3D12RootSignature>     rootSignature;
     ComPtr<ID3D12PipelineState>     pso;
@@ -21,8 +21,8 @@ class Exercise5 : public Module
     std::unique_ptr<Model>          model;
 
 public:
-    Exercise5();
-    ~Exercise5();
+    Exercise6();
+    ~Exercise6();
 
     virtual bool init() override;
     virtual bool cleanUp() override;

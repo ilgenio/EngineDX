@@ -17,16 +17,16 @@ BasicMaterial::~BasicMaterial()
 {
 }
 
-void BasicMaterial::load(const tinygltf::Model& model, const tinygltf::Material& material, const char* basePath)
+void BasicMaterial::load(const tinygltf::Model& model, const tinygltf::Material& material, Type type, const char* basePath)
 {
     name = material.name;
 
-    materialData.baseColour = Vector4(float(material.pbrMetallicRoughness.baseColorFactor[0]),
-                                      float(material.pbrMetallicRoughness.baseColorFactor[1]),
-                                      float(material.pbrMetallicRoughness.baseColorFactor[2]),
-                                      float(material.pbrMetallicRoughness.baseColorFactor[3]));
+    Vector4 baseColour = Vector4(float(material.pbrMetallicRoughness.baseColorFactor[0]),
+                                 float(material.pbrMetallicRoughness.baseColorFactor[1]),
+                                 float(material.pbrMetallicRoughness.baseColorFactor[2]),
+                                 float(material.pbrMetallicRoughness.baseColorFactor[3]));
 
-    materialData.hasColourTexture = FALSE;
+    BOOL hasColourTexture = FALSE;
     int textureIndex = material.pbrMetallicRoughness.baseColorTexture.index;
 
     if (textureIndex >= 0)
@@ -38,15 +38,33 @@ void BasicMaterial::load(const tinygltf::Model& model, const tinygltf::Material&
         {
             baseColourTex = app->getResources()->createTextureFromFile(std::string(basePath) + image.uri);
 
-            materialData.hasColourTexture = TRUE;
+            hasColourTexture = TRUE;
         }
     }
 
-    materialBuffer = app->getResources()->createDefaultBuffer(&materialData, alignUp(sizeof(MaterialData), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT), name.c_str());
+    materialType = type;
+
+    if (materialType == BASIC)
+    {
+        materialData.basic.baseColour = baseColour;
+        materialData.basic.hasColourTexture = hasColourTexture;
+
+        materialBuffer = app->getResources()->createUploadBuffer(&materialData.basic, alignUp(sizeof(BasicData), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT), name.c_str());
+    }
+    else if(materialType == PHONG)
+    {
+        materialData.phong.diffuseColour = baseColour;
+        materialData.phong.Kd = 1.0;
+        materialData.phong.Ks = 0.0;
+        materialData.phong.shininess = 0.0;
+        materialData.phong.hasDiffuseTex = hasColourTexture;
+
+        materialBuffer = app->getResources()->createUploadBuffer(&materialData.phong, alignUp(sizeof(PhongData), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT), name.c_str());
+    }
 
     // Descriptors 
 
-    if (materialData.hasColourTexture)
+    if (hasColourTexture)
     {
         baseColourSRV = app->getDescriptors()->createTextureSRV(baseColourTex.Get());
     }

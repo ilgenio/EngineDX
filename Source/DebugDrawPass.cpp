@@ -488,5 +488,5 @@ void DebugDrawPass::record(ID3D12GraphicsCommandList* commandList, uint32_t widt
 
     dd::flush();
 
-    END_EVENT();
+    END_EVENT(commandList);
 }

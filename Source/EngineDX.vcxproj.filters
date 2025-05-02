@@ -124,6 +124,9 @@
     <ClCompile Include="3rdParty\ImGuizmo\ImGuizmo.cpp">
       <Filter>imgui</Filter>
     </ClCompile>
+    <ClCompile Include="Exercise6.cpp">
+      <Filter>Exercises</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EngineDX.h">
@@ -258,6 +261,9 @@
     <ClInclude Include="3rdParty\ImGuizmo\ImGuizmo.h">
       <Filter>imgui</Filter>
     </ClInclude>
+    <ClInclude Include="Exercise6.h">
+      <Filter>Exercises</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="EngineDX.ico">
@@ -326,6 +332,12 @@
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\Exercise5VS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\Exercise6PS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\Exercise6VS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>
