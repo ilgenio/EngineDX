@@ -47,7 +47,7 @@ private:
         XMFLOAT3X3 normal;
     };
 
-    Matrix matrix;
+    Matrix matrix = Matrix::Identity;
     std::unique_ptr<BasicMaterial[]> materials;
     std::unique_ptr<Mesh[]> meshes;
     uint32_t numMeshes = 0;

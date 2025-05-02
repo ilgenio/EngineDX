@@ -2,6 +2,21 @@
 
 namespace tinygltf { class Model; struct Material;  }
 
+struct BasicMaterialData
+{
+    XMFLOAT4 baseColour;
+    BOOL     hasColourTexture;
+};
+
+struct PhongMaterialData
+{
+    XMFLOAT4 diffuseColour;
+    float    Kd;
+    float    Ks;
+    float    shininess;
+    BOOL     hasDiffuseTex;
+};
+
 class BasicMaterial
 {
 public:
@@ -17,37 +32,25 @@ public:
     ~BasicMaterial();
 
     void load(const tinygltf::Model& model, const tinygltf::Material& material, Type materialType, const char* basePath);
-    void updateImGui();
 
-    UINT getTableStartDescriptor() const { return baseColourSRV;  }
+    UINT getTexturesTableDescriptor() const { return baseColourSRV;}
+    Type getMaterialType() const { return materialType;  }
+
+    const BasicMaterialData& getBasicMaterial() const { _ASSERTE(materialType == BASIC); return materialData.basic; }
+    const PhongMaterialData& getPhongMaterial() const { _ASSERTE(materialType == PHONG); return materialData.phong; }
+
+    const char* getName() const { return name.c_str(); }
 
 private:
 
-    struct BasicData
-    {
-        XMFLOAT4 baseColour;
-        BOOL     hasColourTexture;
-    };
-
-    struct PhongData
-    {
-        XMFLOAT4 diffuseColour;
-        float    Kd;
-        float    Ks;
-        float    shininess;
-        BOOL     hasDiffuseTex;
-    };
-
     union 
     {
-        BasicData basic;
-        PhongData phong;
+        BasicMaterialData basic;
+        PhongMaterialData phong;
     }                       materialData;
-    Type                    materialType;
+    Type                    materialType = BASIC;
 
     ComPtr<ID3D12Resource>  baseColourTex;
     UINT                    baseColourSRV = UINT32_MAX;
-    ComPtr<ID3D12Resource>  materialBuffer;
-    UINT                    materialCBV = UINT32_MAX;
     std::string             name;
 };

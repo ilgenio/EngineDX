@@ -200,7 +200,7 @@ void Exercise6::render()
             commandList->IASetVertexBuffers(0, 1, &mesh.getVertexBufferView());    // set the vertex buffer (using the vertex buffer view)
             const BasicMaterial& material = model->getMaterials()[mesh.getMaterialIndex()];
 
-            UINT tableStartDesc = material.getTableStartDescriptor();
+            UINT tableStartDesc = material.getTexturesTableDescriptor();
             commandList->SetGraphicsRootDescriptorTable(1, descriptors->getGPUHandle(tableStartDesc));
 
             if (mesh.getNumIndices() > 0)

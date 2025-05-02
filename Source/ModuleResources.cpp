@@ -42,7 +42,7 @@ bool ModuleResources::cleanUp()
     return true;
 }
 
-ComPtr<ID3D12Resource> ModuleResources::createUploadBuffer(void* data, size_t size, const char* name)
+ComPtr<ID3D12Resource> ModuleResources::createUploadBuffer(const void* data, size_t size, const char* name)
 {
     ModuleD3D12* d3d12 = app->getD3D12();
     ID3D12Device2* device = d3d12->getDevice();
@@ -68,7 +68,7 @@ ComPtr<ID3D12Resource> ModuleResources::createUploadBuffer(void* data, size_t si
 }
 
 
-ComPtr<ID3D12Resource> ModuleResources::createDefaultBuffer(void* data, size_t size, const char* name)
+ComPtr<ID3D12Resource> ModuleResources::createDefaultBuffer(const void* data, size_t size, const char* name)
 {
     ModuleD3D12* d3d12 = app->getD3D12();
     ID3D12Device2* device = d3d12->getDevice();

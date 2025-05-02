@@ -5,6 +5,7 @@
 #include "ModuleD3D12.h"
 #include "ModuleCamera.h"
 #include "ModuleDescriptors.h"
+#include "ModuleResources.h"
 #include "ModuleSamplers.h"
 #include "Model.h"
 #include "Mesh.h"
@@ -30,15 +31,7 @@ bool Exercise5::init()
 {
     bool ok = createRootSignature();
     ok = ok && createPSO();
-
-    if(ok)
-    {
-        model = std::make_unique<Model>();
-        //model->load("Assets/Models/BoxInterleaved/BoxInterleaved.gltf", "Assets/Models/BoxInterleaved/");
-        //model->load("Assets/Models/BoxTextured/BoxTextured.gltf", "Assets/Models/BoxTextured/");
-        model->load("Assets/Models/Duck/duck.gltf", "Assets/Models/Duck/");
-        model->setModelMatrix(Matrix::CreateScale(0.01f, 0.01f, 0.01f));
-    }
+    ok = ok && loadModel();
 
     if(ok)
     {
@@ -190,7 +183,7 @@ void Exercise5::render()
     commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);  // set the primitive topology
     ID3D12DescriptorHeap* descriptorHeaps[] = { descriptors->getHeap(), samplers->getHeap() };
     commandList->SetDescriptorHeaps(2, descriptorHeaps);
-    commandList->SetGraphicsRootDescriptorTable(2, samplers->getGPUHanlde(ModuleSamplers::LINEAR_WRAP));
+    commandList->SetGraphicsRootDescriptorTable(3, samplers->getGPUHanlde(ModuleSamplers::LINEAR_WRAP));
     commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &mvp, 0);
 
     BEGIN_EVENT(commandList, "Model Render Pass");
@@ -202,8 +195,9 @@ void Exercise5::render()
             commandList->IASetVertexBuffers(0, 1, &mesh.getVertexBufferView());    // set the vertex buffer (using the vertex buffer view)
             const BasicMaterial& material = model->getMaterials()[mesh.getMaterialIndex()];
 
-            UINT tableStartDesc = material.getTableStartDescriptor();
-            commandList->SetGraphicsRootDescriptorTable(1, descriptors->getGPUHandle(tableStartDesc));
+            UINT tableStartDesc = material.getTexturesTableDescriptor();
+            commandList->SetGraphicsRootDescriptorTable(2, descriptors->getGPUHandle(tableStartDesc));
+            commandList->SetGraphicsRootConstantBufferView(1, materialBuffers[mesh.getMaterialIndex()]->GetGPUVirtualAddress());
 
             if (mesh.getNumIndices() > 0)
             {
@@ -239,18 +233,18 @@ bool Exercise5::createRootSignature()
 {
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
     CD3DX12_ROOT_PARAMETER rootParameters[4] = {};
-    CD3DX12_DESCRIPTOR_RANGE tableRanges[2];
+    CD3DX12_DESCRIPTOR_RANGE tableRanges;
     CD3DX12_DESCRIPTOR_RANGE sampRange;
 
-    tableRanges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
-    tableRanges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1);
+    tableRanges.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
     sampRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, ModuleSamplers::COUNT, 0);
 
     rootParameters[0].InitAsConstants((sizeof(Matrix) / sizeof(UINT32)), 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
-    rootParameters[1].InitAsDescriptorTable(2, &tableRanges[0], D3D12_SHADER_VISIBILITY_PIXEL);
-    rootParameters[2].InitAsDescriptorTable(1, &sampRange, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[1].InitAsConstantBufferView(1, 0, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[2].InitAsDescriptorTable(1, &tableRanges, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[3].InitAsDescriptorTable(1, &sampRange, D3D12_SHADER_VISIBILITY_PIXEL);
 
-    rootSignatureDesc.Init(3, rootParameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+    rootSignatureDesc.Init(4, rootParameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
     ComPtr<ID3DBlob> rootSignatureBlob;
 
@@ -266,6 +260,29 @@ bool Exercise5::createRootSignature()
 
     return true;
 }
+
+bool Exercise5::loadModel()
+{
+    model = std::make_unique<Model>();
+    //model->load("Assets/Models/BoxInterleaved/BoxInterleaved.gltf", "Assets/Models/BoxInterleaved/");
+    //model->load("Assets/Models/BoxTextured/BoxTextured.gltf", "Assets/Models/BoxTextured/");
+    model->load("Assets/Models/Duck/duck.gltf", "Assets/Models/Duck/");
+    model->setModelMatrix(Matrix::CreateScale(0.01f, 0.01f, 0.01f));
+
+    ModuleResources* resources = app->getResources();
+
+
+    for (int i = 0, count = model->getNumMaterials(); i < count; ++i)
+    {
+        const BasicMaterial& material = model->getMaterials()[i];
+        const BasicMaterialData& data = material.getBasicMaterial();
+
+        materialBuffers.push_back(resources->createDefaultBuffer(&data, alignUp(sizeof(BasicMaterialData), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT), material.getName()));
+    }
+
+    return true;
+}
+
 
 bool Exercise5::createPSO()
 {

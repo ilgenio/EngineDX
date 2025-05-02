@@ -12,7 +12,7 @@
 #include "tiny_gltf.h"
 
 
-Model::Model() : matrix(Matrix::Identity)
+Model::Model() 
 {
 }
 
@@ -42,7 +42,7 @@ void Model::load(const char* fileName, const char* basePath)
 
 void Model::loadMeshes(const tinygltf::Model& model)
 {
-    numMeshes = model.meshes.size();
+    numMeshes = uint32_t(model.meshes.size());
     meshes = std::make_unique<Mesh[]>(numMeshes);
     int meshIndex = 0;
 
@@ -60,7 +60,7 @@ void Model::loadMaterials(const tinygltf::Model& model, const char* basePath)
     ModuleDescriptors* descriptors = app->getDescriptors();
     ModuleResources* resources = app->getResources();
 
-    numMaterials = model.materials.size();
+    numMaterials = uint32_t(model.materials.size());
     materials = std::make_unique<BasicMaterial[]>(numMaterials);
     int materialIndex = 0;
 

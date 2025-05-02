@@ -50,8 +50,6 @@ void BasicMaterial::load(const tinygltf::Model& model, const tinygltf::Material&
     {
         materialData.basic.baseColour = baseColour;
         materialData.basic.hasColourTexture = hasColourTexture;
-
-        materialBuffer = app->getResources()->createUploadBuffer(&materialData.basic, alignUp(sizeof(BasicData), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT), name.c_str());
     }
     else if(materialType == PHONG)
     {
@@ -60,8 +58,6 @@ void BasicMaterial::load(const tinygltf::Model& model, const tinygltf::Material&
         materialData.phong.Ks = 0.0;
         materialData.phong.shininess = 0.0;
         materialData.phong.hasDiffuseTex = hasColourTexture;
-
-        materialBuffer = app->getResources()->createUploadBuffer(&materialData.phong, alignUp(sizeof(PhongData), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT), name.c_str());
     }
 
     // Descriptors 
@@ -73,18 +69,6 @@ void BasicMaterial::load(const tinygltf::Model& model, const tinygltf::Material&
     else
     {
         baseColourSRV = app->getDescriptors()->createNullTexture2DSRV();
-    }
- 
-    materialCBV = app->getDescriptors()->createCBV(materialBuffer.Get());
-}
-
-void BasicMaterial::updateImGui()
-{
-    if (ImGui::CollapsingHeader(name.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
-    {
-        ImGui::Text("Type %s", materialType == BASIC ? "Basic" : "Phong");
-
-        // TODO:
     }
 }
 

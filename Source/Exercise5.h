@@ -10,15 +10,16 @@ class Model;
 
 class Exercise5 : public Module
 {
-    ComPtr<ID3D12RootSignature>     rootSignature;
-    ComPtr<ID3D12PipelineState>     pso;
-    std::unique_ptr<DebugDrawPass>  debugDrawPass;
-    std::unique_ptr<ImGuiPass>      imguiPass;
-    bool                            showAxis = false;
-    bool                            showGrid = true;
-    bool                            showGuizmo = true;
-    ImGuizmo::OPERATION             gizmoOperation = ImGuizmo::TRANSLATE;
-    std::unique_ptr<Model>          model;
+    ComPtr<ID3D12RootSignature>         rootSignature;
+    ComPtr<ID3D12PipelineState>         pso;
+    std::unique_ptr<DebugDrawPass>      debugDrawPass;
+    std::unique_ptr<ImGuiPass>          imguiPass;
+    std::vector<ComPtr<ID3D12Resource>> materialBuffers;
+    bool                                showAxis = false;
+    bool                                showGrid = true;
+    bool                                showGuizmo = true;
+    ImGuizmo::OPERATION                 gizmoOperation = ImGuizmo::TRANSLATE;
+    std::unique_ptr<Model>              model;
 
 public:
     Exercise5();
@@ -34,4 +35,5 @@ private:
     void imGuiCommands();
     bool createRootSignature();
     bool createPSO();
+    bool loadModel();
 };
