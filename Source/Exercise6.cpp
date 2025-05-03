@@ -6,6 +6,7 @@
 #include "ModuleCamera.h"
 #include "ModuleDescriptors.h"
 #include "ModuleSamplers.h"
+#include "ModuleRingBuffer.h"
 #include "Model.h"
 #include "Mesh.h"
 
@@ -30,13 +31,7 @@ bool Exercise6::init()
 {
     bool ok = createRootSignature();
     ok = ok && createPSO();
-
-    if(ok)
-    {
-        model = std::make_unique<Model>();
-        model->load("Assets/Models/Duck/duck.gltf", "Assets/Models/Duck/");
-        model->setModelMatrix(Matrix::CreateScale(0.01f, 0.01f, 0.01f));
-    }
+    ok = ok && loadModel();
 
     if(ok)
     {
@@ -143,6 +138,7 @@ void Exercise6::render()
     ModuleCamera* camera = app->getCamera();
     ModuleDescriptors* descriptors = app->getDescriptors();
     ModuleSamplers* samplers = app->getSamplers();
+    ModuleRingBuffer* ringBuffer = app->getRingBuffer();
 
     ID3D12GraphicsCommandList* commandList = d3d12->getCommandList();
 
@@ -188,8 +184,10 @@ void Exercise6::render()
     commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);  // set the primitive topology
     ID3D12DescriptorHeap* descriptorHeaps[] = { descriptors->getHeap(), samplers->getHeap() };
     commandList->SetDescriptorHeaps(2, descriptorHeaps);
-    commandList->SetGraphicsRootDescriptorTable(2, samplers->getGPUHanlde(ModuleSamplers::LINEAR_WRAP));
     commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &mvp, 0);
+    commandList->SetGraphicsRootConstantBufferView(1, ringBuffer->allocConstantBuffer(&perFrame, alignUp(sizeof(PerFrame), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT)));
+    commandList->SetGraphicsRootDescriptorTable(4, samplers->getGPUHanlde(ModuleSamplers::LINEAR_WRAP));
+
 
     BEGIN_EVENT(commandList, "Model Render Pass");
 
@@ -201,7 +199,11 @@ void Exercise6::render()
             const BasicMaterial& material = model->getMaterials()[mesh.getMaterialIndex()];
 
             UINT tableStartDesc = material.getTexturesTableDescriptor();
-            commandList->SetGraphicsRootDescriptorTable(1, descriptors->getGPUHandle(tableStartDesc));
+
+            PerInstance perInstance = { model->getModelMatrix(), model->getNormalMatrix(), material.getPhongMaterial() };
+
+            commandList->SetGraphicsRootConstantBufferView(2, ringBuffer->allocConstantBuffer(&perInstance, alignUp(sizeof(PerInstance), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT)));
+            commandList->SetGraphicsRootDescriptorTable(3, descriptors->getGPUHandle(tableStartDesc));
 
             if (mesh.getNumIndices() > 0)
             {
@@ -236,19 +238,20 @@ void Exercise6::render()
 bool Exercise6::createRootSignature()
 {
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-    CD3DX12_ROOT_PARAMETER rootParameters[4] = {};
-    CD3DX12_DESCRIPTOR_RANGE tableRanges[2];
+    CD3DX12_ROOT_PARAMETER rootParameters[5] = {};
+    CD3DX12_DESCRIPTOR_RANGE tableRanges;
     CD3DX12_DESCRIPTOR_RANGE sampRange;
 
-    tableRanges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
-    tableRanges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1);
+    tableRanges.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
     sampRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, ModuleSamplers::COUNT, 0);
 
     rootParameters[0].InitAsConstants((sizeof(Matrix) / sizeof(UINT32)), 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
-    rootParameters[1].InitAsDescriptorTable(2, &tableRanges[0], D3D12_SHADER_VISIBILITY_PIXEL);
-    rootParameters[2].InitAsDescriptorTable(1, &sampRange, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[1].InitAsConstantBufferView(1, 0, D3D12_SHADER_VISIBILITY_ALL);
+    rootParameters[2].InitAsConstantBufferView(2, 0, D3D12_SHADER_VISIBILITY_ALL);
+    rootParameters[3].InitAsDescriptorTable(1, &tableRanges, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[4].InitAsDescriptorTable(1, &sampRange, D3D12_SHADER_VISIBILITY_PIXEL);
 
-    rootSignatureDesc.Init(3, rootParameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+    rootSignatureDesc.Init(5, rootParameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
     ComPtr<ID3DBlob> rootSignatureBlob;
 
@@ -292,5 +295,14 @@ bool Exercise6::createPSO()
 
     // create the pso
     return SUCCEEDED(app->getD3D12()->getDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pso)));
+}
+
+bool Exercise6::loadModel()
+{
+    model = std::make_unique<Model>();
+    model->load("Assets/Models/Duck/duck.gltf", "Assets/Models/Duck/", BasicMaterial::PHONG);
+    model->setModelMatrix(Matrix::CreateScale(0.01f, 0.01f, 0.01f));
+
+    return true;
 }
 

@@ -1,19 +1,8 @@
+#include "Exercise6.hlsli"
 
 cbuffer MVP : register(b0)
 {
     float4x4 mvp;  
-};
-
-cbuffer PerObject : register(b1)
-{
-    float4x4 modelMat;
-    float3x3 normalMat;
-    
-    float4 diffuseColour;
-    float Kd;
-    float Ks;
-    float shininess;
-    bool hasDiffuseTex;
 };
 
 struct VertexOutput
@@ -28,7 +17,7 @@ VertexOutput exercise6VS(float3 position : POSITION, float2 texCoord : TEXCOORD,
 {
     VertexOutput output;
     output.worldPos = mul(float4(position, 1.0), modelMat).xyz;
-    output.normal   = mul(normal, normalMat);
+    output.normal   = mul(normal, (float3x3)normalMat);
     output.texCoord = texCoord;
     output.position = mul(float4(position, 1.0f), mvp);
 

@@ -34,6 +34,7 @@ public:
     ModuleResources*   getResources() { return resources;  }
     ModuleDescriptors* getDescriptors() { return descriptors;  }
     ModuleSamplers*    getSamplers() { return samplers;  }
+    ModuleRingBuffer*  getRingBuffer() { return ringBuffer; }
 
     float              getFPS() const { return 1000.0f * float(MAX_FPS_TICKS) / tickSum; }
     float              getAvgElapsedMs() const { return tickSum / float(MAX_FPS_TICKS); }

@@ -13,7 +13,7 @@ public:
     Model();
     ~Model();
 
-    void load(const char* fileName, const char* basePath);
+    void load(const char* fileName, const char* basePath, BasicMaterial::Type materialType);
 
     uint32_t getNumMeshes() const { return numMeshes; }
     uint32_t getNumMaterials() const { return numMaterials;  }
@@ -23,14 +23,22 @@ public:
 
     const Matrix& getModelMatrix() const { return matrix; }
     void setModelMatrix(const Matrix& m) { matrix = m; }
-    const Matrix& getNormalMatrix() const { return matrix; }
+    Matrix getNormalMatrix() const 
+    {
+        Matrix normal = matrix;
+        normal.Translation(Vector3::Zero);
+        normal.Invert();
+        normal.Transpose();
+
+        return normal;
+    }
 
     const std::string& getSrcFile() const { return srcFile; }
 
 private:
 
     void loadMeshes(const tinygltf::Model& model);
-    void loadMaterials(const tinygltf::Model& model, const char* basePath);
+    void loadMaterials(const tinygltf::Model& model, const char* basePath, BasicMaterial::Type materialType);
 
 private:
 

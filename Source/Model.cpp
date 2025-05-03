@@ -20,7 +20,7 @@ Model::~Model()
 {
 }
 
-void Model::load(const char* fileName, const char* basePath)
+void Model::load(const char* fileName, const char* basePath, BasicMaterial::Type materialType)
 {
     tinygltf::TinyGLTF gltfContext;
     tinygltf::Model model;
@@ -31,7 +31,7 @@ void Model::load(const char* fileName, const char* basePath)
     if (loadOk)
     {
         srcFile = fileName;
-        loadMaterials(model, basePath);
+        loadMaterials(model, basePath, materialType);
         loadMeshes(model);
     }
     else
@@ -55,7 +55,7 @@ void Model::loadMeshes(const tinygltf::Model& model)
     }
 }
 
-void Model::loadMaterials(const tinygltf::Model& model, const char* basePath)
+void Model::loadMaterials(const tinygltf::Model& model, const char* basePath, BasicMaterial::Type materialType)
 {
     ModuleDescriptors* descriptors = app->getDescriptors();
     ModuleResources* resources = app->getResources();
@@ -66,7 +66,7 @@ void Model::loadMaterials(const tinygltf::Model& model, const char* basePath)
 
     for(const tinygltf::Material& material : model.materials)
     {
-        materials[materialIndex++].load(model, material, BasicMaterial::BASIC, basePath);
+        materials[materialIndex++].load(model, material, materialType, basePath);
     }
 }
 

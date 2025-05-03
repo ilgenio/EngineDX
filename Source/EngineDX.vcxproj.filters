@@ -314,6 +314,9 @@
     <None Include="SimpleMath.inl">
       <Filter>Core</Filter>
     </None>
+    <None Include="Shaders\Exercise6.hlsli">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\Exercise2PS.hlsl">

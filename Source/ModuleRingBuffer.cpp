@@ -24,8 +24,6 @@ bool ModuleRingBuffer::init()
     ID3D12Device2* device = d3d12->getDevice();
     ID3D12CommandQueue* queue = d3d12->getDrawCommandQueue();
 
-    ComPtr<ID3D12Resource> buffer;
-
     CD3DX12_HEAP_PROPERTIES heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
     CD3DX12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Buffer(totalMemorySize);
     device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&buffer));
@@ -62,7 +60,7 @@ void ModuleRingBuffer::preRender()
 
 D3D12_GPU_VIRTUAL_ADDRESS ModuleRingBuffer::allocConstantBuffer(const void* data, size_t size)
 {
-    _ASSERT_EXPR(size < (totalMemorySize-totalAllocated), "Out of memory, please allocate more memory at initialisation");
+    _ASSERT_EXPR(size < (totalMemorySize-totalAllocated), L"Out of memory, please allocate more memory at initialisation");
 
     if(tail < head)
     {
@@ -93,15 +91,15 @@ D3D12_GPU_VIRTUAL_ADDRESS ModuleRingBuffer::allocConstantBuffer(const void* data
 
     size_t available = tail == head && totalAllocated == 0 ? totalMemorySize : size_t(tail-head);
 
-    if(available >= size)
+    if(size < available)
     {
         memcpy(bufferData+head, data, size);
 
         D3D12_GPU_VIRTUAL_ADDRESS address = buffer->GetGPUVirtualAddress() + head;
         head += size;
 
-        allocatedInFrame[currentFrame] += available;
-        totalAllocated += available;
+        allocatedInFrame[currentFrame] += size;
+        totalAllocated += size;
 
         return address;
     }

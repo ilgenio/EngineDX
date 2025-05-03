@@ -194,10 +194,10 @@ void Exercise5::render()
         {
             commandList->IASetVertexBuffers(0, 1, &mesh.getVertexBufferView());    // set the vertex buffer (using the vertex buffer view)
             const BasicMaterial& material = model->getMaterials()[mesh.getMaterialIndex()];
-
+            
             UINT tableStartDesc = material.getTexturesTableDescriptor();
-            commandList->SetGraphicsRootDescriptorTable(2, descriptors->getGPUHandle(tableStartDesc));
             commandList->SetGraphicsRootConstantBufferView(1, materialBuffers[mesh.getMaterialIndex()]->GetGPUVirtualAddress());
+            commandList->SetGraphicsRootDescriptorTable(2, descriptors->getGPUHandle(tableStartDesc));
 
             if (mesh.getNumIndices() > 0)
             {
@@ -266,7 +266,7 @@ bool Exercise5::loadModel()
     model = std::make_unique<Model>();
     //model->load("Assets/Models/BoxInterleaved/BoxInterleaved.gltf", "Assets/Models/BoxInterleaved/");
     //model->load("Assets/Models/BoxTextured/BoxTextured.gltf", "Assets/Models/BoxTextured/");
-    model->load("Assets/Models/Duck/duck.gltf", "Assets/Models/Duck/");
+    model->load("Assets/Models/Duck/duck.gltf", "Assets/Models/Duck/", BasicMaterial::BASIC);
     model->setModelMatrix(Matrix::CreateScale(0.01f, 0.01f, 0.01f));
 
     ModuleResources* resources = app->getResources();
