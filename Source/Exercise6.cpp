@@ -107,6 +107,16 @@ void Exercise6::imGuiCommands()
         model->setModelMatrix(objectMatrix);
     }
 
+    ImGui::CollapsingHeader("Light", ImGuiTreeNodeFlags_DefaultOpen);
+    ImGui::DragFloat3("Light Direction", reinterpret_cast<float*>(&light.L), 0.1f, -1.0f, 1.0f); 
+    ImGui::SameLine();
+    if (ImGui::SmallButton("Normalize"))
+    {
+        light.L.Normalize();
+    }
+    ImGui::ColorEdit3("Light Colour", reinterpret_cast<float*>(&light.Lc), ImGuiColorEditFlags_NoAlpha);
+    ImGui::ColorEdit3("Ambient Colour", reinterpret_cast<float*>(&light.Ac), ImGuiColorEditFlags_NoAlpha);
+
     ImGui::End();
 
     ModuleCamera* camera = app->getCamera();
@@ -128,13 +138,15 @@ void Exercise6::imGuiCommands()
     {
         model->setModelMatrix(objectMatrix);
     }
+
+
 }
 
 void Exercise6::render()
 {
     imGuiCommands();
 
-    ModuleD3D12* d3d12  = app->getD3D12();
+    ModuleD3D12* d3d12 = app->getD3D12();
     ModuleCamera* camera = app->getCamera();
     ModuleDescriptors* descriptors = app->getDescriptors();
     ModuleSamplers* samplers = app->getSamplers();
@@ -160,18 +172,25 @@ void Exercise6::render()
     viewport.TopLeftX = viewport.TopLeftY = 0;
     viewport.MinDepth = 0.0f;
     viewport.MaxDepth = 1.0f;
-    viewport.Width    = float(width); 
-    viewport.Height   = float(height);
+    viewport.Width = float(width);
+    viewport.Height = float(height);
 
     D3D12_RECT scissor;
     scissor.left = 0;
     scissor.top = 0;
-    scissor.right = width;    
+    scissor.right = width;
     scissor.bottom = height;
 
     float clearColor[] = { 0.2f, 0.2f, 0.2f, 1.0f };
     D3D12_CPU_DESCRIPTOR_HANDLE rtv = d3d12->getRenderTargetDescriptor();
     D3D12_CPU_DESCRIPTOR_HANDLE dsv = d3d12->getDepthStencilDescriptor();
+
+    PerFrame perFrame;
+    perFrame.L = light.L;
+    perFrame.Lc = light.Lc;
+    perFrame.Ac = light.Ac;
+
+    perFrame.L.Normalize();    
 
     commandList->OMSetRenderTargets(1, &rtv, false, &dsv);
 
@@ -187,7 +206,6 @@ void Exercise6::render()
     commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &mvp, 0);
     commandList->SetGraphicsRootConstantBufferView(1, ringBuffer->allocConstantBuffer(&perFrame, alignUp(sizeof(PerFrame), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT)));
     commandList->SetGraphicsRootDescriptorTable(4, samplers->getGPUHanlde(ModuleSamplers::LINEAR_WRAP));
-
 
     BEGIN_EVENT(commandList, "Model Render Pass");
 

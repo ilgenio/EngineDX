@@ -22,11 +22,22 @@ class Exercise6 : public Module
     struct PerFrame
     {
         Vector3 L = Vector3::UnitX;
+        float pad0;
+        Vector3 Lc = Vector3::One;
+        float pad1;
+        Vector3 Ac = Vector3::Zero;
+        float pad2;
+
+    };
+
+    struct Light
+    {
+        Vector3 L = Vector3::One*(-0.5f);
         Vector3 Lc = Vector3::One;
         Vector3 Ac = Vector3::Zero;
+    };
 
-    } perFrame;
-
+    Light                           light;
     ComPtr<ID3D12RootSignature>     rootSignature;
     ComPtr<ID3D12PipelineState>     pso;
     std::unique_ptr<DebugDrawPass>  debugDrawPass;
