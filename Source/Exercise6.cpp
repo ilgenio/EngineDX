@@ -69,6 +69,9 @@ void Exercise6::preRender()
 void Exercise6::imGuiCommands()
 {
     ImGui::Begin("Geometry Viewer Options");
+    ImGui::Separator();
+    ImGui::Text("FPS: [%d]. Avg. elapsed (Ms): [%g] ", uint32_t(app->getFPS()), app->getAvgElapsedMs());
+    ImGui::Separator();
     ImGui::Checkbox("Show grid", &showGrid);
     ImGui::Checkbox("Show axis", &showAxis);
     ImGui::Checkbox("Show guizmo", &showGuizmo);
@@ -107,15 +110,57 @@ void Exercise6::imGuiCommands()
         model->setModelMatrix(objectMatrix);
     }
 
-    ImGui::CollapsingHeader("Light", ImGuiTreeNodeFlags_DefaultOpen);
-    ImGui::DragFloat3("Light Direction", reinterpret_cast<float*>(&light.L), 0.1f, -1.0f, 1.0f); 
-    ImGui::SameLine();
-    if (ImGui::SmallButton("Normalize"))
+    if (ImGui::CollapsingHeader("Light", ImGuiTreeNodeFlags_DefaultOpen))
     {
-        light.L.Normalize();
+        ImGui::DragFloat3("Light Direction", reinterpret_cast<float*>(&light.L), 0.1f, -1.0f, 1.0f);
+        ImGui::SameLine();
+        if (ImGui::SmallButton("Normalize"))
+        {
+            light.L.Normalize();
+        }
+        ImGui::ColorEdit3("Light Colour", reinterpret_cast<float*>(&light.Lc), ImGuiColorEditFlags_NoAlpha);
+        ImGui::ColorEdit3("Ambient Colour", reinterpret_cast<float*>(&light.Ac), ImGuiColorEditFlags_NoAlpha);
     }
-    ImGui::ColorEdit3("Light Colour", reinterpret_cast<float*>(&light.Lc), ImGuiColorEditFlags_NoAlpha);
-    ImGui::ColorEdit3("Ambient Colour", reinterpret_cast<float*>(&light.Ac), ImGuiColorEditFlags_NoAlpha);
+
+    for (BasicMaterial& material : model->getMaterials())
+    {
+        if (material.getMaterialType() == BasicMaterial::PHONG)
+        {
+            char tmp[256];
+            _snprintf_s(tmp, 255, "Materila %s", material.getName());
+
+            if (ImGui::CollapsingHeader(tmp, ImGuiTreeNodeFlags_DefaultOpen))
+            {
+                PhongMaterialData phong = material.getPhongMaterial();
+                if (ImGui::ColorEdit3("Diffuse Colour", reinterpret_cast<float*>(&phong.diffuseColour)))
+                {
+                    material.setPhongMaterial(phong);
+                }
+
+                bool hasTexture = phong.hasDiffuseTex;
+                if (ImGui::Checkbox("Use Texture", &hasTexture))
+                {
+                    phong.hasDiffuseTex = hasTexture;
+                    material.setPhongMaterial(phong);
+                }
+                
+                if (ImGui::DragFloat("Kd", &phong.Kd, 0.01f))
+                {
+                    material.setPhongMaterial(phong);
+                }
+
+                if (ImGui::DragFloat("Ks", &phong.Ks, 0.01f))
+                {
+                    material.setPhongMaterial(phong);
+                }
+
+                if (ImGui::DragFloat("shininess", &phong.shininess))
+                {
+                    material.setPhongMaterial(phong);
+                }
+            }
+        }
+    }
 
     ImGui::End();
 
@@ -138,8 +183,6 @@ void Exercise6::imGuiCommands()
     {
         model->setModelMatrix(objectMatrix);
     }
-
-
 }
 
 void Exercise6::render()
@@ -189,6 +232,7 @@ void Exercise6::render()
     perFrame.L = light.L;
     perFrame.Lc = light.Lc;
     perFrame.Ac = light.Ac;
+    perFrame.viewPos = camera->getPos();
 
     perFrame.L.Normalize();    
 

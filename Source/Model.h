@@ -20,6 +20,7 @@ public:
 
     std::span<const Mesh> getMeshes() const { return std::span<const Mesh>(meshes.get(), numMeshes); }
     std::span<const BasicMaterial> getMaterials() const { return std::span<const BasicMaterial>(materials.get(), numMaterials); }
+    std::span<BasicMaterial> getMaterials() { return std::span<BasicMaterial>(materials.get(), numMaterials); }
 
     const Matrix& getModelMatrix() const { return matrix; }
     void setModelMatrix(const Matrix& m) { matrix = m; }

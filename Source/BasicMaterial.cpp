@@ -54,9 +54,9 @@ void BasicMaterial::load(const tinygltf::Model& model, const tinygltf::Material&
     else if(materialType == PHONG)
     {
         materialData.phong.diffuseColour = baseColour;
-        materialData.phong.Kd = 1.0;
-        materialData.phong.Ks = 0.0;
-        materialData.phong.shininess = 0.0;
+        materialData.phong.Kd = 0.85;
+        materialData.phong.Ks = 0.35;
+        materialData.phong.shininess = 32.0;
         materialData.phong.hasDiffuseTex = hasColourTexture;
     }
 
@@ -69,6 +69,15 @@ void BasicMaterial::load(const tinygltf::Model& model, const tinygltf::Material&
     else
     {
         baseColourSRV = app->getDescriptors()->createNullTexture2DSRV();
+    }
+}
+
+void BasicMaterial::setPhongMaterial(const PhongMaterialData& phong)
+{
+    materialData.phong = phong;
+    if (!baseColourTex)
+    {
+        materialData.phong.hasDiffuseTex = FALSE;
     }
 }
 

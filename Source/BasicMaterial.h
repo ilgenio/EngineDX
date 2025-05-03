@@ -38,6 +38,7 @@ public:
 
     const BasicMaterialData& getBasicMaterial() const { _ASSERTE(materialType == BASIC); return materialData.basic; }
     const PhongMaterialData& getPhongMaterial() const { _ASSERTE(materialType == PHONG); return materialData.phong; }
+    void setPhongMaterial(const PhongMaterialData& phong);
 
     const char* getName() const { return name.c_str(); }
 

@@ -27,14 +27,15 @@ class Exercise6 : public Module
         float pad1;
         Vector3 Ac = Vector3::Zero;
         float pad2;
-
+        Vector3 viewPos = Vector3::Zero;
+        float pad3;
     };
 
     struct Light
     {
         Vector3 L = Vector3::One*(-0.5f);
         Vector3 Lc = Vector3::One;
-        Vector3 Ac = Vector3::Zero;
+        Vector3 Ac = Vector3::One*(0.1f);
     };
 
     Light                           light;
@@ -44,7 +45,7 @@ class Exercise6 : public Module
     std::unique_ptr<ImGuiPass>      imguiPass;
     bool                            showAxis = false;
     bool                            showGrid = true;
-    bool                            showGuizmo = true;
+    bool                            showGuizmo = false;
     ImGuizmo::OPERATION             gizmoOperation = ImGuizmo::TRANSLATE;
     std::unique_ptr<Model>          model;
 
