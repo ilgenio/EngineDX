@@ -38,7 +38,6 @@ DirectXTex/DirectXTex_Desktop_2019.vcxproj.user
 Source/.vs/EngineDX/v17/.suo
 Source/.vs/EngineDX/v17/fileList.bin
 *.obj
-*.lib
 *.pch
 *.pdb
 Source/DirectXTex/Bin/Desktop_2019/x64/Debug/DirectXTex.tlog/CL.command.1.tlog
@@ -105,3 +104,8 @@ Source/tmp/x64/Debug/material.obj.enc
 Source/tmp/x64/Debug/material.obj.enc
 Source/tmp/x64/Debug/material.obj.enc
 /Source/3rdParty/DirectXTex/Shaders/Compiled
+/Source/3rdParty/DirectXTex/Bin/Desktop_2019_Win10/x64
+/Source/3rdParty/DirectXTex/Bin/Desktop_2022_Win10/x64/Debug
+/Source/3rdParty/DirectXTex/Bin/Desktop_2022_Win10/x64/Release
+Source/3rdParty/imgui-1.89.8/examples/libs/glfw/lib-vc2010-32/glfw3.lib
+Source/3rdParty/imgui-1.89.8/examples/libs/glfw/lib-vc2010-64/glfw3.lib
