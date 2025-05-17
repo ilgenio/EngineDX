@@ -16,7 +16,7 @@ public:
     UINT createTextureSRV(ID3D12Resource* resource); 
     UINT createNullTexture2DSRV();
 
-    UINT allocateDescriptors(UINT numDescriptors = 0)
+    UINT allocateDescriptors(UINT numDescriptors = 1)
     {
         _ASSERTE(current + numDescriptors <= count);
         UINT index = current;
