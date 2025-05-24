@@ -5,8 +5,8 @@
 #include "Application.h"
 #include "ModuleD3D12.h"
 
- // 100 Mb
-#define MEMORY_TOTAL_SIZE 100 * (1 << 10)
+ // 10 Mb
+#define MEMORY_TOTAL_SIZE 10 * (1 << 20)
 
 ModuleRingBuffer::ModuleRingBuffer()
 {
@@ -61,6 +61,7 @@ void ModuleRingBuffer::preRender()
 D3D12_GPU_VIRTUAL_ADDRESS ModuleRingBuffer::allocConstantBuffer(const void* data, size_t size)
 {
     _ASSERT_EXPR(size < (totalMemorySize-totalAllocated), L"Out of memory, please allocate more memory at initialisation");
+    _ASSERT_EXPR((size & (D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT -1) ) == 0, "Size must be multiple of D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT"); // Is aligned with 256u 
 
     if(tail < head)
     {
@@ -88,6 +89,7 @@ D3D12_GPU_VIRTUAL_ADDRESS ModuleRingBuffer::allocConstantBuffer(const void* data
     }
 
     _ASSERTE(head <= tail);
+    _ASSERT_EXPR(size < (totalMemorySize - totalAllocated), L"Out of memory, please allocate more memory at initialisation");
 
     size_t available = tail == head && totalAllocated == 0 ? totalMemorySize : size_t(tail-head);
 
