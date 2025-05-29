@@ -16,7 +16,7 @@
 #include "Exercise4.h"
 #include "Exercise5.h"
 #include "Exercise6.h"
-
+#include "Exercise7.h"
 
 Application::Application(int argc, wchar_t** argv, void* hWnd)
 {
@@ -51,6 +51,10 @@ Application::Application(int argc, wchar_t** argv, void* hWnd)
     else if (argc > 1 && wcscmp(argv[1], L"Exercise6") == 0)
     {
         modules.push_back(new Exercise6);
+    }
+    else if (argc > 1 && wcscmp(argv[1], L"Exercise7") == 0)
+    {
+        modules.push_back(new Exercise7);
     }
     else
     {

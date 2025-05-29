@@ -1,3 +1,4 @@
+static const float PI = 3.14159265f;
 
 cbuffer PerFrame : register(b1)
 {
@@ -12,11 +13,10 @@ cbuffer PerInstance : register(b2)
     float4x4 modelMat;
     float4x4 normalMat;
     
-    float4 diffuseColour;
-    float Kd;
-    float Ks;
-    float shininess;
+    float3 diffuseColour;
     bool hasDiffuseTex;
+    float3 specularColour;
+    float shininess;
 };
 
 

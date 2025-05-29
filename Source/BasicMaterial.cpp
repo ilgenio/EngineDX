@@ -59,6 +59,13 @@ void BasicMaterial::load(const tinygltf::Model& model, const tinygltf::Material&
         materialData.phong.shininess = 32.0f;
         materialData.phong.hasDiffuseTex = hasColourTexture;
     }
+    else if (materialType == PBR_PHONG)
+    {
+        materialData.pbrPhong.diffuseColour = XMFLOAT3(baseColour.x, baseColour.y, baseColour.z);
+        materialData.pbrPhong.hasDiffuseTex = hasColourTexture;
+        materialData.pbrPhong.shininess = 32.0f;
+        materialData.pbrPhong.specularColour = XMFLOAT3(0.0f, 0.0f, 0.0f);
+    }
 
     // Descriptors 
 
@@ -80,4 +87,14 @@ void BasicMaterial::setPhongMaterial(const PhongMaterialData& phong)
         materialData.phong.hasDiffuseTex = FALSE;
     }
 }
+
+void BasicMaterial::setPBRPhongMaterial(const PBRPhongMaterialData& pbr)
+{
+    materialData.pbrPhong = pbr;
+    if (!baseColourTex)
+    {
+        materialData.pbrPhong.hasDiffuseTex = FALSE;
+    }
+}
+
 
