@@ -63,8 +63,8 @@ void BasicMaterial::load(const tinygltf::Model& model, const tinygltf::Material&
     {
         materialData.pbrPhong.diffuseColour = XMFLOAT3(baseColour.x, baseColour.y, baseColour.z);
         materialData.pbrPhong.hasDiffuseTex = hasColourTexture;
-        materialData.pbrPhong.shininess = 32.0f;
-        materialData.pbrPhong.specularColour = XMFLOAT3(0.0f, 0.0f, 0.0f);
+        materialData.pbrPhong.shininess = 64.0f;
+        materialData.pbrPhong.specularColour = XMFLOAT3(0.015f, 0.015f, 0.015f);
     }
 
     // Descriptors 
