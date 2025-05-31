@@ -6,6 +6,7 @@
 #include "ModuleCamera.h"
 #include "ModuleResources.h"
 #include "ModuleDescriptors.h"
+#include "ModuleRenderTargets.h"
 #include "ModuleSamplers.h"
 #include "ModuleRingBuffer.h"
 #include "ModuleLevel.h"
@@ -25,6 +26,7 @@ Application::Application(int argc, wchar_t** argv, void* hWnd)
     modules.push_back(camera = new ModuleCamera());
     modules.push_back(resources = new ModuleResources());
     modules.push_back(descriptors = new ModuleDescriptors());
+    modules.push_back(renderTargets = new ModuleRenderTargets());
     modules.push_back(samplers = new ModuleSamplers());
     modules.push_back(ringBuffer = new ModuleRingBuffer());
 

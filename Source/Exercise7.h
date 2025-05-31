@@ -51,6 +51,9 @@ class Exercise7 : public Module
     std::unique_ptr<Model>              model;
     std::unique_ptr<DX::RenderTexture>  renderTexture;
 
+    UINT                                srvTarget = 0;
+    UINT                                rtvTarget = 0;
+
 public:
     Exercise7();
     ~Exercise7();
@@ -67,4 +70,5 @@ private:
     bool createRootSignature();
     bool createPSO();
     bool loadModel();
+    void renderToTexture(ID3D12GraphicsCommandList* commandList);
 };

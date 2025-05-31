@@ -133,6 +133,9 @@
     <ClCompile Include="RenderTexture.cpp">
       <Filter>Core</Filter>
     </ClCompile>
+    <ClCompile Include="ModuleRenderTargets.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EngineDX.h">
@@ -275,6 +278,9 @@
     </ClInclude>
     <ClInclude Include="RenderTexture.h">
       <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="ModuleRenderTargets.h">
+      <Filter>Modules</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

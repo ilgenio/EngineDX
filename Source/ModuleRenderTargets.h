@@ -2,19 +2,17 @@
 
 #include "Module.h"
 
-class ModuleDescriptors : public Module
+class ModuleRenderTargets : public Module
 {
 public:
 
-    ModuleDescriptors();
-    ~ModuleDescriptors();
+    ModuleRenderTargets();
+    ~ModuleRenderTargets();
 
     bool init() override;
     bool cleanUp() override;
 
-    UINT createCBV(ID3D12Resource* resource);
-    UINT createTextureSRV(ID3D12Resource* resource); 
-    UINT createNullTexture2DSRV();
+    UINT createRTV(ID3D12Resource* resource);
 
     UINT allocate(UINT numDescriptors = 1)
     {

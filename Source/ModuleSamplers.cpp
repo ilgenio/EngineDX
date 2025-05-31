@@ -27,6 +27,8 @@ bool ModuleSamplers::init()
 
     device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&heap));
 
+    heap->SetName(L"Module Samplers Heap");
+
     cpuStart = heap->GetCPUDescriptorHandleForHeapStart();
     gpuStart = heap->GetGPUDescriptorHandleForHeapStart();
 

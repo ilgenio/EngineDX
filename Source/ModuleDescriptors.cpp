@@ -29,6 +29,8 @@ bool ModuleDescriptors::init()
 
     device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&heap));
 
+    heap->SetName(L"Module Descriptors Heap");
+
     cpuStart = heap->GetCPUDescriptorHandleForHeapStart();
     gpuStart = heap->GetGPUDescriptorHandleForHeapStart();
 

@@ -139,16 +139,19 @@ void RenderTexture::ReleaseDevice() noexcept
 void RenderTexture::TransitionTo(_In_ ID3D12GraphicsCommandList* commandList,
     D3D12_RESOURCE_STATES afterState)
 {
-    D3D12_RESOURCE_BARRIER desc = {};
-    desc.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-    desc.Transition.pResource = m_resource.Get();
-    desc.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-    desc.Transition.StateBefore = m_state;
-    desc.Transition.StateAfter = afterState;
+    if (m_state != afterState)
+    {
+        D3D12_RESOURCE_BARRIER desc = {};
+        desc.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+        desc.Transition.pResource = m_resource.Get();
+        desc.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+        desc.Transition.StateBefore = m_state;
+        desc.Transition.StateAfter = afterState;
 
-    commandList->ResourceBarrier(1, &desc);
+        commandList->ResourceBarrier(1, &desc);
 
-    m_state = afterState;
+        m_state = afterState;
+    }
 }
 
 void RenderTexture::SetWindow(const RECT& output)

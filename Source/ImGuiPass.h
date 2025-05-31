@@ -6,7 +6,7 @@ class ImGuiPass
     ComPtr<ID3D12DescriptorHeap> heap;
 
 public:
-    ImGuiPass(ID3D12Device2* device, HWND hWnd);
+    ImGuiPass(ID3D12Device2* device, HWND hWnd, ID3D12DescriptorHeap* descriptors = nullptr);
     ~ImGuiPass();
 
     void startFrame();
