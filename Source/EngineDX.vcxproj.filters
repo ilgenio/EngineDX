@@ -133,6 +133,9 @@
     <ClCompile Include="Exercise7.cpp">
       <Filter>Exercises</Filter>
     </ClCompile>
+    <ClCompile Include="RenderTexture.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EngineDX.h">
@@ -275,6 +278,9 @@
     </ClInclude>
     <ClInclude Include="Exercise7.h">
       <Filter>Exercises</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderTexture.h">
+      <Filter>Core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
