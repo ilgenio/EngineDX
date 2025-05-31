@@ -6,6 +6,7 @@
 #include <imgui.h>
 #include "ImGuizmo.h"
 #include "BasicMaterial.h"
+#include "RenderTexture.h"
 
 class Model;
 
@@ -38,16 +39,17 @@ class Exercise7 : public Module
         Vector3 Ac = Vector3::One*(0.1f);
     };
 
-    Light                           light;
-    ComPtr<ID3D12RootSignature>     rootSignature;
-    ComPtr<ID3D12PipelineState>     pso;
-    std::unique_ptr<DebugDrawPass>  debugDrawPass;
-    std::unique_ptr<ImGuiPass>      imguiPass;
-    bool                            showAxis = false;
-    bool                            showGrid = true;
-    bool                            showGuizmo = false;
-    ImGuizmo::OPERATION             gizmoOperation = ImGuizmo::TRANSLATE;
-    std::unique_ptr<Model>          model;
+    Light                               light;
+    ComPtr<ID3D12RootSignature>         rootSignature;
+    ComPtr<ID3D12PipelineState>         pso;
+    std::unique_ptr<DebugDrawPass>      debugDrawPass;
+    std::unique_ptr<ImGuiPass>          imguiPass;
+    bool                                showAxis = false;
+    bool                                showGrid = true;
+    bool                                showGuizmo = false;
+    ImGuizmo::OPERATION                 moOperation = ImGuizmo::TRANSLATE;
+    std::unique_ptr<Model>              model;
+    std::unique_ptr<DX::RenderTexture>  renderTexture;
 
 public:
     Exercise7();

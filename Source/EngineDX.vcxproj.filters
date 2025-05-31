@@ -70,9 +70,6 @@
     <ClCompile Include="ModuleDescriptors.cpp">
       <Filter>Modules</Filter>
     </ClCompile>
-    <ClCompile Include="DescriptorHeaps.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
     <ClCompile Include="CubemapMesh.cpp">
       <Filter>Scene</Filter>
     </ClCompile>
@@ -230,9 +227,6 @@
     </ClInclude>
     <ClInclude Include="ModuleDescriptors.h">
       <Filter>Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="DescriptorHeaps.h">
-      <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="CubemapMesh.h">
       <Filter>Scene</Filter>

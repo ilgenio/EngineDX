@@ -112,6 +112,9 @@ void Application::update()
 
 bool Application::cleanUp()
 {
+    // needed to safely remove d3d objects 
+    d3d12->flush();
+
 	bool ret = true;
 
 	for(auto it = modules.rbegin(); it != modules.rend() && ret; ++it)
