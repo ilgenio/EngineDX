@@ -41,7 +41,10 @@ bool Exercise7::init()
         ModuleRenderTargets* renderTargets = app->getRenderTargets();
 
         debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue());
-        imguiPass = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd(), descriptors->getHeap());
+
+        UINT imguiTextDesc = descriptors->allocate();
+        imguiPass = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd(), 
+            descriptors->getCPUHandle(imguiTextDesc), descriptors->getGPUHandle(imguiTextDesc));
 
         renderTexture = std::make_unique< DX::RenderTexture>(DXGI_FORMAT_R8G8B8A8_UNORM);
         srvTarget = descriptors->allocate();
@@ -175,14 +178,16 @@ void Exercise7::imGuiCommands()
     ModuleDescriptors* descriptors = app->getDescriptors();
     ModuleD3D12* d3d12 = app->getD3D12();
 
-    ImGui::Begin("Geometry Viewer Canvas");
-    ImVec2 screenPos = ImGui::GetCursorScreenPos();
-    ImGui::GetWindowDrawList()->AddImage((ImTextureID)descriptors->getGPUHandle(srvTarget).ptr,
-        ImVec2(screenPos),
-        ImVec2(screenPos.x + d3d12->getWindowWidth(), screenPos.y + d3d12->getWindowHeight()),
-        ImVec2(0, 1), ImVec2(1, 0));
-            
+    bool viewerFocused = false;
+    ImGui::Begin("Scene");
+    ImGuiID id(10);
 
+    ImVec2 max = ImGui::GetWindowContentRegionMax();
+    ImVec2 min = ImGui::GetWindowContentRegionMin();
+    ImGui::BeginChildFrame(id, ImVec2(max.x-min.x, max.y-min.y), ImGuiWindowFlags_NoScrollbar);
+    viewerFocused = ImGui::IsWindowFocused();
+    ImGui::Image((ImTextureID)descriptors->getGPUHandle(srvTarget).ptr, ImVec2(max.x - min.x, max.y - min.y));
+    ImGui::EndChildFrame();
     ImGui::End();
 
     ModuleCamera* camera = app->getCamera();
@@ -198,7 +203,7 @@ void Exercise7::imGuiCommands()
 
     ImGuiIO& io = ImGui::GetIO();
 
-    camera->setEnable(!io.WantCaptureMouse && !ImGuizmo::IsUsing());
+    camera->setEnable(viewerFocused && !ImGuizmo::IsUsing());
 
     if (ImGuizmo::IsUsing())
     {
@@ -328,7 +333,7 @@ void Exercise7::render()
     D3D12_CPU_DESCRIPTOR_HANDLE dsv = d3d12->getDepthStencilDescriptor();
     commandList->OMSetRenderTargets(1, &rtv, false, nullptr);
 
-    float clearColor[] = { 0.2f, 0.2f, 0.2f, 1.0f };
+    float clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
     commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
 
     ID3D12DescriptorHeap* descriptorHeaps[] = { descriptors->getHeap(), samplers->getHeap() };

@@ -9,7 +9,7 @@
 #include "backends/imgui_impl_dx12.h"
 
 
-ImGuiPass::ImGuiPass(ID3D12Device2* device, HWND hWnd, ID3D12DescriptorHeap* descriptors)
+ImGuiPass::ImGuiPass(ID3D12Device2* device, HWND hWnd, D3D12_CPU_DESCRIPTOR_HANDLE cpuTextHandle, D3D12_GPU_DESCRIPTOR_HANDLE gpuTextHandle)
 {
 
     // It's not optimal but makes ImGuiPass independent from ModuleDescriptor slides
@@ -18,18 +18,14 @@ ImGuiPass::ImGuiPass(ID3D12Device2* device, HWND hWnd, ID3D12DescriptorHeap* des
     heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
     heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 
-    if (descriptors)
-    {
-        heap = descriptors;
-    }
-    else
+    if (!cpuTextHandle.ptr || !gpuTextHandle.ptr)
     {
         device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&heap));
         heap->SetName(L"ImGui Descriptor Heap");
-    }
 
-    D3D12_CPU_DESCRIPTOR_HANDLE cpuFont = heap->GetCPUDescriptorHandleForHeapStart();
-    D3D12_GPU_DESCRIPTOR_HANDLE gpuFont = heap->GetGPUDescriptorHandleForHeapStart();
+        cpuTextHandle = heap->GetCPUDescriptorHandleForHeapStart();
+        gpuTextHandle = heap->GetGPUDescriptorHandleForHeapStart();
+    }
 
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
@@ -44,7 +40,7 @@ ImGuiPass::ImGuiPass(ID3D12Device2* device, HWND hWnd, ID3D12DescriptorHeap* des
 
     // Setup Platform/Renderer backends
     ImGui_ImplWin32_Init(hWnd);
-    ImGui_ImplDX12_Init(device, FRAMES_IN_FLIGHT, DXGI_FORMAT_R8G8B8A8_UNORM, nullptr, cpuFont, gpuFont);
+    ImGui_ImplDX12_Init(device, FRAMES_IN_FLIGHT, DXGI_FORMAT_R8G8B8A8_UNORM, nullptr, cpuTextHandle, gpuTextHandle);
 
     // Load Fonts
     // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
@@ -90,8 +86,11 @@ void ImGuiPass::record(ID3D12GraphicsCommandList* commandList)
 
     // It's not optimal but makes ImGuiPass independent from ModuleDescriptor slides
 
-    ID3D12DescriptorHeap* descriptorHeaps[] = { heap.Get() };
-    commandList->SetDescriptorHeaps(1, descriptorHeaps);
+    if (heap)
+    {
+        ID3D12DescriptorHeap* descriptorHeaps[] = { heap.Get() };
+        commandList->SetDescriptorHeaps(1, descriptorHeaps);
+    }
 
     ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList);
 
