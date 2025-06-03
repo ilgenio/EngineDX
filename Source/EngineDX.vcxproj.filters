@@ -67,9 +67,6 @@
     <ClCompile Include="ModuleResources.cpp">
       <Filter>Modules</Filter>
     </ClCompile>
-    <ClCompile Include="ModuleDescriptors.cpp">
-      <Filter>Modules</Filter>
-    </ClCompile>
     <ClCompile Include="CubemapMesh.cpp">
       <Filter>Scene</Filter>
     </ClCompile>
@@ -133,7 +130,13 @@
     <ClCompile Include="RenderTexture.cpp">
       <Filter>Core</Filter>
     </ClCompile>
-    <ClCompile Include="ModuleRenderTargets.cpp">
+    <ClCompile Include="ModuleShaderDescriptors.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="ModuleRTDescriptors.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="ModuleDSDescriptors.cpp">
       <Filter>Modules</Filter>
     </ClCompile>
   </ItemGroup>
@@ -228,9 +231,6 @@
     <ClInclude Include="ModuleResources.h">
       <Filter>Modules</Filter>
     </ClInclude>
-    <ClInclude Include="ModuleDescriptors.h">
-      <Filter>Modules</Filter>
-    </ClInclude>
     <ClInclude Include="CubemapMesh.h">
       <Filter>Scene</Filter>
     </ClInclude>
@@ -279,7 +279,13 @@
     <ClInclude Include="RenderTexture.h">
       <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="ModuleRenderTargets.h">
+    <ClInclude Include="ModuleShaderDescriptors.h">
+      <Filter>Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="ModuleRTDescriptors.h">
+      <Filter>Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="ModuleDSDescriptors.h">
       <Filter>Modules</Filter>
     </ClInclude>
   </ItemGroup>

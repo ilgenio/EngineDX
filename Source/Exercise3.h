@@ -2,7 +2,6 @@
 
 #include "ModuleRender.h"
 #include "DebugDrawPass.h"
-#include "ModuleDescriptors.h"
 
 class Exercise3 : public Module
 {

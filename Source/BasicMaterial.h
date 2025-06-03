@@ -66,6 +66,6 @@ private:
     Type                     materialType = BASIC;
 
     ComPtr<ID3D12Resource>  baseColourTex;
-    UINT                    baseColourSRV = UINT32_MAX;
+    UINT                    baseColourSRV = 0;
     std::string             name;
 };

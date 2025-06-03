@@ -39,6 +39,9 @@ public:
     ComPtr<ID3D12Resource> createTextureFromMemory(const void* data, size_t size, const char* name);
     ComPtr<ID3D12Resource> createTextureFromFile(const std::filesystem::path& path);
 
+    ComPtr<ID3D12Resource> createRenderTarget(DXGI_FORMAT format, size_t width, size_t height, float clearColour[4], const char* name);
+    ComPtr<ID3D12Resource> createDepthStencil(DXGI_FORMAT format, size_t width, size_t height, float clearDepth, uint8_t clearStencil, const char* name);
+
 private:
 
     ComPtr<ID3D12Resource> createTextureFromImage(const ScratchImage& image, const char* name);

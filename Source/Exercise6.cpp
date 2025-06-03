@@ -4,7 +4,7 @@
 #include "Application.h"
 #include "ModuleD3D12.h"
 #include "ModuleCamera.h"
-#include "ModuleDescriptors.h"
+#include "ModuleShaderDescriptors.h"
 #include "ModuleSamplers.h"
 #include "ModuleRingBuffer.h"
 #include "Model.h"
@@ -165,11 +165,15 @@ void Exercise6::imGuiCommands()
     ImGui::End();
 
     ModuleCamera* camera = app->getCamera();
+    ModuleD3D12* d3d12 = app->getD3D12();
 
     if (showGuizmo)
     {
+        unsigned width = d3d12->getWindowWidth();
+        unsigned height = d3d12->getWindowHeight();
+
         const Matrix& viewMatrix = camera->getView();
-        const Matrix& projMatrix = camera->getProj();
+        Matrix projMatrix = ModuleCamera::getPerspectiveProj(float(width) / float(height));
 
         // Manipulate the object
         ImGuizmo::Manipulate((const float*)&viewMatrix, (const float*)&projMatrix, gizmoOperation, ImGuizmo::LOCAL, (float*)&objectMatrix);
@@ -191,7 +195,7 @@ void Exercise6::render()
 
     ModuleD3D12* d3d12 = app->getD3D12();
     ModuleCamera* camera = app->getCamera();
-    ModuleDescriptors* descriptors = app->getDescriptors();
+    ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
     ModuleSamplers* samplers = app->getSamplers();
     ModuleRingBuffer* ringBuffer = app->getRingBuffer();
 
@@ -206,7 +210,7 @@ void Exercise6::render()
     unsigned height = d3d12->getWindowHeight();
 
     const Matrix& view = camera->getView();
-    const Matrix& proj = camera->getProj();
+    Matrix proj = ModuleCamera::getPerspectiveProj(float(width) / float(height));
 
     Matrix mvp = model->getModelMatrix() * view * proj;
     mvp = mvp.Transpose();

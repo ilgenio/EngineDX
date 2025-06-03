@@ -8,7 +8,7 @@
 
 #include "Application.h"
 #include "ModuleD3D12.h"
-#include "ModuleDescriptors.h"
+#include "ModuleShaderDescriptors.h"
 
 #include <imgui.h>
 
@@ -25,9 +25,9 @@ bool ModuleRender::init()
 {
     ModuleD3D12* d3d12 = app->getD3D12();
     ID3D12Device2* device = d3d12->getDevice();
-    ModuleDescriptors* descriptors = app->getDescriptors();
+    ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
 
-    debugFontDebugDraw = descriptors->allocate();
+    debugFontDebugDraw = descriptors->alloc();
     debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue(), descriptors->getCPUHandle(debugFontDebugDraw), descriptors->getGPUHandle(debugFontDebugDraw));
 
     bool ok = SUCCEEDED(device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, d3d12->getCommandAllocator(), nullptr, IID_PPV_ARGS(&commandList)));
@@ -79,7 +79,7 @@ void ModuleRender::render()
     sprintf_s(lTmp, 1023, "FPS: [%d]. Avg. elapsed (Ms): [%g] ", uint32_t(app->getFPS()), app->getAvgElapsedMs());
     dd::screenText(lTmp, ddConvert(Vector3(10.0f, 10.0f, 0.0f)), dd::colors::White, 0.6f);
 
-    debugDrawPass->record(commandList.Get(), width, height, camera->getView(), camera->getProj());
+    debugDrawPass->record(commandList.Get(), width, height, camera->getView(), ModuleCamera::getPerspectiveProj(float(width) / float(height)));
 
     imguiPass->record(commandList.Get());
 

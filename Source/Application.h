@@ -12,8 +12,9 @@ class ModuleD3D12;
 class ModuleCamera;
 class ModuleRender;
 class ModuleResources;
-class ModuleDescriptors;
-class ModuleRenderTargets;
+class ModuleShaderDescriptors;
+class ModuleRTDescriptors;
+class ModuleDSDescriptors;
 class ModuleLevel;
 class ModuleSamplers;
 class ModuleRingBuffer;
@@ -29,14 +30,15 @@ public:
 	void         update();
 	bool         cleanUp();
 
-    ModuleD3D12*            getD3D12() { return d3d12; }
-    ModuleCamera*           getCamera() { return camera;  }
-    ModuleRender*           getRender() { return render;  }
-    ModuleResources*        getResources() { return resources;  }
-    ModuleDescriptors*      getDescriptors() { return descriptors;  }
-    ModuleRenderTargets*    getRenderTargets() { return renderTargets;  }
-    ModuleSamplers*         getSamplers() { return samplers;  }
-    ModuleRingBuffer*       getRingBuffer() { return ringBuffer; }
+    ModuleD3D12*                getD3D12() { return d3d12; }
+    ModuleCamera*               getCamera() { return camera;  }
+    ModuleRender*               getRender() { return render;  }
+    ModuleResources*            getResources() { return resources;  }
+    ModuleShaderDescriptors*    getShaderDescriptors() { return shaderDescriptors;  }
+    ModuleRTDescriptors*        getRTDescriptors() { return rtDescriptors;  }
+    ModuleDSDescriptors*        getDSDescriptors() { return dsDescriptors; }
+    ModuleSamplers*             getSamplers() { return samplers;  }
+    ModuleRingBuffer*           getRingBuffer() { return ringBuffer; }
 
     float              getFPS() const { return 1000.0f * float(MAX_FPS_TICKS) / tickSum; }
     float              getAvgElapsedMs() const { return tickSum / float(MAX_FPS_TICKS); }
@@ -52,8 +54,9 @@ private:
     ModuleCamera* camera = nullptr;
     ModuleRender* render = nullptr;
     ModuleResources* resources = nullptr;
-    ModuleDescriptors* descriptors = nullptr;
-    ModuleRenderTargets* renderTargets = nullptr;
+    ModuleShaderDescriptors* shaderDescriptors = nullptr;
+    ModuleRTDescriptors* rtDescriptors = nullptr;
+    ModuleDSDescriptors* dsDescriptors = nullptr;
     ModuleSamplers* samplers = nullptr;
     ModuleRingBuffer* ringBuffer = nullptr;
     ModuleLevel* level = nullptr;

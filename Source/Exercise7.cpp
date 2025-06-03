@@ -4,10 +4,12 @@
 #include "Application.h"
 #include "ModuleD3D12.h"
 #include "ModuleCamera.h"
-#include "ModuleDescriptors.h"
-#include "ModuleRenderTargets.h"
+#include "ModuleShaderDescriptors.h"
+#include "ModuleRTDescriptors.h"
+#include "ModuleDSDescriptors.h"
 #include "ModuleSamplers.h"
 #include "ModuleRingBuffer.h"
+#include "ModuleResources.h"
 #include "Model.h"
 #include "Mesh.h"
 
@@ -37,22 +39,15 @@ bool Exercise7::init()
     if(ok)
     {
         ModuleD3D12* d3d12 = app->getD3D12();
-        ModuleDescriptors* descriptors = app->getDescriptors();
-        ModuleRenderTargets* renderTargets = app->getRenderTargets();
+        ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
 
         debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue());
 
-        UINT imguiTextDesc = descriptors->allocate();
+        UINT imguiTextDesc = descriptors->alloc();
         imguiPass = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd(), 
             descriptors->getCPUHandle(imguiTextDesc), descriptors->getGPUHandle(imguiTextDesc));
 
-        renderTexture = std::make_unique< DX::RenderTexture>(DXGI_FORMAT_R8G8B8A8_UNORM);
-        srvTarget = descriptors->allocate();
-        rtvTarget = renderTargets->allocate();
-
-        renderTexture->SetClearColor(DirectX::XMVectorSet(0.2f, 0.2f, 0.2f, 1.0f));
-       
-        renderTexture->SetDevice(d3d12->getDevice(), descriptors->getCPUHandle(srvTarget), renderTargets->getCPUHandle(rtvTarget));
+        srvTarget = descriptors->createNullTexture2DSRV();
     }
      
     return true;
@@ -70,16 +65,49 @@ void Exercise7::preRender()
     imguiPass->startFrame();
     ImGuizmo::BeginFrame();
 
-    ModuleD3D12* d3d12 = app->getD3D12();
+    resizeRenderTexture();
 
-    unsigned width = d3d12->getWindowWidth();
-    unsigned height = d3d12->getWindowHeight();
+}
 
-    // Set the viewport size (adjust based on your application)
-    ImGuizmo::SetRect(0, 0, float(width), float(height));
+void Exercise7::resizeRenderTexture()
+{
+    if (canvasSize.x > 0 && canvasSize.y > 0 && (previousSize.x != canvasSize.x || previousSize.x == 0 ||
+        previousSize.y != canvasSize.y || previousSize.y == 0))
+    {
 
-    renderTexture->SizeResources(width, height);
+        if (renderTexture)
+        {
+            // Ensure previous texture usage is finished
+            app->getD3D12()->flush();
+        }
 
+        ModuleResources* resources            = app->getResources();
+        ModuleShaderDescriptors* descriptors  = app->getShaderDescriptors();
+        ModuleRTDescriptors* rtDescriptors    = app->getRTDescriptors();
+        ModuleDSDescriptors* dsDescriptors    = app->getDSDescriptors();
+
+
+        float clearColor[4] = { 0.2f, 0.2f, 0.2f, 1.0f };
+        renderTexture = resources->createRenderTarget(DXGI_FORMAT_R8G8B8A8_UNORM, size_t(canvasSize.x), 
+            size_t(canvasSize.y), clearColor, "Exercise7 RT");
+
+        renderDS = resources->createDepthStencil(DXGI_FORMAT_D32_FLOAT, size_t(canvasSize.x), 
+            size_t(canvasSize.y), 1.0f, 0, "Exercise7 DS");
+
+        // Create RTV.
+        rtDescriptors->release(srvTarget);
+        rtvTarget = rtDescriptors->create(renderTexture.Get());
+
+        // Create SRV.
+        descriptors->release(srvTarget);
+        srvTarget = descriptors->createTextureSRV(renderTexture.Get());
+
+        // Create DSV
+        dsDescriptors->release(dsvTarget);
+        dsvTarget = dsDescriptors->create(renderDS.Get());
+
+        previousSize = canvasSize;
+    }
 }
 
 void Exercise7::imGuiCommands()
@@ -175,31 +203,39 @@ void Exercise7::imGuiCommands()
 
     ImGui::End();
 
-    ModuleDescriptors* descriptors = app->getDescriptors();
+    ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
     ModuleD3D12* d3d12 = app->getD3D12();
+
+    ModuleCamera* camera = app->getCamera();
 
     bool viewerFocused = false;
     ImGui::Begin("Scene");
+    const char* frameName = "Scene Frame";
     ImGuiID id(10);
 
     ImVec2 max = ImGui::GetWindowContentRegionMax();
     ImVec2 min = ImGui::GetWindowContentRegionMin();
-    ImGui::BeginChildFrame(id, ImVec2(max.x-min.x, max.y-min.y), ImGuiWindowFlags_NoScrollbar);
+    canvasPos = min;
+    canvasSize = ImVec2(max.x - min.x, max.y - min.y);
+    ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+
+    ImGui::BeginChildFrame(id, canvasSize, ImGuiWindowFlags_NoScrollbar);
     viewerFocused = ImGui::IsWindowFocused();
-    ImGui::Image((ImTextureID)descriptors->getGPUHandle(srvTarget).ptr, ImVec2(max.x - min.x, max.y - min.y));
-    ImGui::EndChildFrame();
-    ImGui::End();
-
-    ModuleCamera* camera = app->getCamera();
-
+    ImGui::Image((ImTextureID)descriptors->getGPUHandle(srvTarget).ptr, canvasSize);
+    
     if (showGuizmo)
     {
         const Matrix& viewMatrix = camera->getView();
-        const Matrix& projMatrix = camera->getProj();
+        Matrix projMatrix = ModuleCamera::getPerspectiveProj(float(canvasSize.x) / float(canvasSize.y));
 
         // Manipulate the object
+        ImGuizmo::SetRect(cursorPos.x, cursorPos.y, canvasSize.x, canvasSize.y);
+        ImGuizmo::SetDrawlist();
         ImGuizmo::Manipulate((const float*)&viewMatrix, (const float*)&projMatrix, gizmoOperation, ImGuizmo::LOCAL, (float*)&objectMatrix);
     }
+
+    ImGui::EndChildFrame();
+    ImGui::End();
 
     ImGuiIO& io = ImGui::GetIO();
 
@@ -209,25 +245,24 @@ void Exercise7::imGuiCommands()
     {
         model->setModelMatrix(objectMatrix);
     }
-
 }
 
 void Exercise7::renderToTexture(ID3D12GraphicsCommandList* commandList)
 {
     ModuleD3D12* d3d12 = app->getD3D12();
     ModuleCamera* camera = app->getCamera();
-    ModuleDescriptors* descriptors = app->getDescriptors();
-    ModuleRenderTargets* renderTargets = app->getRenderTargets();
+    ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
+    ModuleRTDescriptors* rtDescriptors = app->getRTDescriptors();
     ModuleSamplers* samplers = app->getSamplers();
     ModuleRingBuffer* ringBuffer = app->getRingBuffer();
 
     commandList->SetPipelineState(pso.Get());
 
-    unsigned width = d3d12->getWindowWidth();
-    unsigned height = d3d12->getWindowHeight();
+    unsigned width = unsigned(canvasSize.x);
+    unsigned height = unsigned(canvasSize.y);
 
     const Matrix& view = camera->getView();
-    const Matrix& proj = camera->getProj();
+    Matrix proj = ModuleCamera::getPerspectiveProj(float(width) / float(height));
 
     Matrix mvp = model->getModelMatrix() * view * proj;
     mvp = mvp.Transpose();
@@ -245,9 +280,10 @@ void Exercise7::renderToTexture(ID3D12GraphicsCommandList* commandList)
     scissor.right = width;
     scissor.bottom = height;
 
-    renderTexture->BeginScene(commandList);
-
-    D3D12_CPU_DESCRIPTOR_HANDLE rtv = renderTargets->getCPUHandle(rtvTarget);
+    CD3DX12_RESOURCE_BARRIER toRT = CD3DX12_RESOURCE_BARRIER::Transition(renderTexture.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
+    commandList->ResourceBarrier(1, &toRT);
+    
+    D3D12_CPU_DESCRIPTOR_HANDLE rtv = rtDescriptors->getCPUHandle(rtvTarget);
     D3D12_CPU_DESCRIPTOR_HANDLE dsv = d3d12->getDepthStencilDescriptor();
 
     PerFrame perFrame;
@@ -309,7 +345,8 @@ void Exercise7::renderToTexture(ID3D12GraphicsCommandList* commandList)
 
     debugDrawPass->record(commandList, width, height, view, proj);
 
-    renderTexture->EndScene(commandList);
+    CD3DX12_RESOURCE_BARRIER toPS = CD3DX12_RESOURCE_BARRIER::Transition(renderTexture.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    commandList->ResourceBarrier(1, &toPS);
 }
 
 void Exercise7::render()
@@ -317,14 +354,17 @@ void Exercise7::render()
     imGuiCommands();
 
     ModuleD3D12* d3d12 = app->getD3D12();
-    ModuleDescriptors* descriptors = app->getDescriptors();
+    ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
     ModuleSamplers* samplers = app->getSamplers();
 
     ID3D12GraphicsCommandList* commandList = d3d12->getCommandList();
 
     commandList->Reset(d3d12->getCommandAllocator(), nullptr);
 
-    renderToTexture(commandList);
+    if (renderTexture)
+    {
+        renderToTexture(commandList);
+    }
 
     CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(d3d12->getBackBuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
     commandList->ResourceBarrier(1, &barrier);

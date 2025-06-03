@@ -49,10 +49,16 @@ class Exercise7 : public Module
     bool                                showGuizmo = false;
     ImGuizmo::OPERATION                 moOperation = ImGuizmo::TRANSLATE;
     std::unique_ptr<Model>              model;
-    std::unique_ptr<DX::RenderTexture>  renderTexture;
+    ComPtr<ID3D12Resource>              renderTexture;
+    ComPtr<ID3D12Resource>              renderDS;
+
 
     UINT                                srvTarget = 0;
     UINT                                rtvTarget = 0;
+    UINT                                dsvTarget = 0;
+    ImVec2                              canvasSize;
+    ImVec2                              previousSize;
+    ImVec2                              canvasPos;
 
 public:
     Exercise7();
@@ -71,4 +77,5 @@ private:
     bool createPSO();
     bool loadModel();
     void renderToTexture(ID3D12GraphicsCommandList* commandList);
+    void resizeRenderTexture();
 };

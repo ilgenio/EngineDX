@@ -2,7 +2,7 @@
 #include "ImGuiPass.h"
 
 #include "Application.h"
-#include "ModuleDescriptors.h"
+#include "ModuleShaderDescriptors.h"
 
 #include "imgui.h"
 #include "backends/imgui_impl_win32.h"

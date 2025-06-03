@@ -1,19 +1,19 @@
 #include "Globals.h"
 
-#include "ModuleDescriptors.h"
+#include "ModuleShaderDescriptors.h"
 
 #include "Application.h"
 #include "ModuleD3D12.h"
 
-ModuleDescriptors::ModuleDescriptors()
+ModuleShaderDescriptors::ModuleShaderDescriptors()
 {
 }
 
-ModuleDescriptors::~ModuleDescriptors()
+ModuleShaderDescriptors::~ModuleShaderDescriptors()
 {
 }
 
-bool ModuleDescriptors::init()
+bool ModuleShaderDescriptors::init()
 {
     ModuleD3D12* d3d12 = app->getD3D12();
     ID3D12Device2* device = d3d12->getDevice();
@@ -31,18 +31,33 @@ bool ModuleDescriptors::init()
 
     heap->SetName(L"Module Descriptors Heap");
 
-    cpuStart = heap->GetCPUDescriptorHandleForHeapStart();
     gpuStart = heap->GetGPUDescriptorHandleForHeapStart();
+    cpuStart = heap->GetCPUDescriptorHandleForHeapStart();
+
 
     return true;
 }
 
-bool ModuleDescriptors::cleanUp()
+bool ModuleShaderDescriptors::cleanUp()
 {
     return true;
 }
 
-UINT ModuleDescriptors::createCBV(ID3D12Resource *resource)
+
+UINT ModuleShaderDescriptors::alloc()
+{
+    _ASSERTE(current < count);
+    UINT index = current;
+    ++current;
+    return index;
+}
+
+void ModuleShaderDescriptors::release(UINT handle)
+{
+
+}
+
+UINT ModuleShaderDescriptors::createCBV(ID3D12Resource *resource)
 {
     _ASSERTE(current < count);
 
@@ -67,7 +82,7 @@ UINT ModuleDescriptors::createCBV(ID3D12Resource *resource)
     return current;
 }
 
-UINT ModuleDescriptors::createTextureSRV(ID3D12Resource* resource) 
+UINT ModuleShaderDescriptors::createTextureSRV(ID3D12Resource* resource) 
 {
     _ASSERTE(current < count);
 
@@ -82,7 +97,7 @@ UINT ModuleDescriptors::createTextureSRV(ID3D12Resource* resource)
     return current;
 }
 
-UINT ModuleDescriptors::createNullTexture2DSRV()
+UINT ModuleShaderDescriptors::createNullTexture2DSRV()
 {
     _ASSERTE(current < count);
 

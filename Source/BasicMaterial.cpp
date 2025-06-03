@@ -3,7 +3,7 @@
 
 #include "Application.h"
 #include "ModuleResources.h"
-#include "ModuleDescriptors.h"
+#include "ModuleShaderDescriptors.h"
 
 #include "tiny_gltf.h"
 
@@ -71,11 +71,11 @@ void BasicMaterial::load(const tinygltf::Model& model, const tinygltf::Material&
 
     if (hasColourTexture)
     {
-        baseColourSRV = app->getDescriptors()->createTextureSRV(baseColourTex.Get());
+        baseColourSRV = app->getShaderDescriptors()->createTextureSRV(baseColourTex.Get());
     }
     else
     {
-        baseColourSRV = app->getDescriptors()->createNullTexture2DSRV();
+        baseColourSRV = app->getShaderDescriptors()->createNullTexture2DSRV();
     }
 }
 

@@ -3,7 +3,7 @@
 
 #include "Application.h"
 #include "ModuleResources.h"
-#include "ModuleDescriptors.h"
+#include "ModuleShaderDescriptors.h"
 #include "ModuleD3D12.h"
 
 #include "tiny_gltf.h"
@@ -102,7 +102,7 @@ void Material::load(const tinygltf::Model& model, const tinygltf::Material &mate
     std::string base = basePath;
 
     // Descriptors
-    ModuleDescriptors* descriptors = app->getDescriptors();
+    ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
 
     // Base Color Texture
     if (material.pbrMetallicRoughness.baseColorTexture.index >= 0 && loadTexture(model, base, material.pbrMetallicRoughness.baseColorTexture.index, baseColorTex))
@@ -174,7 +174,7 @@ bool Material::loadTexture(const tinygltf::Model& model, const std::string& base
 
 void Material::loadIridescenceExt(const tinygltf::Model& model, const tinygltf::Material &material, const std::string& basePath)
 {
-    ModuleDescriptors* descriptors = app->getDescriptors();
+    ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
 
     auto it = material.extensions.find("KHR_materials_iridescence");
     if (it != material.extensions.end())
@@ -252,7 +252,7 @@ void Material::loadTransmissionExt(const tinygltf::Model &model, const tinygltf:
             int index = texture.Get(std::string("index")).GetNumberAsInt();
             if (index >= 0 && loadTexture(model, basePath, index, transmissionTex))
             {
-                transmissionDesc = app->getDescriptors()->createTextureSRV(transmissionTex.Get());
+                transmissionDesc = app->getShaderDescriptors()->createTextureSRV(transmissionTex.Get());
                 data.flags |= MATERIAL_FLAGS_TRANSMISSION_TEX;
             }
         }

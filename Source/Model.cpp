@@ -2,7 +2,7 @@
 #include "Model.h"
 
 #include "Application.h"
-#include "ModuleDescriptors.h"
+#include "ModuleShaderDescriptors.h"
 #include "ModuleResources.h"
 
 #define TINYGLTF_NO_STB_IMAGE_WRITE
@@ -57,7 +57,7 @@ void Model::loadMeshes(const tinygltf::Model& model)
 
 void Model::loadMaterials(const tinygltf::Model& model, const char* basePath, BasicMaterial::Type materialType)
 {
-    ModuleDescriptors* descriptors = app->getDescriptors();
+    ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
     ModuleResources* resources = app->getResources();
 
     numMaterials = uint32_t(model.materials.size());

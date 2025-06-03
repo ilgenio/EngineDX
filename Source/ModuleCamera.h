@@ -22,21 +22,19 @@ class ModuleCamera : public Module
     Quaternion rotation;
     Vector3 position;
     Matrix view;
-    Matrix proj;
     bool enabled = true;
 public:
 
 	bool init() override;
 	void update() override;
 
-    void windowResized(unsigned newWidth, unsigned newHeight);
-
     void setEnable(bool flag) { enabled = flag; }
     bool getEnabled() const { return enabled;  }
 
     const Matrix&     getView() const {return view;}
-    const Matrix&     getProj() const {return proj;}
-    const Vector3&    getPos() const  {return position;}
-    const Quaternion& getRot() const  {return rotation;}
+    const Quaternion& getRot() const { return rotation; }
+    const Vector3&    getPos() const { return position; }
+
+    static Matrix getPerspectiveProj(float aspect); 
 
 };

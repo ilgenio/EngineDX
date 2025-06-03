@@ -5,7 +5,7 @@
 #include "ModuleD3D12.h"
 #include "ModuleCamera.h"
 #include "ModuleResources.h"
-#include "ModuleDescriptors.h"
+#include "ModuleShaderDescriptors.h"
 
 #include "ReadData.h"
 
@@ -41,7 +41,7 @@ bool Exercise4::init()
     if (ok)
     {
         ModuleResources* resources = app->getResources();
-        ModuleDescriptors* descriptors = app->getDescriptors();
+        ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
 
         textureDog = resources->createTextureFromFile(std::wstring(L"Assets/Textures/dog.dds"));
 
@@ -84,7 +84,7 @@ void Exercise4::render()
 
     ModuleD3D12* d3d12  = app->getD3D12();
     ModuleCamera* camera = app->getCamera();
-    ModuleDescriptors* descriptors = app->getDescriptors();
+    ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
     ModuleSamplers* samplers = app->getSamplers();
 
     ID3D12GraphicsCommandList* commandList = d3d12->getCommandList();
@@ -99,7 +99,7 @@ void Exercise4::render()
 
     Matrix model = Matrix::Identity;
     const Matrix& view = camera->getView();
-    const Matrix& proj = camera->getProj();
+    Matrix proj = ModuleCamera::getPerspectiveProj(float(width)/float(height));
 
     Matrix mvp = model * view * proj;
     mvp = mvp.Transpose();

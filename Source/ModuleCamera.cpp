@@ -3,7 +3,6 @@
 #include "ModuleCamera.h"
 
 #include "Application.h"
-#include "ModuleD3D12.h"
 
 #include "Mouse.h"
 #include "Keyboard.h"
@@ -20,11 +19,6 @@ namespace
 
 bool ModuleCamera::init()
 {
-    ModuleD3D12* d3d12 = app->getD3D12();
-
-    unsigned width = d3d12->getWindowWidth();
-    unsigned height = d3d12->getWindowHeight();
-
     position = Vector3(0.0f, 0.0f, 10.0f);
     rotation = Quaternion::CreateFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), XMConvertToRadians(0.0f));
 
@@ -35,7 +29,6 @@ bool ModuleCamera::init()
     view.Translation(-position);
 
     view  = Matrix::CreateLookAt(Vector3(0.0f, 0.0f, 10.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(0.0f, 1.0f, 0.0f));
-    proj  = Matrix::CreatePerspectiveFieldOfView(XM_PIDIV4, float(width) / float(height), NEAR_PLANE, FAR_PLANE);
 
     return true;
 }
@@ -133,8 +126,8 @@ void ModuleCamera::update()
     }
 }
 
-void ModuleCamera::windowResized(unsigned newWidth, unsigned newHeight)
+Matrix ModuleCamera::getPerspectiveProj(float aspect) 
 {
-    proj = Matrix::CreatePerspectiveFieldOfView(XM_PIDIV4, float(newWidth) / float(newHeight), NEAR_PLANE, FAR_PLANE);
+    return Matrix::CreatePerspectiveFieldOfView(XM_PIDIV4, aspect, NEAR_PLANE, FAR_PLANE);
 }
 
