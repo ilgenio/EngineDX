@@ -124,6 +124,11 @@ void ModuleCamera::update()
         view = Matrix::CreateFromQuaternion(invRot);
         view.Translation(Vector3::Transform(-position, invRot));
     }
+    else
+    {
+        leftDrag = false;
+        rightDrag = false;
+    }
 }
 
 Matrix ModuleCamera::getPerspectiveProj(float aspect) 
