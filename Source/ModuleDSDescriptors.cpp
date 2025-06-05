@@ -21,7 +21,7 @@ bool ModuleDSDescriptors::init()
     descriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
     D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
-    heapDesc.NumDescriptors = MAX_NUM_TARGETS;
+    heapDesc.NumDescriptors = MAX_NUM_DEPTHS;
     heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
     heapDesc.Type =  D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
 
@@ -39,7 +39,7 @@ UINT ModuleDSDescriptors::create(ID3D12Resource *resource)
 
     _ASSERTE(handles.validHandle(handle));
 
-    app->getD3D12()->getDevice()->CreateRenderTargetView(resource, nullptr, CD3DX12_CPU_DESCRIPTOR_HANDLE(cpuStart, handles.indexFromHandle(handle), descriptorSize));
+    app->getD3D12()->getDevice()->CreateDepthStencilView(resource, nullptr, CD3DX12_CPU_DESCRIPTOR_HANDLE(cpuStart, handles.indexFromHandle(handle), descriptorSize));
 
     return handle;
 }

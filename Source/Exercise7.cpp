@@ -95,7 +95,7 @@ void Exercise7::resizeRenderTexture()
             size_t(canvasSize.y), 1.0f, 0, "Exercise7 DS");
 
         // Create RTV.
-        rtDescriptors->release(srvTarget);
+        rtDescriptors->release(rtvTarget);
         rtvTarget = rtDescriptors->create(renderTexture.Get());
 
         // Create SRV.
@@ -253,6 +253,7 @@ void Exercise7::renderToTexture(ID3D12GraphicsCommandList* commandList)
     ModuleCamera* camera = app->getCamera();
     ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
     ModuleRTDescriptors* rtDescriptors = app->getRTDescriptors();
+    ModuleDSDescriptors* dsDescriptors = app->getDSDescriptors();
     ModuleSamplers* samplers = app->getSamplers();
     ModuleRingBuffer* ringBuffer = app->getRingBuffer();
 
@@ -284,7 +285,7 @@ void Exercise7::renderToTexture(ID3D12GraphicsCommandList* commandList)
     commandList->ResourceBarrier(1, &toRT);
     
     D3D12_CPU_DESCRIPTOR_HANDLE rtv = rtDescriptors->getCPUHandle(rtvTarget);
-    D3D12_CPU_DESCRIPTOR_HANDLE dsv = d3d12->getDepthStencilDescriptor();
+    D3D12_CPU_DESCRIPTOR_HANDLE dsv = dsDescriptors->getCPUHandle(dsvTarget);
 
     PerFrame perFrame;
     perFrame.L = light.L;
@@ -371,6 +372,7 @@ void Exercise7::render()
 
     D3D12_CPU_DESCRIPTOR_HANDLE rtv = d3d12->getRenderTargetDescriptor();
     D3D12_CPU_DESCRIPTOR_HANDLE dsv = d3d12->getDepthStencilDescriptor();
+
     commandList->OMSetRenderTargets(1, &rtv, false, nullptr);
 
     float clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };

@@ -18,9 +18,9 @@ public:
     D3D12_CPU_DESCRIPTOR_HANDLE getCPUHandle(UINT handle) const { return CD3DX12_CPU_DESCRIPTOR_HANDLE(cpuStart, handles.indexFromHandle(handle), descriptorSize); }
 
 private:
-    enum { MAX_NUM_TARGETS = 256 };
+    enum { MAX_NUM_DEPTHS = 256 };
 
-    typedef HandleManager<MAX_NUM_TARGETS> Handles;
+    typedef HandleManager<MAX_NUM_DEPTHS> Handles;
    
     ComPtr<ID3D12DescriptorHeap> heap;
     D3D12_CPU_DESCRIPTOR_HANDLE cpuStart = {0};
