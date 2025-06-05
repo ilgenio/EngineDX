@@ -295,7 +295,7 @@ ComPtr<ID3D12Resource> ModuleResources::createRenderTarget(DXGI_FORMAT format, s
     D3D12_CLEAR_VALUE clearValue = { format , { clearColour[0], clearColour[1], clearColour[2], clearColour[3]} };
 
     app->getD3D12()->getDevice()->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES,
-        &desc, D3D12_RESOURCE_STATE_RENDER_TARGET, &clearValue, IID_PPV_ARGS(&texture));
+        &desc, D3D12_RESOURCE_STATE_COMMON, &clearValue, IID_PPV_ARGS(&texture));
 
     texture->SetName(std::wstring(name, name + strlen(name)).c_str());
 
