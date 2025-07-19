@@ -170,7 +170,6 @@ bool Exercise4::createVertexBuffer(void* bufferData, unsigned bufferSize, unsign
         vertexBufferView.SizeInBytes    = bufferSize;
 
         return true;
-#include "Module.h"
     }
 
     return false;

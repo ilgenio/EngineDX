@@ -109,3 +109,5 @@ Source/tmp/x64/Debug/material.obj.enc
 /Source/3rdParty/DirectXTex/Bin/Desktop_2022_Win10/x64/Release
 Source/3rdParty/imgui-1.89.8/examples/libs/glfw/lib-vc2010-32/glfw3.lib
 Source/3rdParty/imgui-1.89.8/examples/libs/glfw/lib-vc2010-64/glfw3.lib
+/Source/build/out/x64/Debug
+/Source/build/tmp/x64/Debug

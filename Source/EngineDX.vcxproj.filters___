@@ -127,9 +127,6 @@
     <ClCompile Include="Exercise7.cpp">
       <Filter>Exercises</Filter>
     </ClCompile>
-    <ClCompile Include="RenderTexture.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
     <ClCompile Include="ModuleShaderDescriptors.cpp">
       <Filter>Modules</Filter>
     </ClCompile>
@@ -138,6 +135,9 @@
     </ClCompile>
     <ClCompile Include="ModuleDSDescriptors.cpp">
       <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="Exercise9.cpp">
+      <Filter>Exercises</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -276,9 +276,6 @@
     <ClInclude Include="Exercise7.h">
       <Filter>Exercises</Filter>
     </ClInclude>
-    <ClInclude Include="RenderTexture.h">
-      <Filter>Core</Filter>
-    </ClInclude>
     <ClInclude Include="ModuleShaderDescriptors.h">
       <Filter>Modules</Filter>
     </ClInclude>
@@ -287,6 +284,12 @@
     </ClInclude>
     <ClInclude Include="ModuleDSDescriptors.h">
       <Filter>Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="HandleManager.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Exercise9.h">
+      <Filter>Exercises</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -374,6 +377,12 @@
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\Exercise7VS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\Exercise9PS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\Exercise9VS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>

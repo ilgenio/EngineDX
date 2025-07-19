@@ -6,7 +6,6 @@
 #include <imgui.h>
 #include "ImGuizmo.h"
 #include "BasicMaterial.h"
-#include "RenderTexture.h"
 
 class Model;
 

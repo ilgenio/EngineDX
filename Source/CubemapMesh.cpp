@@ -51,27 +51,29 @@ namespace
         -1.0f, -1.0f,  1.0f,
          1.0f, -1.0f,  1.0f
     };
-
-
 }
-Vector3 CubemapMesh::front[6] = {
-    {1.0f, 0.0f, 0.0f}, {-1.0f, 0.0f, 0.0f},
-    {0.0f, 1.0f, 0.0f}, {0.0f, -1.0f, 0.0f},
-    {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f, 1.0f}
-};
-
-Vector3 CubemapMesh::up[6] = {
-    {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 0.0f},
-    {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, -1.0f},
-    {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 0.0f}
-};
-
-const D3D12_INPUT_ELEMENT_DESC CubemapMesh::inputLayout[CubemapMesh::numVertexAttribs] = { {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0} };
-const D3D12_INPUT_LAYOUT_DESC CubemapMesh::inputLayoutDesc = { &CubemapMesh::inputLayout[0], UINT(std::size(CubemapMesh::inputLayout)) };
 
 CubemapMesh::CubemapMesh()
 {
+    front[0] = {1.0f, 0.0f, 0.0f};
+    front[1] = {-1.0f, 0.0f, 0.0f};
+    front[2] = {0.0f, 1.0f, 0.0f};
+    front[3] = {0.0f, -1.0f, 0.0f};
+    front[4] = {0.0f, 0.0f, -1.0f};
+    front[5] = {0.0f, 0.0f, 1.0f};
+
+    up[0] = {0.0f, 1.0f, 0.0f};
+    up[1] = {0.0f, 1.0f, 0.0f};
+    up[2] = {0.0f, 0.0f, 1.0f};
+    up[3] = {0.0f, 0.0f, -1.0f};
+    up[4] = {0.0f, 1.0f, 0.0f};
+    up[5] = {0.0f, 1.0f, 0.0f};
+
+    inputLayout     = {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0};
+    inputLayoutDesc = { &inputLayout, 1 };
     vertexBuffer = app->getResources()->createDefaultBuffer(&vertices[0], sizeof(vertices), "CubemapMesh");
+
+    vertexBufferView = { vertexBuffer->GetGPUVirtualAddress(), sizeof(vertices), sizeof(float)*3};
 }
 
 CubemapMesh::~CubemapMesh()
