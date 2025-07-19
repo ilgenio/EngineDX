@@ -71,6 +71,31 @@ UINT ModuleShaderDescriptors::createTextureSRV(ID3D12Resource* resource)
     return 0;
 }
 
+UINT ModuleShaderDescriptors::createCubeTextureSRV(ID3D12Resource* resource)
+{
+    if (resource)
+    {
+        UINT handle = handles.allocHandle();
+        _ASSERTE(handles.validHandle(handle));
+
+        D3D12_RESOURCE_DESC desc = resource->GetDesc();
+
+        D3D12_SHADER_RESOURCE_VIEW_DESC viewDesc;
+        viewDesc.Format = desc.Format;
+        viewDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+        viewDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+        viewDesc.TextureCube.MipLevels = desc.MipLevels;
+        viewDesc.TextureCube.MostDetailedMip = 0;
+        viewDesc.Texture1D.ResourceMinLODClamp = 0.0f;
+
+        app->getD3D12()->getDevice()->CreateShaderResourceView(resource, &viewDesc, CD3DX12_CPU_DESCRIPTOR_HANDLE(cpuStart, handles.indexFromHandle(handle), descriptorSize));
+
+        return handle;
+    }
+
+    return 0;
+}
+
 UINT ModuleShaderDescriptors::createNullTexture2DSRV()
 {
     UINT handle = handles.allocHandle();

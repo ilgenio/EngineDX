@@ -31,11 +31,11 @@ bool Exercise9::init()
         ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
 
         cubemapMesh = std::make_unique<CubemapMesh>();
-        cubemap = resources->createTextureFromFile(std::wstring(L"Assets/Textures/dog.dds"));
+        cubemap = resources->createTextureFromFile(std::wstring(L"Assets/Textures/cubemap.dds"));
 
         if ((ok = cubemap) == true)
         {
-            cubemapDesc = descriptors->createTextureSRV(cubemap.Get());
+            cubemapDesc = descriptors->createCubeTextureSRV(cubemap.Get());
         }
     }
 
@@ -181,6 +181,7 @@ bool Exercise9::createPSO()
     psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);                               // a default rasterizer state.
     psoDesc.RasterizerState.FrontCounterClockwise = TRUE;                                           // our models are counter clock wise
     psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+    psoDesc.DepthStencilState.DepthEnable = FALSE;
     psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);                                         // a default blend state.
     psoDesc.NumRenderTargets = 1;                                                                   // we are only binding one render target
 

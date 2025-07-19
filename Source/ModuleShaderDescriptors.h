@@ -17,6 +17,7 @@ public:
 
     UINT createCBV(ID3D12Resource* resource);
     UINT createTextureSRV(ID3D12Resource* resource); 
+    UINT createCubeTextureSRV(ID3D12Resource* resource);
     UINT createNullTexture2DSRV();
     
     D3D12_GPU_DESCRIPTOR_HANDLE getGPUHandle(UINT handle) const { return CD3DX12_GPU_DESCRIPTOR_HANDLE(gpuStart, handles.indexFromHandle(handle), descriptorSize); }
