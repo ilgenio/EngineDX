@@ -22,6 +22,8 @@ Exercise9::~Exercise9()
 
 bool Exercise9::init() 
 {
+    cubemapMesh = std::make_unique<CubemapMesh>();
+
     bool ok = createRootSignature();
     ok = ok && createPSO();
 
@@ -30,7 +32,6 @@ bool Exercise9::init()
         ModuleResources* resources = app->getResources();
         ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
 
-        cubemapMesh = std::make_unique<CubemapMesh>();
         cubemap = resources->createTextureFromFile(std::wstring(L"Assets/Textures/cubemap.dds"));
 
         if ((ok = cubemap) == true)
@@ -63,10 +64,15 @@ void Exercise9::render()
     unsigned width = d3d12->getWindowWidth();
     unsigned height = d3d12->getWindowHeight();
 
-    const Matrix& view = camera->getView();
+    const Quaternion& rot = camera->getRot();
+    Quaternion invRot; 
+    rot.Inverse(invRot);
+    Matrix view = Matrix::CreateFromQuaternion(invRot);
+
     Matrix proj = ModuleCamera::getPerspectiveProj(float(width) / float(height));
 
     Matrix vp = view * proj;
+    vp = vp.Transpose();
 
     D3D12_VIEWPORT viewport;
     viewport.TopLeftX = viewport.TopLeftY = 0;
@@ -161,15 +167,11 @@ bool Exercise9::createRootSignature()
 
 bool Exercise9::createPSO()
 {
-    D3D12_INPUT_ELEMENT_DESC inputLayout[] = {{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-                                              {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-                                              {"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}  };
-
     auto dataVS = DX::ReadData(L"Exercise9VS.cso");
     auto dataPS = DX::ReadData(L"Exercise9PS.cso");
 
     D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
-    psoDesc.InputLayout = { inputLayout, sizeof(inputLayout) / sizeof(D3D12_INPUT_ELEMENT_DESC) };  // the structure describing our input layout
+    psoDesc.InputLayout = cubemapMesh->getInputLayoutDesc(); 
     psoDesc.pRootSignature = rootSignature.Get();                                                   // the root signature that describes the input data this pso needs
     psoDesc.VS = { dataVS.data(), dataVS.size() };                                                  // structure describing where to find the vertex shader bytecode and how large it is
     psoDesc.PS = { dataPS.data(), dataPS.size() };                                                  // same as VS but for pixel shader
@@ -181,7 +183,9 @@ bool Exercise9::createPSO()
     psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);                               // a default rasterizer state.
     psoDesc.RasterizerState.FrontCounterClockwise = TRUE;                                           // our models are counter clock wise
     psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-    psoDesc.DepthStencilState.DepthEnable = FALSE;
+
+    // NOTE: This is important as cubemap Z will be 1 and default comparison is LESS (not equal) 
+    psoDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
     psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);                                         // a default blend state.
     psoDesc.NumRenderTargets = 1;                                                                   // we are only binding one render target
 

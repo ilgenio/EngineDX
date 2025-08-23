@@ -79,9 +79,9 @@ void ModuleRender::render()
     sprintf_s(lTmp, 1023, "FPS: [%d]. Avg. elapsed (Ms): [%g] ", uint32_t(app->getFPS()), app->getAvgElapsedMs());
     dd::screenText(lTmp, ddConvert(Vector3(10.0f, 10.0f, 0.0f)), dd::colors::White, 0.6f);
 
-   // debugDrawPass->record(commandList.Get(), width, height, camera->getView(), ModuleCamera::getPerspectiveProj(float(width) / float(height)));
+    debugDrawPass->record(commandList.Get(), width, height, camera->getView(), ModuleCamera::getPerspectiveProj(float(width) / float(height)));
 
-    //imguiPass->record(commandList.Get());
+    imguiPass->record(commandList.Get());
 
     barrier = CD3DX12_RESOURCE_BARRIER::Transition(d3d12->getBackBuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
     commandList->ResourceBarrier(1, &barrier);

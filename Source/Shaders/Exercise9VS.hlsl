@@ -1,5 +1,5 @@
 
-cbuffer MVP : register(b0)
+cbuffer VP : register(b0)
 {
     float4x4 vp;  
 };
@@ -14,7 +14,8 @@ VertexOutput exercise9VS(float3 position : POSITION)
 {
     VertexOutput output;
     output.texCoord = position;
-    output.position = mul(float4(position, 1.0), vp).xyww;
+    float4 clipPos = mul(float4(position, 1.0), vp);    
+    output.position = clipPos.xyww;
 
     return output;
 }
