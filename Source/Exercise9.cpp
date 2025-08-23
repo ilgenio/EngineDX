@@ -7,6 +7,7 @@
 #include "ModuleResources.h"
 #include "ModuleShaderDescriptors.h"
 #include "ModuleCamera.h"
+#include "DebugDrawPass.h"
 
 #include "CubemapMesh.h"
 #include "ReadData.h"
@@ -31,6 +32,9 @@ bool Exercise9::init()
     {
         ModuleResources* resources = app->getResources();
         ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
+        ModuleD3D12* d3d12 = app->getD3D12();
+
+        debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue());
 
         cubemap = resources->createTextureFromFile(std::wstring(L"Assets/Textures/cubemap.dds"));
 
@@ -117,12 +121,10 @@ void Exercise9::render()
 
     END_EVENT(commandList);
  
-#if 0
     if (showGrid) dd::xzSquareGrid(-10.0f, 10.0f, 0.0f, 1.0f, dd::colors::LightGray);
     if (showAxis) dd::axisTriad(ddConvert(Matrix::Identity), 0.1f, 1.0f);
 
-    debugDrawPass->record(commandList, width, height, view, proj);
-#endif
+    debugDrawPass->record(commandList, width, height, camera->getView(), proj);
 
     barrier = CD3DX12_RESOURCE_BARRIER::Transition(d3d12->getBackBuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
     commandList->ResourceBarrier(1, &barrier);

@@ -4,14 +4,19 @@
 #include <memory>
 
 class CubemapMesh;
+class DebugDrawPass;
 
 class Exercise9 : public Module
 {
-    ComPtr<ID3D12RootSignature>  rootSignature;
-    ComPtr<ID3D12PipelineState>  pso;
+    ComPtr<ID3D12RootSignature>     rootSignature;
+    ComPtr<ID3D12PipelineState>     pso;
 
-    std::unique_ptr<CubemapMesh> cubemapMesh;
-    ComPtr<ID3D12Resource>       cubemap;
+    std::unique_ptr<CubemapMesh>    cubemapMesh;
+    ComPtr<ID3D12Resource>          cubemap;
+    std::unique_ptr<DebugDrawPass>  debugDrawPass;
+    bool                            showAxis = true;
+    bool                            showGrid = true;
+
 
     UINT cubemapDesc = 0;
 
