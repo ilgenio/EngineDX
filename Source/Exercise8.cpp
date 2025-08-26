@@ -1,12 +1,15 @@
 #include "Globals.h"
-#include "Exercise6.h"
+#include "Exercise8.h"
 
 #include "Application.h"
 #include "ModuleD3D12.h"
 #include "ModuleCamera.h"
 #include "ModuleShaderDescriptors.h"
+#include "ModuleRTDescriptors.h"
+#include "ModuleDSDescriptors.h"
 #include "ModuleSamplers.h"
 #include "ModuleRingBuffer.h"
+#include "ModuleResources.h"
 #include "Model.h"
 #include "Mesh.h"
 
@@ -17,16 +20,16 @@
 #include "d3dx12.h"
 
 
-Exercise6::Exercise6()
+Exercise8::Exercise8()
 {
 
 }
 
-Exercise6::~Exercise6()
+Exercise8::~Exercise8()
 {
 }
 
-bool Exercise6::init() 
+bool Exercise8::init() 
 {
     bool ok = createRootSignature();
     ok = ok && createPSO();
@@ -35,37 +38,78 @@ bool Exercise6::init()
     if(ok)
     {
         ModuleD3D12* d3d12 = app->getD3D12();
+        ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
 
         debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue());
-        imguiPass = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd());
+
+        UINT imguiTextDesc = descriptors->alloc();
+        imguiPass = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd(), 
+            descriptors->getCPUHandle(imguiTextDesc), descriptors->getGPUHandle(imguiTextDesc));
+
+        srvTarget = descriptors->createNullTexture2DSRV();
     }
      
     return true;
 }
 
-bool Exercise6::cleanUp()
+bool Exercise8::cleanUp()
 {
     imguiPass.reset();
 
     return true;
 }
 
-void Exercise6::preRender()
+void Exercise8::preRender()
 {
     imguiPass->startFrame();
     ImGuizmo::BeginFrame();
 
-    ModuleD3D12* d3d12 = app->getD3D12();
-
-    unsigned width = d3d12->getWindowWidth();
-    unsigned height = d3d12->getWindowHeight();
-
-    // Set the viewport size (adjust based on your application)
-    ImGuizmo::SetRect(0, 0, float(width), float(height));
+    resizeRenderTexture();
 
 }
 
-void Exercise6::imGuiCommands()
+void Exercise8::resizeRenderTexture()
+{
+    if (canvasSize.x > 0 && canvasSize.y > 0 && (previousSize.x != canvasSize.x || previousSize.x == 0 ||
+        previousSize.y != canvasSize.y || previousSize.y == 0))
+    {
+
+        if (renderTexture)
+        {
+            // Ensure previous texture usage is finished
+            app->getD3D12()->flush();
+        }
+
+        ModuleResources* resources            = app->getResources();
+        ModuleShaderDescriptors* descriptors  = app->getShaderDescriptors();
+        ModuleRTDescriptors* rtDescriptors    = app->getRTDescriptors();
+        ModuleDSDescriptors* dsDescriptors    = app->getDSDescriptors();
+
+
+        float clearColor[4] = { 0.2f, 0.2f, 0.2f, 1.0f };
+        renderTexture = resources->createRenderTarget(DXGI_FORMAT_R8G8B8A8_UNORM, size_t(canvasSize.x), 
+            size_t(canvasSize.y), clearColor, "Exercise8 RT");
+
+        renderDS = resources->createDepthStencil(DXGI_FORMAT_D32_FLOAT, size_t(canvasSize.x), 
+            size_t(canvasSize.y), 1.0f, 0, "Exercise8 DS");
+
+        // Create RTV.
+        rtDescriptors->release(rtvTarget);
+        rtvTarget = rtDescriptors->create(renderTexture.Get());
+
+        // Create SRV.
+        descriptors->release(srvTarget);
+        srvTarget = descriptors->createTextureSRV(renderTexture.Get());
+
+        // Create DSV
+        dsDescriptors->release(dsvTarget);
+        dsvTarget = dsDescriptors->create(renderDS.Get());
+
+        previousSize = canvasSize;
+    }
+}
+
+void Exercise8::imGuiCommands()
 {
     ImGui::Begin("Geometry Viewer Options");
     ImGui::Separator();
@@ -123,39 +167,34 @@ void Exercise6::imGuiCommands()
 
     for (BasicMaterial& material : model->getMaterials())
     {
-        if (material.getMaterialType() == BasicMaterial::PHONG)
+        if (material.getMaterialType() == BasicMaterial::PBR_PHONG)
         {
             char tmp[256];
-            _snprintf_s(tmp, 255, "Materila %s", material.getName());
+            _snprintf_s(tmp, 255, "Material %s", material.getName());
 
             if (ImGui::CollapsingHeader(tmp, ImGuiTreeNodeFlags_DefaultOpen))
             {
-                PhongMaterialData phong = material.getPhongMaterial();
-                if (ImGui::ColorEdit3("Diffuse Colour", reinterpret_cast<float*>(&phong.diffuseColour)))
+                PBRPhongMaterialData pbr = material.getPBRPhongMaterial();
+                if (ImGui::ColorEdit3("Diffuse Colour", reinterpret_cast<float*>(&pbr.diffuseColour)))
                 {
-                    material.setPhongMaterial(phong);
+                    material.setPBRPhongMaterial(pbr);
                 }
 
-                bool hasTexture = phong.hasDiffuseTex;
+                bool hasTexture = pbr.hasDiffuseTex;
                 if (ImGui::Checkbox("Use Texture", &hasTexture))
                 {
-                    phong.hasDiffuseTex = hasTexture;
-                    material.setPhongMaterial(phong);
+                    pbr.hasDiffuseTex = hasTexture;
+                    material.setPBRPhongMaterial(pbr);
                 }
-                
-                if (ImGui::DragFloat("Kd", &phong.Kd, 0.01f))
+      
+                if (ImGui::ColorEdit3("Specular Colour", reinterpret_cast<float*>(&pbr.specularColour)))
                 {
-                    material.setPhongMaterial(phong);
-                }
-
-                if (ImGui::DragFloat("Ks", &phong.Ks, 0.01f))
-                {
-                    material.setPhongMaterial(phong);
+                    material.setPBRPhongMaterial(pbr);
                 }
 
-                if (ImGui::DragFloat("shininess", &phong.shininess))
+                if (ImGui::DragFloat("shininess", &pbr.shininess))
                 {
-                    material.setPhongMaterial(phong);
+                    material.setPBRPhongMaterial(pbr);
                 }
             }
         }
@@ -163,24 +202,43 @@ void Exercise6::imGuiCommands()
 
     ImGui::End();
 
-    ModuleCamera* camera = app->getCamera();
+    ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
     ModuleD3D12* d3d12 = app->getD3D12();
 
+    ModuleCamera* camera = app->getCamera();
+
+    bool viewerFocused = false;
+    ImGui::Begin("Scene");
+    const char* frameName = "Scene Frame";
+    ImGuiID id(10);
+
+    ImVec2 max = ImGui::GetWindowContentRegionMax();
+    ImVec2 min = ImGui::GetWindowContentRegionMin();
+    canvasPos = min;
+    canvasSize = ImVec2(max.x - min.x, max.y - min.y);
+    ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+
+    ImGui::BeginChildFrame(id, canvasSize, ImGuiWindowFlags_NoScrollbar);
+    viewerFocused = ImGui::IsWindowFocused();
+    ImGui::Image((ImTextureID)descriptors->getGPUHandle(srvTarget).ptr, canvasSize);
+    
     if (showGuizmo)
     {
-        unsigned width = d3d12->getWindowWidth();
-        unsigned height = d3d12->getWindowHeight();
-
         const Matrix& viewMatrix = camera->getView();
-        Matrix projMatrix = ModuleCamera::getPerspectiveProj(float(width) / float(height));
+        Matrix projMatrix = ModuleCamera::getPerspectiveProj(float(canvasSize.x) / float(canvasSize.y));
 
         // Manipulate the object
+        ImGuizmo::SetRect(cursorPos.x, cursorPos.y, canvasSize.x, canvasSize.y);
+        ImGuizmo::SetDrawlist();
         ImGuizmo::Manipulate((const float*)&viewMatrix, (const float*)&projMatrix, gizmoOperation, ImGuizmo::LOCAL, (float*)&objectMatrix);
     }
 
+    ImGui::EndChildFrame();
+    ImGui::End();
+
     ImGuiIO& io = ImGui::GetIO();
 
-    camera->setEnable(!io.WantCaptureMouse && !ImGuizmo::IsUsing());
+    camera->setEnable(viewerFocused && !ImGuizmo::IsUsing());
 
     if (ImGuizmo::IsUsing())
     {
@@ -188,25 +246,20 @@ void Exercise6::imGuiCommands()
     }
 }
 
-void Exercise6::render()
+void Exercise8::renderToTexture(ID3D12GraphicsCommandList* commandList)
 {
-    imGuiCommands();
-
     ModuleD3D12* d3d12 = app->getD3D12();
     ModuleCamera* camera = app->getCamera();
     ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
+    ModuleRTDescriptors* rtDescriptors = app->getRTDescriptors();
+    ModuleDSDescriptors* dsDescriptors = app->getDSDescriptors();
     ModuleSamplers* samplers = app->getSamplers();
     ModuleRingBuffer* ringBuffer = app->getRingBuffer();
 
-    ID3D12GraphicsCommandList* commandList = d3d12->getCommandList();
+    commandList->SetPipelineState(pso.Get());
 
-    commandList->Reset(d3d12->getCommandAllocator(), pso.Get());
-
-    CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(d3d12->getBackBuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-    commandList->ResourceBarrier(1, &barrier);
-
-    unsigned width = d3d12->getWindowWidth();
-    unsigned height = d3d12->getWindowHeight();
+    unsigned width = unsigned(canvasSize.x);
+    unsigned height = unsigned(canvasSize.y);
 
     const Matrix& view = camera->getView();
     Matrix proj = ModuleCamera::getPerspectiveProj(float(width) / float(height));
@@ -227,9 +280,11 @@ void Exercise6::render()
     scissor.right = width;
     scissor.bottom = height;
 
-    float clearColor[] = { 0.2f, 0.2f, 0.2f, 1.0f };
-    D3D12_CPU_DESCRIPTOR_HANDLE rtv = d3d12->getRenderTargetDescriptor();
-    D3D12_CPU_DESCRIPTOR_HANDLE dsv = d3d12->getDepthStencilDescriptor();
+    CD3DX12_RESOURCE_BARRIER toRT = CD3DX12_RESOURCE_BARRIER::Transition(renderTexture.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
+    commandList->ResourceBarrier(1, &toRT);
+    
+    D3D12_CPU_DESCRIPTOR_HANDLE rtv = rtDescriptors->getCPUHandle(rtvTarget);
+    D3D12_CPU_DESCRIPTOR_HANDLE dsv = dsDescriptors->getCPUHandle(dsvTarget);
 
     PerFrame perFrame;
     perFrame.L = light.L;
@@ -237,10 +292,11 @@ void Exercise6::render()
     perFrame.Ac = light.Ac;
     perFrame.viewPos = camera->getPos();
 
-    perFrame.L.Normalize();    
+    perFrame.L.Normalize();
 
     commandList->OMSetRenderTargets(1, &rtv, false, &dsv);
 
+    float clearColor[] = { 0.2f, 0.2f, 0.2f, 1.0f };
     commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
     commandList->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 
@@ -265,7 +321,7 @@ void Exercise6::render()
 
             UINT tableStartDesc = material.getTexturesTableDescriptor();
 
-            PerInstance perInstance = { model->getModelMatrix(), model->getNormalMatrix(), material.getPhongMaterial() };
+            PerInstance perInstance = { model->getModelMatrix(), model->getNormalMatrix(), material.getPBRPhongMaterial() };
 
             commandList->SetGraphicsRootConstantBufferView(2, ringBuffer->allocConstantBuffer(&perInstance, alignUp(sizeof(PerInstance), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT)));
             commandList->SetGraphicsRootDescriptorTable(3, descriptors->getGPUHandle(tableStartDesc));
@@ -284,10 +340,46 @@ void Exercise6::render()
 
     END_EVENT(commandList);
 
-    if(showGrid) dd::xzSquareGrid(-10.0f, 10.0f, 0.0f, 1.0f, dd::colors::LightGray);
-    if(showAxis) dd::axisTriad(ddConvert(Matrix::Identity), 0.1f, 1.0f);
+    if (showGrid) dd::xzSquareGrid(-10.0f, 10.0f, 0.0f, 1.0f, dd::colors::LightGray);
+    if (showAxis) dd::axisTriad(ddConvert(Matrix::Identity), 0.1f, 1.0f);
 
     debugDrawPass->record(commandList, width, height, view, proj);
+
+    CD3DX12_RESOURCE_BARRIER toPS = CD3DX12_RESOURCE_BARRIER::Transition(renderTexture.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    commandList->ResourceBarrier(1, &toPS);
+}
+
+void Exercise8::render()
+{
+    imGuiCommands();
+
+    ModuleD3D12* d3d12 = app->getD3D12();
+    ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
+    ModuleSamplers* samplers = app->getSamplers();
+
+    ID3D12GraphicsCommandList* commandList = d3d12->getCommandList();
+
+    commandList->Reset(d3d12->getCommandAllocator(), nullptr);
+
+    if (renderTexture)
+    {
+        renderToTexture(commandList);
+    }
+
+    CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(d3d12->getBackBuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+    commandList->ResourceBarrier(1, &barrier);
+
+    D3D12_CPU_DESCRIPTOR_HANDLE rtv = d3d12->getRenderTargetDescriptor();
+    D3D12_CPU_DESCRIPTOR_HANDLE dsv = d3d12->getDepthStencilDescriptor();
+
+    commandList->OMSetRenderTargets(1, &rtv, false, nullptr);
+
+    float clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+    commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
+
+    ID3D12DescriptorHeap* descriptorHeaps[] = { descriptors->getHeap(), samplers->getHeap() };
+    commandList->SetDescriptorHeaps(2, descriptorHeaps);
+
     imguiPass->record(commandList);
 
     barrier = CD3DX12_RESOURCE_BARRIER::Transition(d3d12->getBackBuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
@@ -300,7 +392,7 @@ void Exercise6::render()
     }
 }
 
-bool Exercise6::createRootSignature()
+bool Exercise8::createRootSignature()
 {
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
     CD3DX12_ROOT_PARAMETER rootParameters[5] = {};
@@ -333,14 +425,14 @@ bool Exercise6::createRootSignature()
     return true;
 }
 
-bool Exercise6::createPSO()
+bool Exercise8::createPSO()
 {
     D3D12_INPUT_ELEMENT_DESC inputLayout[] = {{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
                                               {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
                                               {"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}  };
 
-    auto dataVS = DX::ReadData(L"Exercise6VS.cso");
-    auto dataPS = DX::ReadData(L"Exercise6PS.cso");
+    auto dataVS = DX::ReadData(L"Exercise7VS.cso");
+    auto dataPS = DX::ReadData(L"Exercise7PS.cso");
 
     D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
     psoDesc.InputLayout = { inputLayout, sizeof(inputLayout) / sizeof(D3D12_INPUT_ELEMENT_DESC) };  // the structure describing our input layout
@@ -362,10 +454,10 @@ bool Exercise6::createPSO()
     return SUCCEEDED(app->getD3D12()->getDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pso)));
 }
 
-bool Exercise6::loadModel()
+bool Exercise8::loadModel()
 {
     model = std::make_unique<Model>();
-    model->load("Assets/Models/Duck/duck.gltf", "Assets/Models/Duck/", BasicMaterial::PHONG);
+    model->load("Assets/Models/Duck/duck.gltf", "Assets/Models/Duck/", BasicMaterial::PBR_PHONG);
     model->setModelMatrix(Matrix::CreateScale(0.01f, 0.01f, 0.01f));
 
     return true;
