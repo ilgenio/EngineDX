@@ -11,6 +11,37 @@ class Model;
 
 class Exercise8 : public Module
 {
+    struct Ambient
+    {
+        Vector3 Lc;
+    };
+
+    struct Directional
+    {
+        Vector3 Ld;
+        float   intenisty;
+        Vector3 Lc;
+    };
+
+    struct Point
+    {
+        Vector3 Lp;
+        float   sqRadius;
+        Vector3 Lc;
+        float   intensity;
+    };
+
+    struct Spot
+    {
+        Vector3 Ld;
+        float  sqRadius;
+        Vector3 Lp;
+        float  inner;
+        Vector3 Lc;
+        float  outter;
+        float  intensity;
+    };
+
     struct PerInstance
     {
         Matrix modelMat;
@@ -21,14 +52,18 @@ class Exercise8 : public Module
 
     struct PerFrame
     {
-        Vector3 L = Vector3::UnitX;
-        float pad0;
-        Vector3 Lc = Vector3::One;
-        float pad1;
-        Vector3 Ac = Vector3::Zero;
-        float pad2;
-        Vector3 viewPos = Vector3::Zero;
-        float pad3;
+        Ambient ambient;       // Ambient Colour
+        uint32_t pad0;
+
+        Directional dirLight;  // Directional light;
+        uint32_t pad1;
+
+        Point pointLight;      // point light; 
+
+        Spot  spotLight;
+
+        Vector3 viewPos;
+        uint32_t pad4;
     };
 
     struct Light
@@ -38,7 +73,15 @@ class Exercise8 : public Module
         Vector3 Ac = Vector3::One*(0.1f);
     };
 
-    Light                               light;
+    enum ELightType { LIGHT_DIRECTIONAL, LIGHT_POINT, LIGHT_SPOT };
+
+    Ambient                             ambient;
+    Directional                         dirLight;
+    Point                               pointLight;
+    Spot                                spotLight;
+    ELightType                          lightType = LIGHT_DIRECTIONAL;
+
+
     ComPtr<ID3D12RootSignature>         rootSignature;
     ComPtr<ID3D12PipelineState>         pso;
     std::unique_ptr<DebugDrawPass>      debugDrawPass;

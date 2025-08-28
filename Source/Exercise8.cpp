@@ -47,6 +47,16 @@ bool Exercise8::init()
             descriptors->getCPUHandle(imguiTextDesc), descriptors->getGPUHandle(imguiTextDesc));
 
         srvTarget = descriptors->createNullTexture2DSRV();
+
+        ZeroMemory(&ambient, sizeof(Ambient));
+        ZeroMemory(&dirLight, sizeof(Directional));
+        ZeroMemory(&pointLight, sizeof(Point));
+        ZeroMemory(&spotLight, sizeof(Spot));
+
+        dirLight.Ld = Vector3::One * (-0.5f);
+        dirLight.Lc = Vector3::One;
+        dirLight.intenisty = 1.0f;
+        ambient.Lc = Vector3::One * (0.1f);
     }
      
     return true;
@@ -153,8 +163,28 @@ void Exercise8::imGuiCommands()
         model->setModelMatrix(objectMatrix);
     }
 
-    if (ImGui::CollapsingHeader("Light", ImGuiTreeNodeFlags_DefaultOpen))
+    if (ImGui::CollapsingHeader("Lights", ImGuiTreeNodeFlags_DefaultOpen))
     {
+        ImGui::ColorEdit3("Ambient colour", (float*)&ambient.Lc);
+        ImGui::Combo("Light Type", (int*)&lightType, "Directional\0Point\0Spot");
+        switch (lightType)
+        {
+        case LIGHT_DIRECTIONAL:
+            ImGui::DragFloat3("Direction", reinterpret_cast<float*>(&dirLight.Ld), 0.1f, -1.0f, 1.0f);
+            ImGui::SameLine();
+            if (ImGui::SmallButton("Normalize"))
+            {
+                dirLight.Ld.Normalize();
+            }
+            ImGui::ColorEdit3("Colour", reinterpret_cast<float*>(&dirLight.Lc));
+            ImGui::DragFloat("Intensity", reinterpret_cast<float*>(&dirLight.intenisty), 0.1f, 0.0f, 1000.0f);
+            break;
+        case LIGHT_POINT:
+            break;
+        case LIGHT_SPOT:
+            break;
+        }
+        /*
         ImGui::DragFloat3("Light Direction", reinterpret_cast<float*>(&light.L), 0.1f, -1.0f, 1.0f);
         ImGui::SameLine();
         if (ImGui::SmallButton("Normalize"))
@@ -163,6 +193,7 @@ void Exercise8::imGuiCommands()
         }
         ImGui::ColorEdit3("Light Colour", reinterpret_cast<float*>(&light.Lc), ImGuiColorEditFlags_NoAlpha);
         ImGui::ColorEdit3("Ambient Colour", reinterpret_cast<float*>(&light.Ac), ImGuiColorEditFlags_NoAlpha);
+        */
     }
 
     for (BasicMaterial& material : model->getMaterials())
@@ -287,12 +318,11 @@ void Exercise8::renderToTexture(ID3D12GraphicsCommandList* commandList)
     D3D12_CPU_DESCRIPTOR_HANDLE dsv = dsDescriptors->getCPUHandle(dsvTarget);
 
     PerFrame perFrame;
-    perFrame.L = light.L;
-    perFrame.Lc = light.Lc;
-    perFrame.Ac = light.Ac;
+    perFrame.ambient  = ambient;
+    perFrame.dirLight = dirLight;
+    perFrame.pointLight = pointLight;
+    perFrame.spotLight = spotLight;
     perFrame.viewPos = camera->getPos();
-
-    perFrame.L.Normalize();
 
     commandList->OMSetRenderTargets(1, &rtv, false, &dsv);
 
@@ -431,8 +461,8 @@ bool Exercise8::createPSO()
                                               {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
                                               {"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}  };
 
-    auto dataVS = DX::ReadData(L"Exercise7VS.cso");
-    auto dataPS = DX::ReadData(L"Exercise7PS.cso");
+    auto dataVS = DX::ReadData(L"Exercise8VS.cso");
+    auto dataPS = DX::ReadData(L"Exercise8PS.cso");
 
     D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
     psoDesc.InputLayout = { inputLayout, sizeof(inputLayout) / sizeof(D3D12_INPUT_ELEMENT_DESC) };  // the structure describing our input layout

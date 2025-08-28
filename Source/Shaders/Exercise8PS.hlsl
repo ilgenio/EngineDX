@@ -3,7 +3,7 @@
 Texture2D diffuseTex : register(t0);
 SamplerState diffuseSamp : register(s0);
 
-float3 shlick(float3 rf0, float dotNL)
+float3 schlick(float3 rf0, float dotNL)
 {
     return rf0 + (1 - rf0) * pow(1.0-dotNL, 5);
 }
@@ -14,8 +14,8 @@ float3 phongBRDF(float3 L, float3 N, float3 V, float3 R, float3 Cd, float3 Cs, f
     float dotNL    = saturate(-dot(L, N));
     float rf0Max   = max(max(Cs.r, Cs.g), Cs.b);
 
-    float3 fresnel = shlick(Cs, dotNL);
-    float3 colour = ((Cd * (1.0 - rf0Max)) + ((shininess + 2.0) / (2)) * fresnel * pow(dotVR, shininess)) * Lc * dotNL;
+    float3 fresnel = schlick(Cs, dotNL);
+    float3 colour = (Cd * (1.0 - rf0Max) + ((shininess + 2.0) / (2)) * fresnel * pow(dotVR, shininess)) * Lc * dotNL;
 
     return colour;
 }
@@ -76,8 +76,11 @@ float4 exercise8PS(float3 worldPos : POSITION, float3 normal : NORMAL, float2 co
     
     float3 colour = computeLighting(ambient, Cd);
     colour += computeLighting(V, N, dirLight, Cd, material.specularColour, material.shininess);
-    colour += computeLighting(V, N, pointLight, worldPos, Cd, material.specularColour, material.shininess);
-    colour += computeLighting(V, N, spotLight, worldPos, Cd, material.specularColour, material.shininess);
+    //colour += computeLighting(V, N, pointLight, worldPos, Cd, material.specularColour, material.shininess);
+    //colour += computeLighting(V, N, spotLight, worldPos, Cd, material.specularColour, material.shininess);
+    
+    
+    
     
     return float4(colour, 1.0); 
 }
