@@ -14,11 +14,11 @@
 #include "Mesh.h"
 
 #include "ReadData.h"
+#include "Math.h"
 
 #include "DirectXTex.h"
 #include <d3d12.h>
 #include "d3dx12.h"
-
 
 Exercise8::Exercise8()
 {
@@ -48,15 +48,27 @@ bool Exercise8::init()
 
         srvTarget = descriptors->createNullTexture2DSRV();
 
-        ZeroMemory(&ambient, sizeof(Ambient));
-        ZeroMemory(&dirLight, sizeof(Directional));
         ZeroMemory(&pointLight, sizeof(Point));
         ZeroMemory(&spotLight, sizeof(Spot));
+
+        ambient.Lc = Vector3::One * (0.1f);
 
         dirLight.Ld = Vector3::One * (-0.5f);
         dirLight.Lc = Vector3::One;
         dirLight.intenisty = 1.0f;
-        ambient.Lc = Vector3::One * (0.1f);
+
+        pointLight.Lp = Vector3(1.5f, 2.5f, 0.0f);
+        pointLight.sqRadius = 16.0f;
+        pointLight.intensity = 2.0f;
+        pointLight.Lc = Vector3::One;
+
+        spotLight.Lp = Vector3(0.0f, 2.5f, 1.5f);
+        spotLight.Ld = Vector3(-0.06f, -0.62f, -0.79f);
+        spotLight.inner = 0.93f;
+        spotLight.outer = 0.8f;
+        spotLight.sqRadius = 25.0f;
+        spotLight.intensity = 2.0f;
+        spotLight.Lc = Vector3::One;
     }
      
     return true;
@@ -119,6 +131,97 @@ void Exercise8::resizeRenderTexture()
     }
 }
 
+void Exercise8::imGuiDirection(Vector3& dir)
+{
+    float azimuth;
+    float elevation;
+    euclideanToSpherical(dir, azimuth, elevation);
+
+    while (azimuth < 0.0f) azimuth += TWO_PI;
+    while (elevation < 0.0f) elevation += TWO_PI;
+
+    ImGui::Text("Direction (%g, %g, %g)", dir.x, dir.y, dir.z);
+    bool change = ImGui::SliderAngle("Dir azimuth", &azimuth, 0.0f, 360.0f);
+    change = ImGui::SliderAngle("Dir elevation", &elevation, 1.0f, 179.0f) || change;
+
+    if (change)
+    {
+        sphericalToEuclidean(azimuth, elevation, dir);
+    }
+
+    ImGui::SameLine();
+    if (ImGui::SmallButton("Normalize"))
+    {
+        dir.Normalize();
+    }
+}
+
+void Exercise8::imGuiDirectional(Directional &dirLight)
+{
+    imGuiDirection(dirLight.Ld);
+    ImGui::ColorEdit3("Colour", reinterpret_cast<float *>(&dirLight.Lc));
+    ImGui::DragFloat("Intensity", &dirLight.intenisty, 0.1f, 0.0f, 1000.0f);
+
+    if (ddLight)
+    {
+        ImGui::DragFloat("DD arrow distance", &ddDistance,  0.1f, 0.0f, 1000.0f);
+        ImGui::DragFloat("DD arrow szie", &ddSize, 0.1f, 0.0f, 10.0f);
+    }
+}
+
+void Exercise8::imGuiPoint(Point &pointLight)
+{
+    ImGui::DragFloat3("Position", reinterpret_cast<float *>(&pointLight.Lp), 0.1f);
+    ImGui::ColorEdit3("Colour", reinterpret_cast<float *>(&pointLight.Lc));
+    ImGui::DragFloat("Intensity", &pointLight.intensity, 0.1f, 0.0f, 1000.0f);
+    float radius = sqrtf(pointLight.sqRadius);
+    if (ImGui::DragFloat("Radius", &radius, 0.1f, 0.1f, 1000.0f))
+    {
+        pointLight.sqRadius = radius * radius;
+    }
+}
+
+void Exercise8::imGuiSpot(Spot &spotLight)
+{
+    ImGui::DragFloat3("Position", reinterpret_cast<float *>(&spotLight.Lp), 0.1f);
+    imGuiDirection(spotLight.Ld);
+
+    ImGui::ColorEdit3("Colour", reinterpret_cast<float *>(&spotLight.Lc));
+    ImGui::DragFloat("Intensity", &spotLight.intensity, 0.1f, 0.0f, 1000.0f);
+
+    float innerConeAngle = acosf(spotLight.inner);
+    float outerConeAngle = acosf(spotLight.outer);
+    if (ImGui::SliderAngle("Inner Cone Angle", &innerConeAngle, 0.0f, 90.0f))
+    {
+        spotLight.inner = cosf(innerConeAngle);
+        spotLight.outer = std::min(spotLight.outer, spotLight.inner);
+    }
+    if (ImGui::SliderAngle("Outer Cone Angle", &outerConeAngle, 0.0f, 90.0f))
+    {
+        spotLight.outer = cosf(outerConeAngle);
+        spotLight.inner = std::max(spotLight.inner, spotLight.outer);
+    }
+
+    ImGui::DragFloat("Radius", &spotLight.sqRadius, 0.1f, 0.1f, 1000.0f);
+}
+
+void Exercise8::ddDirectional(Directional &dirLight, float distance, float size)
+{
+    dd::arrow(ddConvert(-dirLight.Ld * (distance + size)), ddConvert(-dirLight.Ld*distance), ddConvert(dirLight.Lc*dirLight.intenisty), 0.1f);
+}
+
+void Exercise8::ddPoint(Point &pointLight)
+{
+    dd::sphere(ddConvert(pointLight.Lp), ddConvert(pointLight.Lc * pointLight.intensity), sqrtf(pointLight.sqRadius));
+}
+
+void Exercise8::ddSpot(Spot &spotLight)
+{
+    dd::arrow(ddConvert(spotLight.Lp), ddConvert(spotLight.Lp + spotLight.Ld* sqrtf(spotLight.sqRadius)), ddConvert(spotLight.Lc * spotLight.intensity), 0.1f);
+
+    dd::cone(ddConvert(spotLight.Lp), ddConvert(spotLight.Ld * sqrtf(spotLight.sqRadius)), ddConvert(spotLight.Lc * spotLight.intensity), sqrtf(spotLight.sqRadius)*tanf(acosf(spotLight.outer)), 0.0f);
+}
+
 void Exercise8::imGuiCommands()
 {
     ImGui::Begin("Geometry Viewer Options");
@@ -167,33 +270,25 @@ void Exercise8::imGuiCommands()
     {
         ImGui::ColorEdit3("Ambient colour", (float*)&ambient.Lc);
         ImGui::Combo("Light Type", (int*)&lightType, "Directional\0Point\0Spot");
+        ImGui::Checkbox("Draw Debug", &ddLight);
+
         switch (lightType)
         {
         case LIGHT_DIRECTIONAL:
-            ImGui::DragFloat3("Direction", reinterpret_cast<float*>(&dirLight.Ld), 0.1f, -1.0f, 1.0f);
-            ImGui::SameLine();
-            if (ImGui::SmallButton("Normalize"))
-            {
-                dirLight.Ld.Normalize();
-            }
-            ImGui::ColorEdit3("Colour", reinterpret_cast<float*>(&dirLight.Lc));
-            ImGui::DragFloat("Intensity", reinterpret_cast<float*>(&dirLight.intenisty), 0.1f, 0.0f, 1000.0f);
+            imGuiDirectional(dirLight);
+            if(ddLight) ddDirectional(dirLight, ddDistance, ddSize);
             break;
         case LIGHT_POINT:
-            break;
-        case LIGHT_SPOT:
-            break;
-        }
-        /*
-        ImGui::DragFloat3("Light Direction", reinterpret_cast<float*>(&light.L), 0.1f, -1.0f, 1.0f);
-        ImGui::SameLine();
-        if (ImGui::SmallButton("Normalize"))
         {
-            light.L.Normalize();
+            imGuiPoint(pointLight);
+            if(ddLight) ddPoint(pointLight);
+            break;
         }
-        ImGui::ColorEdit3("Light Colour", reinterpret_cast<float*>(&light.Lc), ImGuiColorEditFlags_NoAlpha);
-        ImGui::ColorEdit3("Ambient Colour", reinterpret_cast<float*>(&light.Ac), ImGuiColorEditFlags_NoAlpha);
-        */
+        case LIGHT_SPOT:
+            imGuiSpot(spotLight);
+            if(ddLight) ddSpot(spotLight);
+            break;
+        }
     }
 
     for (BasicMaterial& material : model->getMaterials())
@@ -323,6 +418,13 @@ void Exercise8::renderToTexture(ID3D12GraphicsCommandList* commandList)
     perFrame.pointLight = pointLight;
     perFrame.spotLight = spotLight;
     perFrame.viewPos = camera->getPos();
+
+    switch (lightType)
+    {
+    case LIGHT_DIRECTIONAL: perFrame.pointLight.intensity = perFrame.spotLight.intensity = 0.0f; break;
+    case LIGHT_POINT: perFrame.dirLight.intenisty = perFrame.spotLight.intensity = 0.0f; break;
+    case LIGHT_SPOT: perFrame.dirLight.intenisty = perFrame.pointLight.intensity = 0.0f; break;
+    }
 
     commandList->OMSetRenderTargets(1, &rtv, false, &dsv);
 

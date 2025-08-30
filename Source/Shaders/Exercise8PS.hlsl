@@ -33,11 +33,19 @@ float3 computeLighting(float3 V, float3 N, Directional light, float3 Cd, float3 
     return phongBRDF(L, N, V, R, Cd, Cs, shininess, light.Lc * light.intensity);
 }
 
-float epicFalloff(float sqDist, float sqRadius)
+float pointFalloff(float sqDist, float sqRadius)
 {
-    float falloff = (1.0-saturate(sqDist*sqDist/sqRadius*sqRadius))/(sqDist+1);   
+    float num = max(1.0-(sqDist*sqDist)/(sqRadius*sqRadius), 0.0);
+    float falloff = (num*num)/(sqDist+1);   
 
-    return falloff*falloff;
+    return falloff;
+}
+
+float spotFalloff(float cosDist, float inner, float outer)
+{
+    float angleAtt = saturate((cosDist - outer) / (inner - outer));
+
+    return angleAtt*angleAtt;
 }
 
 float3 computeLighting(float3 V, float3 N, Point light, float3 worldPos, float3 Cd, float3 Cs, float shininess)
@@ -48,7 +56,7 @@ float3 computeLighting(float3 V, float3 N, Point light, float3 worldPos, float3 
 
     float sqDist = dot(Ldiff, Ldiff);
 
-    float attenuation = epicFalloff(sqDist, light.sqRadius);
+    float attenuation = pointFalloff(sqDist, light.sqRadius);
 
     return phongBRDF(L, N, V, R, Cd, Cs, shininess, light.Lc * light.intensity) * attenuation;
 }
@@ -59,13 +67,13 @@ float3 computeLighting(float3 V, float3 N, Spot light, float3 worldPos, float3 C
     float3 L     = normalize(Ldiff);
     float3 R     = reflect(L, N);
 
-    float dist = dot(Ldiff, light.Ld);
-    float distAtt = epicFalloff(dist * dist, light.sqRadius);
+    float sqDist  = dot(Ldiff, light.Ld);
+    float attenuation = pointFalloff(sqDist, light.sqRadius);
 
-    float C = dot(L, light.Ld);
-    float angleAtt = saturate((C - light.outter) / (light.inner - light.outter));
+    float cosDist = dot(L, light.Ld);
+    attenuation *= spotFalloff(cosDist, light.inner, light.outter);
 
-    return phongBRDF(L, N, V, R, Cd, Cs, shininess, light.Lc * light.intensity) * distAtt * angleAtt;
+    return phongBRDF(L, N, V, R, Cd, Cs, shininess, light.Lc * light.intensity) * attenuation;
 }
 
 float4 exercise8PS(float3 worldPos : POSITION, float3 normal : NORMAL, float2 coord : TEXCOORD) : SV_TARGET
@@ -76,11 +84,8 @@ float4 exercise8PS(float3 worldPos : POSITION, float3 normal : NORMAL, float2 co
     
     float3 colour = computeLighting(ambient, Cd);
     colour += computeLighting(V, N, dirLight, Cd, material.specularColour, material.shininess);
-    //colour += computeLighting(V, N, pointLight, worldPos, Cd, material.specularColour, material.shininess);
-    //colour += computeLighting(V, N, spotLight, worldPos, Cd, material.specularColour, material.shininess);
-    
-    
-    
+    colour += computeLighting(V, N, pointLight, worldPos, Cd, material.specularColour, material.shininess);
+    colour += computeLighting(V, N, spotLight, worldPos, Cd, material.specularColour, material.shininess);
     
     return float4(colour, 1.0); 
 }

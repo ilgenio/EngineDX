@@ -1,4 +1,4 @@
-static const float PI = 3.14159265f;
+static const float PI = 3.14159265;
 
 cbuffer PerFrame : register(b1)
 {

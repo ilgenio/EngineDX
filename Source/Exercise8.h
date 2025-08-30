@@ -38,7 +38,7 @@ class Exercise8 : public Module
         Vector3 Lp;
         float  inner;
         Vector3 Lc;
-        float  outter;
+        float  outer;
         float  intensity;
     };
 
@@ -80,7 +80,9 @@ class Exercise8 : public Module
     Point                               pointLight;
     Spot                                spotLight;
     ELightType                          lightType = LIGHT_DIRECTIONAL;
-
+    bool                                ddLight = false;
+    float                               ddDistance = 2.0f;
+    float                               ddSize = 1.0f;
 
     ComPtr<ID3D12RootSignature>         rootSignature;
     ComPtr<ID3D12PipelineState>         pso;
@@ -112,9 +114,16 @@ public:
     virtual void render() override;
 
 private:
-
-
     void imGuiCommands();
+    void imGuiDirection(Vector3& dir);
+    void imGuiDirectional(Directional& dirLight);
+    void imGuiPoint(Point& pointLight);
+    void imGuiSpot(Spot& spotLight);
+
+    void ddDirectional(Directional& dirLight, float distance, float size);
+    void ddPoint(Point& pointLight);
+    void ddSpot(Spot& spotLight);
+
     bool createRootSignature();
     bool createPSO();
     bool loadModel();
