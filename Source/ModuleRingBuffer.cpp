@@ -58,7 +58,7 @@ void ModuleRingBuffer::preRender()
     allocatedInFrame[currentFrame] = 0;
 }
 
-D3D12_GPU_VIRTUAL_ADDRESS ModuleRingBuffer::allocConstantBuffer(const void* data, size_t size)
+D3D12_GPU_VIRTUAL_ADDRESS ModuleRingBuffer::allocBuffer(const void* data, size_t size)
 {
     _ASSERT_EXPR(size < (totalMemorySize-totalAllocated), L"Out of memory, please allocate more memory at initialisation");
     _ASSERT_EXPR((size & (D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT -1) ) == 0, "Size must be multiple of D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT"); // Is aligned with 256u 

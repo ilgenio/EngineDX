@@ -307,7 +307,7 @@ void Exercise7::renderToTexture(ID3D12GraphicsCommandList* commandList)
     ID3D12DescriptorHeap* descriptorHeaps[] = { descriptors->getHeap(), samplers->getHeap() };
     commandList->SetDescriptorHeaps(2, descriptorHeaps);
     commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &mvp, 0);
-    commandList->SetGraphicsRootConstantBufferView(1, ringBuffer->allocConstantBuffer(&perFrame, alignUp(sizeof(PerFrame), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT)));
+    commandList->SetGraphicsRootConstantBufferView(1, ringBuffer->allocBuffer(&perFrame, alignUp(sizeof(PerFrame), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT)));
     commandList->SetGraphicsRootDescriptorTable(4, samplers->getGPUHanlde(ModuleSamplers::LINEAR_WRAP));
 
     BEGIN_EVENT(commandList, "Model Render Pass");
@@ -323,7 +323,7 @@ void Exercise7::renderToTexture(ID3D12GraphicsCommandList* commandList)
 
             PerInstance perInstance = { model->getModelMatrix(), model->getNormalMatrix(), material.getPBRPhongMaterial() };
 
-            commandList->SetGraphicsRootConstantBufferView(2, ringBuffer->allocConstantBuffer(&perInstance, alignUp(sizeof(PerInstance), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT)));
+            commandList->SetGraphicsRootConstantBufferView(2, ringBuffer->allocBuffer(&perInstance, alignUp(sizeof(PerInstance), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT)));
             commandList->SetGraphicsRootDescriptorTable(3, descriptors->getGPUHandle(tableStartDesc));
 
             if (mesh.getNumIndices() > 0)

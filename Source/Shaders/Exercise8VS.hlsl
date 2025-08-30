@@ -1,10 +1,5 @@
 #include "Exercise8.hlsli"
 
-cbuffer MVP : register(b0)
-{
-    float4x4 mvp;  
-};
-
 struct VertexOutput
 {
     float3 worldPos : POSITION;

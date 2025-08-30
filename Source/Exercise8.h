@@ -56,14 +56,11 @@ class Exercise8 : public Module
         uint32_t pad0;
 
         Directional dirLight;  // Directional light;
-        uint32_t pad1;
 
-        Point pointLight;      // point light; 
-
-        Spot  spotLight;
+        uint32_t numPointLights;
+        uint32_t numSpotLights;
 
         Vector3 viewPos;
-        uint32_t pad4;
     };
 
     struct Light

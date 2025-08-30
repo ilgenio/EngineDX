@@ -14,7 +14,7 @@ public:
 
     void preRender() override;
 
-    D3D12_GPU_VIRTUAL_ADDRESS allocConstantBuffer(const void* data, size_t size);
+    D3D12_GPU_VIRTUAL_ADDRESS allocBuffer(const void* data, size_t size);
 
 private:
 

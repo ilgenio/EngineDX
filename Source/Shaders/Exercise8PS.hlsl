@@ -1,6 +1,6 @@
 #include "Exercise8.hlsli"
 
-Texture2D diffuseTex : register(t0);
+Texture2D diffuseTex : register(t2);
 SamplerState diffuseSamp : register(s0);
 
 float3 schlick(float3 rf0, float dotNL)
@@ -84,9 +84,13 @@ float4 exercise8PS(float3 worldPos : POSITION, float3 normal : NORMAL, float2 co
     
     float3 colour = computeLighting(ambient, Cd);
     colour += computeLighting(V, N, dirLight, Cd, material.specularColour, material.shininess);
-    colour += computeLighting(V, N, pointLight, worldPos, Cd, material.specularColour, material.shininess);
-    colour += computeLighting(V, N, spotLight, worldPos, Cd, material.specularColour, material.shininess);
-    
+
+    for (int i = 0; i < numPointLights; i++) 
+        colour += computeLighting(V, N, pointLights[i], worldPos, Cd, material.specularColour, material.shininess);
+
+    for( int i = 0; i< numSpotLights; i++)
+        colour += computeLighting(V, N, spotLights[i], worldPos, Cd, material.specularColour, material.shininess);
+
     return float4(colour, 1.0); 
 }
 
