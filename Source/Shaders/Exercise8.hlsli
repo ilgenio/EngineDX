@@ -39,8 +39,9 @@ struct PhongMat
     float shininess;
 };
 
-StructuredBuffer<Point> pointLights : register(t0);
-StructuredBuffer<Spot>  spotLights  : register(t1);
+StructuredBuffer<Directional> dirLights : register(t0);
+StructuredBuffer<Point> pointLights : register(t1);
+StructuredBuffer<Spot>  spotLights  : register(t2);
 
 cbuffer MVP : register(b0)
 {
@@ -49,12 +50,13 @@ cbuffer MVP : register(b0)
 
 cbuffer PerFrame : register(b1)
 {
-    Ambient ambient;       // Ambient Colour
-    Directional dirLight;  // Directional light;
-    uint numPointLights;   // Number of point lights 
-    uint numSpotLights;    // Number of spot lights
+    Ambient ambient;        // Ambient Colour
 
-    float3 viewPos;
+    uint numDirLights;      // Number of directional lights
+    uint numPointLights;    // Number of point lights 
+    uint numSpotLights;     // Number of spot lights
+
+    float3 viewPos;         // Camera position
 };
 
 cbuffer PerInstance : register(b2)

@@ -414,9 +414,9 @@ void Exercise8::renderToTexture(ID3D12GraphicsCommandList* commandList)
 
     PerFrame perFrame;
     perFrame.ambient  = ambient;
-    perFrame.dirLight = dirLight;
-    perFrame.numPointLights = 1;
-    perFrame.numSpotLights = 1;
+    perFrame.numDirLights = lightType == LIGHT_DIRECTIONAL ? 1 : 0;
+    perFrame.numPointLights = lightType == LIGHT_POINT ? 1 : 0;
+    perFrame.numSpotLights = lightType == LIGHT_SPOT ? 1 : 0;
     perFrame.viewPos = camera->getPos();
 
     commandList->OMSetRenderTargets(1, &rtv, false, &dsv);
@@ -431,11 +431,14 @@ void Exercise8::renderToTexture(ID3D12GraphicsCommandList* commandList)
     commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);  // set the primitive topology
     ID3D12DescriptorHeap* descriptorHeaps[] = { descriptors->getHeap(), samplers->getHeap() };
     commandList->SetDescriptorHeaps(2, descriptorHeaps);
+
     commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &mvp, 0);
     commandList->SetGraphicsRootConstantBufferView(1, ringBuffer->allocBuffer(&perFrame, alignUp(sizeof(PerFrame), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT)));
-    commandList->SetGraphicsRootShaderResourceView(3, ringBuffer->allocBuffer(&pointLight, alignUp(sizeof(Point), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT)));
-    commandList->SetGraphicsRootShaderResourceView(4, ringBuffer->allocBuffer(&spotLight, alignUp(sizeof(Spot), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT)));
-    commandList->SetGraphicsRootDescriptorTable(6, samplers->getGPUHanlde(ModuleSamplers::LINEAR_WRAP));
+    commandList->SetGraphicsRootShaderResourceView(3, ringBuffer->allocBuffer(&dirLight, alignUp(sizeof(Directional), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT)));
+    commandList->SetGraphicsRootShaderResourceView(4, ringBuffer->allocBuffer(&pointLight, alignUp(sizeof(Point), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT)));
+    commandList->SetGraphicsRootShaderResourceView(5, ringBuffer->allocBuffer(&spotLight, alignUp(sizeof(Spot), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT)));
+
+    commandList->SetGraphicsRootDescriptorTable(7, samplers->getGPUHanlde(ModuleSamplers::LINEAR_WRAP));
 
     BEGIN_EVENT(commandList, "Model Render Pass");
 
@@ -451,7 +454,7 @@ void Exercise8::renderToTexture(ID3D12GraphicsCommandList* commandList)
             PerInstance perInstance = { model->getModelMatrix(), model->getNormalMatrix(), material.getPBRPhongMaterial() };
 
             commandList->SetGraphicsRootConstantBufferView(2, ringBuffer->allocBuffer(&perInstance, alignUp(sizeof(PerInstance), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT)));
-            commandList->SetGraphicsRootDescriptorTable(5, descriptors->getGPUHandle(tableStartDesc));
+            commandList->SetGraphicsRootDescriptorTable(6, descriptors->getGPUHandle(tableStartDesc));
 
             if (mesh.getNumIndices() > 0)
             {
@@ -522,11 +525,11 @@ void Exercise8::render()
 bool Exercise8::createRootSignature()
 {
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-    CD3DX12_ROOT_PARAMETER rootParameters[7] = {};
+    CD3DX12_ROOT_PARAMETER rootParameters[8] = {};
     CD3DX12_DESCRIPTOR_RANGE tableRanges;
     CD3DX12_DESCRIPTOR_RANGE sampRange;
 
-    tableRanges.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 2);
+    tableRanges.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 3);
     sampRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, ModuleSamplers::COUNT, 0);
 
     rootParameters[0].InitAsConstants((sizeof(Matrix) / sizeof(UINT32)), 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
@@ -534,10 +537,11 @@ bool Exercise8::createRootSignature()
     rootParameters[2].InitAsConstantBufferView(2, 0, D3D12_SHADER_VISIBILITY_ALL);
     rootParameters[3].InitAsShaderResourceView(0);
     rootParameters[4].InitAsShaderResourceView(1);
-    rootParameters[5].InitAsDescriptorTable(1, &tableRanges, D3D12_SHADER_VISIBILITY_PIXEL);
-    rootParameters[6].InitAsDescriptorTable(1, &sampRange, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[5].InitAsShaderResourceView(2);
+    rootParameters[6].InitAsDescriptorTable(1, &tableRanges, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[7].InitAsDescriptorTable(1, &sampRange, D3D12_SHADER_VISIBILITY_PIXEL);
 
-    rootSignatureDesc.Init(7, rootParameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+    rootSignatureDesc.Init(8, rootParameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
     ComPtr<ID3DBlob> rootSignatureBlob;
 

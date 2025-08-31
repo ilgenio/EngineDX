@@ -53,12 +53,11 @@ class Exercise8 : public Module
     struct PerFrame
     {
         Ambient ambient;       // Ambient Colour
-        uint32_t pad0;
 
-        Directional dirLight;  // Directional light;
-
+        uint32_t numDirLights;
         uint32_t numPointLights;
         uint32_t numSpotLights;
+        uint32_t pad[2];
 
         Vector3 viewPos;
     };
