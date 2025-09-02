@@ -28,21 +28,26 @@ void BasicMaterial::load(const tinygltf::Model& model, const tinygltf::Material&
                                  float(material.pbrMetallicRoughness.baseColorFactor[2]),
                                  float(material.pbrMetallicRoughness.baseColorFactor[3]));
 
-    BOOL hasColourTexture = FALSE;
-    int textureIndex = material.pbrMetallicRoughness.baseColorTexture.index;
+    BOOL hasColourTexture = FALSE, hasMetallicRoughnessTex = FALSE;
 
-    if (textureIndex >= 0)
+    auto loadTexture = [](int index, const tinygltf::Model& model, const char* basePath, ComPtr<ID3D12Resource>& outTex) -> BOOL
     {
-        const tinygltf::Texture& texture = model.textures[textureIndex];
-        const tinygltf::Image& image = model.images[texture.source];
+        if (index < 0 || index >= int(model.textures.size()))
+            return FALSE;
 
+        const tinygltf::Texture& texture = model.textures[index];
+        const tinygltf::Image& image = model.images[texture.source];
         if (!image.uri.empty())
         {
-            baseColourTex = app->getResources()->createTextureFromFile(std::string(basePath) + image.uri);
-
-            hasColourTexture = TRUE;
+            outTex = app->getResources()->createTextureFromFile(std::string(basePath) + image.uri);
+            return TRUE;
         }
-    }
+        return FALSE;
+    };
+
+    hasColourTexture = loadTexture(material.pbrMetallicRoughness.baseColorTexture.index, model, basePath, baseColourTex);
+    hasMetallicRoughnessTex = loadTexture(material.pbrMetallicRoughness.metallicRoughnessTexture.index, model, basePath, metallicRoughnessTex);
+
 
     materialType = type;
 
@@ -66,6 +71,14 @@ void BasicMaterial::load(const tinygltf::Model& model, const tinygltf::Material&
         materialData.pbrPhong.shininess = 64.0f;
         materialData.pbrPhong.specularColour = XMFLOAT3(0.015f, 0.015f, 0.015f);
     }
+    else if(materialType == METALLIC_ROUGHNESS)
+    {
+        materialData.metallicRoughness.baseColour = baseColour;
+        materialData.metallicRoughness.metallicFactor = float(material.pbrMetallicRoughness.metallicFactor);
+        materialData.metallicRoughness.roughnessFactor = float(material.pbrMetallicRoughness.roughnessFactor);
+        materialData.metallicRoughness.hasBaseColourTex = hasColourTexture;
+        materialData.metallicRoughness.hasMetallicRoughnessTex = hasMetallicRoughnessTex;
+    }
 
     // Descriptors 
 
@@ -76,6 +89,18 @@ void BasicMaterial::load(const tinygltf::Model& model, const tinygltf::Material&
     else
     {
         baseColourSRV = app->getShaderDescriptors()->createNullTexture2DSRV();
+    }
+
+    if (materialType == METALLIC_ROUGHNESS)
+    {
+        if (hasMetallicRoughnessTex)
+        {
+            app->getShaderDescriptors()->createTextureSRV(metallicRoughnessTex.Get());
+        }
+        else
+        {
+            app->getShaderDescriptors()->createNullTexture2DSRV();
+        }
     }
 }
 

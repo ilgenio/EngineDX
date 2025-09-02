@@ -26,6 +26,15 @@ struct PBRPhongMaterialData
     float    shininess;
 };
 
+struct MetallicRoughnessMaterialData
+{
+    XMFLOAT4 baseColour;
+    float    metallicFactor;
+    float    roughnessFactor;
+    BOOL     hasBaseColourTex;
+    BOOL     hasMetallicRoughnessTex;
+};
+
 class BasicMaterial
 {
 public:
@@ -33,7 +42,8 @@ public:
     {
         BASIC = 0,
         PHONG,   
-        PBR_PHONG
+        PBR_PHONG,
+        METALLIC_ROUGHNESS
     };
 
 public:
@@ -49,6 +59,7 @@ public:
     const BasicMaterialData& getBasicMaterial() const { _ASSERTE(materialType == BASIC); return materialData.basic; }
     const PhongMaterialData& getPhongMaterial() const { _ASSERTE(materialType == PHONG); return materialData.phong; }
     const PBRPhongMaterialData& getPBRPhongMaterial() const { _ASSERTE(materialType == PBR_PHONG); return materialData.pbrPhong; }
+    const MetallicRoughnessMaterialData& getMetallicRoughnessMaterial() const { _ASSERTE(materialType == METALLIC_ROUGHNESS); return materialData.metallicRoughness; }
 
     void setPhongMaterial(const PhongMaterialData& phong);
     void setPBRPhongMaterial(const PBRPhongMaterialData& pbr);
@@ -59,13 +70,15 @@ private:
 
     union 
     {
-        BasicMaterialData    basic;
-        PhongMaterialData    phong;
-        PBRPhongMaterialData pbrPhong;
+        BasicMaterialData             basic;
+        PhongMaterialData             phong;
+        PBRPhongMaterialData          pbrPhong;
+        MetallicRoughnessMaterialData metallicRoughness;
     }                        materialData;
     Type                     materialType = BASIC;
 
     ComPtr<ID3D12Resource>  baseColourTex;
+    ComPtr<ID3D12Resource>  metallicRoughnessTex;
     UINT                    baseColourSRV = 0;
     std::string             name;
 };

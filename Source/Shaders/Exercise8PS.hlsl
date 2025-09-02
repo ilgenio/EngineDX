@@ -79,21 +79,25 @@ float3 computeLighting(float3 V, float3 N, Spot light, float3 worldPos, float3 C
 float4 exercise8PS(float3 worldPos : POSITION, float3 normal : NORMAL, float2 coord : TEXCOORD) : SV_TARGET
 {
     float3 Cd = material.hasDiffuseTex ? diffuseTex.Sample(diffuseSamp, coord).rgb * material.diffuseColour.rgb : material.diffuseColour.rgb;
+    float3 Cs = material.specularColour.rgb;
+    
     float3 V  = normalize(viewPos - worldPos);
     float3 N  = normalize(normal);
     
     float3 colour = computeLighting(ambient, Cd);
 
     for (uint i = 0; i < numDirLights; i++)
-        colour += computeLighting(V, N, dirLights[i], Cd, material.specularColour, material.shininess);
+        colour += computeLighting(V, N, dirLights[i], Cd, Cs, material.shininess);
     
     for (uint i = 0; i < numPointLights; i++) 
-        colour += computeLighting(V, N, pointLights[i], worldPos, Cd, material.specularColour, material.shininess);
+        colour += computeLighting(V, N, pointLights[i], worldPos, Cd, Cs, material.shininess);
 
     for( uint i = 0; i< numSpotLights; i++)
-        colour += computeLighting(V, N, spotLights[i], worldPos, Cd, material.specularColour, material.shininess);
+        colour += computeLighting(V, N, spotLights[i], worldPos, Cd, Cs, material.shininess);
 
+    // Reinhard tone mapping (HDR to LDR)
+    float3 ldr = colour.rgb / (colour.rgb + 1.0);
     
-    return float4(colour, 1.0); 
+    return float4(ldr, 1.0);
 }
 
