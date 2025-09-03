@@ -451,7 +451,7 @@ void Exercise10::renderToTexture(ID3D12GraphicsCommandList* commandList)
 
             UINT tableStartDesc = material.getTexturesTableDescriptor();
 
-            PerInstance perInstance = { model->getModelMatrix(), model->getNormalMatrix(), material.getMetallicRoughnessMaterial() };
+            PerInstance perInstance = { model->getModelMatrix().Transpose(), model->getNormalMatrix().Transpose(), material.getMetallicRoughnessMaterial()};
 
             commandList->SetGraphicsRootConstantBufferView(2, ringBuffer->allocBuffer(&perInstance, alignUp(sizeof(PerInstance), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT)));
             commandList->SetGraphicsRootDescriptorTable(6, descriptors->getGPUHandle(tableStartDesc));
@@ -591,6 +591,7 @@ bool Exercise10::loadModel()
 {
     model = std::make_unique<Model>();
     model->load("Assets/Models/DamagedHelmet/DamagedHelmet.gltf", "Assets/Models/DamagedHelmet/", BasicMaterial::METALLIC_ROUGHNESS);
+    model->setModelMatrix(Matrix::CreateRotationX(HALF_PI));
 
     return true;
 }

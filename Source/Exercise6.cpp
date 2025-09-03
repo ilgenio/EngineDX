@@ -265,7 +265,7 @@ void Exercise6::render()
 
             UINT tableStartDesc = material.getTexturesTableDescriptor();
 
-            PerInstance perInstance = { model->getModelMatrix(), model->getNormalMatrix(), material.getPhongMaterial() };
+            PerInstance perInstance = { model->getModelMatrix().Transpose(), model->getNormalMatrix().Transpose(), material.getPhongMaterial()};
 
             commandList->SetGraphicsRootConstantBufferView(2, ringBuffer->allocBuffer(&perInstance, alignUp(sizeof(PerInstance), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT)));
             commandList->SetGraphicsRootDescriptorTable(3, descriptors->getGPUHandle(tableStartDesc));

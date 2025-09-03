@@ -37,9 +37,9 @@ float3 GGX(float3 L, float3 N, float3 V, float3 R, float3 Cs, float roughness)
 {
     float3 H = normalize(V + L);
 
-    float3 F = schlick(Cs, dot(L, H));
-    float D = D_GGX(roughness, dot(N, H));
-    float Vis = V_GGX(dot(N, V), dot(N, L), roughness);
+    float3 F = schlick(Cs, saturate(dot(L, H)));
+    float D = D_GGX(roughness, saturate(dot(N, H)));
+    float Vis = V_GGX(saturate(dot(N, V)), saturate(dot(N, L)), roughness);
 
     return F * D * Vis ;
 }
@@ -56,10 +56,10 @@ float3 computeLighting(Ambient ambient, float3 Cd)
 
 float3 computeLighting(float3 V, float3 N, Directional light, float3 Cd, float3 Cs, float roughness)
 {
-    float3 L = normalize(light.Ld);
-    float3 R = reflect(L, N);
+    float3 L    = normalize(-light.Ld);
+    float3 R    = reflect(-L, N);
 
-    return (Lambert(Cd)+GGX(L, N, V, R, Cs, roughness))*light.Lc * light.intensity*dot(N, L);
+    return ( Lambert(Cd) + GGX(L, N, V, R, Cs, roughness) ) * light.Lc * light.intensity * saturate(dot(L, N));
 }
 
 float pointFalloff(float sqDist, float sqRadius)
@@ -87,7 +87,7 @@ float3 computeLighting(float3 V, float3 N, Point light, float3 worldPos, float3 
 
     float attenuation = pointFalloff(sqDist, light.sqRadius);
 
-    return (Lambert(Cd)+GGX(L, N, V, R, Cs, roughness))*light.Lc * light.intensity*dot(N, L)*attenuation;
+    return (Lambert(Cd)+GGX(L, N, V, R, Cs, roughness)) * light.Lc * light.intensity*dot(N, L)*attenuation;
 }
 
 float3 computeLighting(float3 V, float3 N, Spot light, float3 worldPos, float3 Cd, float3 Cs, float roughness)

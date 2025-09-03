@@ -5,6 +5,7 @@
 
 #define PI std::numbers::pi_v<float>
 #define TWO_PI 2.0f*std::numbers::pi_v<float>
+#define HALF_PI 0.5f*std::numbers::pi_v<float>
 
 
 void euclideanToSpherical(const Vector3 & dir, float& azimuth, float& elevation);
