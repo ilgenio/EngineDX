@@ -67,8 +67,8 @@ float3 computeLighting(float3 V, float3 N, Spot light, float3 worldPos, float3 C
     float3 L     = normalize(Ldiff);
     float3 R     = reflect(L, N);
 
-    float sqDist  = dot(Ldiff, light.Ld);
-    float attenuation = pointFalloff(sqDist, light.sqRadius);
+    float dist  = dot(Ldiff, light.Ld);
+    float attenuation = pointFalloff(dist*dist, light.sqRadius);
 
     float cosDist = dot(L, light.Ld);
     attenuation *= spotFalloff(cosDist, light.inner, light.outter);

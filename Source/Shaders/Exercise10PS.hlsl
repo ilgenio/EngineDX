@@ -28,7 +28,7 @@ float V_GGX(float NdotV, float NdotL, float roughness)
     float denom = GGX_V + GGX_L;
 
     if(denom > 0.0)
-        return a / (PI * denom * denom);
+        return 0.5 / (PI * denom * denom);
 
     return 0.0;
 }
@@ -41,7 +41,7 @@ float3 GGX(float3 L, float3 N, float3 V, float3 R, float3 Cs, float roughness)
     float D = D_GGX(roughness, saturate(dot(N, H)));
     float Vis = V_GGX(saturate(dot(N, V)), saturate(dot(N, L)), roughness);
 
-    return F * D * Vis ;
+    return F * D * Vis;
 }
 
 float3 Lambert(float3 Cd)
@@ -58,8 +58,11 @@ float3 computeLighting(float3 V, float3 N, Directional light, float3 Cd, float3 
 {
     float3 L    = normalize(-light.Ld);
     float3 R    = reflect(-L, N);
+    float rf0Max = max(max(Cs.r, Cs.g), Cs.b);
+    
+    float NdotL = saturate(dot(L, N));
 
-    return ( Lambert(Cd) + GGX(L, N, V, R, Cs, roughness) ) * light.Lc * light.intensity * saturate(dot(L, N));
+    return (Lambert(Cd) * (1 - rf0Max) + GGX(L, N, V, R, Cs, roughness)) * NdotL * light.Lc * light.intensity ;
 }
 
 float pointFalloff(float sqDist, float sqRadius)
@@ -79,30 +82,35 @@ float spotFalloff(float cosDist, float inner, float outer)
 
 float3 computeLighting(float3 V, float3 N, Point light, float3 worldPos, float3 Cd, float3 Cs, float roughness)
 {
-    float3 Ldiff = worldPos - light.Lp;
+    float3 Ldiff = light.Lp - worldPos;
     float3 L     = normalize(Ldiff);
-    float3 R     = reflect(L, N);
+    float3 R     = reflect(-L, N);
 
     float sqDist = dot(Ldiff, Ldiff);
 
     float attenuation = pointFalloff(sqDist, light.sqRadius);
+    
+    float rf0Max = max(max(Cs.r, Cs.g), Cs.b);
 
-    return (Lambert(Cd)+GGX(L, N, V, R, Cs, roughness)) * light.Lc * light.intensity*dot(N, L)*attenuation;
+  
+    return (Lambert(Cd)*(1-rf0Max) + GGX(L, N, V, R, Cs, roughness)) * light.Lc * light.intensity * saturate(dot(L, N)) * attenuation;
 }
 
 float3 computeLighting(float3 V, float3 N, Spot light, float3 worldPos, float3 Cd, float3 Cs, float roughness)
 {
-    float3 Ldiff = worldPos - light.Lp;
+    float3 Ldiff = light.Lp - worldPos;
     float3 L     = normalize(Ldiff);
-    float3 R     = reflect(L, N);
+    float3 R     = reflect(-L, N);
 
-    float sqDist  = dot(Ldiff, light.Ld);
-    float attenuation = pointFalloff(sqDist, light.sqRadius);
+    float dist  = dot(-Ldiff, light.Ld);
+    float attenuation = pointFalloff(dist*dist, light.sqRadius);
 
-    float cosDist = dot(L, light.Ld);
+    float cosDist = dot(-L, light.Ld);
     attenuation *= spotFalloff(cosDist, light.inner, light.outter);
+    
+    float rf0Max = max(max(Cs.r, Cs.g), Cs.b);
 
-    return (Lambert(Cd)+GGX(L, N, V, R, Cs, roughness))*light.Lc * light.intensity*dot(N, L)*attenuation;
+    return ( Lambert(Cd)*(1-rf0Max) + GGX(L, N, V, R, Cs, roughness) ) * light.Lc * light.intensity * saturate(dot(L, N)) * attenuation;
 }
 
 void getMaterialProperties(out float3 Cd, out float3 Cs, out float roughness, in float2 coord)
