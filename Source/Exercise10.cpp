@@ -55,11 +55,11 @@ bool Exercise10::init()
 
         dirLight.Ld = Vector3(0.678f, -0.375f, -0.632f);
         dirLight.Lc = Vector3::One;
-        dirLight.intenisty = 32.0f;
+        dirLight.intenisty = 24.0f;
 
         pointLight.Lp = Vector3(-1.5f, 1.5f, 2.5f);
         pointLight.sqRadius = 20.25f;
-        pointLight.intensity = 648.0f;
+        pointLight.intensity = 324.0f;
         pointLight.Lc = Vector3::One;
 
         spotLight.Lp = Vector3(-1.6f, 2.5f, 1.5f);
@@ -67,7 +67,7 @@ bool Exercise10::init()
         spotLight.inner = 0.93f;
         spotLight.outer = 0.88f;
         spotLight.sqRadius = 25.0f;
-        spotLight.intensity = 650.0f;
+        spotLight.intensity = 324.0f;
         spotLight.Lc = Vector3::One;
     }
      

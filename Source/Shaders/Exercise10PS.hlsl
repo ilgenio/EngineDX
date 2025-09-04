@@ -41,7 +41,7 @@ float3 GGX(float3 L, float3 N, float3 V, float3 R, float3 Cs, float roughness)
     float D = D_GGX(roughness, saturate(dot(N, H)));
     float Vis = V_GGX(saturate(dot(N, V)), saturate(dot(N, L)), roughness);
 
-    return F * D * Vis;
+    return 0.25 * F * D * Vis;
 }
 
 float3 Lambert(float3 Cd)
@@ -58,11 +58,10 @@ float3 computeLighting(float3 V, float3 N, Directional light, float3 Cd, float3 
 {
     float3 L    = normalize(-light.Ld);
     float3 R    = reflect(-L, N);
-    float rf0Max = max(max(Cs.r, Cs.g), Cs.b);
     
     float NdotL = saturate(dot(L, N));
 
-    return (Lambert(Cd) * (1 - rf0Max) + GGX(L, N, V, R, Cs, roughness)) * NdotL * light.Lc * light.intensity ;
+    return (Lambert(Cd) + GGX(L, N, V, R, Cs, roughness)) * NdotL * light.Lc * light.intensity ;
 }
 
 float pointFalloff(float sqDist, float sqRadius)
@@ -90,10 +89,7 @@ float3 computeLighting(float3 V, float3 N, Point light, float3 worldPos, float3 
 
     float attenuation = pointFalloff(sqDist, light.sqRadius);
     
-    float rf0Max = max(max(Cs.r, Cs.g), Cs.b);
-
-  
-    return (Lambert(Cd)*(1-rf0Max) + GGX(L, N, V, R, Cs, roughness)) * light.Lc * light.intensity * saturate(dot(L, N)) * attenuation;
+    return (Lambert(Cd) + GGX(L, N, V, R, Cs, roughness)) * light.Lc * light.intensity * saturate(dot(L, N)) * attenuation;
 }
 
 float3 computeLighting(float3 V, float3 N, Spot light, float3 worldPos, float3 Cd, float3 Cs, float roughness)
@@ -108,9 +104,7 @@ float3 computeLighting(float3 V, float3 N, Spot light, float3 worldPos, float3 C
     float cosDist = dot(-L, light.Ld);
     attenuation *= spotFalloff(cosDist, light.inner, light.outter);
     
-    float rf0Max = max(max(Cs.r, Cs.g), Cs.b);
-
-    return ( Lambert(Cd)*(1-rf0Max) + GGX(L, N, V, R, Cs, roughness) ) * light.Lc * light.intensity * saturate(dot(L, N)) * attenuation;
+    return ( Lambert(Cd)+ GGX(L, N, V, R, Cs, roughness) ) * light.Lc * light.intensity * saturate(dot(L, N)) * attenuation;
 }
 
 void getMaterialProperties(out float3 Cd, out float3 Cs, out float roughness, in float2 coord)
