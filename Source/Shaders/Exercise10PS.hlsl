@@ -114,7 +114,7 @@ void getMaterialProperties(out float3 Cd, out float3 Cs, out float roughness, in
 
     Cd = baseColour * (1.0 - metallicRoughness.x);
     Cs = lerp(0.04, baseColour, metallicRoughness.x);
-    roughness = metallicRoughness.y; // Perceptural roughness
+    roughness = metallicRoughness.y*metallicRoughness.y; // Perceptural roughness
 }
 
 float4 exercise10PS(float3 worldPos : POSITION, float3 normal : NORMAL, float2 coord : TEXCOORD) : SV_TARGET
