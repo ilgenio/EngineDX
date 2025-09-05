@@ -20,12 +20,13 @@ float2 hammersley2D(uint i, uint N)
     return float2(float(i)/float(N), radicalInverse_VdC(i));
 }
 
-mat3 computeTangetSpace(in vec3 normal)
+float3x3 computeTangetSpace(in float3 normal)
 {
-    vec3 up    = abs(normal.y) > 0.999 ? vec3(0.0, 0.0, 1.0) : vec3(0.0, 1.0, 0.0);
-    vec3 right = normalize(cross(up, normal));
-    up         = cross(normal, right);
-    return mat3(right, up, normal);
+    float3 up    = abs(normal.y) > 0.999 ? float3(0.0, 0.0, 1.0) : float3(0.0, 1.0, 0.0);
+    float3 right = normalize(cross(up, normal));
+    up           = cross(normal, right);
+    
+    return float3x3(right, up, normal);
 }
 
 float3 cosineSample(float u1, float u2)
@@ -40,16 +41,16 @@ float3 cosineSample(float u1, float u2)
     return float3(x, y, z);
 }
 
-float4 IrradianceMapPS(float2 texcoord : TEXCOORD) : SV_Target
+float4 IrradianceMapPS(float3 texcoords : TEXCOORD) : SV_Target
 {    
-   float3 irradiance = 0.0;
-   float3 normal     = normalize(texcoords);
-   float3x3 tangentSpace = computeTangetSpace(normal); // TBN matrix (está mal)
+   float3 irradiance     = 0.0;
+   float3 normal         = normalize(texcoords);
+   float3x3 tangentSpace = computeTangetSpace(normal); // TBN matrix 
 
    for(int i=0; i< NUM_SAMPLES; ++i)
    {
        float2 rand_value = hammersley2D(i, NUM_SAMPLES);
-       float3 L = tangentSpace*cosineSample(rand_value[0], rand_value[1]);
+       float3 L = mul(cosineSample(rand_value[0], rand_value[1]), tangentSpace);
        float3 Li = environment.Sample(samplerState, L).rgb;
        irradiance += Li;
    }  

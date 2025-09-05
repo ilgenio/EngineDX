@@ -23,4 +23,4 @@ private:
 
     bool createRootSignature();
     bool createPSO();
-}
+};

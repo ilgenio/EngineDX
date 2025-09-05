@@ -73,8 +73,8 @@ void IrradianceMapPass::record(ID3D12GraphicsCommandList* cmdList, UINT cubeMapD
         //cmdList->ResourceBarrier(1, &toRT);
 
         UINT rtvHandle = rtDescriptors->create(irradianceMap.Get(), i, DXGI_FORMAT_R16G16B16A16_FLOAT);
-        D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = rtDescriptors->getCPUHandle(rtvHandle);
-        cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
+        D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = rtDescriptors->getCPUHandle(rtvHandle);
+        cmdList->OMSetRenderTargets(1, &cpuHandle, FALSE, nullptr);
 
         cmdList->DrawInstanced(cubemapMesh->getVertexCount(), 1, 0, 0);
 

@@ -177,6 +177,7 @@
     <ClInclude Include="EngineDX.h" />
     <ClInclude Include="Exercise1.h" />
     <ClInclude Include="Exercise10.h" />
+    <ClInclude Include="Exercise11.h" />
     <ClInclude Include="Exercise2.h" />
     <ClInclude Include="Exercise3.h" />
     <ClInclude Include="Exercise4.h" />
@@ -191,6 +192,7 @@
     <ClInclude Include="gltf_utils.h" />
     <ClInclude Include="HandleManager.h" />
     <ClInclude Include="ImGuiPass.h" />
+    <ClInclude Include="IrradianceMapPass.h" />
     <ClInclude Include="Keyboard.h" />
     <ClInclude Include="Material.h" />
     <ClInclude Include="Math.h" />
@@ -297,6 +299,7 @@
     <ClCompile Include="EngineDX.cpp" />
     <ClCompile Include="Exercise1.cpp" />
     <ClCompile Include="Exercise10.cpp" />
+    <ClCompile Include="Exercise11.cpp" />
     <ClCompile Include="Exercise2.cpp" />
     <ClCompile Include="Exercise3.cpp" />
     <ClCompile Include="Exercise4.cpp" />
@@ -311,6 +314,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="ImGuiPass.cpp" />
+    <ClCompile Include="IrradianceMapPass.cpp" />
     <ClCompile Include="Keyboard.cpp" />
     <ClCompile Include="Material.cpp" />
     <ClCompile Include="Math.cpp" />
@@ -500,6 +504,16 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">-Qembed_debug %(AdditionalOptions)</AdditionalOptions>
+    </FxCompile>
+    <FxCompile Include="Shaders\IrradianceMapPS.hlsl">
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">IrradianceMapPS</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.5</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">IrradianceMapPS</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.5</ShaderModel>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">-Qembed_debug %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">-Qembed_debug %(AdditionalOptions)</AdditionalOptions>
     </FxCompile>
     <FxCompile Include="Shaders\skyboxVS.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">skyboxVS</EntryPointName>
