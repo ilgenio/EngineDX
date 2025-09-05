@@ -22,14 +22,14 @@ public:
     bool init() override;
     bool cleanUp() override;
 
-    D3D12_CPU_DESCRIPTOR_HANDLE getCPUHanlde(Type type) const
+    D3D12_CPU_DESCRIPTOR_HANDLE getCPUHandle(Type type) const
     {
         _ASSERTE(type < COUNT);
 
         return CD3DX12_CPU_DESCRIPTOR_HANDLE(cpuStart, type, descriptorSize);
     }
 
-    D3D12_GPU_DESCRIPTOR_HANDLE getGPUHanlde(Type type) const
+    D3D12_GPU_DESCRIPTOR_HANDLE getGPUHandle(Type type) const
     {
         _ASSERTE(type < COUNT);
 

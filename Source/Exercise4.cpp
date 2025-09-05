@@ -137,7 +137,7 @@ void Exercise4::render()
 
     commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix)/sizeof(UINT32), &mvp, 0);
     commandList->SetGraphicsRootDescriptorTable(1, descriptors->getGPUHandle(dogDescriptor));
-    commandList->SetGraphicsRootDescriptorTable(2, samplers->getGPUHanlde(ModuleSamplers::Type(sampler)));
+    commandList->SetGraphicsRootDescriptorTable(2, samplers->getGPUHandle(ModuleSamplers::Type(sampler)));
 
     commandList->DrawInstanced(6, 1, 0, 0);
 

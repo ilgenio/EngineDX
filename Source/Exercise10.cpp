@@ -438,7 +438,7 @@ void Exercise10::renderToTexture(ID3D12GraphicsCommandList* commandList)
     commandList->SetGraphicsRootShaderResourceView(4, ringBuffer->allocBuffer(&pointLight, alignUp(sizeof(Point), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT)));
     commandList->SetGraphicsRootShaderResourceView(5, ringBuffer->allocBuffer(&spotLight, alignUp(sizeof(Spot), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT)));
 
-    commandList->SetGraphicsRootDescriptorTable(7, samplers->getGPUHanlde(ModuleSamplers::LINEAR_WRAP));
+    commandList->SetGraphicsRootDescriptorTable(7, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
 
     BEGIN_EVENT(commandList, "Model Render Pass");
 

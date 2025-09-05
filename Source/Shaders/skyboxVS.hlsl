@@ -10,7 +10,7 @@ struct VertexOutput
     float4 position : SV_POSITION;
 };
 
-VertexOutput exercise9VS(float3 position : POSITION) 
+VertexOutput skyboxVS(float3 position : POSITION) 
 {
     VertexOutput output;
     output.texCoord = position;

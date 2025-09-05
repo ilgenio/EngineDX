@@ -42,9 +42,21 @@ public:
     ComPtr<ID3D12Resource> createRenderTarget(DXGI_FORMAT format, size_t width, size_t height, float clearColour[4], const char* name);
     ComPtr<ID3D12Resource> createDepthStencil(DXGI_FORMAT format, size_t width, size_t height, float clearDepth, uint8_t clearStencil, const char* name);
 
+    ComPtr<ID3D12Resource> createCubemapRenderTarget(DXGI_FORMAT format, size_t width, size_t height, float clearColour[4], const char* name);
+
 private:
 
     ComPtr<ID3D12Resource> createTextureFromImage(const ScratchImage& image, const char* name);
+    ComPtr<ID3D12Resource> createRenderTarget(DXGI_FORMAT format, size_t width, size_t height, size_t arraySize, float clearColour[4], const char* name);
     ID3D12Resource* getUploadHeap(size_t size);
 };
 
+inline ComPtr<ID3D12Resource> ModuleResources::createRenderTarget(DXGI_FORMAT format, size_t width, size_t height, float clearColour[4], const char* name)
+{
+    return createRenderTarget(format, width, height, 1, clearColour, name);
+}
+
+inline ComPtr<ID3D12Resource> ModuleResources::createCubemapRenderTarget(DXGI_FORMAT format, size_t width, size_t height, float clearColour[4], const char *name)
+{
+    return createRenderTarget(format, width, height, 6, clearColour, name);
+}

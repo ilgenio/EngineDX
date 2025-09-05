@@ -13,6 +13,7 @@ public:
     bool init() override;
 
     UINT create(ID3D12Resource* resource);
+    UINT create(ID3D12Resource* resource, UINT arraySlice, DXGI_FORMAT format);
     void release(UINT handle);
 
     D3D12_CPU_DESCRIPTOR_HANDLE getCPUHandle(UINT handle) const { return CD3DX12_CPU_DESCRIPTOR_HANDLE(cpuStart, handles.indexFromHandle(handle), descriptorSize); }

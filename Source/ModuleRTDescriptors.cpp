@@ -44,6 +44,26 @@ UINT ModuleRTDescriptors::create(ID3D12Resource *resource)
     return handle;
 }
 
+UINT ModuleRTDescriptors::create(ID3D12Resource *resource, UINT arraySlice, DXGI_FORMAT format)
+{
+    UINT handle = handles.allocHandle();
+
+    _ASSERTE(handles.validHandle(handle));
+
+    D3D12_RENDER_TARGET_VIEW_DESC rtvDesc = {};
+    rtvDesc.Format = format;
+    rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
+    rtvDesc.Texture2DArray.ArraySize = 1;
+    rtvDesc.Texture2DArray.FirstArraySlice = arraySlice;
+    rtvDesc.Texture2DArray.MipSlice = 0;
+    rtvDesc.Texture2DArray.PlaneSlice = 0;
+
+    app->getD3D12()->getDevice()->CreateRenderTargetView(resource, &rtvDesc, CD3DX12_CPU_DESCRIPTOR_HANDLE(cpuStart, handles.indexFromHandle(handle), descriptorSize));
+
+    return handle;
+
+}
+
 void ModuleRTDescriptors::release(UINT handle)
 {
     if(handle != 0) 

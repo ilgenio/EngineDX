@@ -111,7 +111,7 @@ void Exercise9::render()
 
     commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &vp, 0);
     commandList->SetGraphicsRootDescriptorTable(1, descriptors->getGPUHandle(cubemapDesc));
-    commandList->SetGraphicsRootDescriptorTable(2, samplers->getGPUHanlde(ModuleSamplers::LINEAR_WRAP));
+    commandList->SetGraphicsRootDescriptorTable(2, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
 
     BEGIN_EVENT(commandList, "Sky Cubemap Render Pass");
 
@@ -169,7 +169,7 @@ bool Exercise9::createRootSignature()
 
 bool Exercise9::createPSO()
 {
-    auto dataVS = DX::ReadData(L"Exercise9VS.cso");
+    auto dataVS = DX::ReadData(L"skyboxVS.cso");
     auto dataPS = DX::ReadData(L"Exercise9PS.cso");
 
     D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};

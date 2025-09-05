@@ -1,5 +1,5 @@
-#ifndef _COMMON_GLSL_
-#define _COMMON_GLSL_
+#ifndef _COMMON_HLSLI_
+#define _COMMON_HLSLI_
 
 #define PI 3.14159265359
 
@@ -13,4 +13,4 @@ float3 sq(float3 value)
     return value*value;
 }
 
-#endif /* _COMMON_GLSL_ */
+#endif /* _COMMON_HLSLI_ */
