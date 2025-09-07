@@ -6,6 +6,8 @@
 #include "ModuleD3D12.h"
 #include "ModuleResources.h"
 #include "ModuleShaderDescriptors.h"
+#include "ModuleRTDescriptors.h"
+#include "ModuleDSDescriptors.h"
 #include "ModuleCamera.h"
 #include "DebugDrawPass.h"
 
@@ -42,6 +44,11 @@ bool Exercise9::init()
         {
             cubemapDesc = descriptors->createCubeTextureSRV(cubemap.Get());
         }
+
+        srvTarget = descriptors->createNullTexture2DSRV();
+        UINT imguiTextDesc = descriptors->alloc();
+        imguiPass = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd(), descriptors->getCPUHandle(imguiTextDesc), descriptors->getGPUHandle(imguiTextDesc));
+
     }
 
     return true;
@@ -49,11 +56,154 @@ bool Exercise9::init()
 
 bool Exercise9::cleanUp()
 {
+    imguiPass.reset();
+
     return true;
+}
+
+void Exercise9::preRender()
+{
+    imguiPass->startFrame();
+
+    resizeRenderTexture();
+}
+
+void Exercise9::resizeRenderTexture()
+{
+    if (canvasSize.x > 0 && canvasSize.y > 0 && (previousSize.x != canvasSize.x || previousSize.x == 0 ||
+        previousSize.y != canvasSize.y || previousSize.y == 0))
+    {
+
+        if (renderTexture)
+        {
+            // Ensure previous texture usage is finished
+            app->getD3D12()->flush();
+        }
+
+        ModuleResources* resources            = app->getResources();
+        ModuleShaderDescriptors* descriptors  = app->getShaderDescriptors();
+        ModuleRTDescriptors* rtDescriptors    = app->getRTDescriptors();
+        ModuleDSDescriptors* dsDescriptors    = app->getDSDescriptors();
+
+        float clearColor[4] = { 0.2f, 0.2f, 0.2f, 1.0f };
+        renderTexture = resources->createRenderTarget(DXGI_FORMAT_R8G8B8A8_UNORM, size_t(canvasSize.x), size_t(canvasSize.y), clearColor, "Exercise9 RT");
+
+        // Create RTV.
+        rtDescriptors->release(rtvTarget);
+        rtvTarget = rtDescriptors->create(renderTexture.Get());
+
+        // Create SRV.
+        descriptors->release(srvTarget);
+        srvTarget = descriptors->createTextureSRV(renderTexture.Get());
+
+        renderDS = resources->createDepthStencil(DXGI_FORMAT_D32_FLOAT, size_t(canvasSize.x), size_t(canvasSize.y), 1.0f, 0, "Exercise9 DS");
+
+        // Create DSV
+        dsDescriptors->release(dsvTarget);
+        dsvTarget = dsDescriptors->create(renderDS.Get());
+
+        previousSize = canvasSize;
+    }
+}
+
+void Exercise9::renderToTexture(ID3D12GraphicsCommandList* commandList)
+{
+    ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
+    ModuleRTDescriptors* rtDescriptors = app->getRTDescriptors();
+    ModuleDSDescriptors* dsDescriptors = app->getDSDescriptors();
+    ModuleSamplers* samplers = app->getSamplers();
+    ModuleCamera* camera = app->getCamera();
+
+    unsigned width = unsigned(canvasSize.x);
+    unsigned height = unsigned(canvasSize.y);
+
+    const Quaternion& rot = camera->getRot();
+    Quaternion invRot;
+    rot.Inverse(invRot);
+    Matrix view = Matrix::CreateFromQuaternion(invRot);
+    Matrix proj = ModuleCamera::getPerspectiveProj(float(width) / float(height));
+
+    Matrix vp = view * proj;
+    vp = vp.Transpose();
+
+    D3D12_VIEWPORT viewport;
+    viewport.TopLeftX = viewport.TopLeftY = 0;
+    viewport.MinDepth = 0.0f;
+    viewport.MaxDepth = 1.0f;
+    viewport.Width = float(width);
+    viewport.Height = float(height);
+
+    D3D12_RECT scissor;
+    scissor.left = 0;
+    scissor.top = 0;
+    scissor.right = width;
+    scissor.bottom = height;
+
+    CD3DX12_RESOURCE_BARRIER toRT = CD3DX12_RESOURCE_BARRIER::Transition(renderTexture.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
+    commandList->ResourceBarrier(1, &toRT);
+    
+    BEGIN_EVENT(commandList, "Sky Cubemap Render Pass");
+
+    D3D12_CPU_DESCRIPTOR_HANDLE rtv = rtDescriptors->getCPUHandle(rtvTarget);
+    D3D12_CPU_DESCRIPTOR_HANDLE dsv = dsDescriptors->getCPUHandle(dsvTarget);
+    commandList->OMSetRenderTargets(1, &rtv, false, &dsv);
+    commandList->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+
+    commandList->SetGraphicsRootSignature(rootSignature.Get());
+
+    commandList->RSSetViewports(1, &viewport);
+    commandList->RSSetScissorRects(1, &scissor);
+
+    ID3D12DescriptorHeap* descriptorHeaps[] = { descriptors->getHeap(), samplers->getHeap() };
+    commandList->SetDescriptorHeaps(2, descriptorHeaps);
+    commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &vp, 0);
+    commandList->SetGraphicsRootDescriptorTable(1, descriptors->getGPUHandle(cubemapDesc));
+    commandList->SetGraphicsRootDescriptorTable(2, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
+    commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);       // set the primitive topology
+    commandList->IASetVertexBuffers(0, 1, &cubemapMesh->getVertexBufferView());     // set the vertex buffer (using the vertex buffer view)
+    commandList->DrawInstanced(cubemapMesh->getVertexCount(), 1, 0, 0);     // draw the vertex buffer to the render target              
+
+    END_EVENT(commandList);
+
+    if (showGrid) dd::xzSquareGrid(-10.0f, 10.0f, 0.0f, 1.0f, dd::colors::LightGray);
+    if (showAxis) dd::axisTriad(ddConvert(Matrix::Identity), 0.1f, 1.0f);
+
+    debugDrawPass->record(commandList, width, height, camera->getView(), proj);
+
+    CD3DX12_RESOURCE_BARRIER toPS = CD3DX12_RESOURCE_BARRIER::Transition(renderTexture.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    commandList->ResourceBarrier(1, &toPS);
+}
+
+void Exercise9::imGuiCommands()
+{
+    ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
+
+    bool viewerFocused = false;
+    ImGui::Begin("Scene");
+    const char* frameName = "Scene Frame";
+    ImGuiID id(10);
+
+    ImVec2 max = ImGui::GetWindowContentRegionMax();
+    ImVec2 min = ImGui::GetWindowContentRegionMin();
+    canvasPos = min;
+    canvasSize = ImVec2(max.x - min.x, max.y - min.y);
+    ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+
+    ImGui::BeginChildFrame(id, canvasSize, ImGuiWindowFlags_NoScrollbar);
+    viewerFocused = ImGui::IsWindowFocused();
+    ImGui::Image((ImTextureID)descriptors->getGPUHandle(srvTarget).ptr, canvasSize);
+    
+    ImGui::EndChildFrame();
+    ImGui::End();
+
+    app->getCamera()->setEnable(viewerFocused);
+
 }
 
 void Exercise9::render()
 {
+    imGuiCommands();
+
     ModuleD3D12* d3d12 = app->getD3D12();
     ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
     ModuleSamplers* samplers = app->getSamplers();
@@ -65,18 +215,13 @@ void Exercise9::render()
     CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(d3d12->getBackBuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
     commandList->ResourceBarrier(1, &barrier);
 
+    if(renderTexture)
+    {
+        renderToTexture(commandList);
+    }
+
     unsigned width = d3d12->getWindowWidth();
     unsigned height = d3d12->getWindowHeight();
-
-    const Quaternion& rot = camera->getRot();
-    Quaternion invRot; 
-    rot.Inverse(invRot);
-    Matrix view = Matrix::CreateFromQuaternion(invRot);
-
-    Matrix proj = ModuleCamera::getPerspectiveProj(float(width) / float(height));
-
-    Matrix vp = view * proj;
-    vp = vp.Transpose();
 
     D3D12_VIEWPORT viewport;
     viewport.TopLeftX = viewport.TopLeftY = 0;
@@ -99,32 +244,12 @@ void Exercise9::render()
 
     commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
     commandList->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
-
     commandList->SetGraphicsRootSignature(rootSignature.Get());
 
     commandList->RSSetViewports(1, &viewport);
     commandList->RSSetScissorRects(1, &scissor);
 
-
-    ID3D12DescriptorHeap* descriptorHeaps[] = { descriptors->getHeap(), samplers->getHeap() };
-    commandList->SetDescriptorHeaps(2, descriptorHeaps);
-
-    commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &vp, 0);
-    commandList->SetGraphicsRootDescriptorTable(1, descriptors->getGPUHandle(cubemapDesc));
-    commandList->SetGraphicsRootDescriptorTable(2, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
-
-    BEGIN_EVENT(commandList, "Sky Cubemap Render Pass");
-
-    commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);       // set the primitive topology
-    commandList->IASetVertexBuffers(0, 1, &cubemapMesh->getVertexBufferView());     // set the vertex buffer (using the vertex buffer view)
-    commandList->DrawInstanced(cubemapMesh->getVertexCount(), 1, 0, 0);
-
-    END_EVENT(commandList);
- 
-    if (showGrid) dd::xzSquareGrid(-10.0f, 10.0f, 0.0f, 1.0f, dd::colors::LightGray);
-    if (showAxis) dd::axisTriad(ddConvert(Matrix::Identity), 0.1f, 1.0f);
-
-    debugDrawPass->record(commandList, width, height, camera->getView(), proj);
+    imguiPass->record(commandList);
 
     barrier = CD3DX12_RESOURCE_BARRIER::Transition(d3d12->getBackBuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
     commandList->ResourceBarrier(1, &barrier);
