@@ -19,13 +19,22 @@ class Exercise11 : public Module
     std::unique_ptr<ImGuiPass>          imguiPass;
     std::unique_ptr<IrradianceMapPass>  irradianceMapPass;
     ComPtr<ID3D12Resource>              irradianceMap;
-    bool showAxis = true;
-    bool                                showGrid = true;
 
+    ComPtr<ID3D12Resource>              renderTexture;
+    ComPtr<ID3D12Resource>              renderDS;
+
+    bool showAxis = true;
+    bool showGrid = true;
 
     UINT cubemapDesc = 0;
     UINT irradianceMapDesc = 0;
-    UINT rtvTarget = 0;
+
+    UINT   srvTarget = 0;
+    UINT   rtvTarget = 0;
+    UINT   dsvTarget = 0;
+    ImVec2 canvasSize;
+    ImVec2 previousSize;
+    ImVec2 canvasPos;
 
 public:
 
@@ -34,9 +43,13 @@ public:
 
     virtual bool init() override;
     virtual bool cleanUp() override;
+    virtual void preRender() override;
     virtual void render() override;
 
 private:
+    void imGuiCommands();
+    void resizeRenderTexture();
+    void renderToTexture(ID3D12GraphicsCommandList* commandList);
 
     bool createRootSignature();
     bool createPSO();
