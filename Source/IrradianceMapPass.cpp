@@ -31,6 +31,8 @@ void IrradianceMapPass::record(ID3D12GraphicsCommandList* cmdList, UINT cubeMapD
     float clearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
     irradianceMap = resources->createCubemapRenderTarget(DXGI_FORMAT_R16G16B16A16_FLOAT, size, size, clearColor, "Irradiance Map");
 
+    BEGIN_EVENT(cmdList, "Irradiance Map");
+
     // set necessary state
     cmdList->SetPipelineState(pso.Get());
     cmdList->SetGraphicsRootSignature(rootSignature.Get());
@@ -85,6 +87,8 @@ void IrradianceMapPass::record(ID3D12GraphicsCommandList* cmdList, UINT cubeMapD
         CD3DX12_RESOURCE_BARRIER toSRV = CD3DX12_RESOURCE_BARRIER::Transition(irradianceMap.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, i);
         cmdList->ResourceBarrier(1, &toSRV);
     }
+
+    END_EVENT(cmdList);
 }
 
 bool IrradianceMapPass::createRootSignature()

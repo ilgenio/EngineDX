@@ -14,6 +14,8 @@
 #include "CubemapMesh.h"
 #include "ReadData.h"
 
+#define CAPTURE_IBL_GENERATION 0
+
 Exercise11::Exercise11()
 {
 
@@ -61,6 +63,15 @@ void Exercise11::render()
     ModuleSamplers* samplers = app->getSamplers();
     ModuleCamera* camera = app->getCamera();
 
+#if CAPTURE_IBL_GENERATION
+    
+    bool takeCapture = !irradianceMap && PIXIsAttachedForGpuCapture();
+    if (takeCapture)
+    {
+        PIXBeginCapture(PIX_CAPTURE_GPU, nullptr);
+    }
+#endif 
+
     ID3D12GraphicsCommandList* commandList = d3d12->getCommandList();
     commandList->Reset(d3d12->getCommandAllocator(), nullptr);
 
@@ -69,8 +80,6 @@ void Exercise11::render()
 
     if(!irradianceMap)
     {
-        d3d12->flush();
-
         irradianceMapPass->record(commandList, cubemapDesc, 512);
         irradianceMap = irradianceMapPass->getIrradianceMap();
         irradianceMapDesc = descriptors->createCubeTextureSRV(irradianceMap.Get());
@@ -144,6 +153,14 @@ void Exercise11::render()
         ID3D12CommandList* commandLists[] = { commandList };
         d3d12->getDrawCommandQueue()->ExecuteCommandLists(UINT(std::size(commandLists)), commandLists);
     }
+
+#if CAPTURE_IBL_GENERATION
+    if (takeCapture)
+    {
+        PIXEndCapture(TRUE);
+    }
+#endif 
+
 }
 
 bool Exercise11::createRootSignature()
