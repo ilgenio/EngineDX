@@ -15,7 +15,7 @@ public:
     IrradianceMapPass();
     ~IrradianceMapPass();
 
-    void record(ID3D12GraphicsCommandList* cmdList, UINT cubeMapDesc, uint32_t width, uint32_t height);
+    void record(ID3D12GraphicsCommandList* cmdList, UINT cubeMapDesc, size_t size);
 
     ID3D12Resource* getIrradianceMap() const { return irradianceMap.Get(); }
 

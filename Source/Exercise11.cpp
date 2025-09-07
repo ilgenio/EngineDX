@@ -37,6 +37,7 @@ bool Exercise11::init()
         ModuleD3D12* d3d12 = app->getD3D12();
 
         debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue());
+        irradianceMapPass = std::make_unique<IrradianceMapPass>();
         cubemap = resources->createTextureFromFile(std::wstring(L"Assets/Textures/cubemap.dds"));
 
         if ((ok = cubemap) == true)
@@ -61,11 +62,20 @@ void Exercise11::render()
     ModuleCamera* camera = app->getCamera();
 
     ID3D12GraphicsCommandList* commandList = d3d12->getCommandList();
-    commandList->Reset(d3d12->getCommandAllocator(), pso.Get());
+    commandList->Reset(d3d12->getCommandAllocator(), nullptr);
 
     CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(d3d12->getBackBuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
     commandList->ResourceBarrier(1, &barrier);
 
+    if(!irradianceMap)
+    {
+        d3d12->flush();
+
+        irradianceMapPass->record(commandList, cubemapDesc, 512);
+        irradianceMap = irradianceMapPass->getIrradianceMap();
+        irradianceMapDesc = descriptors->createCubeTextureSRV(irradianceMap.Get());
+    }
+ 
     unsigned width = d3d12->getWindowWidth();
     unsigned height = d3d12->getWindowHeight();
 
@@ -73,9 +83,7 @@ void Exercise11::render()
     Quaternion invRot; 
     rot.Inverse(invRot);
     Matrix view = Matrix::CreateFromQuaternion(invRot);
-
     Matrix proj = ModuleCamera::getPerspectiveProj(float(width) / float(height));
-
     Matrix vp = view * proj;
     vp = vp.Transpose();
 
@@ -101,6 +109,7 @@ void Exercise11::render()
     commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
     commandList->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 
+    commandList->SetPipelineState(pso.Get());
     commandList->SetGraphicsRootSignature(rootSignature.Get());
 
     commandList->RSSetViewports(1, &viewport);

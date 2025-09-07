@@ -18,11 +18,14 @@ class Exercise11 : public Module
     std::unique_ptr<DebugDrawPass>      debugDrawPass;
     std::unique_ptr<ImGuiPass>          imguiPass;
     std::unique_ptr<IrradianceMapPass>  irradianceMapPass;
-    bool                                showAxis = true;
+    ComPtr<ID3D12Resource>              irradianceMap;
+    bool showAxis = true;
     bool                                showGrid = true;
 
 
     UINT cubemapDesc = 0;
+    UINT irradianceMapDesc = 0;
+    UINT rtvTarget = 0;
 
 public:
 

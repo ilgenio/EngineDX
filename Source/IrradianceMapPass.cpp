@@ -13,27 +13,30 @@
 
 IrradianceMapPass::IrradianceMapPass()
 {
+    cubemapMesh = std::make_unique<CubemapMesh>();
     createRootSignature();
     createPSO();
-    cubemapMesh = std::make_unique<CubemapMesh>();
 }
 
 IrradianceMapPass::~IrradianceMapPass()
 {
 }
 
-void IrradianceMapPass::record(ID3D12GraphicsCommandList* cmdList, UINT cubeMapDesc, uint32_t width, uint32_t height)
+void IrradianceMapPass::record(ID3D12GraphicsCommandList* cmdList, UINT cubeMapDesc, size_t size)
 {
     ModuleResources* resources = app->getResources();
     ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
     ModuleSamplers* samplers = app->getSamplers();
 
     float clearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-    irradianceMap = resources->createCubemapRenderTarget(DXGI_FORMAT_R16G16B16A16_FLOAT, width, height, clearColor, "Irradiance Map");
+    irradianceMap = resources->createCubemapRenderTarget(DXGI_FORMAT_R16G16B16A16_FLOAT, size, size, clearColor, "Irradiance Map");
 
     // set necessary state
     cmdList->SetPipelineState(pso.Get());
     cmdList->SetGraphicsRootSignature(rootSignature.Get());
+
+    ID3D12DescriptorHeap* descriptorHeaps[] = { descriptors->getHeap(), samplers->getHeap() };
+    cmdList->SetDescriptorHeaps(2, descriptorHeaps);
 
     // set viewport and scissor
 
@@ -41,18 +44,19 @@ void IrradianceMapPass::record(ID3D12GraphicsCommandList* cmdList, UINT cubeMapD
     viewport.TopLeftX = viewport.TopLeftY = 0;
     viewport.MinDepth = 0.0f;
     viewport.MaxDepth = 1.0f;
-    viewport.Width = float(width);
-    viewport.Height = float(height);
+    viewport.Width = float(size);
+    viewport.Height = float(size);
 
     D3D12_RECT scissor;
     scissor.left = 0;
     scissor.top = 0;
-    scissor.right = width;
-    scissor.bottom = height;
+    scissor.right = LONG(size);
+    scissor.bottom = LONG(size);
 
     cmdList->RSSetViewports(1, &viewport);
     cmdList->RSSetScissorRects(1, &scissor);
 
+    cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);       // set the primitive topology
     cmdList->IASetVertexBuffers(0, 1, &cubemapMesh->getVertexBufferView());
 
     cmdList->SetGraphicsRootDescriptorTable(1, descriptors->getGPUHandle(cubeMapDesc));
@@ -69,8 +73,8 @@ void IrradianceMapPass::record(ID3D12GraphicsCommandList* cmdList, UINT cubeMapD
 
         cmdList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &mvpMatrix, 0);
 
-        //CD3DX12_RESOURCE_BARRIER toRT = CD3DX12_RESOURCE_BARRIER::Transition(irradianceMap.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET, i);
-        //cmdList->ResourceBarrier(1, &toRT);
+        CD3DX12_RESOURCE_BARRIER toRT = CD3DX12_RESOURCE_BARRIER::Transition(irradianceMap.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET, i);
+        cmdList->ResourceBarrier(1, &toRT);
 
         UINT rtvHandle = rtDescriptors->create(irradianceMap.Get(), i, DXGI_FORMAT_R16G16B16A16_FLOAT);
         D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = rtDescriptors->getCPUHandle(rtvHandle);
@@ -116,7 +120,7 @@ bool IrradianceMapPass::createRootSignature()
 
 bool IrradianceMapPass::createPSO()
 {
-    auto dataVS = DX::ReadData(L"fullscreenVS.cso");
+    auto dataVS = DX::ReadData(L"skyboxVS.cso");
     auto dataPS = DX::ReadData(L"IrradianceMapPS.cso");
 
     D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
