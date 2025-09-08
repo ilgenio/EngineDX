@@ -28,8 +28,7 @@ public:
     uint32_t getNumVertices() const {return numVertices; }
     uint32_t getNumIndices() const {return numIndices; }
 
-    const D3D12_VERTEX_BUFFER_VIEW& getVertexBufferView() const {return vertexBufferView; }
-    const D3D12_INDEX_BUFFER_VIEW&  getIndexBufferView() const {return indexBufferView; }
+    void draw(ID3D12GraphicsCommandList* commandList) const;
 
     uint32_t getMaterialIndex() const {return materialIndex;}
 

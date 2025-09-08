@@ -79,3 +79,11 @@ CubemapMesh::CubemapMesh()
 CubemapMesh::~CubemapMesh()
 {
 }
+
+void CubemapMesh::draw(ID3D12GraphicsCommandList* commandList) const
+{
+    commandList->IASetVertexBuffers(0, 1, &vertexBufferView);
+    commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    commandList->DrawInstanced(6 * 6, 1, 0, 0);
+}
+

@@ -159,9 +159,7 @@ void Exercise9::renderToTexture(ID3D12GraphicsCommandList* commandList)
     commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &vp, 0);
     commandList->SetGraphicsRootDescriptorTable(1, descriptors->getGPUHandle(cubemapDesc));
     commandList->SetGraphicsRootDescriptorTable(2, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
-    commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);       // set the primitive topology
-    commandList->IASetVertexBuffers(0, 1, &cubemapMesh->getVertexBufferView());     // set the vertex buffer (using the vertex buffer view)
-    commandList->DrawInstanced(cubemapMesh->getVertexCount(), 1, 0, 0);     // draw the vertex buffer to the render target              
+    cubemapMesh->draw(commandList);
 
     END_EVENT(commandList);
 

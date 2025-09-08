@@ -84,6 +84,20 @@ void Mesh::load(const tinygltf::Model& model, const tinygltf::Mesh& mesh, const 
     }
 }
 
+void Mesh::draw(ID3D12GraphicsCommandList* commandList) const
+{
+    commandList->IASetVertexBuffers(0, 1, &vertexBufferView);
+    if (indexBuffer)
+    {
+        commandList->IASetIndexBuffer(&indexBufferView);
+        commandList->DrawIndexedInstanced(numIndices, 1, 0, 0, 0);
+    }
+    else
+    {
+        commandList->DrawInstanced(numVertices, 1, 0, 0);
+    }
+}
+
 void Mesh::computeTSpace()
 {
     struct UserData

@@ -58,9 +58,6 @@ void IrradianceMapPass::record(ID3D12GraphicsCommandList* cmdList, UINT cubeMapD
     cmdList->RSSetViewports(1, &viewport);
     cmdList->RSSetScissorRects(1, &scissor);
 
-    cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);       // set the primitive topology
-    cmdList->IASetVertexBuffers(0, 1, &cubemapMesh->getVertexBufferView());
-
     cmdList->SetGraphicsRootDescriptorTable(1, descriptors->getGPUHandle(cubeMapDesc));
     cmdList->SetGraphicsRootDescriptorTable(2, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
 
@@ -70,7 +67,7 @@ void IrradianceMapPass::record(ID3D12GraphicsCommandList* cmdList, UINT cubeMapD
 
     for(int i=0; i<6; ++i)
     {
-        Matrix viewMatrix = Matrix::CreateLookAt(Vector3(0.0f), cubemapMesh->getFrontDir(CubemapMesh::Direction(i)), cubemapMesh->getUpDir(CubemapMesh::Direction(i)));
+        Matrix viewMatrix = cubemapMesh->getViewMatrix(CubemapMesh::Direction(i));
         Matrix mvpMatrix = (viewMatrix * projMatrix).Transpose();
 
         cmdList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &mvpMatrix, 0);
@@ -82,7 +79,7 @@ void IrradianceMapPass::record(ID3D12GraphicsCommandList* cmdList, UINT cubeMapD
         D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = rtDescriptors->getCPUHandle(rtvHandle);
         cmdList->OMSetRenderTargets(1, &cpuHandle, FALSE, nullptr);
 
-        cmdList->DrawInstanced(cubemapMesh->getVertexCount(), 1, 0, 0);
+        cubemapMesh->draw(cmdList);
 
         CD3DX12_RESOURCE_BARRIER toSRV = CD3DX12_RESOURCE_BARRIER::Transition(irradianceMap.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, i);
         cmdList->ResourceBarrier(1, &toSRV);

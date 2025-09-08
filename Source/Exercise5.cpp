@@ -195,22 +195,13 @@ void Exercise5::render()
     {
         if (mesh.getMaterialIndex() < model->getNumMaterials())
         {
-            commandList->IASetVertexBuffers(0, 1, &mesh.getVertexBufferView());    // set the vertex buffer (using the vertex buffer view)
             const BasicMaterial& material = model->getMaterials()[mesh.getMaterialIndex()];
             
             UINT tableStartDesc = material.getTexturesTableDescriptor();
             commandList->SetGraphicsRootConstantBufferView(1, materialBuffers[mesh.getMaterialIndex()]->GetGPUVirtualAddress());
             commandList->SetGraphicsRootDescriptorTable(2, descriptors->getGPUHandle(tableStartDesc));
 
-            if (mesh.getNumIndices() > 0)
-            {
-                commandList->IASetIndexBuffer(&mesh.getIndexBufferView());
-                commandList->DrawIndexedInstanced(mesh.getNumIndices(), 1, 0, 0, 0);
-            }
-            else
-            {
-                commandList->DrawInstanced(mesh.getNumVertices(), 1, 0, 0);
-            }
+            mesh.draw(commandList);
         }
     }
 

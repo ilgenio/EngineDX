@@ -446,7 +446,6 @@ void Exercise10::renderToTexture(ID3D12GraphicsCommandList* commandList)
     {
         if (mesh.getMaterialIndex() < model->getNumMaterials())
         {
-            commandList->IASetVertexBuffers(0, 1, &mesh.getVertexBufferView());    // set the vertex buffer (using the vertex buffer view)
             const BasicMaterial& material = model->getMaterials()[mesh.getMaterialIndex()];
 
             UINT tableStartDesc = material.getTexturesTableDescriptor();
@@ -455,16 +454,7 @@ void Exercise10::renderToTexture(ID3D12GraphicsCommandList* commandList)
 
             commandList->SetGraphicsRootConstantBufferView(2, ringBuffer->allocBuffer(&perInstance, alignUp(sizeof(PerInstance), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT)));
             commandList->SetGraphicsRootDescriptorTable(6, descriptors->getGPUHandle(tableStartDesc));
-
-            if (mesh.getNumIndices() > 0)
-            {
-                commandList->IASetIndexBuffer(&mesh.getIndexBufferView());
-                commandList->DrawIndexedInstanced(mesh.getNumIndices(), 1, 0, 0, 0);
-            }
-            else
-            {
-                commandList->DrawInstanced(mesh.getNumVertices(), 1, 0, 0);
-            }
+            mesh.draw(commandList);
         }
     }
 
