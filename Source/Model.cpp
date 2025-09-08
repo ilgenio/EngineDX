@@ -9,7 +9,11 @@
 #define TINYGLTF_NO_STB_IMAGE
 #define TINYGLTF_NO_EXTERNAL_IMAGE 
 #define TINYGLTF_IMPLEMENTATION /* Only in one of the includes */
+#pragma warning(push)
+#pragma warning(disable : 4018) 
+#pragma warning(disable : 4267) 
 #include "tiny_gltf.h"
+#pragma warning(pop)
 
 
 Model::Model() 

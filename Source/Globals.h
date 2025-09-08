@@ -10,6 +10,8 @@
 #define USE_PIX 0
 #endif 
 
+#define _CRT_SECURE_NO_WARNINGS
+
 #include <windows.h>
 #include <wrl.h>
 #include <d3d12.h>

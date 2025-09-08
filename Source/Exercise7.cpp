@@ -303,9 +303,10 @@ void Exercise7::renderToTexture(ID3D12GraphicsCommandList* commandList)
     commandList->SetGraphicsRootSignature(rootSignature.Get());
     commandList->RSSetViewports(1, &viewport);
     commandList->RSSetScissorRects(1, &scissor);
-    commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);  // set the primitive topology
+
     ID3D12DescriptorHeap* descriptorHeaps[] = { descriptors->getHeap(), samplers->getHeap() };
     commandList->SetDescriptorHeaps(2, descriptorHeaps);
+
     commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &mvp, 0);
     commandList->SetGraphicsRootConstantBufferView(1, ringBuffer->allocBuffer(&perFrame, alignUp(sizeof(PerFrame), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT)));
     commandList->SetGraphicsRootDescriptorTable(4, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
@@ -318,12 +319,11 @@ void Exercise7::renderToTexture(ID3D12GraphicsCommandList* commandList)
         {
             const BasicMaterial& material = model->getMaterials()[mesh.getMaterialIndex()];
 
-            UINT tableStartDesc = material.getTexturesTableDescriptor();
-
             PerInstance perInstance = { model->getModelMatrix().Transpose(), model->getNormalMatrix().Transpose(), material.getPBRPhongMaterial()};
 
             commandList->SetGraphicsRootConstantBufferView(2, ringBuffer->allocBuffer(&perInstance, alignUp(sizeof(PerInstance), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT)));
-            commandList->SetGraphicsRootDescriptorTable(3, descriptors->getGPUHandle(tableStartDesc));
+            commandList->SetGraphicsRootDescriptorTable(3, descriptors->getGPUHandle(material.getTexturesTableDescriptor()));
+
             mesh.draw(commandList);
         }
     }

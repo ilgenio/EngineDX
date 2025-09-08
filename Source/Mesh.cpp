@@ -86,6 +86,7 @@ void Mesh::load(const tinygltf::Model& model, const tinygltf::Mesh& mesh, const 
 
 void Mesh::draw(ID3D12GraphicsCommandList* commandList) const
 {
+    commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);  
     commandList->IASetVertexBuffers(0, 1, &vertexBufferView);
     if (indexBuffer)
     {

@@ -290,7 +290,7 @@ ComPtr<ID3D12Resource> ModuleResources::createRenderTarget(DXGI_FORMAT format, s
     const auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 
     const D3D12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Tex2D(format, (UINT64)(width), (UINT)(height),
-        arraySize, 1, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
+        UINT16(arraySize), 1, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
 
     D3D12_CLEAR_VALUE clearValue = { format , { clearColour[0], clearColour[1], clearColour[2], clearColour[3]} };
 
@@ -311,7 +311,10 @@ ComPtr<ID3D12Resource> ModuleResources::createDepthStencil(DXGI_FORMAT format, s
     const D3D12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Tex2D(format, (UINT64)(width), (UINT)(height),
         1, 1, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
 
-    D3D12_CLEAR_VALUE clear = { format ,  { clearDepth, clearStencil} };
+    D3D12_CLEAR_VALUE clear;
+    clear.Format = format;
+    clear.DepthStencil.Depth = clearDepth;
+    clear.DepthStencil.Stencil = clearStencil;
 
     app->getD3D12()->getDevice()->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES,
         &desc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &clear, IID_PPV_ARGS(&texture));
