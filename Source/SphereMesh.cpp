@@ -4,7 +4,6 @@
 #include "Application.h"
 #include "ModuleResources.h"
 
-
 #define PAR_SHAPES_IMPLEMENTATION
 #ifdef ARRAYSIZE
 #undef ARRAYSIZE
@@ -74,3 +73,4 @@ void SphereMesh::draw(ID3D12GraphicsCommandList* commandList) const
     commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     commandList->DrawIndexedInstanced(numIndices, 1, 0, 0, 0);
 }
+
