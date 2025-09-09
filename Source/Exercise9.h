@@ -7,6 +7,7 @@
 
 class CubemapMesh;
 class DebugDrawPass;
+class RenderTexture;
 
 class Exercise9 : public Module
 {
@@ -17,18 +18,13 @@ class Exercise9 : public Module
     ComPtr<ID3D12Resource>          cubemap;
     std::unique_ptr<DebugDrawPass>  debugDrawPass;
     std::unique_ptr<ImGuiPass>      imguiPass;
-    ComPtr<ID3D12Resource>          renderTexture;
-    ComPtr<ID3D12Resource>          renderDS;
 
     bool showAxis = true;
     bool showGrid = true;
     UINT cubemapDesc = 0;
-    UINT srvTarget = 0;
-    UINT rtvTarget = 0;
-    UINT dsvTarget = 0;
 
+    std::unique_ptr<RenderTexture>  renderTexture;
     ImVec2 canvasSize;
-    ImVec2 previousSize;
     ImVec2 canvasPos;
 
 public:

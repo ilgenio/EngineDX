@@ -8,6 +8,7 @@
 #include "BasicMaterial.h"
 
 class Model;
+class RenderTexture;
 
 class Exercise10 : public Module
 {
@@ -89,15 +90,10 @@ class Exercise10 : public Module
     bool                                showGuizmo = false;
     ImGuizmo::OPERATION                 moOperation = ImGuizmo::TRANSLATE;
     std::unique_ptr<Model>              model;
-    ComPtr<ID3D12Resource>              renderTexture;
-    ComPtr<ID3D12Resource>              renderDS;
 
 
-    UINT                                srvTarget = 0;
-    UINT                                rtvTarget = 0;
-    UINT                                dsvTarget = 0;
+    std::unique_ptr<RenderTexture>      renderTexture;
     ImVec2                              canvasSize;
-    ImVec2                              previousSize;
     ImVec2                              canvasPos;
 
 public:
@@ -124,5 +120,4 @@ private:
     bool createPSO();
     bool loadModel();
     void renderToTexture(ID3D12GraphicsCommandList* commandList);
-    void resizeRenderTexture();
 };
