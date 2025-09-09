@@ -8,9 +8,11 @@ class RenderTexture
     int width = 0;
     int height = 0;
 
-    DXGI_FORMAT format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    DXGI_FORMAT depthFormat = DXGI_FORMAT_D32_FLOAT;
+    DXGI_FORMAT format;
+    DXGI_FORMAT depthFormat;
     const char* name;
+    Vector4 clearColour;
+    FLOAT clearDepth;
 
     UINT rtvHandle = 0;
     UINT srvHandle = 0; 
@@ -18,17 +20,20 @@ class RenderTexture
 
 public:
 
-    RenderTexture(DXGI_FORMAT format, const char* name, DXGI_FORMAT depthFormat = DXGI_FORMAT_UNKNOWN) 
-    : format(format), depthFormat(depthFormat), name(name) {};
+    RenderTexture(const char* name, DXGI_FORMAT format, const Vector4 clearColour, DXGI_FORMAT depthFormat = DXGI_FORMAT_UNKNOWN, float clearDepth = 1.0f)
+    : format(format), depthFormat(depthFormat), name(name), clearColour(clearColour), clearDepth(clearDepth) 
+    { };
 
     ~RenderTexture();
 
+    bool isValid() const { return width > 0 || height > 0;  }
     void resize(int width, int height);
 
-    void transitionToRTV(ID3D12GraphicsCommandList* commandList);
-    void transitionToSRV(ID3D12GraphicsCommandList* commandList);
+    void transitionToRTV(ID3D12GraphicsCommandList* cmdList);
+    void transitionToSRV(ID3D12GraphicsCommandList* cmdList);
 
     void bindAsRenderTarget(ID3D12GraphicsCommandList* cmdList);
+    void clear(ID3D12GraphicsCommandList* cmdList);
     void bindAsShaderResource(ID3D12GraphicsCommandList* cmdList, int slot);
 
     UINT getRTVHandle() const { return rtvHandle; }

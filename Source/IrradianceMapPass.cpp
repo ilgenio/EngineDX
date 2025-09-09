@@ -79,6 +79,8 @@ void IrradianceMapPass::record(ID3D12GraphicsCommandList* cmdList, UINT cubeMapD
         D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = rtDescriptors->getCPUHandle(rtvHandle);
         cmdList->OMSetRenderTargets(1, &cpuHandle, FALSE, nullptr);
 
+        // TODO: DESTROY RTV
+
         cubemapMesh->draw(cmdList);
 
         CD3DX12_RESOURCE_BARRIER toSRV = CD3DX12_RESOURCE_BARRIER::Transition(irradianceMap.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, i);

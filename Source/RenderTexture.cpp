@@ -10,6 +10,21 @@
 
 RenderTexture::~RenderTexture()
 {
+    if (texture)
+    {
+        // Ensure previous texture usage is finished
+        app->getD3D12()->flush();
+
+        // Release descriptors
+        app->getRTDescriptors()->release(rtvHandle);
+        app->getShaderDescriptors()->release(srvHandle);
+
+        if (depthFormat != DXGI_FORMAT_UNKNOWN)
+        {
+            ModuleDSDescriptors *dsDescriptors = app->getDSDescriptors();
+            dsDescriptors->release(dsvHandle);
+        }
+    }
 }
 
 void RenderTexture::resize(int width, int height)
@@ -30,8 +45,7 @@ void RenderTexture::resize(int width, int height)
     ModuleRTDescriptors* rtDescriptors = app->getRTDescriptors();
     ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
 
-    float clearColor[4] = {0.0f, 0.0f, 0.0f, 1.0f};
-    texture = resources->createRenderTarget(format, size_t(width), size_t(height), clearColor, name);
+    texture = resources->createRenderTarget(format, size_t(width), size_t(height), reinterpret_cast<float*>(&clearColour), name);
 
     // Create RTV.
     rtDescriptors->release(rtvHandle);
@@ -45,7 +59,7 @@ void RenderTexture::resize(int width, int height)
     {
         ModuleDSDescriptors *dsDescriptors = app->getDSDescriptors();
 
-        depthTexture = resources->createDepthStencil(depthFormat, size_t(width), size_t(height), 1.0f, 0, name);
+        depthTexture = resources->createDepthStencil(depthFormat, size_t(width), size_t(height), clearDepth, 0, name);
         // Create DSV
         dsDescriptors->release(dsvHandle);
         dsvHandle = dsDescriptors->create(depthTexture.Get());
@@ -53,16 +67,16 @@ void RenderTexture::resize(int width, int height)
 
 }
 
-void RenderTexture::transitionToRTV(ID3D12GraphicsCommandList* commandList)
+void RenderTexture::transitionToRTV(ID3D12GraphicsCommandList* cmdList)
 {
     CD3DX12_RESOURCE_BARRIER toRT = CD3DX12_RESOURCE_BARRIER::Transition(texture.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
-    commandList->ResourceBarrier(1, &toRT);
+    cmdList->ResourceBarrier(1, &toRT);
 }
 
-void RenderTexture::transitionToSRV(ID3D12GraphicsCommandList* commandList)
+void RenderTexture::transitionToSRV(ID3D12GraphicsCommandList* cmdList)
 {
     CD3DX12_RESOURCE_BARRIER toSRV = CD3DX12_RESOURCE_BARRIER::Transition(texture.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-    commandList->ResourceBarrier(1, &toSRV);
+    cmdList->ResourceBarrier(1, &toSRV);
 }
 
 void RenderTexture::bindAsRenderTarget(ID3D12GraphicsCommandList *cmdList)
@@ -79,6 +93,17 @@ void RenderTexture::bindAsRenderTarget(ID3D12GraphicsCommandList *cmdList)
         cmdList->OMSetRenderTargets(1, &rtv, FALSE, &dsv);
     }
 }
+
+void RenderTexture::clear(ID3D12GraphicsCommandList* cmdList)
+{
+    cmdList->ClearRenderTargetView(app->getRTDescriptors()->getCPUHandle(rtvHandle), reinterpret_cast<float*>(&clearColour), 0, nullptr);
+
+    if (depthFormat != DXGI_FORMAT_UNKNOWN)
+    {
+        cmdList->ClearDepthStencilView(app->getDSDescriptors()->getCPUHandle(dsvHandle), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+    }
+}
+
 
 void RenderTexture::bindAsShaderResource(ID3D12GraphicsCommandList *cmdList, int slot)
 {

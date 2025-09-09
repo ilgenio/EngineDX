@@ -91,9 +91,9 @@ Application::~Application()
 {
     cleanUp();
 
-	for(Module* module : modules)
+	for(auto it = modules.rbegin(); it != modules.rend(); ++it)
     {
-        delete module;
+        delete *it;
     }
 }
  

@@ -12,6 +12,7 @@
 #include "ModuleResources.h"
 #include "Model.h"
 #include "Mesh.h"
+#include "RenderTexture.h"
 
 #include "ReadData.h"
 
@@ -46,7 +47,7 @@ bool Exercise7::init()
         imguiPass = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd(), 
             descriptors->getCPUHandle(imguiTextDesc), descriptors->getGPUHandle(imguiTextDesc));
 
-        srvTarget = descriptors->createNullTexture2DSRV();
+        renderTexture = std::make_unique<RenderTexture>("Exercise7", DXGI_FORMAT_R8G8B8A8_UNORM, Vector4(0.2f, 0.2f, 0.2f, 1.0f), DXGI_FORMAT_D32_FLOAT, 1.0f);
     }
      
     return true;
@@ -64,49 +65,7 @@ void Exercise7::preRender()
     imguiPass->startFrame();
     ImGuizmo::BeginFrame();
 
-    resizeRenderTexture();
-
-}
-
-void Exercise7::resizeRenderTexture()
-{
-    if (canvasSize.x > 0 && canvasSize.y > 0 && (previousSize.x != canvasSize.x || previousSize.x == 0 ||
-        previousSize.y != canvasSize.y || previousSize.y == 0))
-    {
-
-        if (renderTexture)
-        {
-            // Ensure previous texture usage is finished
-            app->getD3D12()->flush();
-        }
-
-        ModuleResources* resources            = app->getResources();
-        ModuleShaderDescriptors* descriptors  = app->getShaderDescriptors();
-        ModuleRTDescriptors* rtDescriptors    = app->getRTDescriptors();
-        ModuleDSDescriptors* dsDescriptors    = app->getDSDescriptors();
-
-
-        float clearColor[4] = { 0.2f, 0.2f, 0.2f, 1.0f };
-        renderTexture = resources->createRenderTarget(DXGI_FORMAT_R8G8B8A8_UNORM, size_t(canvasSize.x), 
-            size_t(canvasSize.y), clearColor, "Exercise7 RT");
-
-        renderDS = resources->createDepthStencil(DXGI_FORMAT_D32_FLOAT, size_t(canvasSize.x), 
-            size_t(canvasSize.y), 1.0f, 0, "Exercise7 DS");
-
-        // Create RTV.
-        rtDescriptors->release(rtvTarget);
-        rtvTarget = rtDescriptors->create(renderTexture.Get());
-
-        // Create SRV.
-        descriptors->release(srvTarget);
-        srvTarget = descriptors->createTextureSRV(renderTexture.Get());
-
-        // Create DSV
-        dsDescriptors->release(dsvTarget);
-        dsvTarget = dsDescriptors->create(renderDS.Get());
-
-        previousSize = canvasSize;
-    }
+    renderTexture->resize(int(canvasSize.x), int(canvasSize.y));
 }
 
 void Exercise7::imGuiCommands()
@@ -220,7 +179,11 @@ void Exercise7::imGuiCommands()
 
     ImGui::BeginChildFrame(id, canvasSize, ImGuiWindowFlags_NoScrollbar);
     viewerFocused = ImGui::IsWindowFocused();
-    ImGui::Image((ImTextureID)descriptors->getGPUHandle(srvTarget).ptr, canvasSize);
+    
+    if (descriptors->isValid(renderTexture->getSRVHandle()))
+    {
+        ImGui::Image((ImTextureID)descriptors->getGPUHandle(renderTexture->getSRVHandle()).ptr, canvasSize);
+    }
     
     if (showGuizmo)
     {
@@ -267,25 +230,6 @@ void Exercise7::renderToTexture(ID3D12GraphicsCommandList* commandList)
     Matrix mvp = model->getModelMatrix() * view * proj;
     mvp = mvp.Transpose();
 
-    D3D12_VIEWPORT viewport;
-    viewport.TopLeftX = viewport.TopLeftY = 0;
-    viewport.MinDepth = 0.0f;
-    viewport.MaxDepth = 1.0f;
-    viewport.Width = float(width);
-    viewport.Height = float(height);
-
-    D3D12_RECT scissor;
-    scissor.left = 0;
-    scissor.top = 0;
-    scissor.right = width;
-    scissor.bottom = height;
-
-    CD3DX12_RESOURCE_BARRIER toRT = CD3DX12_RESOURCE_BARRIER::Transition(renderTexture.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
-    commandList->ResourceBarrier(1, &toRT);
-    
-    D3D12_CPU_DESCRIPTOR_HANDLE rtv = rtDescriptors->getCPUHandle(rtvTarget);
-    D3D12_CPU_DESCRIPTOR_HANDLE dsv = dsDescriptors->getCPUHandle(dsvTarget);
-
     PerFrame perFrame;
     perFrame.L = light.L;
     perFrame.Lc = light.Lc;
@@ -294,18 +238,18 @@ void Exercise7::renderToTexture(ID3D12GraphicsCommandList* commandList)
 
     perFrame.L.Normalize();
 
-    commandList->OMSetRenderTargets(1, &rtv, false, &dsv);
-
-    float clearColor[] = { 0.2f, 0.2f, 0.2f, 1.0f };
-    commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
-    commandList->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+    renderTexture->transitionToRTV(commandList);
+    renderTexture->bindAsRenderTarget(commandList);
+    renderTexture->clear(commandList);
 
     commandList->SetGraphicsRootSignature(rootSignature.Get());
-    commandList->RSSetViewports(1, &viewport);
-    commandList->RSSetScissorRects(1, &scissor);
-
     ID3D12DescriptorHeap* descriptorHeaps[] = { descriptors->getHeap(), samplers->getHeap() };
     commandList->SetDescriptorHeaps(2, descriptorHeaps);
+
+    D3D12_VIEWPORT viewport{ 0.0f, 0.0f, float(width), float(height), 0.0f, 1.0f };
+    D3D12_RECT scissor = { 0, 0, LONG(width), LONG(height) };
+    commandList->RSSetViewports(1, &viewport);
+    commandList->RSSetScissorRects(1, &scissor);
 
     commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &mvp, 0);
     commandList->SetGraphicsRootConstantBufferView(1, ringBuffer->allocBuffer(&perFrame, alignUp(sizeof(PerFrame), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT)));
@@ -335,8 +279,7 @@ void Exercise7::renderToTexture(ID3D12GraphicsCommandList* commandList)
 
     debugDrawPass->record(commandList, width, height, view, proj);
 
-    CD3DX12_RESOURCE_BARRIER toPS = CD3DX12_RESOURCE_BARRIER::Transition(renderTexture.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-    commandList->ResourceBarrier(1, &toPS);
+    renderTexture->transitionToSRV(commandList);
 }
 
 void Exercise7::render()
@@ -351,7 +294,7 @@ void Exercise7::render()
 
     commandList->Reset(d3d12->getCommandAllocator(), nullptr);
 
-    if (renderTexture)
+    if (renderTexture->isValid())
     {
         renderToTexture(commandList);
     }

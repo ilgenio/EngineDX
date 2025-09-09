@@ -22,6 +22,7 @@ public:
     
     D3D12_GPU_DESCRIPTOR_HANDLE getGPUHandle(UINT handle) const { return CD3DX12_GPU_DESCRIPTOR_HANDLE(gpuStart, handles.indexFromHandle(handle), descriptorSize); }
     D3D12_CPU_DESCRIPTOR_HANDLE getCPUHandle(UINT handle) const { return CD3DX12_CPU_DESCRIPTOR_HANDLE(cpuStart, handles.indexFromHandle(handle), descriptorSize); }
+    bool isValid(UINT handle) const { return handles.validHandle(handle); }
 
     ID3D12DescriptorHeap* getHeap() { return heap.Get(); }
 private:
