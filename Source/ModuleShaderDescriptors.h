@@ -1,9 +1,7 @@
 #pragma once
 
 #include "Module.h"
-#include "HandleManager.h"
-
-#include <vector>
+#include "DeferredFreeHandleManager.h"
 
 class ModuleShaderDescriptors : public Module
 {
@@ -31,24 +29,14 @@ public:
     ID3D12DescriptorHeap* getHeap() { return heap.Get(); }
 private:
 
-    void releaseDeferred();
-
     enum { MAX_NUM_DESCRIPTORS = 16384 };
 
-    typedef HandleManager<MAX_NUM_DESCRIPTORS> Handles;
+    typedef DeferredFreeHandleManager<MAX_NUM_DESCRIPTORS> Handles;
     
     ComPtr<ID3D12DescriptorHeap> heap;
     D3D12_GPU_DESCRIPTOR_HANDLE gpuStart = {0};
     D3D12_CPU_DESCRIPTOR_HANDLE cpuStart = {0};
     UINT descriptorSize = 0;
-
-    struct DeferredFree
-    {
-        UINT frame = 0;
-        UINT handle = 0;
-    };
-
-    std::vector<DeferredFree> deferredFrees;
 
     Handles handles;
 };

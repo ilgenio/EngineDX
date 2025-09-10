@@ -11,6 +11,8 @@ ModuleRTDescriptors::ModuleRTDescriptors()
 
 ModuleRTDescriptors::~ModuleRTDescriptors()
 {
+    handles.forceReleaseDeferred();
+
 #ifdef _DEBUG
     size_t allocCount = handles.getSize() - handles.getFreeCount();
 
@@ -80,4 +82,12 @@ void ModuleRTDescriptors::release(UINT handle)
     }
 }
 
+void ModuleRTDescriptors::deferRelease(UINT handle)
+{
+    handles.deferRelease(handle, app->getD3D12()->getCurrentFrame());
+}
 
+void ModuleRTDescriptors::preRender()
+{
+    handles.releaseDeferred(app->getD3D12()->getLastCompletedFrame());
+}

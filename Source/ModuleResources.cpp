@@ -82,7 +82,7 @@ ComPtr<ID3D12Resource> ModuleResources::createDefaultBuffer(const void* data, si
 
     heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
 
-    ID3D12Resource* upload = getUploadHeap(size);
+    ComPtr<ID3D12Resource> upload = getUploadHeap(size);
 
     if (ok)
     {
@@ -92,7 +92,7 @@ ComPtr<ID3D12Resource> ModuleResources::createDefaultBuffer(const void* data, si
         memcpy(pData, data, size);
         upload->Unmap(0, nullptr);
 
-        commandList->CopyBufferRegion(buffer.Get(), 0, upload, 0, size);
+        commandList->CopyBufferRegion(buffer.Get(), 0, upload.Get(), 0, size);
         commandList->Close();
                           
         ID3D12CommandList* commandLists[] = { commandList.Get()};
@@ -140,7 +140,7 @@ ComPtr<ID3D12Resource> ModuleResources::createRawTexture2D(const void* data, siz
 
     device->GetCopyableFootprints(&desc, 0, 1, 0, &layout, nullptr, nullptr, &requiredSize);
 
-    ID3D12Resource* upload = getUploadHeap(requiredSize);
+    ComPtr<ID3D12Resource> upload = getUploadHeap(requiredSize);
 
     if (ok)
     {
@@ -155,7 +155,7 @@ ComPtr<ID3D12Resource> ModuleResources::createRawTexture2D(const void* data, siz
         upload->Unmap(0, nullptr);
 
         CD3DX12_TEXTURE_COPY_LOCATION Dst(texture.Get(), 0);
-        CD3DX12_TEXTURE_COPY_LOCATION Src(upload, layout);
+        CD3DX12_TEXTURE_COPY_LOCATION Src(upload.Get(), layout);
         commandList->CopyTextureRegion(&Dst, 0, 0, 0, &Src, nullptr);
 
         CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(texture.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
@@ -228,7 +228,7 @@ ComPtr<ID3D12Resource> ModuleResources::createTextureFromImage(const ScratchImag
         bool ok = SUCCEEDED(device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &desc, 
                                                             D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&texture)));
 
-        ID3D12Resource* upload = nullptr;
+        ComPtr<ID3D12Resource> upload;
         if (ok)
         {
             _ASSERTE(metaData.mipLevels * metaData.arraySize == image.GetImageCount());
@@ -253,7 +253,7 @@ ComPtr<ID3D12Resource> ModuleResources::createTextureFromImage(const ScratchImag
                 }
             }
 
-            ok = UpdateSubresources(commandList.Get(), texture.Get(), upload, 0, 0, UINT(image.GetImageCount()), subData.data()) != 0;
+            ok = UpdateSubresources(commandList.Get(), texture.Get(), upload.Get(), 0, 0, UINT(image.GetImageCount()), subData.data()) != 0;
         }
 
         if(ok)
@@ -324,20 +324,17 @@ ComPtr<ID3D12Resource> ModuleResources::createDepthStencil(DXGI_FORMAT format, s
     return texture;
 }
 
-ID3D12Resource* ModuleResources::getUploadHeap(size_t size)
+ComPtr<ID3D12Resource> ModuleResources::getUploadHeap(size_t size)
 {
-    if (size > uploadSize)
-    {
-        ModuleD3D12* d3d12 = app->getD3D12();
-        ID3D12Device* device = d3d12->getDevice();
+    ModuleD3D12* d3d12 = app->getD3D12();
+    ID3D12Device* device = d3d12->getDevice();
 
-        CD3DX12_HEAP_PROPERTIES heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-        CD3DX12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Buffer(size);
+    ComPtr<ID3D12Resource> uploadHeap;
 
-        device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&uploadHeap));
-        uploadSize = size;
-    }
+    CD3DX12_HEAP_PROPERTIES heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+    CD3DX12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Buffer(size);
+    device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&uploadHeap));
 
-    return uploadHeap.Get();
+    return uploadHeap;
 }
 

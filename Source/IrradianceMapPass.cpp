@@ -22,14 +22,16 @@ IrradianceMapPass::~IrradianceMapPass()
 {
 }
 
-void IrradianceMapPass::record(ID3D12GraphicsCommandList* cmdList, UINT cubeMapDesc, size_t size)
+ComPtr<ID3D12Resource> IrradianceMapPass::record(ID3D12GraphicsCommandList* cmdList, UINT cubeMapDesc, size_t size)
 {
     ModuleResources* resources = app->getResources();
     ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
     ModuleSamplers* samplers = app->getSamplers();
 
+    // TODO: deferred release old resources
+
     float clearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-    irradianceMap = resources->createCubemapRenderTarget(DXGI_FORMAT_R16G16B16A16_FLOAT, size, size, clearColor, "Irradiance Map");
+    ComPtr<ID3D12Resource> irradianceMap = app->getResources()->createCubemapRenderTarget(DXGI_FORMAT_R16G16B16A16_FLOAT, size, size, clearColor, "Irradiance Map");
 
     BEGIN_EVENT(cmdList, "Irradiance Map");
 
@@ -79,15 +81,18 @@ void IrradianceMapPass::record(ID3D12GraphicsCommandList* cmdList, UINT cubeMapD
         D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = rtDescriptors->getCPUHandle(rtvHandle);
         cmdList->OMSetRenderTargets(1, &cpuHandle, FALSE, nullptr);
 
-        // TODO: DESTROY RTV
-
         cubemapMesh->draw(cmdList);
 
         CD3DX12_RESOURCE_BARRIER toSRV = CD3DX12_RESOURCE_BARRIER::Transition(irradianceMap.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, i);
         cmdList->ResourceBarrier(1, &toSRV);
+
+        rtDescriptors->deferRelease(rtvHandle);
+
     }
 
     END_EVENT(cmdList);
+
+    return irradianceMap;
 }
 
 bool IrradianceMapPass::createRootSignature()

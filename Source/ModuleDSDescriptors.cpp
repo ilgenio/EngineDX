@@ -11,6 +11,8 @@ ModuleDSDescriptors::ModuleDSDescriptors()
 
 ModuleDSDescriptors::~ModuleDSDescriptors()
 {
+    handles.forceReleaseDeferred();
+
 #ifdef _DEBUG
     size_t allocCount = handles.getSize() - handles.getFreeCount();
 
@@ -60,4 +62,12 @@ void ModuleDSDescriptors::release(UINT handle)
     }
 }
 
+void ModuleDSDescriptors::deferRelease(UINT handle)
+{
+    handles.deferRelease(handle, app->getD3D12()->getCurrentFrame());
+}
 
+void ModuleDSDescriptors::preRender()
+{
+    handles.releaseDeferred(app->getD3D12()->getLastCompletedFrame());
+}

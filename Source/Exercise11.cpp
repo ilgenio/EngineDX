@@ -194,8 +194,7 @@ void Exercise11::render()
 
     if(!irradianceMap)
     {
-        irradianceMapPass->record(commandList, cubemapDesc, 512);
-        irradianceMap = irradianceMapPass->getIrradianceMap();
+        irradianceMap = irradianceMapPass->record(commandList, cubemapDesc, 512);
         irradianceMapDesc = descriptors->createCubeTextureSRV(irradianceMap.Get());
     }
 

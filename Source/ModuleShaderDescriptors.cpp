@@ -11,7 +11,7 @@ ModuleShaderDescriptors::ModuleShaderDescriptors()
 
 ModuleShaderDescriptors::~ModuleShaderDescriptors()
 {
-    releaseDeferred();
+    handles.forceReleaseDeferred();
 
 #ifdef _DEBUG
     size_t allocCount = handles.getSize() - handles.getFreeCount();
@@ -42,51 +42,18 @@ bool ModuleShaderDescriptors::init()
     gpuStart = heap->GetGPUDescriptorHandleForHeapStart();
     cpuStart = heap->GetCPUDescriptorHandleForHeapStart();
 
-
     return true;
 }
 
 void ModuleShaderDescriptors::preRender()
 {
-    releaseDeferred();
+    handles.releaseDeferred(app->getD3D12()->getLastCompletedFrame());
 }
-
-void ModuleShaderDescriptors::releaseDeferred()
-{
-    UINT completedFrame = app->getD3D12()->getLastCompletedFrame();
-    for (size_t i = 0; i < deferredFrees.size(); )
-    {
-        DeferredFree& df = deferredFrees[i];
-        if (completedFrame >= df.frame)
-        {
-            handles.freeHandle(df.handle);
-            deferredFrees[i] = deferredFrees.back();
-            deferredFrees.pop_back();
-        }
-        else
-        {
-            ++i;
-        }
-    }
-}
-
 
 void ModuleShaderDescriptors::deferRelease(UINT handle)
 {
-    _ASSERT_EXPR(handles.validHandle(handle), L"Invalid handle");
-
-    for (DeferredFree& df : deferredFrees)
-    {
-        if (df.handle == handle)
-        {
-            df.frame = app->getD3D12()->getCurrentFrame();
-            return;
-        }
-    }
-
-    deferredFrees.push_back({ handle, app->getD3D12()->getCurrentFrame() });
+    handles.deferRelease(handle, app->getD3D12()->getCurrentFrame());
 }
-
 
 UINT ModuleShaderDescriptors::createCBV(ID3D12Resource *resource)
 {

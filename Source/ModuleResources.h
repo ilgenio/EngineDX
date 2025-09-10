@@ -7,6 +7,10 @@
 
 namespace DirectX { class ScratchImage;  struct TexMetadata; }
 
+// ModuleResources handles creation and management of GPU resources in DirectX 12.
+// It provides functions to create buffers, textures, render targets, and depth stencils.
+// The class manages temporary upload buffers and command lists for resource initialization.
+// Note: Current implementation is not thread-safe and should only be used from a single thread.
 class ModuleResources : public Module
 {
 private:
@@ -16,8 +20,6 @@ private:
     ComPtr<ID3D12Fence1> uploadFence;
     ComPtr<ID3D12CommandAllocator> commandAllocator;
     ComPtr<ID3D12GraphicsCommandList> commandList;
-    ComPtr<ID3D12Resource> uploadHeap;
-    size_t uploadSize = 0;
 
     // temporal data for loading textures (note: multithreading issues)
     std::vector<D3D12_PLACED_SUBRESOURCE_FOOTPRINT> layouts;
@@ -48,7 +50,7 @@ private:
 
     ComPtr<ID3D12Resource> createTextureFromImage(const ScratchImage& image, const char* name);
     ComPtr<ID3D12Resource> createRenderTarget(DXGI_FORMAT format, size_t width, size_t height, size_t arraySize, float clearColour[4], const char* name);
-    ID3D12Resource* getUploadHeap(size_t size);
+    ComPtr<ID3D12Resource> getUploadHeap(size_t size);
 };
 
 inline ComPtr<ID3D12Resource> ModuleResources::createRenderTarget(DXGI_FORMAT format, size_t width, size_t height, float clearColour[4], const char* name)
