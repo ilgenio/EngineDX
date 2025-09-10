@@ -7,6 +7,7 @@ class CubemapMesh;
 class DebugDrawPass;
 class ImGuiPass;
 class IrradianceMapPass;
+class RenderTexture;
 
 class Exercise11 : public Module
 {
@@ -20,20 +21,14 @@ class Exercise11 : public Module
     std::unique_ptr<IrradianceMapPass>  irradianceMapPass;
     ComPtr<ID3D12Resource>              irradianceMap;
 
-    ComPtr<ID3D12Resource>              renderTexture;
-    ComPtr<ID3D12Resource>              renderDS;
-
     bool showAxis = true;
     bool showGrid = true;
 
     UINT cubemapDesc = 0;
     UINT irradianceMapDesc = 0;
 
-    UINT   srvTarget = 0;
-    UINT   rtvTarget = 0;
-    UINT   dsvTarget = 0;
+    std::unique_ptr<RenderTexture> renderTexture;
     ImVec2 canvasSize;
-    ImVec2 previousSize;
     ImVec2 canvasPos;
 
 public:

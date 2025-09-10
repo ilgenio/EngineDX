@@ -15,6 +15,7 @@
 #include "ImGuiPass.h"
 #include "CubemapMesh.h"
 #include "ReadData.h"
+#include "RenderTexture.h"
 
 #define CAPTURE_IBL_GENERATION 0
 
@@ -49,9 +50,10 @@ bool Exercise11::init()
             cubemapDesc = descriptors->createCubeTextureSRV(cubemap.Get());
         }
 
-        srvTarget = descriptors->createNullTexture2DSRV();
         UINT imguiTextDesc = descriptors->alloc();
         imguiPass = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd(), descriptors->getCPUHandle(imguiTextDesc), descriptors->getGPUHandle(imguiTextDesc));
+
+        renderTexture = std::make_unique<RenderTexture>("Exercise11", DXGI_FORMAT_R8G8B8A8_UNORM, Vector4(0.2f, 0.2f, 0.2f, 1.0f), DXGI_FORMAT_D32_FLOAT, 1.0f);
     }
 
     return true;
@@ -68,42 +70,7 @@ void Exercise11::preRender()
 {
     imguiPass->startFrame();
 
-    if (canvasSize.x != previousSize.x || canvasSize.y != previousSize.y)
-    {
-        resizeRenderTexture();
-        previousSize = canvasSize;
-    }
-}
-
-void Exercise11::resizeRenderTexture()
-{
-    if (renderTexture)
-    {
-        // Ensure previous texture usage is finished
-        app->getD3D12()->flush();
-    }
-
-    ModuleResources *resources = app->getResources();
-    ModuleShaderDescriptors *descriptors = app->getShaderDescriptors();
-    ModuleRTDescriptors *rtDescriptors = app->getRTDescriptors();
-    ModuleDSDescriptors *dsDescriptors = app->getDSDescriptors();
-
-    float clearColor[4] = {0.2f, 0.2f, 0.2f, 1.0f};
-    renderTexture = resources->createRenderTarget(DXGI_FORMAT_R8G8B8A8_UNORM, size_t(canvasSize.x), size_t(canvasSize.y), clearColor, "Exercise9 RT");
-
-    // Create RTV.
-    rtDescriptors->release(rtvTarget);
-    rtvTarget = rtDescriptors->create(renderTexture.Get());
-
-    // Create SRV.
-    descriptors->release(srvTarget);
-    srvTarget = descriptors->createTextureSRV(renderTexture.Get());
-
-    renderDS = resources->createDepthStencil(DXGI_FORMAT_D32_FLOAT, size_t(canvasSize.x), size_t(canvasSize.y), 1.0f, 0, "Exercise9 DS");
-
-    // Create DSV
-    dsDescriptors->release(dsvTarget);
-    dsvTarget = dsDescriptors->create(renderDS.Get());
+    renderTexture->resize(unsigned(canvasSize.x), unsigned(canvasSize.y));
 }
 
 void Exercise11::renderToTexture(ID3D12GraphicsCommandList* commandList)
@@ -126,31 +93,17 @@ void Exercise11::renderToTexture(ID3D12GraphicsCommandList* commandList)
     Matrix vp = view * proj;
     vp = vp.Transpose();
 
-    D3D12_VIEWPORT viewport;
-    viewport.TopLeftX = viewport.TopLeftY = 0;
-    viewport.MinDepth = 0.0f;
-    viewport.MaxDepth = 1.0f;
-    viewport.Width = float(width);
-    viewport.Height = float(height);
-
-    D3D12_RECT scissor;
-    scissor.left = 0;
-    scissor.top = 0;
-    scissor.right = width;
-    scissor.bottom = height;
-
-    CD3DX12_RESOURCE_BARRIER toRT = CD3DX12_RESOURCE_BARRIER::Transition(renderTexture.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
-    commandList->ResourceBarrier(1, &toRT);
     
     BEGIN_EVENT(commandList, "Sky Cubemap Render Pass");
 
-    D3D12_CPU_DESCRIPTOR_HANDLE rtv = rtDescriptors->getCPUHandle(rtvTarget);
-    D3D12_CPU_DESCRIPTOR_HANDLE dsv = dsDescriptors->getCPUHandle(dsvTarget);
-    commandList->OMSetRenderTargets(1, &rtv, false, &dsv);
-    commandList->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+    renderTexture->transitionToRTV(commandList);
+    renderTexture->bindAsRenderTarget(commandList);
+    renderTexture->clear(commandList);
 
     commandList->SetGraphicsRootSignature(rootSignature.Get());
 
+    D3D12_VIEWPORT viewport{ 0.0f, 0.0f, float(width), float(height), 0.0f, 1.0f };
+    D3D12_RECT scissor = { 0, 0, LONG(width), LONG(height) };
     commandList->RSSetViewports(1, &viewport);
     commandList->RSSetScissorRects(1, &scissor);
 
@@ -169,8 +122,7 @@ void Exercise11::renderToTexture(ID3D12GraphicsCommandList* commandList)
 
     debugDrawPass->record(commandList, width, height, camera->getView(), proj);
 
-    CD3DX12_RESOURCE_BARRIER toPS = CD3DX12_RESOURCE_BARRIER::Transition(renderTexture.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-    commandList->ResourceBarrier(1, &toPS);
+    renderTexture->transitionToSRV(commandList);
 }
 
 void Exercise11::imGuiCommands()
@@ -190,7 +142,11 @@ void Exercise11::imGuiCommands()
 
     ImGui::BeginChildFrame(id, canvasSize, ImGuiWindowFlags_NoScrollbar);
     viewerFocused = ImGui::IsWindowFocused();
-    ImGui::Image((ImTextureID)descriptors->getGPUHandle(srvTarget).ptr, canvasSize);
+
+    if(renderTexture->isValid())
+    {
+        ImGui::Image((ImTextureID)descriptors->getGPUHandle(renderTexture->getSRVHandle()).ptr, canvasSize);
+    }
     
     ImGui::EndChildFrame();
     ImGui::End();
@@ -227,7 +183,7 @@ void Exercise11::render()
         irradianceMapDesc = descriptors->createCubeTextureSRV(irradianceMap.Get());
     }
 
-    if(renderTexture)
+    if(renderTexture->isValid())
     {
         renderToTexture(commandList);
     }
@@ -238,19 +194,6 @@ void Exercise11::render()
     unsigned width = d3d12->getWindowWidth();
     unsigned height = d3d12->getWindowHeight();
 
-    D3D12_VIEWPORT viewport;
-    viewport.TopLeftX = viewport.TopLeftY = 0;
-    viewport.MinDepth = 0.0f;
-    viewport.MaxDepth = 1.0f;
-    viewport.Width = float(width);
-    viewport.Height = float(height);
-
-    D3D12_RECT scissor;
-    scissor.left = 0;
-    scissor.top = 0;
-    scissor.right = width;
-    scissor.bottom = height;
-
     float clearColor[] = { 0.2f, 0.2f, 0.2f, 1.0f };
     D3D12_CPU_DESCRIPTOR_HANDLE rtv = d3d12->getRenderTargetDescriptor();
     D3D12_CPU_DESCRIPTOR_HANDLE dsv = d3d12->getDepthStencilDescriptor();
@@ -260,6 +203,8 @@ void Exercise11::render()
     commandList->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
     commandList->SetGraphicsRootSignature(rootSignature.Get());
 
+    D3D12_VIEWPORT viewport{ 0.0f, 0.0f, float(width), float(height), 0.0f, 1.0f };
+    D3D12_RECT scissor = { 0, 0, LONG(width), LONG(height) };
     commandList->RSSetViewports(1, &viewport);
     commandList->RSSetScissorRects(1, &scissor);
 
