@@ -13,14 +13,7 @@ ModuleShaderDescriptors::~ModuleShaderDescriptors()
 {
     handles.forceReleaseDeferred();
 
-#ifdef _DEBUG
-    size_t allocCount = handles.getSize() - handles.getFreeCount();
-
-    if (allocCount > 0) 
-    {
-        LOG("ModuleShaderDescriptors has leaks: %u/%u handles used\n", allocCount, handles.getSize());
-    }
-#endif
+    _ASSERT_EXPR((handles.getSize() - handles.getFreeCount()) == 0, "ModuleShaderDescriptors has leaks!!!");
 }
 
 bool ModuleShaderDescriptors::init()

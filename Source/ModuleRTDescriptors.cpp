@@ -13,14 +13,7 @@ ModuleRTDescriptors::~ModuleRTDescriptors()
 {
     handles.forceReleaseDeferred();
 
-#ifdef _DEBUG
-    size_t allocCount = handles.getSize() - handles.getFreeCount();
-
-    if (allocCount > 0)
-    {
-        LOG("ModuleRTDescriptors has leaks: %u/%u handles used\n", allocCount, handles.getSize());
-    }
-#endif
+    _ASSERT_EXPR((handles.getSize() - handles.getFreeCount()) == 0, "ModuleRTDescriptors has leaks!!!");
 }
 
 bool ModuleRTDescriptors::init()
