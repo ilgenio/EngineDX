@@ -31,6 +31,10 @@ private:
     unsigned                            drawFenceCounter = 0;
     unsigned                            drawFenceValues[FRAMES_IN_FLIGHT] = { 0, 0, 0 };
 
+    unsigned                            frameValues[FRAMES_IN_FLIGHT] = { 0, 0, 0 };
+    unsigned                            frameIndex = 0; 
+    unsigned                            lastCompletedFrame = 0;
+
     bool                                allowTearing = false;
     bool                                supportsRT = false;
     unsigned                            currentBackBufferIdx = 0;
@@ -69,7 +73,10 @@ public:
     D3D12_CPU_DESCRIPTOR_HANDLE getRenderTargetDescriptor();
     D3D12_CPU_DESCRIPTOR_HANDLE getDepthStencilDescriptor();
 
-    void                        signalDrawQueue();
+    UINT                        signalDrawQueue();
+
+    unsigned                    getCurrentFrame() const { return frameIndex; }
+    unsigned                    getLastCompletedFrame() const { return lastCompletedFrame; }
 
     unsigned                    getWindowWidth() const { return windowWidth; }
     unsigned                    getWindowHeight() const { return windowHeight; }

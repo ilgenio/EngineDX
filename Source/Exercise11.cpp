@@ -26,6 +26,22 @@ Exercise11::Exercise11()
 
 Exercise11::~Exercise11()
 {
+    ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
+
+    if (cubemapDesc)
+    {
+        descriptors->release(cubemapDesc);
+    }
+
+    if (imguiTextDesc)
+    {
+        descriptors->release(imguiTextDesc);
+    }
+
+    if (irradianceMapDesc)
+    {
+        descriptors->release(irradianceMapDesc);
+    }
 }
 
 bool Exercise11::init() 
@@ -50,7 +66,7 @@ bool Exercise11::init()
             cubemapDesc = descriptors->createCubeTextureSRV(cubemap.Get());
         }
 
-        UINT imguiTextDesc = descriptors->alloc();
+        imguiTextDesc = descriptors->alloc();
         imguiPass = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd(), descriptors->getCPUHandle(imguiTextDesc), descriptors->getGPUHandle(imguiTextDesc));
 
         renderTexture = std::make_unique<RenderTexture>("Exercise11", DXGI_FORMAT_R8G8B8A8_UNORM, Vector4(0.2f, 0.2f, 0.2f, 1.0f), DXGI_FORMAT_D32_FLOAT, 1.0f);

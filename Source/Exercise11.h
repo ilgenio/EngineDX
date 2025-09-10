@@ -25,6 +25,7 @@ class Exercise11 : public Module
     bool showGrid = true;
 
     UINT cubemapDesc = 0;
+    UINT imguiTextDesc = 0;
     UINT irradianceMapDesc = 0;
 
     std::unique_ptr<RenderTexture> renderTexture;

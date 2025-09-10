@@ -3,6 +3,8 @@
 #include "Module.h"
 #include "HandleManager.h"
 
+#include <vector>
+
 class ModuleShaderDescriptors : public Module
 {
 public:
@@ -11,9 +13,11 @@ public:
     ~ModuleShaderDescriptors();
 
     bool init() override;
+    void preRender() override;
 
     UINT alloc() { return handles.allocHandle(); }
     void release(UINT handle) { if (handle) handles.freeHandle(handle); }
+    void deferRelease(UINT handle);
 
     UINT createCBV(ID3D12Resource* resource);
     UINT createTextureSRV(ID3D12Resource* resource); 
@@ -26,6 +30,9 @@ public:
 
     ID3D12DescriptorHeap* getHeap() { return heap.Get(); }
 private:
+
+    void releaseDeferred();
+
     enum { MAX_NUM_DESCRIPTORS = 16384 };
 
     typedef HandleManager<MAX_NUM_DESCRIPTORS> Handles;
@@ -34,6 +41,14 @@ private:
     D3D12_GPU_DESCRIPTOR_HANDLE gpuStart = {0};
     D3D12_CPU_DESCRIPTOR_HANDLE cpuStart = {0};
     UINT descriptorSize = 0;
+
+    struct DeferredFree
+    {
+        UINT frame = 0;
+        UINT handle = 0;
+    };
+
+    std::vector<DeferredFree> deferredFrees;
 
     Handles handles;
 };

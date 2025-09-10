@@ -85,6 +85,20 @@ public:
         return valid(item.index, item.number);
     }
 
+    size_t getSize() const { return size; }
+
+    size_t getFreeCount() const
+    {
+        size_t freeCount = 0;
+        size_t index = firstFree;
+        while (index < size)
+        {
+            ++freeCount;
+            index = data[index].index;
+        }
+        return freeCount;
+    }
+
 private:
 
     bool valid(UINT index, UINT genNumber) const 

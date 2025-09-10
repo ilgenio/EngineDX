@@ -11,6 +11,14 @@ ModuleDSDescriptors::ModuleDSDescriptors()
 
 ModuleDSDescriptors::~ModuleDSDescriptors()
 {
+#ifdef _DEBUG
+    size_t allocCount = handles.getSize() - handles.getFreeCount();
+
+    if (allocCount > 0)
+    {
+        LOG("ModuleRTDescriptors has leaks: %u/%u handles used\n", allocCount, handles.getSize());
+    }
+#endif
 }
 
 bool ModuleDSDescriptors::init()

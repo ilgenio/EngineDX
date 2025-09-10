@@ -59,8 +59,14 @@ void ModuleD3D12::preRender()
     {
         drawFence->SetEventOnCompletion(drawFenceValues[currentBackBufferIdx], drawEvent);
         WaitForSingleObject(drawEvent, INFINITE);
+
+        drawFenceValues[currentBackBufferIdx];
+        lastCompletedFrame = frameValues[currentBackBufferIdx];
     }
 
+    frameIndex++;
+    frameValues[currentBackBufferIdx] = frameIndex;
+    
     commandAllocators[currentBackBufferIdx]->Reset();
 }
 
@@ -71,10 +77,12 @@ void ModuleD3D12::postRender()
     signalDrawQueue();
 }
 
-void ModuleD3D12::signalDrawQueue()
+UINT ModuleD3D12::signalDrawQueue()
 {
     drawFenceValues[currentBackBufferIdx] = ++drawFenceCounter;
     drawCommandQueue->Signal(drawFence.Get(), drawFenceValues[currentBackBufferIdx]);
+
+    return drawFenceCounter;
 }
 
 void ModuleD3D12::resize()
@@ -110,6 +118,7 @@ void ModuleD3D12::toogleFullscreen()
 
     if(fullscreen)
     {
+
         GetWindowRect(hWnd, &lastWindowRect);
 
         UINT windowStyle = WS_OVERLAPPEDWINDOW & ~(WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX);
