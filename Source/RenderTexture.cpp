@@ -28,12 +28,6 @@ void RenderTexture::resize(int width, int height)
     if(this->width == width && this->height == height)
         return;
 
-    if (texture)
-    {
-        // Ensure previous texture usage is finished
-        app->getD3D12()->flush();
-    }
-
     this->width = width;
     this->height = height;
 
@@ -41,6 +35,8 @@ void RenderTexture::resize(int width, int height)
     ModuleRTDescriptors* rtDescriptors = app->getRTDescriptors();
     ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
 
+    // Create Render Target 
+    resources->deferRelease(texture);
     texture = resources->createRenderTarget(format, size_t(width), size_t(height), clearColour, name);
 
     // Create RTV.
@@ -55,12 +51,14 @@ void RenderTexture::resize(int width, int height)
     {
         ModuleDSDescriptors *dsDescriptors = app->getDSDescriptors();
 
+        // Create Depth Texture
+        resources->deferRelease(depthTexture);
         depthTexture = resources->createDepthStencil(depthFormat, size_t(width), size_t(height), clearDepth, 0, name);
+
         // Create DSV
         dsDescriptors->deferRelease(dsvHandle);
         dsvHandle = dsDescriptors->create(depthTexture.Get());
     }
-
 }
 
 void RenderTexture::transitionToRTV(ID3D12GraphicsCommandList* cmdList)

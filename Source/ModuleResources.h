@@ -23,12 +23,21 @@ private:
     std::vector<UINT> numRows;
     std::vector<UINT64> rowSizes;
 
+    struct DeferredFree
+    {
+        UINT frame = 0;
+        ComPtr<ID3D12Resource> resource;
+    };
+
+    std::vector<DeferredFree> deferredFrees;
+
 public:
 
     ModuleResources();
     ~ModuleResources();
 
     bool init() override;
+    void preRender() override;
     bool cleanUp() override;
 
     ComPtr<ID3D12Resource> createUploadBuffer(const void* data, size_t size, const char* name);
@@ -43,6 +52,8 @@ public:
 
     ComPtr<ID3D12Resource> createCubemapRenderTarget(DXGI_FORMAT format, size_t size, const Vector4& clearColour, const char* name);
     ComPtr<ID3D12Resource> createCubemapRenderTarget(DXGI_FORMAT format, size_t size, size_t mipLevels, const Vector4& clearColour, const char* name);
+
+    void deferRelease(ComPtr<ID3D12Resource> resource);
 
 private:
 

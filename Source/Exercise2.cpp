@@ -80,8 +80,6 @@ bool Exercise2::createVertexBuffer()
 
 bool Exercise2::createRootSignature()
 {
-    // TODO: create root signature from HSLS
-
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc = {};
     rootSignatureDesc.Init(0, nullptr, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 

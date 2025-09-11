@@ -319,3 +319,40 @@ ComPtr<ID3D12Resource> ModuleResources::getUploadHeap(size_t size)
     return uploadHeap;
 }
 
+void ModuleResources::preRender() 
+{
+    UINT completedFrame = app->getD3D12()->getLastCompletedFrame();
+
+    for(int i=0; i < deferredFrees.size(); ++i)
+    {
+        if(completedFrame >= deferredFrees[i].frame)
+        {
+            deferredFrees[i] = deferredFrees.back();
+            deferredFrees.pop_back();
+        }
+        else
+        {
+            ++i;
+        }
+    }
+}
+
+void ModuleResources::deferRelease(ComPtr<ID3D12Resource> resource)
+{
+    if(resource)
+    {
+        UINT currentFrame = app->getD3D12()->getCurrentFrame();
+
+        auto it = std::find_if(deferredFrees.begin(), deferredFrees.end(), [resource](const DeferredFree &item) -> bool
+                               { return item.resource.Get() == resource.Get(); });
+
+        if (it != deferredFrees.end())
+        {
+            it->frame = currentFrame;
+        }
+        else
+        {
+            deferredFrees.push_back({currentFrame, resource});
+        }
+    }
+}

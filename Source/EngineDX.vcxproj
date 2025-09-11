@@ -357,12 +357,12 @@
     <Image Include="small.ico" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\brdf.hlsli" />
     <None Include="Shaders\common.hlsli" />
     <None Include="Shaders\Exercise10.hlsli" />
     <None Include="Shaders\Exercise6.hlsli" />
     <None Include="Shaders\Exercise7.hlsli" />
     <None Include="Shaders\Exercise8.hlsli" />
+    <None Include="Shaders\ggx_brdf.hlsli" />
     <None Include="Shaders\sampling.hlsli" />
     <None Include="SimpleMath.inl" />
   </ItemGroup>
