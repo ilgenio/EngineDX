@@ -1,5 +1,6 @@
 #include "Globals.h"
-#include "IrradianceMapPass.h"
+
+#include "EnvironmentBRDFPass.h"
 
 #include "Application.h"
 #include "ModuleD3D12.h"
@@ -7,20 +8,18 @@
 #include "ModuleRTDescriptors.h"
 #include "ModuleShaderDescriptors.h"
 #include "ModuleSamplers.h"
-#include "CubemapMesh.h"
+
 #include "ReadData.h"
-#include "Math.h"
 
-IrradianceMapPass::IrradianceMapPass()
-{
-    cubemapMesh = std::make_unique<CubemapMesh>();
-}
-
-IrradianceMapPass::~IrradianceMapPass()
+EnvironmentBRDFPass::EnvironmentBRDFPass()
 {
 }
 
-bool IrradianceMapPass::init()
+EnvironmentBRDFPass::~EnvironmentBRDFPass()
+{
+}
+
+bool EnvironmentBRDFPass::init()
 {
     ModuleD3D12* d3d12   = app->getD3D12();
     ID3D12Device4* device = d3d12->getDevice();
@@ -35,91 +34,65 @@ bool IrradianceMapPass::init()
     return ok;
 }
 
-ComPtr<ID3D12Resource> IrradianceMapPass::generate(UINT cubeMapDesc, size_t size)
+ComPtr<ID3D12Resource> EnvironmentBRDFPass::generate(size_t size)
 {
     ModuleD3D12* d3d12 = app->getD3D12();
     ModuleResources* resources = app->getResources();
+    ModuleRTDescriptors* rtDescriptors = app->getRTDescriptors();
     ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
     ModuleSamplers* samplers = app->getSamplers();
 
-    ComPtr<ID3D12Resource> irradianceMap = resources->createCubemapRenderTarget(DXGI_FORMAT_R16G16B16A16_FLOAT, size, size, Vector4(0.0f, 0.0f, 0.0f, 1.0f), "Irradiance Map");
+    ComPtr<ID3D12Resource> environmentMap = resources->createCubemapRenderTarget(DXGI_FORMAT_R16G16B16A16_FLOAT, size, size, Vector4(0.0f, 0.0f, 0.0f, 1.0f), "EnvironmentBRDF Map");
 
-    BEGIN_EVENT(commandList.Get(), "Irradiance Map");
+    BEGIN_EVENT(commandList.Get(), "EnvironmentBRDF Map");
 
-    // set necessary state
     commandList->SetPipelineState(pso.Get());
     commandList->SetGraphicsRootSignature(rootSignature.Get());
 
     ID3D12DescriptorHeap* descriptorHeaps[] = { descriptors->getHeap(), samplers->getHeap() };
     commandList->SetDescriptorHeaps(2, descriptorHeaps);
 
-    // set viewport and scissor
-
     D3D12_VIEWPORT viewport{ 0.0f, 0.0f, float(size), float(size), 0.0f, 1.0f };
     D3D12_RECT scissor = { 0, 0, LONG(size), LONG(size) };
     commandList->RSSetViewports(1, &viewport);
     commandList->RSSetScissorRects(1, &scissor);
 
-    commandList->SetGraphicsRootDescriptorTable(1, descriptors->getGPUHandle(cubeMapDesc));
-    commandList->SetGraphicsRootDescriptorTable(2, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
+    UINT rtvHandle = rtDescriptors->create(environmentMap.Get(), i, 0, DXGI_FORMAT_R16G16B16A16_FLOAT);
+    D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = rtDescriptors->getCPUHandle(rtvHandle);
+    commandList->OMSetRenderTargets(1, &cpuHandle, FALSE, nullptr);
 
-    // create render target view for each face
-    ModuleRTDescriptors* rtDescriptors = app->getRTDescriptors();
-    Matrix projMatrix = Matrix::CreatePerspectiveFieldOfView(HALF_PI, 1.0f, 0.1f, 100.0f);
+    CD3DX12_RESOURCE_BARRIER toRT = CD3DX12_RESOURCE_BARRIER::Transition(environmentMap.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
+    commandList->ResourceBarrier(1, &toRT);
 
-    for(int i=0; i<6; ++i)
-    {
-        Matrix viewMatrix = cubemapMesh->getViewMatrix(CubemapMesh::Direction(i));
-        Matrix mvpMatrix = (viewMatrix * projMatrix).Transpose();
+    // Draw fullscreen triangle
+    commandList->IASetVertexBuffers(0, 0, nullptr);
+    commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    commandList->DrawInstanced(3, 1, 0, 0);
 
-        commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &mvpMatrix, 0);
-
-        UINT subResource = D3D12CalcSubresource(0, i, 0, 1, 6);
-
-        CD3DX12_RESOURCE_BARRIER toRT = CD3DX12_RESOURCE_BARRIER::Transition(irradianceMap.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET, subResource);
-        commandList->ResourceBarrier(1, &toRT);
-
-        UINT rtvHandle = rtDescriptors->create(irradianceMap.Get(), i, 0, DXGI_FORMAT_R16G16B16A16_FLOAT);
-        D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = rtDescriptors->getCPUHandle(rtvHandle);
-        commandList->OMSetRenderTargets(1, &cpuHandle, FALSE, nullptr);
-
-        cubemapMesh->draw(commandList.Get());
-
-        CD3DX12_RESOURCE_BARRIER toSRV = CD3DX12_RESOURCE_BARRIER::Transition(irradianceMap.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, subResource);
-        commandList->ResourceBarrier(1, &toSRV);
-
-        rtDescriptors->deferRelease(rtvHandle);
-    }
+    CD3DX12_RESOURCE_BARRIER toSRV = CD3DX12_RESOURCE_BARRIER::Transition(environmentMap.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    commandList->ResourceBarrier(1, &toSRV);
 
     END_EVENT(commandList.Get());
 
     commandList->Close();
-
     ID3D12CommandList *commandLists[] = {commandList.Get()};
     d3d12->getDrawCommandQueue()->ExecuteCommandLists(UINT(std::size(commandLists)), commandLists);
+
     d3d12->flush();
 
     commandAllocator->Reset();
     SUCCEEDED(commandList->Reset(commandAllocator.Get(), nullptr));
 
-    return irradianceMap;
+    rtDescriptors->release(rtvHandle);
+
+    return environmentMap;
 }
 
-bool IrradianceMapPass::createRootSignature()
+bool EnvironmentBRDFPass::createRootSignature()
 {
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-    CD3DX12_ROOT_PARAMETER rootParameters[3] = {};
-    CD3DX12_DESCRIPTOR_RANGE tableRanges;
-    CD3DX12_DESCRIPTOR_RANGE sampRange;
 
-    tableRanges.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
-    sampRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, ModuleSamplers::COUNT, 0);
-
-    rootParameters[0].InitAsConstants((sizeof(Matrix) / sizeof(UINT32)), 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
-    rootParameters[1].InitAsDescriptorTable(1, &tableRanges, D3D12_SHADER_VISIBILITY_PIXEL);
-    rootParameters[2].InitAsDescriptorTable(1, &sampRange, D3D12_SHADER_VISIBILITY_PIXEL);
-
-    rootSignatureDesc.Init(3, rootParameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+    rootSignatureDesc.Init(0, nullptr, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
     ComPtr<ID3DBlob> rootSignatureBlob;
 
@@ -136,13 +109,13 @@ bool IrradianceMapPass::createRootSignature()
     return true;
 }
 
-bool IrradianceMapPass::createPSO()
+bool EnvironmentBRDFPass::createPSO()
 {
-    auto dataVS = DX::ReadData(L"skyboxVS.cso");
-    auto dataPS = DX::ReadData(L"IrradianceMapPS.cso");
+    auto dataVS = DX::ReadData(L"fullscreenVS.cso");
+    auto dataPS = DX::ReadData(L"EnvironmentBRDFPS.cso");
 
     D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
-    psoDesc.InputLayout = cubemapMesh->getInputLayoutDesc();
+    psoDesc.InputLayout = { nullptr, 0};
     psoDesc.pRootSignature = rootSignature.Get();                                                   
     psoDesc.VS = { dataVS.data(), dataVS.size() };                                                  
     psoDesc.PS = { dataPS.data(), dataPS.size() };                                                  

@@ -14,7 +14,7 @@ public:
     void preRender() override;
 
     UINT create(ID3D12Resource* resource);
-    UINT create(ID3D12Resource* resource, UINT arraySlice, DXGI_FORMAT format);
+    UINT create(ID3D12Resource* resource, UINT arraySlice, UINT mipSlice, DXGI_FORMAT format);
     void release(UINT handle);
     void deferRelease(UINT handle);
 

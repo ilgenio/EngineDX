@@ -88,7 +88,6 @@ ComPtr<ID3D12Resource> ModuleResources::createDefaultBuffer(const void* data, si
         ID3D12CommandList* commandLists[] = { commandList.Get()};
         queue->ExecuteCommandLists(UINT(std::size(commandLists)), commandLists);
 
-        // TODO: Add flush to class 2
         d3d12->flush();
 
         commandAllocator->Reset();
@@ -265,16 +264,17 @@ ComPtr<ID3D12Resource> ModuleResources::createTextureFromImage(const ScratchImag
     return ComPtr<ID3D12Resource>();
 }
 
-ComPtr<ID3D12Resource> ModuleResources::createRenderTarget(DXGI_FORMAT format, size_t width, size_t height, size_t arraySize, float clearColour[4], const char *name)
+ComPtr<ID3D12Resource> ModuleResources::createRenderTarget(DXGI_FORMAT format, size_t width, size_t height, size_t arraySize, size_t mipLevels, 
+                                                          const Vector4& clearColour, const char *name)
 {
     ComPtr<ID3D12Resource> texture;
 
     const auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 
     const D3D12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Tex2D(format, (UINT64)(width), (UINT)(height),
-        UINT16(arraySize), 1, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
+        UINT16(arraySize), mipLevels, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
 
-    D3D12_CLEAR_VALUE clearValue = { format , { clearColour[0], clearColour[1], clearColour[2], clearColour[3]} };
+    D3D12_CLEAR_VALUE clearValue = { format , { clearColour.x, clearColour.y, clearColour.z, clearColour.w } };
 
     app->getD3D12()->getDevice()->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES,
         &desc, D3D12_RESOURCE_STATE_COMMON, &clearValue, IID_PPV_ARGS(&texture));

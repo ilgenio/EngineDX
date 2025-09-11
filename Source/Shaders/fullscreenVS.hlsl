@@ -16,5 +16,6 @@ VSOutput main(uint vertexID : SV_VertexID)
 
     // Map to [0,1] for texture coordinates
     output.texcoord = pos;
+    
     return output;
 }
