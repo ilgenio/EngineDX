@@ -13,9 +13,6 @@ class ModuleCamera : public Module
 	};
 
 	Params    params = { 10.0f ,0.0f, 0.0f , {0.0f , 0.0f , 0.0f }};
-	Params    dragging = { 0.0f ,0.0f, 0.0f , {0.0f , 0.0f , 0.0f } };;
-    bool      leftDrag = false;
-    bool      rightDrag = false;
     int       dragPosX = 0;
     int       dragPosY = 0;
 

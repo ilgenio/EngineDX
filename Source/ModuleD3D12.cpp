@@ -183,7 +183,6 @@ bool ModuleD3D12::createFactory()
 
 bool ModuleD3D12::createDevice(bool useWarp)
 {
-    
     bool ok = true;
 
     if (useWarp)

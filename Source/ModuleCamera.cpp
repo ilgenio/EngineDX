@@ -28,95 +28,107 @@ bool ModuleCamera::init()
     view = Matrix::CreateFromQuaternion(invRot);
     view.Translation(-position);
 
-    view  = Matrix::CreateLookAt(Vector3(0.0f, 0.0f, 10.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(0.0f, 1.0f, 0.0f));
+    view = Matrix::CreateLookAt(Vector3(0.0f, 0.0f, 10.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(0.0f, 1.0f, 0.0f));
 
     return true;
 }
 
 void ModuleCamera::update()
 {
-    if(enabled)
-    { 
-        Mouse& mouse = Mouse::Get();
+    Mouse& mouse = Mouse::Get();
+    const Mouse::State& mouseState = mouse.GetState();
+
+    if (enabled)
+    {
         Keyboard& keyboard = Keyboard::Get();
         GamePad& pad = GamePad::Get();
 
-        const Mouse::State& mouseState = mouse.GetState();
         const Keyboard::State& keyState = keyboard.GetState();
+        GamePad::State padState = pad.GetState(0);
+       
+        enum EAction { ROTATING, PANNING, ZOOMING, NONE } action = NONE;
+        float relX = 0.0f;
+        float relY = 0.0f;
 
-        if (mouseState.leftButton)
+        // Check game pad
+        if (padState.IsConnected())
         {
-            if (leftDrag)
-            {
-                int relX = dragPosX - mouseState.x;
-                int relY = dragPosY - mouseState.y;
+            relX = -padState.thumbSticks.rightX;
+            relY = -padState.thumbSticks.rightY;
 
-                if (keyState.LeftControl)
+            if (relX != 0.0f || relY != 0.0f)
+            {
+                action = ROTATING;
+            }
+            else
+            {
+                relX = -padState.thumbSticks.leftX*0.25f;
+
+                if (padState.IsLeftTriggerPressed())
                 {
-                    dragging.panning.x = -getTranslationSpeed() * params.radius * relX;
-                    dragging.panning.y = getTranslationSpeed() * params.radius * relY;
+                    relY += 0.1f;
+                }
+                else if (padState.IsRightTriggerPressed())
+                {
+                    relY -= 0.1f;
+                }
+
+                if (relX != 0.0f || relY != 0.0f)
+                {
+                    action = PANNING;
                 }
                 else
                 {
-                    dragging.polar = XMConvertToRadians(getRotationSpeed() * relX);
-                    dragging.azimuthal = XMConvertToRadians(getRotationSpeed() * relY);
+                    relY = -padState.thumbSticks.leftY * 0.25f;
+                    if (relY != 0.0f)
+                    {
+                        action = ZOOMING;
+                    }
                 }
             }
-            else
+        }
+        
+        // Check mouse and keyboard
+        if (action == NONE )
+        {
+            if (mouseState.leftButton)
             {
-                leftDrag = true;
-                dragPosX = mouseState.x;
-                dragPosY = mouseState.y;
+                relX = float(dragPosX - mouseState.x);
+                relY = float(dragPosY - mouseState.y);
+                action = (keyState.LeftControl) ? PANNING : ROTATING;
+            }
+   
+            if (mouseState.rightButton)
+            {
+                relY = float(mouseState.y - dragPosY);
+                action = ZOOMING;
             }
         }
-        else
+
+        switch (action)
         {
-            leftDrag = false;
+            case PANNING:
+                params.panning.x += -getTranslationSpeed() * params.radius * relX;
+                params.panning.y += getTranslationSpeed() * params.radius * relY;
+                break;
+            case ROTATING:
+                params.polar += XMConvertToRadians(getRotationSpeed() * relX);
+                params.azimuthal += XMConvertToRadians(getRotationSpeed() * relY);
+                break;
+            case ZOOMING:
+                params.radius += getTranslationSpeed() * params.radius * relY;
 
-            Quaternion rotation_polar = Quaternion::CreateFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), dragging.polar + params.polar);
-            Quaternion rotation_azimuthal = Quaternion::CreateFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), dragging.azimuthal + params.azimuthal);
-            Quaternion rotation = rotation_polar * rotation_azimuthal;
-
-            params.polar += dragging.polar;
-            params.azimuthal += dragging.azimuthal;
-
-            params.panning += dragging.panning;
-            dragging.polar = 0.0f;
-            dragging.azimuthal = 0.0f;
-            dragging.panning = Vector3(0.0f);
-        }
-
-        if (!leftDrag && mouseState.rightButton)
-        {
-            if (rightDrag)
-            {
-                int relY = mouseState.y - dragPosY;
-
-                dragging.radius = getTranslationSpeed() * params.radius * relY;
-                if (dragging.radius < -params.radius)
-                {
-                    dragging.radius = -params.radius;
-                }
-            }
-            else
-            {
-                rightDrag = true;
-                dragPosY = mouseState.y;
-            }
-        }
-        else
-        {
-            rightDrag = false;
-            params.radius += dragging.radius;
-            dragging.radius = 0.0f;
+                break;
+            default:
+                break;
         }
 
         // Updates camera view 
 
-        Quaternion rotation_polar = Quaternion::CreateFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), dragging.polar + params.polar);
-        Quaternion rotation_azimuthal = Quaternion::CreateFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), dragging.azimuthal + params.azimuthal);
+        Quaternion rotation_polar = Quaternion::CreateFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), params.polar);
+        Quaternion rotation_azimuthal = Quaternion::CreateFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), params.azimuthal);
         rotation = rotation_azimuthal * rotation_polar;
-        position = Vector3::Transform((Vector3(0.0f, 0.0f, dragging.radius + params.radius) + dragging.panning) + params.panning, rotation);
+        position = Vector3::Transform(Vector3(0.0f, 0.0f, params.radius) + params.panning, rotation);
 
         Quaternion invRot;
         rotation.Inverse(invRot);
@@ -124,11 +136,9 @@ void ModuleCamera::update()
         view = Matrix::CreateFromQuaternion(invRot);
         view.Translation(Vector3::Transform(-position, invRot));
     }
-    else
-    {
-        leftDrag = false;
-        rightDrag = false;
-    }
+
+    dragPosX = mouseState.x;
+    dragPosY = mouseState.y;
 }
 
 Matrix ModuleCamera::getPerspectiveProj(float aspect) 

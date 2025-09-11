@@ -1,5 +1,8 @@
 #pragma once
 
+// RenderTexture encapsulates a DirectX 12 render target and optional depth stencil.
+// It manages creation, resizing, resource transitions, and descriptor handles for rendering and shader access.
+// Use this class to render to textures and bind them as shader resources in your pipeline.
 class RenderTexture
 {
     ComPtr<ID3D12Resource> texture;
