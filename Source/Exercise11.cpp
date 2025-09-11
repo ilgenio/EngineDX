@@ -58,7 +58,10 @@ bool Exercise11::init()
         ModuleD3D12* d3d12 = app->getD3D12();
 
         debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue());
+
         irradianceMapPass = std::make_unique<IrradianceMapPass>();
+        irradianceMapPass->init();
+
         cubemap = resources->createTextureFromFile(std::wstring(L"Assets/Textures/cubemap.dds"));
 
         if ((ok = cubemap) == true)
@@ -68,7 +71,6 @@ bool Exercise11::init()
 
         imguiTextDesc = descriptors->alloc();
         imguiPass = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd(), descriptors->getCPUHandle(imguiTextDesc), descriptors->getGPUHandle(imguiTextDesc));
-
         renderTexture = std::make_unique<RenderTexture>("Exercise11", DXGI_FORMAT_R8G8B8A8_UNORM, Vector4(0.2f, 0.2f, 0.2f, 1.0f), DXGI_FORMAT_D32_FLOAT, 1.0f);
     }
 
@@ -194,7 +196,7 @@ void Exercise11::render()
 
     if(!irradianceMap)
     {
-        irradianceMap = irradianceMapPass->record(commandList, cubemapDesc, 512);
+        irradianceMap = irradianceMapPass->generate(cubemapDesc, 512);
         irradianceMapDesc = descriptors->createCubeTextureSRV(irradianceMap.Get());
     }
 

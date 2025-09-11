@@ -77,7 +77,10 @@ void ModuleRTDescriptors::release(UINT handle)
 
 void ModuleRTDescriptors::deferRelease(UINT handle)
 {
-    handles.deferRelease(handle, app->getD3D12()->getCurrentFrame());
+    if (handle != 0)
+    {
+        handles.deferRelease(handle, app->getD3D12()->getCurrentFrame());
+    }
 }
 
 void ModuleRTDescriptors::preRender()

@@ -12,17 +12,13 @@ RenderTexture::~RenderTexture()
 {
     if (texture)
     {
-        // Ensure previous texture usage is finished
-        app->getD3D12()->flush();
-
-        // Release descriptors
-        app->getRTDescriptors()->release(rtvHandle);
-        app->getShaderDescriptors()->release(srvHandle);
+        app->getRTDescriptors()->deferRelease(rtvHandle);
+        app->getShaderDescriptors()->deferRelease(srvHandle);
 
         if (depthFormat != DXGI_FORMAT_UNKNOWN)
         {
             ModuleDSDescriptors *dsDescriptors = app->getDSDescriptors();
-            dsDescriptors->release(dsvHandle);
+            dsDescriptors->deferRelease(dsvHandle);
         }
     }
 }
@@ -48,11 +44,11 @@ void RenderTexture::resize(int width, int height)
     texture = resources->createRenderTarget(format, size_t(width), size_t(height), reinterpret_cast<float*>(&clearColour), name);
 
     // Create RTV.
-    rtDescriptors->release(rtvHandle);
+    rtDescriptors->deferRelease(rtvHandle);
     rtvHandle = rtDescriptors->create(texture.Get());
 
     // Create SRV.
-    descriptors->release(srvHandle);
+    descriptors->deferRelease(srvHandle);
     srvHandle = descriptors->createTextureSRV(texture.Get());
 
     if(depthFormat != DXGI_FORMAT_UNKNOWN)
@@ -61,7 +57,7 @@ void RenderTexture::resize(int width, int height)
 
         depthTexture = resources->createDepthStencil(depthFormat, size_t(width), size_t(height), clearDepth, 0, name);
         // Create DSV
-        dsDescriptors->release(dsvHandle);
+        dsDescriptors->deferRelease(dsvHandle);
         dsvHandle = dsDescriptors->create(depthTexture.Get());
     }
 

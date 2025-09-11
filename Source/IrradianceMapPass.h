@@ -6,18 +6,20 @@ class CubemapMesh;
 
 class IrradianceMapPass
 {
-    ComPtr<ID3D12RootSignature>  rootSignature;
-    ComPtr<ID3D12PipelineState>  pso;
-    std::unique_ptr<CubemapMesh> cubemapMesh;
+    ComPtr<ID3D12CommandAllocator>    commandAllocator;
+    ComPtr<ID3D12GraphicsCommandList> commandList;
+    ComPtr<ID3D12RootSignature>       rootSignature;
+    ComPtr<ID3D12PipelineState>       pso;
+    std::unique_ptr<CubemapMesh>      cubemapMesh;
 
 public:
     IrradianceMapPass();
     ~IrradianceMapPass();
 
-    ComPtr<ID3D12Resource> record(ID3D12GraphicsCommandList* cmdList, UINT cubeMapDesc, size_t size);
+    bool init();
+    ComPtr<ID3D12Resource> generate(UINT cubeMapDesc, size_t size);
 
 private:
-    void createResources(size_t size);
     bool createRootSignature();
     bool createPSO();
 };

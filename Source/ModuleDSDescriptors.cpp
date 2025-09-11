@@ -58,7 +58,10 @@ void ModuleDSDescriptors::release(UINT handle)
 
 void ModuleDSDescriptors::deferRelease(UINT handle)
 {
-    handles.deferRelease(handle, app->getD3D12()->getCurrentFrame());
+    if (handle != 0)
+    {
+        handles.deferRelease(handle, app->getD3D12()->getCurrentFrame());
+    }
 }
 
 void ModuleDSDescriptors::preRender()

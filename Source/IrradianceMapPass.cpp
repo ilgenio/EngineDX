@@ -14,33 +14,45 @@
 IrradianceMapPass::IrradianceMapPass()
 {
     cubemapMesh = std::make_unique<CubemapMesh>();
-    createRootSignature();
-    createPSO();
 }
 
 IrradianceMapPass::~IrradianceMapPass()
 {
 }
 
-ComPtr<ID3D12Resource> IrradianceMapPass::record(ID3D12GraphicsCommandList* cmdList, UINT cubeMapDesc, size_t size)
+bool IrradianceMapPass::init()
 {
+    ModuleD3D12* d3d12   = app->getD3D12();
+    ID3D12Device4* device = d3d12->getDevice();
+
+    bool ok SUCCEEDED(device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator)));
+    ok = ok && SUCCEEDED(device->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&commandList)));
+    ok = ok && SUCCEEDED(commandList->Reset(commandAllocator.Get(), nullptr));
+
+    ok = ok && createRootSignature();
+    ok = ok && createPSO();
+
+    return ok;
+}
+
+ComPtr<ID3D12Resource> IrradianceMapPass::generate(UINT cubeMapDesc, size_t size)
+{
+    ModuleD3D12* d3d12 = app->getD3D12();
     ModuleResources* resources = app->getResources();
     ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
     ModuleSamplers* samplers = app->getSamplers();
 
-    // TODO: deferred release old resources
-
     float clearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
     ComPtr<ID3D12Resource> irradianceMap = app->getResources()->createCubemapRenderTarget(DXGI_FORMAT_R16G16B16A16_FLOAT, size, size, clearColor, "Irradiance Map");
 
-    BEGIN_EVENT(cmdList, "Irradiance Map");
+    BEGIN_EVENT(commandList.Get(), "Irradiance Map");
 
     // set necessary state
-    cmdList->SetPipelineState(pso.Get());
-    cmdList->SetGraphicsRootSignature(rootSignature.Get());
+    commandList->SetPipelineState(pso.Get());
+    commandList->SetGraphicsRootSignature(rootSignature.Get());
 
     ID3D12DescriptorHeap* descriptorHeaps[] = { descriptors->getHeap(), samplers->getHeap() };
-    cmdList->SetDescriptorHeaps(2, descriptorHeaps);
+    commandList->SetDescriptorHeaps(2, descriptorHeaps);
 
     // set viewport and scissor
 
@@ -57,40 +69,52 @@ ComPtr<ID3D12Resource> IrradianceMapPass::record(ID3D12GraphicsCommandList* cmdL
     scissor.right = LONG(size);
     scissor.bottom = LONG(size);
 
-    cmdList->RSSetViewports(1, &viewport);
-    cmdList->RSSetScissorRects(1, &scissor);
+    commandList->RSSetViewports(1, &viewport);
+    commandList->RSSetScissorRects(1, &scissor);
 
-    cmdList->SetGraphicsRootDescriptorTable(1, descriptors->getGPUHandle(cubeMapDesc));
-    cmdList->SetGraphicsRootDescriptorTable(2, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
+    commandList->SetGraphicsRootDescriptorTable(1, descriptors->getGPUHandle(cubeMapDesc));
+    commandList->SetGraphicsRootDescriptorTable(2, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
 
     // create render target view for each face
     ModuleRTDescriptors* rtDescriptors = app->getRTDescriptors();
     Matrix projMatrix = Matrix::CreatePerspectiveFieldOfView(HALF_PI, 1.0f, 0.1f, 100.0f);
 
+    UINT rtvHandles[6] = { 0 };
     for(int i=0; i<6; ++i)
     {
         Matrix viewMatrix = cubemapMesh->getViewMatrix(CubemapMesh::Direction(i));
         Matrix mvpMatrix = (viewMatrix * projMatrix).Transpose();
 
-        cmdList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &mvpMatrix, 0);
+        commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &mvpMatrix, 0);
 
         CD3DX12_RESOURCE_BARRIER toRT = CD3DX12_RESOURCE_BARRIER::Transition(irradianceMap.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET, i);
-        cmdList->ResourceBarrier(1, &toRT);
+        commandList->ResourceBarrier(1, &toRT);
 
-        UINT rtvHandle = rtDescriptors->create(irradianceMap.Get(), i, DXGI_FORMAT_R16G16B16A16_FLOAT);
-        D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = rtDescriptors->getCPUHandle(rtvHandle);
-        cmdList->OMSetRenderTargets(1, &cpuHandle, FALSE, nullptr);
+        rtvHandles[i] = rtDescriptors->create(irradianceMap.Get(), i, DXGI_FORMAT_R16G16B16A16_FLOAT);
+        D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = rtDescriptors->getCPUHandle(rtvHandles[i]);
+        commandList->OMSetRenderTargets(1, &cpuHandle, FALSE, nullptr);
 
-        cubemapMesh->draw(cmdList);
+        cubemapMesh->draw(commandList.Get());
 
         CD3DX12_RESOURCE_BARRIER toSRV = CD3DX12_RESOURCE_BARRIER::Transition(irradianceMap.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, i);
-        cmdList->ResourceBarrier(1, &toSRV);
-
-        rtDescriptors->deferRelease(rtvHandle);
-
+        commandList->ResourceBarrier(1, &toSRV);
     }
 
-    END_EVENT(cmdList);
+    END_EVENT(commandList.Get());
+
+    commandList->Close();
+
+    ID3D12CommandList *commandLists[] = {commandList.Get()};
+    d3d12->getDrawCommandQueue()->ExecuteCommandLists(UINT(std::size(commandLists)), commandLists);
+    d3d12->flush();
+
+    for(int i=0; i<6; ++i)
+    {
+        rtDescriptors->release(rtvHandles[i]);
+    }
+
+    commandAllocator->Reset();
+    SUCCEEDED(commandList->Reset(commandAllocator.Get(), nullptr));
 
     return irradianceMap;
 }

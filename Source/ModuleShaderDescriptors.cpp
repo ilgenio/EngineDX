@@ -45,7 +45,10 @@ void ModuleShaderDescriptors::preRender()
 
 void ModuleShaderDescriptors::deferRelease(UINT handle)
 {
-    handles.deferRelease(handle, app->getD3D12()->getCurrentFrame());
+    if (handle != 0)
+    {
+        handles.deferRelease(handle, app->getD3D12()->getCurrentFrame());
+    }
 }
 
 UINT ModuleShaderDescriptors::createCBV(ID3D12Resource *resource)

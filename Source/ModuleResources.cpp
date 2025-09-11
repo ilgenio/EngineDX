@@ -25,20 +25,11 @@ bool ModuleResources::init()
     ok = ok && SUCCEEDED(device->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&commandList)));
     ok = ok && SUCCEEDED(commandList->Reset(commandAllocator.Get(), nullptr));
 
-    ok = ok && SUCCEEDED(device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&uploadFence)));
-
-    uploadEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
-    ok = uploadEvent != NULL;
-
-
     return ok;
 }
 
 bool ModuleResources::cleanUp()
 {
-    if (uploadEvent) CloseHandle(uploadEvent);
-    uploadEvent = NULL;
-
     return true;
 }
 
@@ -62,7 +53,6 @@ ComPtr<ID3D12Resource> ModuleResources::createUploadBuffer(const void* data, siz
     buffer->Map(0, &readRange, reinterpret_cast<void**>(&pData));
     memcpy(pData, data, size);
     buffer->Unmap(0, nullptr);
-
 
     return buffer;
 }
@@ -98,10 +88,8 @@ ComPtr<ID3D12Resource> ModuleResources::createDefaultBuffer(const void* data, si
         ID3D12CommandList* commandLists[] = { commandList.Get()};
         queue->ExecuteCommandLists(UINT(std::size(commandLists)), commandLists);
 
-        ++uploadCounter;
-        queue->Signal(uploadFence.Get(), uploadCounter);
-        uploadFence->SetEventOnCompletion(uploadCounter, uploadEvent);
-        WaitForSingleObject(uploadEvent, INFINITE);
+        // TODO: Add flush to class 2
+        d3d12->flush();
 
         commandAllocator->Reset();
         ok = SUCCEEDED(commandList->Reset(commandAllocator.Get(), nullptr));
@@ -167,10 +155,7 @@ ComPtr<ID3D12Resource> ModuleResources::createRawTexture2D(const void* data, siz
 
         queue->ExecuteCommandLists(UINT(std::size(commandLists)), commandLists);
 
-        ++uploadCounter;
-        queue->Signal(uploadFence.Get(), uploadCounter);
-        uploadFence->SetEventOnCompletion(uploadCounter, uploadEvent);
-        WaitForSingleObject(uploadEvent, INFINITE);
+        d3d12->flush();
 
         commandAllocator->Reset();
         ok = SUCCEEDED(commandList->Reset(commandAllocator.Get(), nullptr));
@@ -267,10 +252,7 @@ ComPtr<ID3D12Resource> ModuleResources::createTextureFromImage(const ScratchImag
 
             queue->ExecuteCommandLists(UINT(std::size(commandLists)), commandLists);
 
-            ++uploadCounter;
-            queue->Signal(uploadFence.Get(), uploadCounter);
-            uploadFence->SetEventOnCompletion(uploadCounter, uploadEvent);
-            WaitForSingleObject(uploadEvent, INFINITE);
+            d3d12->flush();
 
             commandAllocator->Reset();
             ok = SUCCEEDED(commandList->Reset(commandAllocator.Get(), nullptr));

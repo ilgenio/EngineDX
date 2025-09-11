@@ -15,9 +15,6 @@ class ModuleResources : public Module
 {
 private:
 
-    uint32_t uploadCounter = 0;
-    HANDLE uploadEvent = NULL;
-    ComPtr<ID3D12Fence1> uploadFence;
     ComPtr<ID3D12CommandAllocator> commandAllocator;
     ComPtr<ID3D12GraphicsCommandList> commandList;
 
