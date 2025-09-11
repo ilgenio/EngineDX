@@ -10,7 +10,6 @@
 
 #define _CRT_SECURE_NO_WARNINGS
 #define NOMINMAX
-#define USING_WINDOWS_GAMING_INPUT
 
 #include <windows.h>
 #include <wrl.h>

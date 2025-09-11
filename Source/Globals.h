@@ -1,6 +1,5 @@
 #pragma once
 
-#define USING_WINDOWS_GAMING_INPUT
 #define NOMINMAX
 #define INITGUID
 

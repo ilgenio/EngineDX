@@ -6,13 +6,12 @@ class ModuleCamera : public Module
 {
 	struct Params
 	{
-		float  radius;
         float  polar;
         float  azimuthal;
         Vector3 panning;
 	};
 
-	Params    params = { 10.0f ,0.0f, 0.0f , {0.0f , 0.0f , 0.0f }};
+	Params    params = { 0.0f, 0.0f , {0.0f , 2.0f , 10.0f }};
     int       dragPosX = 0;
     int       dragPosY = 0;
 

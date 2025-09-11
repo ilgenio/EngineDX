@@ -46,9 +46,10 @@ void ModuleCamera::update()
         const Keyboard::State& keyState = keyboard.GetState();
         GamePad::State padState = pad.GetState(0);
        
-        enum EAction { ROTATING, PANNING, ZOOMING, NONE } action = NONE;
+        enum EAction { ROTATING, PANNING, NONE } action = NONE;
         float relX = 0.0f;
         float relY = 0.0f;
+        float relZ = 0.0f;
 
         // Check game pad
         if (padState.IsConnected())
@@ -63,33 +64,26 @@ void ModuleCamera::update()
             else
             {
                 relX = -padState.thumbSticks.leftX*0.25f;
+                relZ = -padState.thumbSticks.leftY * 0.25f;
 
                 if (padState.IsLeftTriggerPressed())
                 {
-                    relY += 0.1f;
+                    relY = 0.15f;
                 }
                 else if (padState.IsRightTriggerPressed())
                 {
-                    relY -= 0.1f;
+                    relY -= 0.15f;
                 }
 
-                if (relX != 0.0f || relY != 0.0f)
+                if (relX != 0.0f || relY != 0.0f || relZ != 0.0f)
                 {
                     action = PANNING;
-                }
-                else
-                {
-                    relY = -padState.thumbSticks.leftY * 0.25f;
-                    if (relY != 0.0f)
-                    {
-                        action = ZOOMING;
-                    }
                 }
             }
         }
         
         // Check mouse and keyboard
-        if (action == NONE )
+        if (action == NONE)
         {
             if (mouseState.leftButton)
             {
@@ -98,27 +92,25 @@ void ModuleCamera::update()
                 action = (keyState.LeftControl) ? PANNING : ROTATING;
             }
    
-            if (mouseState.rightButton)
+            if (mouseState.rightButton && keyState.LeftControl)
             {
-                relY = float(mouseState.y - dragPosY);
-                action = ZOOMING;
+                relZ = float(mouseState.y - dragPosY);
+                action = PANNING;
             }
         }
 
         switch (action)
         {
             case PANNING:
-                params.panning.x += -getTranslationSpeed() * params.radius * relX;
-                params.panning.y += getTranslationSpeed() * params.radius * relY;
+                params.panning.x += -getTranslationSpeed() * relX;
+                params.panning.y += getTranslationSpeed() * relY;
+                params.panning.z += getTranslationSpeed() * relZ;
                 break;
             case ROTATING:
                 params.polar += XMConvertToRadians(getRotationSpeed() * relX);
                 params.azimuthal += XMConvertToRadians(getRotationSpeed() * relY);
                 break;
-            case ZOOMING:
-                params.radius += getTranslationSpeed() * params.radius * relY;
-
-                break;
+            case NONE:
             default:
                 break;
         }
@@ -128,7 +120,7 @@ void ModuleCamera::update()
         Quaternion rotation_polar = Quaternion::CreateFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), params.polar);
         Quaternion rotation_azimuthal = Quaternion::CreateFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), params.azimuthal);
         rotation = rotation_azimuthal * rotation_polar;
-        position = Vector3::Transform(Vector3(0.0f, 0.0f, params.radius) + params.panning, rotation);
+        position = Vector3::Transform(params.panning, rotation);
 
         Quaternion invRot;
         rotation.Inverse(invRot);
