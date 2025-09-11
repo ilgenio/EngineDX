@@ -1,8 +1,6 @@
 #pragma once
 #include "Module.h"
 
-#include <memory>
-
 class DebugDrawPass;
 class ImGuiPass;
 

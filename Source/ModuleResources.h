@@ -41,8 +41,8 @@ public:
     ComPtr<ID3D12Resource> createRenderTarget(DXGI_FORMAT format, size_t width, size_t height, const Vector4& clearColour, const char* name);
     ComPtr<ID3D12Resource> createDepthStencil(DXGI_FORMAT format, size_t width, size_t height, float clearDepth, uint8_t clearStencil, const char* name);
 
-    ComPtr<ID3D12Resource> createCubemapRenderTarget(DXGI_FORMAT format, size_t width, size_t height, const Vector4& clearColour, const char* name);
-    ComPtr<ID3D12Resource> createCubemapRenderTarget(DXGI_FORMAT format, size_t width, size_t height, size_t mipLevels, const Vector4& clearColour, const char* name);
+    ComPtr<ID3D12Resource> createCubemapRenderTarget(DXGI_FORMAT format, size_t size, const Vector4& clearColour, const char* name);
+    ComPtr<ID3D12Resource> createCubemapRenderTarget(DXGI_FORMAT format, size_t size, size_t mipLevels, const Vector4& clearColour, const char* name);
 
 private:
 
@@ -56,12 +56,12 @@ inline ComPtr<ID3D12Resource> ModuleResources::createRenderTarget(DXGI_FORMAT fo
     return createRenderTarget(format, width, height, 1, 1, clearColour, name);
 }
 
-inline ComPtr<ID3D12Resource> ModuleResources::createCubemapRenderTarget(DXGI_FORMAT format, size_t width, size_t height, const Vector4& clearColour, const char *name)
+inline ComPtr<ID3D12Resource> ModuleResources::createCubemapRenderTarget(DXGI_FORMAT format, size_t size, const Vector4& clearColour, const char *name)
 {
-    return createRenderTarget(format, width, height, 6, 1, clearColour, name);
+    return createRenderTarget(format, size, size, 6, 1, clearColour, name);
 }
 
-inline ComPtr<ID3D12Resource> ModuleResources::createCubemapRenderTarget(DXGI_FORMAT format, size_t width, size_t height, size_t mipLevels, const Vector4 &clearColour, const char *name)
+inline ComPtr<ID3D12Resource> ModuleResources::createCubemapRenderTarget(DXGI_FORMAT format, size_t size, size_t mipLevels, const Vector4 &clearColour, const char *name)
 {
-    return createRenderTarget(format, width, height, 6, mipLevels, clearColour, name);
+    return createRenderTarget(format, size, size, 6, mipLevels, clearColour, name);
 }

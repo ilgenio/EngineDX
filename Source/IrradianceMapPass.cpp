@@ -42,7 +42,7 @@ ComPtr<ID3D12Resource> IrradianceMapPass::generate(UINT cubeMapDesc, size_t size
     ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
     ModuleSamplers* samplers = app->getSamplers();
 
-    ComPtr<ID3D12Resource> irradianceMap = resources->createCubemapRenderTarget(DXGI_FORMAT_R16G16B16A16_FLOAT, size, size, Vector4(0.0f, 0.0f, 0.0f, 1.0f), "Irradiance Map");
+    ComPtr<ID3D12Resource> irradianceMap = resources->createCubemapRenderTarget(DXGI_FORMAT_R16G16B16A16_FLOAT, size, Vector4(0.0f, 0.0f, 0.0f, 1.0f), "Irradiance Map");
 
     BEGIN_EVENT(commandList.Get(), "Irradiance Map");
 
@@ -65,7 +65,7 @@ ComPtr<ID3D12Resource> IrradianceMapPass::generate(UINT cubeMapDesc, size_t size
 
     // create render target view for each face
     ModuleRTDescriptors* rtDescriptors = app->getRTDescriptors();
-    Matrix projMatrix = Matrix::CreatePerspectiveFieldOfView(HALF_PI, 1.0f, 0.1f, 100.0f);
+    Matrix projMatrix = Matrix::CreatePerspectiveFieldOfView(M_HALF_PI, 1.0f, 0.1f, 100.0f);
 
     for(int i=0; i<6; ++i)
     {

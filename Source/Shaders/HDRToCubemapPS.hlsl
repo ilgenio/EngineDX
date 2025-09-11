@@ -3,11 +3,11 @@
 Texture2D skybox : register(t0);
 SamplerState skyboxSampler : register(s0);
 
-float2 CartesianToEquirectangular(in vec3 dir)
+float2 CartesianToEquirectangular(in float3 dir)
 {
     float phi;
 
-    phi = atan(dir.z, dir.x); // between -PI , PI
+    phi = atan2(dir.z, dir.x); // between -PI , PI
     phi = phi/(2.0*PI)+0.5;
 
     float theta = asin(dir.y);  // between -PI/2 ,  PI/2

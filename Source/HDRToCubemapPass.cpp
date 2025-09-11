@@ -1,30 +1,30 @@
 #include "Globals.h"
 
-#include "PrefilterEnvMapPass.h"
+#include "HDRToCubemapPass.h"
 
 #include "Application.h"
 #include "ModuleD3D12.h"
+#include "ModuleSamplers.h"
 #include "ModuleResources.h"
 #include "ModuleShaderDescriptors.h"
-#include "ModuleSamplers.h"
 #include "ModuleRTDescriptors.h"
 
-#include "CubeMapMesh.h"
+#include "CubemapMesh.h"
 #include "ReadData.h"
 
-PrefilterEnvMapPass::PrefilterEnvMapPass()
+HDRToCubemapPass::HDRToCubemapPass()
+{
+    cubemapMesh = std::make_unique<CubemapMesh>();
+}
+
+HDRToCubemapPass::~HDRToCubemapPass()
 {
 }
 
-PrefilterEnvMapPass::~PrefilterEnvMapPass()
+bool HDRToCubemapPass::init()
 {
-}
-
-
-bool PrefilterEnvMapPass::init()
-{
-    ModuleD3D12 *d3d12 = app->getD3D12();
-    ID3D12Device4 *device = d3d12->getDevice();
+    ModuleD3D12* d3d12   = app->getD3D12();
+    ID3D12Device4* device = d3d12->getDevice();
 
     bool ok SUCCEEDED(device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator)));
     ok = ok && SUCCEEDED(device->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&commandList)));
@@ -36,16 +36,16 @@ bool PrefilterEnvMapPass::init()
     return ok;
 }
 
-ComPtr<ID3D12Resource> PrefilterEnvMapPass::generate(UINT cubeMapDesc, size_t size, UINT mipLevels)
+ComPtr<ID3D12Resource> HDRToCubemapPass::generate(UINT skybox, DXGI_FORMAT format, size_t size)
 {
     ModuleD3D12* d3d12 = app->getD3D12();
     ModuleResources* resources = app->getResources();
     ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
     ModuleSamplers* samplers = app->getSamplers();
 
-    ComPtr<ID3D12Resource> prefilterMap = resources->createCubemapRenderTarget(DXGI_FORMAT_R16G16B16A16_FLOAT, size, mipLevels, Vector4(0.0f, 0.0f, 0.0f , 1.0f), "Irradiance Map");
+    ComPtr<ID3D12Resource> irradianceMap = resources->createCubemapRenderTarget(format, size, Vector4(0.0f, 0.0f, 0.0f, 1.0f), "HDR To Cubemap");
 
-    BEGIN_EVENT(commandList.Get(), "Prefilter Map");
+    BEGIN_EVENT(commandList.Get(), "HDR To Cubemap");
 
     // set necessary state
     commandList->SetPipelineState(pso.Get());
@@ -61,48 +61,37 @@ ComPtr<ID3D12Resource> PrefilterEnvMapPass::generate(UINT cubeMapDesc, size_t si
     commandList->RSSetViewports(1, &viewport);
     commandList->RSSetScissorRects(1, &scissor);
 
-    commandList->SetGraphicsRootDescriptorTable(1, descriptors->getGPUHandle(cubeMapDesc));
+    commandList->SetGraphicsRootDescriptorTable(1, descriptors->getGPUHandle(skybox));
     commandList->SetGraphicsRootDescriptorTable(2, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
 
     // create render target view for each face
     ModuleRTDescriptors* rtDescriptors = app->getRTDescriptors();
     Matrix projMatrix = Matrix::CreatePerspectiveFieldOfView(M_HALF_PI, 1.0f, 0.1f, 100.0f);
 
-    PrefilterConstants constants = {};
-    constants.samples = 1024;
-    constants.cubeMapSize = static_cast<INT>(size);
-    constants.lodBias = 0;
-
-    for(UINT  roughnessLevel=0; roughnessLevel<mipLevels; ++roughnessLevel)
+    for(int i=0; i<6; ++i)
     {
-        float roughness = mipLevels > 1 ? (roughnessLevel) / float(mipLevels - 1) : 0.0f;
-        constants.roughness = roughness;
+        Matrix viewMatrix = cubemapMesh->getViewMatrix(CubemapMesh::Direction(i));
+        Matrix mvpMatrix = (viewMatrix * projMatrix).Transpose();
 
-        for(int i=0; i<6; ++i)
-        {
-            Matrix viewMatrix = cubemapMesh->getViewMatrix(CubemapMesh::Direction(i));
-            Matrix mvpMatrix = (viewMatrix * projMatrix).Transpose();
+        commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &mvpMatrix, 0);
 
-            commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &mvpMatrix, 0);
-            commandList->SetGraphicsRoot32BitConstants(1, sizeof(PrefilterConstants) / sizeof(UINT32), &constants, 0);
+        UINT subResource = D3D12CalcSubresource(0, i, 0, 1, 6);
 
-            UINT subResource = D3D12CalcSubresource(roughnessLevel, i, 0, mipLevels, 6);
-            CD3DX12_RESOURCE_BARRIER toRT = CD3DX12_RESOURCE_BARRIER::Transition(prefilterMap.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET, subResource);
-            commandList->ResourceBarrier(1, &toRT);
+        CD3DX12_RESOURCE_BARRIER toRT = CD3DX12_RESOURCE_BARRIER::Transition(irradianceMap.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET, subResource);
+        commandList->ResourceBarrier(1, &toRT);
 
-            UINT rtvHandle = rtDescriptors->create(prefilterMap.Get(), i, roughnessLevel, DXGI_FORMAT_R16G16B16A16_FLOAT);
-            D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = rtDescriptors->getCPUHandle(rtvHandle);
-            commandList->OMSetRenderTargets(1, &cpuHandle, FALSE, nullptr);
+        UINT rtvHandle = rtDescriptors->create(irradianceMap.Get(), i, 0, DXGI_FORMAT_R16G16B16A16_FLOAT);
+        D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = rtDescriptors->getCPUHandle(rtvHandle);
+        commandList->OMSetRenderTargets(1, &cpuHandle, FALSE, nullptr);
 
-            cubemapMesh->draw(commandList.Get());
+        cubemapMesh->draw(commandList.Get());
 
-            CD3DX12_RESOURCE_BARRIER toSRV = CD3DX12_RESOURCE_BARRIER::Transition(prefilterMap.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, subResource);
-            commandList->ResourceBarrier(1, &toSRV);
+        CD3DX12_RESOURCE_BARRIER toSRV = CD3DX12_RESOURCE_BARRIER::Transition(irradianceMap.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, subResource);
+        commandList->ResourceBarrier(1, &toSRV);
 
-            rtDescriptors->deferRelease(rtvHandle);
-        }
+        rtDescriptors->deferRelease(rtvHandle);
     }
-    
+
     END_EVENT(commandList.Get());
 
     commandList->Close();
@@ -114,13 +103,13 @@ ComPtr<ID3D12Resource> PrefilterEnvMapPass::generate(UINT cubeMapDesc, size_t si
     commandAllocator->Reset();
     SUCCEEDED(commandList->Reset(commandAllocator.Get(), nullptr));
 
-    return prefilterMap;
+    return irradianceMap;
 }
 
-bool PrefilterEnvMapPass::createRootSignature()
+bool HDRToCubemapPass::createRootSignature()
 {
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-    CD3DX12_ROOT_PARAMETER rootParameters[4] = {};
+    CD3DX12_ROOT_PARAMETER rootParameters[3] = {};
     CD3DX12_DESCRIPTOR_RANGE tableRanges;
     CD3DX12_DESCRIPTOR_RANGE sampRange;
 
@@ -128,11 +117,10 @@ bool PrefilterEnvMapPass::createRootSignature()
     sampRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, ModuleSamplers::COUNT, 0);
 
     rootParameters[0].InitAsConstants((sizeof(Matrix) / sizeof(UINT32)), 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
-    rootParameters[1].InitAsConstants((sizeof(PrefilterConstants) / sizeof(UINT32)), 1, 0, D3D12_SHADER_VISIBILITY_PIXEL);
-    rootParameters[2].InitAsDescriptorTable(1, &tableRanges, D3D12_SHADER_VISIBILITY_PIXEL);
-    rootParameters[3].InitAsDescriptorTable(1, &sampRange, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[1].InitAsDescriptorTable(1, &tableRanges, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[2].InitAsDescriptorTable(1, &sampRange, D3D12_SHADER_VISIBILITY_PIXEL);
 
-    rootSignatureDesc.Init(4, rootParameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+    rootSignatureDesc.Init(3, rootParameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
     ComPtr<ID3DBlob> rootSignatureBlob;
 
@@ -149,10 +137,10 @@ bool PrefilterEnvMapPass::createRootSignature()
     return true;
 }
 
-bool PrefilterEnvMapPass::createPSO()
+bool HDRToCubemapPass::createPSO()
 {
     auto dataVS = DX::ReadData(L"skyboxVS.cso");
-    auto dataPS = DX::ReadData(L"PrefilterEnvMapPS.cso");
+    auto dataPS = DX::ReadData(L"HDRToCubemapPS.cso");
 
     D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
     psoDesc.InputLayout = cubemapMesh->getInputLayoutDesc();

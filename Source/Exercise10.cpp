@@ -95,8 +95,8 @@ void Exercise10::imGuiDirection(Vector3& dir)
     float elevation;
     euclideanToSpherical(dir, azimuth, elevation);
 
-    while (azimuth < 0.0f) azimuth += TWO_PI;
-    while (elevation < 0.0f) elevation += TWO_PI;
+    while (azimuth < 0.0f) azimuth += M_TWO_PI;
+    while (elevation < 0.0f) elevation += M_TWO_PI;
 
     ImGui::Text("Direction (%g, %g, %g)", dir.x, dir.y, dir.z);
     bool change = ImGui::SliderAngle("Dir azimuth", &azimuth, 0.0f, 360.0f);
@@ -524,7 +524,7 @@ bool Exercise10::loadModel()
 {
     model = std::make_unique<Model>();
     model->load("Assets/Models/DamagedHelmet/DamagedHelmet.gltf", "Assets/Models/DamagedHelmet/", BasicMaterial::METALLIC_ROUGHNESS);
-    model->setModelMatrix(Matrix::CreateRotationX(HALF_PI));
+    model->setModelMatrix(Matrix::CreateRotationX(M_HALF_PI));
 
     return true;
 }

@@ -94,8 +94,8 @@ void Exercise8::imGuiDirection(Vector3& dir)
     float elevation;
     euclideanToSpherical(dir, azimuth, elevation);
 
-    while (azimuth < 0.0f) azimuth += TWO_PI;
-    while (elevation < 0.0f) elevation += TWO_PI;
+    while (azimuth < 0.0f) azimuth += M_TWO_PI;
+    while (elevation < 0.0f) elevation += M_TWO_PI;
 
     ImGui::Text("Direction (%g, %g, %g)", dir.x, dir.y, dir.z);
     bool change = ImGui::SliderAngle("Dir azimuth", &azimuth, 0.0f, 360.0f);

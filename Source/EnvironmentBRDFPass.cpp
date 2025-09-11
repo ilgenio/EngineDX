@@ -42,7 +42,7 @@ ComPtr<ID3D12Resource> EnvironmentBRDFPass::generate(size_t size)
     ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
     ModuleSamplers* samplers = app->getSamplers();
 
-    ComPtr<ID3D12Resource> environmentMap = resources->createCubemapRenderTarget(DXGI_FORMAT_R16G16B16A16_FLOAT, size, size, Vector4(0.0f, 0.0f, 0.0f, 1.0f), "EnvironmentBRDF Map");
+    ComPtr<ID3D12Resource> environmentMap = resources->createRenderTarget(DXGI_FORMAT_R16G16B16A16_FLOAT, size, size, Vector4(0.0f, 0.0f, 0.0f, 1.0f), "EnvironmentBRDF Map");
 
     BEGIN_EVENT(commandList.Get(), "EnvironmentBRDF Map");
 
@@ -57,7 +57,7 @@ ComPtr<ID3D12Resource> EnvironmentBRDFPass::generate(size_t size)
     commandList->RSSetViewports(1, &viewport);
     commandList->RSSetScissorRects(1, &scissor);
 
-    UINT rtvHandle = rtDescriptors->create(environmentMap.Get(), i, 0, DXGI_FORMAT_R16G16B16A16_FLOAT);
+    UINT rtvHandle = rtDescriptors->create(environmentMap.Get());
     D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = rtDescriptors->getCPUHandle(rtvHandle);
     commandList->OMSetRenderTargets(1, &cpuHandle, FALSE, nullptr);
 

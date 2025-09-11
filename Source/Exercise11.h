@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Module.h"
-#include <memory>
 
 class CubemapMesh;
 class DebugDrawPass;

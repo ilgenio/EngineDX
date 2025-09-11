@@ -41,7 +41,7 @@ void RenderTexture::resize(int width, int height)
     ModuleRTDescriptors* rtDescriptors = app->getRTDescriptors();
     ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
 
-    texture = resources->createRenderTarget(format, size_t(width), size_t(height), reinterpret_cast<float*>(&clearColour), name);
+    texture = resources->createRenderTarget(format, size_t(width), size_t(height), clearColour, name);
 
     // Create RTV.
     rtDescriptors->deferRelease(rtvHandle);

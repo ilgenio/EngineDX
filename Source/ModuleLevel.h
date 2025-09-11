@@ -2,8 +2,6 @@
 
 #include "Module.h"
 
-#include <memory>
-
 class Scene;
 
 class ModuleLevel : public Module

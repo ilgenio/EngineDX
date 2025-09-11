@@ -1,4 +1,5 @@
 #include "ggx_brdf.hlsli"
+#include "sampling.hlsli"
 
 cbuffer PrefilterEnvMapCB : register(b1)
 {
@@ -26,7 +27,7 @@ float4 PrefilterEnvMapPS(float3 texcoords : TEXCOORD) : SV_Target
 
     float3 color      = 0.0;
     float weight      = 0.0;
-    mat3 tangentSpace = computeTangetSpace(N);
+    float3x3 tangentSpace = computeTangetSpace(N);
 
     for( int i = 0; i < numSamples; ++i ) 
     {
@@ -37,7 +38,7 @@ float4 PrefilterEnvMapPS(float3 texcoords : TEXCOORD) : SV_Target
         float pdf = D_GGX(dir.z, roughness)/4.0;
         float lod = computeLod(pdf, numSamples, cubemapSize);
 
-        float3 H = normalize(tangentSpace*dir);
+        float3 H = normalize(mul(dir, tangentSpace));
         float3 L = reflect(-V, H); 
         float NdotL = dot( N, L );
         if( NdotL > 0 ) 

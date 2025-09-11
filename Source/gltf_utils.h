@@ -5,7 +5,6 @@
 #define TINYGLTF_NO_EXTERNAL_IMAGE 
 #include "tiny_gltf.h"
 
-#include <memory>
 
 inline bool loadAccessorData(uint8_t* data, size_t elemSize, size_t stride, size_t count, const tinygltf::Model& model, int index)
 {

@@ -1,4 +1,5 @@
 #include "ggx_brdf.hlsli"
+#include "sampling.hlsli"
 
 #define NUM_SAMPLES 1024
 
@@ -12,7 +13,7 @@ float4 EnvironmentBRDFPS(float2 uv : TEXCOORD) : SV_Target
     V.y = 0.0;
     V.z = NdotV; // cos
 
-    float3 N = vec3(0.0, 0.0, 1.0);
+    float3 N = float3(0.0, 0.0, 1.0);
 
     float fa = 0.0;
     float fb = 0.0;
@@ -37,5 +38,5 @@ float4 EnvironmentBRDFPS(float2 uv : TEXCOORD) : SV_Target
         }
     }
 
-    fragColor = float4(4.0*fa/float(NUM_SAMPLES), 4.0*fb/float(NUM_SAMPLES), 1.0, 1.0);
+    return float4(4.0*fa/float(NUM_SAMPLES), 4.0*fb/float(NUM_SAMPLES), 1.0, 1.0);
 }

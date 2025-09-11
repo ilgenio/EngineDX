@@ -1,18 +1,11 @@
 #include "common.hlsli"
+#include "sampling.hlsli"
 
 TextureCube environment : register(t0);
 SamplerState samplerState : register(s0);
 
 #define NUM_SAMPLES 1024
 
-float3x3 computeTangetSpace(in float3 normal)
-{
-    float3 up    = abs(normal.y) > 0.999 ? float3(0.0, 0.0, 1.0) : float3(0.0, 1.0, 0.0);
-    float3 right = normalize(cross(up, normal));
-    up           = cross(normal, right);
-    
-    return float3x3(right, up, normal);
-}
 
 float4 IrradianceMapPS(float3 texcoords : TEXCOORD) : SV_Target
 {    

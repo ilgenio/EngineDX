@@ -1,7 +1,6 @@
 #pragma once
 
 #include <string>
-#include <memory>
 
 namespace tinygltf { class Model;  struct Mesh; struct Primitive;  }
 

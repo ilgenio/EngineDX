@@ -2,8 +2,6 @@
 
 #include "Module.h"
 #include "ImGuiPass.h"
-#include <imgui.h>
-#include <memory>
 
 class CubemapMesh;
 class DebugDrawPass;

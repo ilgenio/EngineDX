@@ -1,6 +1,8 @@
 #ifndef _SAMPLING_HLSLI
 #define _SAMPLING_HLSLI
 
+#include "common.hlsli"
+
 float radicalInverse_VdC(uint bits) 
 {
     bits = (bits << 16u) | (bits >> 16u);

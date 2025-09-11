@@ -126,7 +126,6 @@ ComPtr<ID3D12Resource> ModuleResources::createRawTexture2D(const void* data, siz
     D3D12_PLACED_SUBRESOURCE_FOOTPRINT layout = {};
 
     device->GetCopyableFootprints(&desc, 0, 1, 0, &layout, nullptr, nullptr, &requiredSize);
-
     ComPtr<ID3D12Resource> upload = getUploadHeap(requiredSize);
 
     if (ok)
@@ -272,7 +271,7 @@ ComPtr<ID3D12Resource> ModuleResources::createRenderTarget(DXGI_FORMAT format, s
     const auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 
     const D3D12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Tex2D(format, (UINT64)(width), (UINT)(height),
-        UINT16(arraySize), mipLevels, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
+        UINT16(arraySize), UINT16(mipLevels), 1, 0, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
 
     D3D12_CLEAR_VALUE clearValue = { format , { clearColour.x, clearColour.y, clearColour.z, clearColour.w } };
 

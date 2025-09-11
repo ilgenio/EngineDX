@@ -2,8 +2,6 @@
 
 #include "Module.h"
 
-#include <memory>
-
 namespace DirectX { class Keyboard; class Mouse; class GamePad;  }
 
 class ModuleInput : public Module
