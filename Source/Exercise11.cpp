@@ -9,10 +9,14 @@
 #include "ModuleRTDescriptors.h"
 #include "ModuleDSDescriptors.h"
 #include "ModuleCamera.h"
+#include "ModuleRingBuffer.h"
+
 #include "DebugDrawPass.h"
 
 #include "IrradianceMapPass.h"
 #include "ImGuiPass.h"
+#include "SkyboxRenderPass.h"
+
 #include "CubemapMesh.h"
 #include "SphereMesh.h"
 #include "ReadData.h"
@@ -48,10 +52,9 @@ Exercise11::~Exercise11()
 bool Exercise11::init() 
 {
     sphereMesh = std::make_unique<SphereMesh>(16, 16);
-    cubemapMesh = std::make_unique<CubemapMesh>();
 
-    bool ok = createSkyRS();
-    ok = ok && createSkyPSO();
+    bool ok = createSphereRS();
+    ok = ok && createSpherePSO();
 
     if (ok)
     {
@@ -63,6 +66,8 @@ bool Exercise11::init()
 
         irradianceMapPass = std::make_unique<IrradianceMapPass>();
         irradianceMapPass->init();
+
+        skyboxRenderPass = std::make_unique<SkyboxRenderPass>();
 
         cubemap = resources->createTextureFromFile(std::wstring(L"Assets/Textures/cubemap.dds"));
 
@@ -109,31 +114,44 @@ void Exercise11::renderToTexture(ID3D12GraphicsCommandList* commandList)
     rot.Inverse(invRot);
     Matrix view = Matrix::CreateFromQuaternion(invRot);
     Matrix proj = ModuleCamera::getPerspectiveProj(float(width) / float(height));
+    Matrix model = Matrix::Identity;
+    Matrix normalMatrix = model;
+    Matrix mvp = model * view * proj;
 
-    Matrix vp = view * proj;
-    vp = vp.Transpose();
-
-    
-    BEGIN_EVENT(commandList, "Sky Cubemap Render Pass");
+    BEGIN_EVENT(commandList, "Exercise11 Render to Texture");
 
     renderTexture->transitionToRTV(commandList);
     renderTexture->bindAsRenderTarget(commandList);
     renderTexture->clear(commandList);
 
-    commandList->SetGraphicsRootSignature(skyRS.Get());
+    ID3D12DescriptorHeap* descriptorHeaps[] = { descriptors->getHeap(), samplers->getHeap() };
+    commandList->SetDescriptorHeaps(2, descriptorHeaps);
 
     D3D12_VIEWPORT viewport{ 0.0f, 0.0f, float(width), float(height), 0.0f, 1.0f };
     D3D12_RECT scissor = { 0, 0, LONG(width), LONG(height) };
     commandList->RSSetViewports(1, &viewport);
     commandList->RSSetScissorRects(1, &scissor);
 
-    ID3D12DescriptorHeap* descriptorHeaps[] = { descriptors->getHeap(), samplers->getHeap() };
-    commandList->SetDescriptorHeaps(2, descriptorHeaps);
-    commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &vp, 0);
-    commandList->SetGraphicsRootDescriptorTable(1, descriptors->getGPUHandle(cubemapDesc));
-    commandList->SetGraphicsRootDescriptorTable(2, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
-    
-    cubemapMesh->draw(commandList);
+    skyboxRenderPass->record(commandList, cubemapDesc, view, proj);
+
+    BEGIN_EVENT(commandList, "Exercise11 Render Sphere");
+
+    PerInstance perInstanceData;
+    perInstanceData.modelMat = model;
+    perInstanceData.normalMat = normalMatrix;
+
+    ModuleRingBuffer* ringBuffer = app->getRingBuffer();
+
+    commandList->SetGraphicsRootSignature(sphereRS.Get());
+    commandList->SetPipelineState(spherePSO.Get());
+    commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &mvp, 0);
+    commandList->SetGraphicsRootConstantBufferView(1, ringBuffer->allocBuffer(&perInstanceData));
+    commandList->SetGraphicsRootDescriptorTable(2, descriptors->getGPUHandle(irradianceMapDesc));
+    commandList->SetGraphicsRootDescriptorTable(3, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
+
+    sphereMesh->draw(commandList);
+
+    END_EVENT(commandList);
 
     END_EVENT(commandList);
 
@@ -194,7 +212,7 @@ void Exercise11::render()
 #endif 
 
     ID3D12GraphicsCommandList* commandList = d3d12->getCommandList();
-    commandList->Reset(d3d12->getCommandAllocator(), skyPSO.Get());
+    commandList->Reset(d3d12->getCommandAllocator(), nullptr);
 
     if(!irradianceMap)
     {
@@ -213,7 +231,7 @@ void Exercise11::render()
     unsigned width = d3d12->getWindowWidth();
     unsigned height = d3d12->getWindowHeight();
 
-    float clearColor[] = { 0.2f, 0.2f, 0.2f, 1.0f };
+    float clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
     D3D12_CPU_DESCRIPTOR_HANDLE rtv = d3d12->getRenderTargetDescriptor();
     D3D12_CPU_DESCRIPTOR_HANDLE dsv = d3d12->getDepthStencilDescriptor();
 
@@ -245,10 +263,10 @@ void Exercise11::render()
 #endif 
 }
 
-bool Exercise11::createSkyRS()
+bool Exercise11::createSphereRS()
 {
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-    CD3DX12_ROOT_PARAMETER rootParameters[3] = {};
+    CD3DX12_ROOT_PARAMETER rootParameters[4] = {};
     CD3DX12_DESCRIPTOR_RANGE tableRanges;
     CD3DX12_DESCRIPTOR_RANGE sampRange;
 
@@ -256,10 +274,11 @@ bool Exercise11::createSkyRS()
     sampRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, ModuleSamplers::COUNT, 0);
 
     rootParameters[0].InitAsConstants((sizeof(Matrix) / sizeof(UINT32)), 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
-    rootParameters[1].InitAsDescriptorTable(1, &tableRanges, D3D12_SHADER_VISIBILITY_PIXEL);
-    rootParameters[2].InitAsDescriptorTable(1, &sampRange, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[1].InitAsConstantBufferView(1, 0, D3D12_SHADER_VISIBILITY_ALL);
+    rootParameters[2].InitAsDescriptorTable(1, &tableRanges, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[3].InitAsDescriptorTable(1, &sampRange, D3D12_SHADER_VISIBILITY_PIXEL);
 
-    rootSignatureDesc.Init(3, rootParameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+    rootSignatureDesc.Init(4, rootParameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
     ComPtr<ID3DBlob> rootSignatureBlob;
 
@@ -268,7 +287,7 @@ bool Exercise11::createSkyRS()
         return false;
     }
 
-    if (FAILED(app->getD3D12()->getDevice()->CreateRootSignature(0, rootSignatureBlob->GetBufferPointer(), rootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&skyRS))))
+    if (FAILED(app->getD3D12()->getDevice()->CreateRootSignature(0, rootSignatureBlob->GetBufferPointer(), rootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&sphereRS))))
     {
         return false;
     }
@@ -276,14 +295,14 @@ bool Exercise11::createSkyRS()
     return true;
 }
 
-bool Exercise11::createSkyPSO()
+bool Exercise11::createSpherePSO()
 {
-    auto dataVS = DX::ReadData(L"skyboxVS.cso");
-    auto dataPS = DX::ReadData(L"skyboxPS.cso");
+    auto dataVS = DX::ReadData(L"Exercise11VS.cso");
+    auto dataPS = DX::ReadData(L"Exercise11_irradiancePS.cso");
 
     D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
-    psoDesc.InputLayout = cubemapMesh->getInputLayoutDesc();
-    psoDesc.pRootSignature = skyRS.Get();                                                   // the root signature that describes the input data this pso needs
+    psoDesc.InputLayout = sphereMesh->getInputLayoutDesc();
+    psoDesc.pRootSignature = sphereRS.Get();                                                        // the root signature that describes the input data this pso needs
     psoDesc.VS = { dataVS.data(), dataVS.size() };                                                  // structure describing where to find the vertex shader bytecode and how large it is
     psoDesc.PS = { dataPS.data(), dataPS.size() };                                                  // same as VS but for pixel shader
     psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;                         // type of topology we are drawing
@@ -294,12 +313,9 @@ bool Exercise11::createSkyPSO()
     psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);                               // a default rasterizer state.
     psoDesc.RasterizerState.FrontCounterClockwise = TRUE;                                           // our models are counter clock wise
     psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-
-    // NOTE: This is important as cubemap Z will be 1 and default comparison is LESS (not equal) 
-    psoDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
     psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);                                         // a default blend state.
     psoDesc.NumRenderTargets = 1;                                                                   // we are only binding one render target
 
     // create the pso
-    return SUCCEEDED(app->getD3D12()->getDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&skyPSO)));
+    return SUCCEEDED(app->getD3D12()->getDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&spherePSO)));
 }

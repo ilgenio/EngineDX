@@ -252,7 +252,7 @@ void Exercise7::renderToTexture(ID3D12GraphicsCommandList* commandList)
     commandList->RSSetScissorRects(1, &scissor);
 
     commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &mvp, 0);
-    commandList->SetGraphicsRootConstantBufferView(1, ringBuffer->allocBuffer(&perFrame, alignUp(sizeof(PerFrame), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT)));
+    commandList->SetGraphicsRootConstantBufferView(1, ringBuffer->allocBuffer(&perFrame));
     commandList->SetGraphicsRootDescriptorTable(4, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
 
     BEGIN_EVENT(commandList, "Model Render Pass");
@@ -265,7 +265,7 @@ void Exercise7::renderToTexture(ID3D12GraphicsCommandList* commandList)
 
             PerInstance perInstance = { model->getModelMatrix().Transpose(), model->getNormalMatrix().Transpose(), material.getPBRPhongMaterial()};
 
-            commandList->SetGraphicsRootConstantBufferView(2, ringBuffer->allocBuffer(&perInstance, alignUp(sizeof(PerInstance), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT)));
+            commandList->SetGraphicsRootConstantBufferView(2, ringBuffer->allocBuffer(&perInstance));
             commandList->SetGraphicsRootDescriptorTable(3, descriptors->getGPUHandle(material.getTexturesTableDescriptor()));
 
             mesh.draw(commandList);

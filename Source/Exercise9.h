@@ -20,14 +20,14 @@ class Exercise9 : public Module
     std::unique_ptr<SkyboxRenderPass>   skyboxRenderPass;
     std::unique_ptr<ImGuiPass>          imguiPass;
 
-    bool showAxis = true;
-    bool showGrid = true;
-    UINT cubemapDesc = 0;
-    UINT imguiTextDesc = 0;
+    bool                                showAxis        = true;
+    bool                                showGrid        = true;
+    UINT                                cubemapDesc     = 0;
+    UINT                                imguiTextDesc   = 0;
 
-    std::unique_ptr<RenderTexture>  renderTexture;
-    ImVec2 canvasSize;
-    ImVec2 canvasPos;
+    std::unique_ptr<RenderTexture>      renderTexture;
+    ImVec2                              canvasSize;
+    ImVec2                              canvasPos;
 
 public:
 

@@ -376,10 +376,10 @@ void Exercise10::renderToTexture(ID3D12GraphicsCommandList* commandList)
     commandList->RSSetScissorRects(1, &scissor);
 
     commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &mvp, 0);
-    commandList->SetGraphicsRootConstantBufferView(1, ringBuffer->allocBuffer(&perFrame, alignUp(sizeof(PerFrame), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT)));
-    commandList->SetGraphicsRootShaderResourceView(3, ringBuffer->allocBuffer(&dirLight, alignUp(sizeof(Directional), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT)));
-    commandList->SetGraphicsRootShaderResourceView(4, ringBuffer->allocBuffer(&pointLight, alignUp(sizeof(Point), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT)));
-    commandList->SetGraphicsRootShaderResourceView(5, ringBuffer->allocBuffer(&spotLight, alignUp(sizeof(Spot), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT)));
+    commandList->SetGraphicsRootConstantBufferView(1, ringBuffer->allocBuffer(&perFrame));
+    commandList->SetGraphicsRootShaderResourceView(3, ringBuffer->allocBuffer(&dirLight));
+    commandList->SetGraphicsRootShaderResourceView(4, ringBuffer->allocBuffer(&pointLight));
+    commandList->SetGraphicsRootShaderResourceView(5, ringBuffer->allocBuffer(&spotLight));
 
     commandList->SetGraphicsRootDescriptorTable(7, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
 
@@ -395,7 +395,7 @@ void Exercise10::renderToTexture(ID3D12GraphicsCommandList* commandList)
 
             PerInstance perInstance = { model->getModelMatrix().Transpose(), model->getNormalMatrix().Transpose(), material.getMetallicRoughnessMaterial()};
 
-            commandList->SetGraphicsRootConstantBufferView(2, ringBuffer->allocBuffer(&perInstance, alignUp(sizeof(PerInstance), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT)));
+            commandList->SetGraphicsRootConstantBufferView(2, ringBuffer->allocBuffer(&perInstance));
             commandList->SetGraphicsRootDescriptorTable(6, descriptors->getGPUHandle(tableStartDesc));
 
             mesh.draw(commandList);
