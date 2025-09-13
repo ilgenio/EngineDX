@@ -158,7 +158,7 @@ void Exercise11::renderToTexture(ID3D12GraphicsCommandList* commandList)
     END_EVENT(commandList);
 
     if (showGrid) dd::xzSquareGrid(-10.0f, 10.0f, 0.0f, 1.0f, dd::colors::LightGray);
-    if (showAxis) dd::axisTriad(ddConvert(Matrix::Identity), 0.1f, 1.0f);
+    if (showAxis) dd::axisTriad(ddConvert(Matrix::Identity), 0.1f, 2.0f);
 
     debugDrawPass->record(commandList, width, height, camera->getView(), proj);
 

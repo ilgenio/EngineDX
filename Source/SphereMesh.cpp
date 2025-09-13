@@ -26,7 +26,10 @@ SphereMesh::SphereMesh(int slices, int stacks)
     };
 
     std::vector<MeshVertex> vertices;
+    std::vector<uint16_t> indices;
+
     vertices.reserve(mesh->npoints);
+    indices.reserve(mesh->ntriangles * 3);
 
     // Create buffers
     for(int i=0; i< mesh->npoints; ++i)
@@ -44,6 +47,13 @@ SphereMesh::SphereMesh(int slices, int stacks)
         vertices.push_back({ pos, tex, norm });
     }
 
+    for(int i=0; i< mesh->ntriangles; ++i)
+    {
+        indices.push_back(mesh->triangles[i * 3]);
+        indices.push_back(mesh->triangles[i * 3 + 2]);
+        indices.push_back(mesh->triangles[i * 3 + 1]);
+    }
+
     numVertices = mesh->npoints;
     numIndices = mesh->ntriangles * 3;;
 
@@ -54,10 +64,10 @@ SphereMesh::SphereMesh(int slices, int stacks)
     inputLayoutDesc = { inputLayout, 3 };
 
     vertexBuffer = app->getResources()->createDefaultBuffer(&vertices[0], sizeof(MeshVertex) * numVertices, "SphereMesh");
-    indexBuffer = app->getResources()->createDefaultBuffer(mesh->triangles, sizeof(PAR_SHAPES_T) * numIndices, "SphereMesh");
+    indexBuffer = app->getResources()->createDefaultBuffer(&indices[0], sizeof(PAR_SHAPES_T) * numIndices, "SphereMesh");
 
     vertexBufferView = { vertexBuffer->GetGPUVirtualAddress(), sizeof(MeshVertex) * numVertices, sizeof(MeshVertex) };
-    indexBufferView = { indexBuffer->GetGPUVirtualAddress(), sizeof(PAR_SHAPES_T) * numIndices, sizeof(PAR_SHAPES_T) == 2 ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT };
+    indexBufferView = { indexBuffer->GetGPUVirtualAddress(), sizeof(uint16_t) * numIndices, DXGI_FORMAT_R16_UINT };
 
     par_shapes_free_mesh(mesh);
 }
