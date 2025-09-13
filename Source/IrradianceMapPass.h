@@ -7,6 +7,14 @@ class CubemapMesh;
 // Use this class to create diffuse environment lighting maps for physically based rendering (PBR) workflows.
 class IrradianceMapPass
 {
+    struct Constants
+    {
+        UINT    samples;
+        INT     cubeMapSize;
+        INT     lodBias;
+        UINT    padding; // Padding to ensure 16-byte alignment
+    };
+
     ComPtr<ID3D12CommandAllocator>    commandAllocator;
     ComPtr<ID3D12GraphicsCommandList> commandList;
     ComPtr<ID3D12RootSignature>       rootSignature;

@@ -70,7 +70,7 @@ ComPtr<ID3D12Resource> PrefilterEnvMapPass::generate(UINT cubeMapDesc, size_t si
     ModuleRTDescriptors* rtDescriptors = app->getRTDescriptors();
     Matrix projMatrix = Matrix::CreatePerspectiveFieldOfView(M_HALF_PI, 1.0f, 0.1f, 100.0f);
 
-    PrefilterConstants constants = {};
+    Constants constants = {};
     constants.samples = 1024;
     constants.cubeMapSize = static_cast<INT>(size);
     constants.lodBias = 0;
@@ -86,7 +86,7 @@ ComPtr<ID3D12Resource> PrefilterEnvMapPass::generate(UINT cubeMapDesc, size_t si
             Matrix mvpMatrix = (viewMatrix * projMatrix).Transpose();
 
             commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &mvpMatrix, 0);
-            commandList->SetGraphicsRoot32BitConstants(1, sizeof(PrefilterConstants) / sizeof(UINT32), &constants, 0);
+            commandList->SetGraphicsRoot32BitConstants(1, sizeof(Constants) / sizeof(UINT32), &constants, 0);
 
             UINT subResource = D3D12CalcSubresource(roughnessLevel, i, 0, mipLevels, 6);
             CD3DX12_RESOURCE_BARRIER toRT = CD3DX12_RESOURCE_BARRIER::Transition(prefilterMap.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET, subResource);
@@ -130,7 +130,7 @@ bool PrefilterEnvMapPass::createRootSignature()
     sampRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, ModuleSamplers::COUNT, 0);
 
     rootParameters[0].InitAsConstants((sizeof(Matrix) / sizeof(UINT32)), 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
-    rootParameters[1].InitAsConstants((sizeof(PrefilterConstants) / sizeof(UINT32)), 1, 0, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[1].InitAsConstants((sizeof(Constants) / sizeof(UINT32)), 1, 0, D3D12_SHADER_VISIBILITY_PIXEL);
     rootParameters[2].InitAsDescriptorTable(1, &tableRanges, D3D12_SHADER_VISIBILITY_PIXEL);
     rootParameters[3].InitAsDescriptorTable(1, &sampRange, D3D12_SHADER_VISIBILITY_PIXEL);
 

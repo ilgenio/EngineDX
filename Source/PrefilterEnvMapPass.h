@@ -2,9 +2,12 @@
 
  class CubemapMesh;
 
+// PrefilterEnvMapPass encapsulates the process of generating a prefiltered environment map from a cubemap texture in a DirectX 12 application.
+// It manages command list setup, root signature, pipeline state, and mesh resources required for environment map prefiltering.
+// Use this class to create mipmapped specular reflection maps for physically based rendering (PBR) workflows.
 class PrefilterEnvMapPass
 {
-    struct PrefilterConstants
+    struct Constants
     {
         float   roughness;
         UINT    samples;
