@@ -136,7 +136,6 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
       return FALSE;
    }
 
-      
    app = new Application(__argc, __wargv, hWnd);
 
    if(!app->init())
@@ -145,6 +144,14 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
        return FALSE;
    }
+
+   // Set the window to be the size of the monitor
+   MONITORINFO monitor = {};
+   monitor.cbSize = sizeof(monitor);
+   GetMonitorInfo(MonitorFromWindow(hWnd, MONITOR_DEFAULTTONEAREST), &monitor);
+   RECT rect = monitor.rcMonitor;
+   SetWindowPos(hWnd, nullptr, static_cast<int>(rect.left), static_cast<int>(rect.top), static_cast<int>(rect.left + rect.right), static_cast<int>(rect.top + rect.bottom), SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
+   SetWindowPos(hWnd, nullptr, static_cast<int>(rect.left), static_cast<int>(rect.top), static_cast<int>(rect.left + rect.right), static_cast<int>(rect.top + rect.bottom), 0);
 
    ShowWindow(hWnd, nCmdShow);
    UpdateWindow(hWnd);

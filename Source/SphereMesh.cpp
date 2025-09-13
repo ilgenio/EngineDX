@@ -54,7 +54,7 @@ SphereMesh::SphereMesh(int slices, int stacks)
     inputLayoutDesc = { inputLayout, 3 };
 
     vertexBuffer = app->getResources()->createDefaultBuffer(&vertices[0], sizeof(MeshVertex) * numVertices, "SphereMesh");
-    indexBuffer = app->getResources()->createDefaultBuffer(&mesh->triangles, sizeof(PAR_SHAPES_T) * numIndices, "SphereMesh");
+    indexBuffer = app->getResources()->createDefaultBuffer(mesh->triangles, sizeof(PAR_SHAPES_T) * numIndices, "SphereMesh");
 
     vertexBufferView = { vertexBuffer->GetGPUVirtualAddress(), sizeof(MeshVertex) * numVertices, sizeof(MeshVertex) };
     indexBufferView = { indexBuffer->GetGPUVirtualAddress(), sizeof(PAR_SHAPES_T) * numIndices, sizeof(PAR_SHAPES_T) == 2 ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT };

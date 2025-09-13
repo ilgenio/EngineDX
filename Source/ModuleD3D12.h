@@ -41,7 +41,7 @@ private:
 
     unsigned                            windowWidth  = 0;
     unsigned                            windowHeight = 0;
-    bool                                fullscreen   = false;
+    bool                                fullscreen  = false;
     RECT                                lastWindowRect;
     
 

@@ -51,7 +51,7 @@ Exercise11::~Exercise11()
 
 bool Exercise11::init() 
 {
-    sphereMesh = std::make_unique<SphereMesh>(16, 16);
+    sphereMesh = std::make_unique<SphereMesh>(64, 64);
 
     bool ok = createSphereRS();
     ok = ok && createSpherePSO();
@@ -112,11 +112,13 @@ void Exercise11::renderToTexture(ID3D12GraphicsCommandList* commandList)
     const Quaternion& rot = camera->getRot();
     Quaternion invRot;
     rot.Inverse(invRot);
-    Matrix view = Matrix::CreateFromQuaternion(invRot);
+    
+    const Matrix & view = camera->getView();
     Matrix proj = ModuleCamera::getPerspectiveProj(float(width) / float(height));
-    Matrix model = Matrix::Identity;
+    Matrix model = Matrix::CreateScale(1.0f);
     Matrix normalMatrix = model;
     Matrix mvp = model * view * proj;
+    mvp = mvp.Transpose();
 
     BEGIN_EVENT(commandList, "Exercise11 Render to Texture");
 
@@ -132,13 +134,13 @@ void Exercise11::renderToTexture(ID3D12GraphicsCommandList* commandList)
     commandList->RSSetViewports(1, &viewport);
     commandList->RSSetScissorRects(1, &scissor);
 
-    skyboxRenderPass->record(commandList, cubemapDesc, view, proj);
+    skyboxRenderPass->record(commandList, cubemapDesc, Matrix::CreateFromQuaternion(invRot), proj);
 
     BEGIN_EVENT(commandList, "Exercise11 Render Sphere");
 
     PerInstance perInstanceData;
     perInstanceData.modelMat = model;
-    perInstanceData.normalMat = normalMatrix;
+    perInstanceData.normalMat = Matrix::Identity;
 
     ModuleRingBuffer* ringBuffer = app->getRingBuffer();
 
@@ -165,6 +167,14 @@ void Exercise11::renderToTexture(ID3D12GraphicsCommandList* commandList)
 
 void Exercise11::imGuiCommands()
 {
+    ImGui::Begin("IBL Viewer Options");
+    ImGui::Separator();
+    ImGui::Text("FPS: [%d]. Avg. elapsed (Ms): [%g] ", uint32_t(app->getFPS()), app->getAvgElapsedMs());
+    ImGui::Separator();
+    ImGui::Checkbox("Show grid", &showGrid);
+    ImGui::Checkbox("Show axis", &showAxis);
+    ImGui::End();
+
     ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
 
     bool viewerFocused = false;
@@ -311,7 +321,7 @@ bool Exercise11::createSpherePSO()
     psoDesc.SampleDesc = {1, 0};                                                                    // must be the same sample description as the swapchain and depth/stencil buffer
     psoDesc.SampleMask = 0xffffffff;                                                                // sample mask has to do with multi-sampling. 0xffffffff means point sampling is done
     psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);                               // a default rasterizer state.
-    psoDesc.RasterizerState.FrontCounterClockwise = TRUE;                                           // our models are counter clock wise
+    psoDesc.RasterizerState.FrontCounterClockwise = FALSE;                                           // our models are counter clock wise
     psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
     psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);                                         // a default blend state.
     psoDesc.NumRenderTargets = 1;                                                                   // we are only binding one render target
