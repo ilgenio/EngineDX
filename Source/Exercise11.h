@@ -7,6 +7,7 @@ class SphereMesh;
 class DebugDrawPass;
 class ImGuiPass;
 class IrradianceMapPass;
+class PrefilterEnvMapPass;
 class SkyboxRenderPass;
 class RenderTexture;
 
@@ -23,13 +24,16 @@ class Exercise11 : public Module
     ComPtr<ID3D12RootSignature>         sphereRS;
     ComPtr<ID3D12PipelineState>         spherePSO;
 
-    std::unique_ptr<SphereMesh>         sphereMesh;
-    ComPtr<ID3D12Resource>              cubemap;
-    std::unique_ptr<DebugDrawPass>      debugDrawPass;
-    std::unique_ptr<ImGuiPass>          imguiPass;
-    std::unique_ptr<IrradianceMapPass>  irradianceMapPass;
-    std::unique_ptr<SkyboxRenderPass>   skyboxRenderPass;
-    ComPtr<ID3D12Resource>              irradianceMap;
+    std::unique_ptr<SphereMesh>             sphereMesh;
+    ComPtr<ID3D12Resource>                  cubemap;
+    std::unique_ptr<DebugDrawPass>          debugDrawPass;
+    std::unique_ptr<ImGuiPass>              imguiPass;
+    std::unique_ptr<IrradianceMapPass>      irradianceMapPass;
+    std::unique_ptr<PrefilterEnvMapPass>    prefilterEnvMapPass;
+    std::unique_ptr<SkyboxRenderPass>       skyboxRenderPass;
+
+    ComPtr<ID3D12Resource>                  irradianceMap;
+    ComPtr<ID3D12Resource>                  prefilteredEnvMap;
 
     bool showAxis = true;
     bool showGrid = true;

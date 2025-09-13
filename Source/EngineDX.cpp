@@ -220,7 +220,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         PostQuitMessage(0);
         break;
     case WM_SIZE:
-        app->getD3D12()->resize();
+        if (wParam == SIZE_MINIMIZED) {
+            app->setPaused(true);
+        }
+        else {
+            app->setPaused(false);
+            app->getD3D12()->resize();
+        }
         break;
     case WM_SYSKEYDOWN:
         if (wParam == VK_RETURN && (lParam & 0x60000000) == 0x20000000)

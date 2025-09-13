@@ -121,17 +121,20 @@ void Application::update()
     tickList[tickIndex] = elapsedMilis;
     tickIndex = (tickIndex + 1) % MAX_FPS_TICKS;
 
-    for (auto it = modules.begin(); it != modules.end(); ++it)
-        (*it)->update();
-    
-    for(auto it = modules.begin(); it != modules.end(); ++it)
-		(*it)->preRender();
+    if (!app->paused)
+    {
+        for (auto it = modules.begin(); it != modules.end(); ++it)
+            (*it)->update();
 
-    for (auto it = modules.begin(); it != modules.end(); ++it)
-        (*it)->render();
-    
-    for(auto it = modules.begin(); it != modules.end(); ++it)
-		(*it)->postRender();
+        for (auto it = modules.begin(); it != modules.end(); ++it)
+            (*it)->preRender();
+
+        for (auto it = modules.begin(); it != modules.end(); ++it)
+            (*it)->render();
+
+        for (auto it = modules.begin(); it != modules.end(); ++it)
+            (*it)->postRender();
+    }
 }
 
 bool Application::cleanUp()

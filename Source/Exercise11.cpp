@@ -14,6 +14,7 @@
 #include "DebugDrawPass.h"
 
 #include "IrradianceMapPass.h"
+#include "PrefilterEnvMapPass.h"
 #include "ImGuiPass.h"
 #include "SkyboxRenderPass.h"
 
@@ -22,7 +23,7 @@
 #include "ReadData.h"
 #include "RenderTexture.h"
 
-#define CAPTURE_IBL_GENERATION 0
+#define CAPTURE_IBL_GENERATION 1
 
 Exercise11::Exercise11()
 {
@@ -66,6 +67,9 @@ bool Exercise11::init()
 
         irradianceMapPass = std::make_unique<IrradianceMapPass>();
         irradianceMapPass->init();
+
+        prefilterEnvMapPass = std::make_unique<PrefilterEnvMapPass>();
+        prefilterEnvMapPass->init();
 
         skyboxRenderPass = std::make_unique<SkyboxRenderPass>();
 
@@ -214,7 +218,7 @@ void Exercise11::render()
 
 #if CAPTURE_IBL_GENERATION
     
-    bool takeCapture = !irradianceMap && PIXIsAttachedForGpuCapture();
+    bool takeCapture = (!irradianceMap || !prefilteredEnvMap) && PIXIsAttachedForGpuCapture();
     if (takeCapture)
     {
         PIXBeginCapture(PIX_CAPTURE_GPU, nullptr);
@@ -224,10 +228,12 @@ void Exercise11::render()
     ID3D12GraphicsCommandList* commandList = d3d12->getCommandList();
     commandList->Reset(d3d12->getCommandAllocator(), nullptr);
 
-    if(!irradianceMap)
+    if(!irradianceMap || !prefilterEnvMapPass)
     {
         irradianceMap = irradianceMapPass->generate(cubemapDesc, 512);
         irradianceMapDesc = descriptors->createCubeTextureSRV(irradianceMap.Get());
+
+        prefilteredEnvMap = prefilterEnvMapPass->generate(cubemapDesc, 512, 5);
     }
 
     if(renderTexture->isValid())

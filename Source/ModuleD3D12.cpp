@@ -104,11 +104,15 @@ void ModuleD3D12::resize()
         }
 
         DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
-
+        
         bool ok = SUCCEEDED(swapChain->GetDesc(&swapChainDesc));
         ok = ok && SUCCEEDED(swapChain->ResizeBuffers(FRAMES_IN_FLIGHT, windowWidth, windowHeight, swapChainDesc.BufferDesc.Format, swapChainDesc.Flags));
-        ok = ok && createRenderTargets();
-        ok = ok && createDepthStencil();
+
+        if (windowWidth > 0 && windowHeight > 0)
+        {
+            ok = ok && createRenderTargets();
+            ok = ok && createDepthStencil();
+        }
     }
 }
 

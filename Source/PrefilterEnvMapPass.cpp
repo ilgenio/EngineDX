@@ -23,6 +23,8 @@ PrefilterEnvMapPass::~PrefilterEnvMapPass()
 
 bool PrefilterEnvMapPass::init()
 {
+    cubemapMesh = std::make_unique<CubemapMesh>();
+
     ModuleD3D12 *d3d12 = app->getD3D12();
     ID3D12Device4 *device = d3d12->getDevice();
 
@@ -61,8 +63,8 @@ ComPtr<ID3D12Resource> PrefilterEnvMapPass::generate(UINT cubeMapDesc, size_t si
     commandList->RSSetViewports(1, &viewport);
     commandList->RSSetScissorRects(1, &scissor);
 
-    commandList->SetGraphicsRootDescriptorTable(1, descriptors->getGPUHandle(cubeMapDesc));
-    commandList->SetGraphicsRootDescriptorTable(2, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
+    commandList->SetGraphicsRootDescriptorTable(2, descriptors->getGPUHandle(cubeMapDesc));
+    commandList->SetGraphicsRootDescriptorTable(3, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
 
     // create render target view for each face
     ModuleRTDescriptors* rtDescriptors = app->getRTDescriptors();
