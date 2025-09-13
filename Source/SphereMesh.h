@@ -11,6 +11,7 @@ class SphereMesh
     uint32_t numIndices = 0;
     uint32_t numVertices = 0;
 public:
+    SphereMesh() = delete;
     SphereMesh(int slices, int stacks);
     ~SphereMesh();
 

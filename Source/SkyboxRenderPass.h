@@ -1,0 +1,24 @@
+#pragma once
+
+class CubemapMesh;
+
+// SkyboxRenderPass encapsulates the rendering of a skybox using a cubemap texture in a DirectX 12 application.
+// It manages the root signature, pipeline state object, and mesh resources required for skybox rendering.
+// The class provides methods to record draw commands for the skybox, handling shader setup and resource binding.
+// Use this class to efficiently render a background environment with a cubemap in your graphics pipeline.
+class SkyboxRenderPass
+{
+    ComPtr<ID3D12RootSignature>  rootSignature;
+    ComPtr<ID3D12PipelineState>  pso;
+
+    std::unique_ptr<CubemapMesh> cubemapMesh;
+public:
+    SkyboxRenderPass();
+    ~SkyboxRenderPass();
+
+    void record(ID3D12GraphicsCommandList* commandList, UINT cubemapSRV, const Matrix& view, const Matrix projection);
+
+private:
+    bool createRootSignature();
+    bool createPSO();
+};

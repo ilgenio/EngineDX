@@ -3,6 +3,7 @@
 #include "Module.h"
 
 class CubemapMesh;
+class SphereMesh;
 class DebugDrawPass;
 class ImGuiPass;
 class IrradianceMapPass;
@@ -10,9 +11,13 @@ class RenderTexture;
 
 class Exercise11 : public Module
 {
-    ComPtr<ID3D12RootSignature>         rootSignature;
-    ComPtr<ID3D12PipelineState>         pso;
+    ComPtr<ID3D12RootSignature>         skyRS;
+    ComPtr<ID3D12RootSignature>         sphereRS;
 
+    ComPtr<ID3D12PipelineState>         skyPSO;
+    ComPtr<ID3D12PipelineState>         spherePSO;
+
+    std::unique_ptr<SphereMesh>         sphereMesh;
     std::unique_ptr<CubemapMesh>        cubemapMesh;
     ComPtr<ID3D12Resource>              cubemap;
     std::unique_ptr<DebugDrawPass>      debugDrawPass;
@@ -46,6 +51,9 @@ private:
     void resizeRenderTexture();
     void renderToTexture(ID3D12GraphicsCommandList* commandList);
 
-    bool createRootSignature();
-    bool createPSO();
+    bool createSkyRS();
+    bool createSkyPSO();
+
+    bool createSphereRS();
+    bool createSpherePSO();
 };

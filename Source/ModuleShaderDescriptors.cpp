@@ -13,7 +13,7 @@ ModuleShaderDescriptors::~ModuleShaderDescriptors()
 {
     handles.forceReleaseDeferred();
 
-    _ASSERT_EXPR((handles.getSize() - handles.getFreeCount()) == 0, "ModuleShaderDescriptors has leaks!!!");
+    _ASSERTE((handles.getSize() - handles.getFreeCount()) == 0);
 }
 
 bool ModuleShaderDescriptors::init()

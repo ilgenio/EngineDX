@@ -11,7 +11,7 @@
 #include "ModuleCamera.h"
 #include "DebugDrawPass.h"
 
-#include "CubemapMesh.h"
+#include "SkyboxRenderPass.h"
 #include "ReadData.h"
 #include "RenderTexture.h"
 
@@ -22,36 +22,39 @@ Exercise9::Exercise9()
 
 Exercise9::~Exercise9()
 {
+    if(cubemapDesc)
+    {
+        ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
+        descriptors->release(cubemapDesc);
+    }
+
+    if (imguiTextDesc)
+    {
+        ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
+        descriptors->release(imguiTextDesc);
+    }
 }
 
 bool Exercise9::init() 
 {
-    cubemapMesh = std::make_unique<CubemapMesh>();
+    ModuleResources* resources = app->getResources();
+    ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
+    ModuleD3D12* d3d12 = app->getD3D12();
 
-    bool ok = createRootSignature();
-    ok = ok && createPSO();
+    debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue());
+    skyboxRenderPass = std::make_unique<SkyboxRenderPass>();
 
-    if (ok)
+    cubemap = resources->createTextureFromFile(std::wstring(L"Assets/Textures/cubemap.dds"));
+
+    if (cubemap)
     {
-        ModuleResources* resources = app->getResources();
-        ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
-        ModuleD3D12* d3d12 = app->getD3D12();
-
-        debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue());
-
-        cubemap = resources->createTextureFromFile(std::wstring(L"Assets/Textures/cubemap.dds"));
-
-        if ((ok = cubemap) == true)
-        {
-            cubemapDesc = descriptors->createCubeTextureSRV(cubemap.Get());
-        }
-
-        renderTexture = std::make_unique<RenderTexture>("Exercise9", DXGI_FORMAT_R8G8B8A8_UNORM, Vector4(0.2f, 0.2f, 0.2f, 1.0f), DXGI_FORMAT_D32_FLOAT, 1.0f);
-
-        UINT imguiTextDesc = descriptors->alloc();
-        imguiPass = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd(), descriptors->getCPUHandle(imguiTextDesc), descriptors->getGPUHandle(imguiTextDesc));
-
+        cubemapDesc = descriptors->createCubeTextureSRV(cubemap.Get());
     }
+
+    renderTexture = std::make_unique<RenderTexture>("Exercise9", DXGI_FORMAT_R8G8B8A8_UNORM, Vector4(0.2f, 0.2f, 0.2f, 1.0f), DXGI_FORMAT_D32_FLOAT, 1.0f);
+
+    imguiTextDesc = descriptors->alloc();
+    imguiPass = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd(), descriptors->getCPUHandle(imguiTextDesc), descriptors->getGPUHandle(imguiTextDesc));
 
     return true;
 }
@@ -81,15 +84,6 @@ void Exercise9::renderToTexture(ID3D12GraphicsCommandList* commandList)
     unsigned width = unsigned(canvasSize.x);
     unsigned height = unsigned(canvasSize.y);
 
-    const Quaternion& rot = camera->getRot();
-    Quaternion invRot;
-    rot.Inverse(invRot);
-    Matrix view = Matrix::CreateFromQuaternion(invRot);
-    Matrix proj = ModuleCamera::getPerspectiveProj(float(width) / float(height));
-
-    Matrix vp = view * proj;
-    vp = vp.Transpose();
-
     BEGIN_EVENT(commandList, "Sky Cubemap Render Pass");
 
     renderTexture->transitionToRTV(commandList);
@@ -101,17 +95,16 @@ void Exercise9::renderToTexture(ID3D12GraphicsCommandList* commandList)
     commandList->RSSetViewports(1, &viewport);
     commandList->RSSetScissorRects(1, &scissor);
 
-    commandList->SetGraphicsRootSignature(rootSignature.Get());
-
-    commandList->RSSetViewports(1, &viewport);
-    commandList->RSSetScissorRects(1, &scissor);
-
     ID3D12DescriptorHeap* descriptorHeaps[] = { descriptors->getHeap(), samplers->getHeap() };
     commandList->SetDescriptorHeaps(2, descriptorHeaps);
-    commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &vp, 0);
-    commandList->SetGraphicsRootDescriptorTable(1, descriptors->getGPUHandle(cubemapDesc));
-    commandList->SetGraphicsRootDescriptorTable(2, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
-    cubemapMesh->draw(commandList);
+
+    const Quaternion& rot = camera->getRot();
+    Quaternion invRot;
+    rot.Inverse(invRot);
+    Matrix view = Matrix::CreateFromQuaternion(invRot);
+    Matrix proj = ModuleCamera::getPerspectiveProj(float(width) / float(height));
+
+    skyboxRenderPass->record(commandList, cubemapDesc, view, proj);
 
     END_EVENT(commandList);
 
@@ -162,7 +155,7 @@ void Exercise9::render()
     ModuleCamera* camera = app->getCamera();
 
     ID3D12GraphicsCommandList* commandList = d3d12->getCommandList();
-    commandList->Reset(d3d12->getCommandAllocator(), pso.Get());
+    commandList->Reset(d3d12->getCommandAllocator(), nullptr);
 
     if(renderTexture->isValid())
     {
@@ -183,7 +176,6 @@ void Exercise9::render()
     float clearColor[] = { 0.2f, 0.2f, 0.2f, 1.0f };
     commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
     commandList->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
-    commandList->SetGraphicsRootSignature(rootSignature.Get());
 
     D3D12_VIEWPORT viewport{ 0.0f, 0.0f, float(width), float(height), 0.0f, 1.0f };
     D3D12_RECT scissor = { 0, 0, LONG(width), LONG(height) };
@@ -200,63 +192,4 @@ void Exercise9::render()
         ID3D12CommandList* commandLists[] = { commandList };
         d3d12->getDrawCommandQueue()->ExecuteCommandLists(UINT(std::size(commandLists)), commandLists);
     }
-}
-
-bool Exercise9::createRootSignature()
-{
-    CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-    CD3DX12_ROOT_PARAMETER rootParameters[3] = {};
-    CD3DX12_DESCRIPTOR_RANGE tableRanges;
-    CD3DX12_DESCRIPTOR_RANGE sampRange;
-
-    tableRanges.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
-    sampRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, ModuleSamplers::COUNT, 0);
-
-    rootParameters[0].InitAsConstants((sizeof(Matrix) / sizeof(UINT32)), 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
-    rootParameters[1].InitAsDescriptorTable(1, &tableRanges, D3D12_SHADER_VISIBILITY_PIXEL);
-    rootParameters[2].InitAsDescriptorTable(1, &sampRange, D3D12_SHADER_VISIBILITY_PIXEL);
-
-    rootSignatureDesc.Init(3, rootParameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-
-    ComPtr<ID3DBlob> rootSignatureBlob;
-
-    if (FAILED(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &rootSignatureBlob, nullptr)))
-    {
-        return false;
-    }
-
-    if (FAILED(app->getD3D12()->getDevice()->CreateRootSignature(0, rootSignatureBlob->GetBufferPointer(), rootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature))))
-    {
-        return false;
-    }
-
-    return true;
-}
-
-bool Exercise9::createPSO()
-{
-    auto dataVS = DX::ReadData(L"skyboxVS.cso");
-    auto dataPS = DX::ReadData(L"Exercise9PS.cso");
-
-    D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
-    psoDesc.InputLayout = cubemapMesh->getInputLayoutDesc(); 
-    psoDesc.pRootSignature = rootSignature.Get();                                                   // the root signature that describes the input data this pso needs
-    psoDesc.VS = { dataVS.data(), dataVS.size() };                                                  // structure describing where to find the vertex shader bytecode and how large it is
-    psoDesc.PS = { dataPS.data(), dataPS.size() };                                                  // same as VS but for pixel shader
-    psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;                         // type of topology we are drawing
-    psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;                                             // format of the render target
-    psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
-    psoDesc.SampleDesc = {1, 0};                                                                    // must be the same sample description as the swapchain and depth/stencil buffer
-    psoDesc.SampleMask = 0xffffffff;                                                                // sample mask has to do with multi-sampling. 0xffffffff means point sampling is done
-    psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);                               // a default rasterizer state.
-    psoDesc.RasterizerState.FrontCounterClockwise = TRUE;                                           // our models are counter clock wise
-    psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-
-    // NOTE: This is important as cubemap Z will be 1 and default comparison is LESS (not equal) 
-    psoDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
-    psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);                                         // a default blend state.
-    psoDesc.NumRenderTargets = 1;                                                                   // we are only binding one render target
-
-    // create the pso
-    return SUCCEEDED(app->getD3D12()->getDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pso)));
 }

@@ -14,6 +14,7 @@
 #include "IrradianceMapPass.h"
 #include "ImGuiPass.h"
 #include "CubemapMesh.h"
+#include "SphereMesh.h"
 #include "ReadData.h"
 #include "RenderTexture.h"
 
@@ -46,10 +47,11 @@ Exercise11::~Exercise11()
 
 bool Exercise11::init() 
 {
+    sphereMesh = std::make_unique<SphereMesh>(16, 16);
     cubemapMesh = std::make_unique<CubemapMesh>();
 
-    bool ok = createRootSignature();
-    ok = ok && createPSO();
+    bool ok = createSkyRS();
+    ok = ok && createSkyPSO();
 
     if (ok)
     {
@@ -118,7 +120,7 @@ void Exercise11::renderToTexture(ID3D12GraphicsCommandList* commandList)
     renderTexture->bindAsRenderTarget(commandList);
     renderTexture->clear(commandList);
 
-    commandList->SetGraphicsRootSignature(rootSignature.Get());
+    commandList->SetGraphicsRootSignature(skyRS.Get());
 
     D3D12_VIEWPORT viewport{ 0.0f, 0.0f, float(width), float(height), 0.0f, 1.0f };
     D3D12_RECT scissor = { 0, 0, LONG(width), LONG(height) };
@@ -192,7 +194,7 @@ void Exercise11::render()
 #endif 
 
     ID3D12GraphicsCommandList* commandList = d3d12->getCommandList();
-    commandList->Reset(d3d12->getCommandAllocator(), pso.Get());
+    commandList->Reset(d3d12->getCommandAllocator(), skyPSO.Get());
 
     if(!irradianceMap)
     {
@@ -218,7 +220,6 @@ void Exercise11::render()
     commandList->OMSetRenderTargets(1, &rtv, false, &dsv);
     commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
     commandList->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
-    commandList->SetGraphicsRootSignature(rootSignature.Get());
 
     D3D12_VIEWPORT viewport{ 0.0f, 0.0f, float(width), float(height), 0.0f, 1.0f };
     D3D12_RECT scissor = { 0, 0, LONG(width), LONG(height) };
@@ -244,7 +245,7 @@ void Exercise11::render()
 #endif 
 }
 
-bool Exercise11::createRootSignature()
+bool Exercise11::createSkyRS()
 {
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
     CD3DX12_ROOT_PARAMETER rootParameters[3] = {};
@@ -267,7 +268,7 @@ bool Exercise11::createRootSignature()
         return false;
     }
 
-    if (FAILED(app->getD3D12()->getDevice()->CreateRootSignature(0, rootSignatureBlob->GetBufferPointer(), rootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature))))
+    if (FAILED(app->getD3D12()->getDevice()->CreateRootSignature(0, rootSignatureBlob->GetBufferPointer(), rootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&skyRS))))
     {
         return false;
     }
@@ -275,14 +276,14 @@ bool Exercise11::createRootSignature()
     return true;
 }
 
-bool Exercise11::createPSO()
+bool Exercise11::createSkyPSO()
 {
     auto dataVS = DX::ReadData(L"skyboxVS.cso");
-    auto dataPS = DX::ReadData(L"Exercise9PS.cso");
+    auto dataPS = DX::ReadData(L"skyboxPS.cso");
 
     D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
     psoDesc.InputLayout = cubemapMesh->getInputLayoutDesc();
-    psoDesc.pRootSignature = rootSignature.Get();                                                   // the root signature that describes the input data this pso needs
+    psoDesc.pRootSignature = skyRS.Get();                                                   // the root signature that describes the input data this pso needs
     psoDesc.VS = { dataVS.data(), dataVS.size() };                                                  // structure describing where to find the vertex shader bytecode and how large it is
     psoDesc.PS = { dataPS.data(), dataPS.size() };                                                  // same as VS but for pixel shader
     psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;                         // type of topology we are drawing
@@ -300,5 +301,5 @@ bool Exercise11::createPSO()
     psoDesc.NumRenderTargets = 1;                                                                   // we are only binding one render target
 
     // create the pso
-    return SUCCEEDED(app->getD3D12()->getDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pso)));
+    return SUCCEEDED(app->getD3D12()->getDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&skyPSO)));
 }
