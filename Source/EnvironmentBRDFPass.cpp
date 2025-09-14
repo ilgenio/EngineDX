@@ -42,7 +42,7 @@ ComPtr<ID3D12Resource> EnvironmentBRDFPass::generate(size_t size)
     ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
     ModuleSamplers* samplers = app->getSamplers();
 
-    ComPtr<ID3D12Resource> environmentMap = resources->createRenderTarget(DXGI_FORMAT_R16G16B16A16_FLOAT, size, size, Vector4(0.0f, 0.0f, 0.0f, 1.0f), "EnvironmentBRDF Map");
+    ComPtr<ID3D12Resource> environmentMap = resources->createRenderTarget(DXGI_FORMAT_R16G16_FLOAT, size, size, Vector4(0.0f, 0.0f, 0.0f, 1.0f), "EnvironmentBRDF Map");
 
     BEGIN_EVENT(commandList.Get(), "EnvironmentBRDF Map");
 
@@ -120,14 +120,14 @@ bool EnvironmentBRDFPass::createPSO()
     psoDesc.VS = { dataVS.data(), dataVS.size() };                                                  
     psoDesc.PS = { dataPS.data(), dataPS.size() };                                                  
     psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;                         
-    psoDesc.RTVFormats[0] = DXGI_FORMAT_R16G16B16A16_FLOAT;                                         
+    psoDesc.RTVFormats[0] = DXGI_FORMAT_R16G16_FLOAT;                                         
     psoDesc.DSVFormat = DXGI_FORMAT_UNKNOWN;
     psoDesc.SampleDesc = {1, 0};                                                                    
     psoDesc.SampleMask = 0xffffffff;                                                                
     psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);                               
-    psoDesc.RasterizerState.FrontCounterClockwise = TRUE; 
     psoDesc.DepthStencilState.DepthEnable = FALSE;
-    psoDesc.DepthStencilState.DepthEnable = FALSE;
+    psoDesc.DepthStencilState.StencilEnable = FALSE;
+    psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
     psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);                                         
     psoDesc.NumRenderTargets = 1;                                                                   
 

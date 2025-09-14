@@ -8,6 +8,7 @@ class DebugDrawPass;
 class ImGuiPass;
 class IrradianceMapPass;
 class PrefilterEnvMapPass;
+class EnvironmentBRDFPass;
 class SkyboxRenderPass;
 class RenderTexture;
 
@@ -30,10 +31,12 @@ class Exercise11 : public Module
     std::unique_ptr<ImGuiPass>              imguiPass;
     std::unique_ptr<IrradianceMapPass>      irradianceMapPass;
     std::unique_ptr<PrefilterEnvMapPass>    prefilterEnvMapPass;
+    std::unique_ptr<EnvironmentBRDFPass>    environmentBRDFPass ;
     std::unique_ptr<SkyboxRenderPass>       skyboxRenderPass;
 
     ComPtr<ID3D12Resource>                  irradianceMap;
     ComPtr<ID3D12Resource>                  prefilteredEnvMap;
+    ComPtr<ID3D12Resource>                  environmentBRDF;
 
     bool showAxis = true;
     bool showGrid = true;
@@ -42,6 +45,8 @@ class Exercise11 : public Module
     UINT imguiTextDesc = 0;
     UINT cubemapDesc = 0;
     UINT irradianceMapDesc = 0;
+    UINT prefilteredEnvMapDesc = 0;
+    UINT environmentBRDFDesc = 0;
 
     std::unique_ptr<RenderTexture> renderTexture;
     ImVec2 canvasSize;

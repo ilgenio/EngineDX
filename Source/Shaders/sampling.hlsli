@@ -32,9 +32,9 @@ float3 cosineSample(float u1, float u2)
 
 float3 ggxSample(in float2 rand, float roughness)
 {
-    float a = roughness*roughness;
+    float a2 = roughness * roughness;
     float phi = 2.0*PI*rand.x;
-    float cos_theta = sqrt((1.0-rand.y)/(rand.y*(a*a-1)+1));
+    float cos_theta = sqrt((1.0-rand.y)/(rand.y*(a2-1)+1));
     float sin_theta = sqrt(1-cos_theta*cos_theta);
 
     // spherical to cartesian conversion

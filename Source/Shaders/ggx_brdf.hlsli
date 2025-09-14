@@ -13,37 +13,38 @@ float3 schlick(float3 rf0, float dotLH)
     return rf0 + (1 - rf0) * pow(1.0-dotLH, 5);
 }
 
-float D_GGX(float roughness, float NdotH)
+float D_GGX(float alphaRoughness, float NdotH)
 {
-    float a = roughness * roughness;
-    float denom = NdotH * NdotH * (a - 1.0) + 1.0;
+    float a2 = alphaRoughness * alphaRoughness;
+    float denom = NdotH * NdotH * (a2 - 1.0) + 1.0;
 
     if(denom > 0.0)
-        return a / (PI * denom * denom);
+        return a2 / (PI * denom * denom);
 
     return 0.0;
 }
 
-float V_GGX(float NdotV, float NdotL, float roughness)
+float V_GGX(float NdotV, float NdotL, float alphaRoughness)
 {
-    float a = roughness * roughness;
-    float GGX_V = NdotL * sqrt(NdotV*NdotV + (1-a) +a );
-    float GGX_L = NdotV * sqrt(NdotL*NdotL + (1-a) +a );
+    float a2 = alphaRoughness * alphaRoughness;
+
+    float GGX_V = NdotL * sqrt(NdotV*NdotV * (1.0-a2) + a2 );
+    float GGX_L = NdotV * sqrt(NdotL*NdotL * (1.0-a2) + a2 );
     float denom = GGX_V + GGX_L;
 
     if(denom > 0.0)
-        return 0.5 / (PI * denom * denom);
+        return 0.5 / (denom);
 
     return 0.0;
 }
 
-float3 GGX(float3 L, float3 N, float3 V, float3 R, float3 Cs, float roughness)
+float3 GGX(float3 L, float3 N, float3 V, float3 R, float3 Cs, float alphaRoughness)
 {
     float3 H = normalize(V + L);
 
     float3 F = schlick(Cs, saturate(dot(L, H)));
-    float D = D_GGX(roughness, saturate(dot(N, H)));
-    float Vis = V_GGX(saturate(dot(N, V)), saturate(dot(N, L)), roughness);
+    float D = D_GGX(alphaRoughness, saturate(dot(N, H)));
+    float Vis = V_GGX(saturate(dot(N, V)), saturate(dot(N, L)), alphaRoughness);
 
     return 0.25 * F * D * Vis;
 }

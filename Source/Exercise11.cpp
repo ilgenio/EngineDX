@@ -15,6 +15,8 @@
 
 #include "IrradianceMapPass.h"
 #include "PrefilterEnvMapPass.h"
+#include "EnvironmentBRDFPass.h"
+
 #include "ImGuiPass.h"
 #include "SkyboxRenderPass.h"
 
@@ -48,6 +50,16 @@ Exercise11::~Exercise11()
     {
         descriptors->release(irradianceMapDesc);
     }
+
+    if(environmentBRDFDesc)
+    {
+        descriptors->release(environmentBRDFDesc);
+    }
+    
+    if(prefilteredEnvMapDesc)
+    {
+        descriptors->release(prefilteredEnvMapDesc);
+    }
 }
 
 bool Exercise11::init() 
@@ -70,6 +82,9 @@ bool Exercise11::init()
 
         prefilterEnvMapPass = std::make_unique<PrefilterEnvMapPass>();
         prefilterEnvMapPass->init();
+
+        environmentBRDFPass = std::make_unique<EnvironmentBRDFPass>();
+        environmentBRDFPass->init();
 
         skyboxRenderPass = std::make_unique<SkyboxRenderPass>();
 
@@ -171,15 +186,24 @@ void Exercise11::renderToTexture(ID3D12GraphicsCommandList* commandList)
 
 void Exercise11::imGuiCommands()
 {
+    ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
+
     ImGui::Begin("IBL Viewer Options");
     ImGui::Separator();
     ImGui::Text("FPS: [%d]. Avg. elapsed (Ms): [%g] ", uint32_t(app->getFPS()), app->getAvgElapsedMs());
     ImGui::Separator();
     ImGui::Checkbox("Show grid", &showGrid);
     ImGui::Checkbox("Show axis", &showAxis);
-    ImGui::End();
 
-    ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
+    ImGui::Separator();
+
+    if (environmentBRDF)
+    {
+        ImGui::Text("Environment BRDF");
+        ImGui::Image((ImTextureID)descriptors->getGPUHandle(environmentBRDFDesc).ptr, ImVec2(128, 128));
+    }
+
+    ImGui::End();
 
     bool viewerFocused = false;
     ImGui::Begin("Scene");
@@ -199,7 +223,7 @@ void Exercise11::imGuiCommands()
     {
         ImGui::Image((ImTextureID)descriptors->getGPUHandle(renderTexture->getSRVHandle()).ptr, canvasSize);
     }
-    
+
     ImGui::EndChildFrame();
     ImGui::End();
 
@@ -218,7 +242,7 @@ void Exercise11::render()
 
 #if CAPTURE_IBL_GENERATION
     
-    bool takeCapture = (!irradianceMap || !prefilteredEnvMap) && PIXIsAttachedForGpuCapture();
+    bool takeCapture = (!irradianceMap || !prefilteredEnvMap || !environmentBRDF) && PIXIsAttachedForGpuCapture();
     if (takeCapture)
     {
         PIXBeginCapture(PIX_CAPTURE_GPU, nullptr);
@@ -234,6 +258,10 @@ void Exercise11::render()
         irradianceMapDesc = descriptors->createCubeTextureSRV(irradianceMap.Get());
 
         prefilteredEnvMap = prefilterEnvMapPass->generate(cubemapDesc, 512, 5);
+        prefilteredEnvMapDesc = descriptors->createCubeTextureSRV(prefilteredEnvMap.Get());
+
+        environmentBRDF = environmentBRDFPass->generate(128);
+        environmentBRDFDesc = descriptors->createTextureSRV(environmentBRDF.Get());
     }
 
     if(renderTexture->isValid())
