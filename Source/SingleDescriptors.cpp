@@ -2,7 +2,7 @@
 #include "SingleDescriptors.h"
 
 #include "Application.h"
-#include "ModuleD3DD12.h"
+#include "ModuleD3D12.h"
 
 SingleDescriptors::SingleDescriptors(ComPtr<ID3D12DescriptorHeap> heap, UINT descSize) : heap(heap), descriptorSize(descSize)
 { 
@@ -71,6 +71,8 @@ UINT SingleDescriptors::createCubeTextureSRV(ID3D12Resource* resource)
     {
         UINT handle = handles.allocHandle();
         _ASSERTE(handles.validHandle(handle));
+
+        D3D12_RESOURCE_DESC desc = resource->GetDesc();
 
         D3D12_SHADER_RESOURCE_VIEW_DESC viewDesc;
         viewDesc.Format = desc.Format;

@@ -6,6 +6,7 @@
 #include "ModuleRTDescriptors.h"
 #include "ModuleDSDescriptors.h"
 #include "ModuleShaderDescriptors.h"
+#include "SingleDescriptors.h"
 #include "ModuleD3D12.h"
 
 RenderTexture::~RenderTexture()
@@ -13,7 +14,7 @@ RenderTexture::~RenderTexture()
     if (texture)
     {
         app->getRTDescriptors()->deferRelease(rtvHandle);
-        app->getShaderDescriptors()->deferRelease(srvHandle);
+        app->getShaderDescriptors()->getSingle()->deferRelease(srvHandle);
 
         if (depthFormat != DXGI_FORMAT_UNKNOWN)
         {
@@ -33,7 +34,7 @@ void RenderTexture::resize(int width, int height)
 
     ModuleResources* resources = app->getResources();
     ModuleRTDescriptors* rtDescriptors = app->getRTDescriptors();
-    ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
+    SingleDescriptors* descriptors = app->getShaderDescriptors()->getSingle();
 
     // Create Render Target 
     resources->deferRelease(texture);
@@ -101,6 +102,6 @@ void RenderTexture::clear(ID3D12GraphicsCommandList* cmdList)
 
 void RenderTexture::bindAsShaderResource(ID3D12GraphicsCommandList *cmdList, int slot)
 {
-    D3D12_GPU_DESCRIPTOR_HANDLE srv = app->getShaderDescriptors()->getGPUHandle(srvHandle);
+    D3D12_GPU_DESCRIPTOR_HANDLE srv = app->getShaderDescriptors()->getSingle()->getGPUHandle(srvHandle);
     cmdList->SetGraphicsRootDescriptorTable(slot, srv);
 }

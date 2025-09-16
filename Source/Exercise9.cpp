@@ -6,6 +6,7 @@
 #include "ModuleD3D12.h"
 #include "ModuleResources.h"
 #include "ModuleShaderDescriptors.h"
+#include "SingleDescriptors.h"
 #include "ModuleRTDescriptors.h"
 #include "ModuleDSDescriptors.h"
 #include "ModuleCamera.h"
@@ -22,15 +23,15 @@ Exercise9::Exercise9()
 
 Exercise9::~Exercise9()
 {
+    SingleDescriptors* descriptors = app->getShaderDescriptors()->getSingle();
+
     if(cubemapDesc)
     {
-        ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
         descriptors->release(cubemapDesc);
     }
 
     if (imguiTextDesc)
     {
-        ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
         descriptors->release(imguiTextDesc);
     }
 }
@@ -38,7 +39,7 @@ Exercise9::~Exercise9()
 bool Exercise9::init() 
 {
     ModuleResources* resources = app->getResources();
-    ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
+    SingleDescriptors* descriptors = app->getShaderDescriptors()->getSingle();
     ModuleD3D12* d3d12 = app->getD3D12();
 
     debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue());
@@ -118,7 +119,7 @@ void Exercise9::renderToTexture(ID3D12GraphicsCommandList* commandList)
 
 void Exercise9::imGuiCommands()
 {
-    ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
+    SingleDescriptors* descriptors = app->getShaderDescriptors()->getSingle();
 
     bool viewerFocused = false;
     ImGui::Begin("Scene");

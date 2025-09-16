@@ -7,6 +7,7 @@
 #include "ModuleSamplers.h"
 #include "ModuleResources.h"
 #include "ModuleShaderDescriptors.h"
+#include "SingleDescriptors.h"
 #include "ModuleRTDescriptors.h"
 
 #include "CubemapMesh.h"
@@ -40,7 +41,7 @@ ComPtr<ID3D12Resource> HDRToCubemapPass::generate(UINT skybox, DXGI_FORMAT forma
 {
     ModuleD3D12* d3d12 = app->getD3D12();
     ModuleResources* resources = app->getResources();
-    ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
+    SingleDescriptors* descriptors = app->getShaderDescriptors()->getSingle();
     ModuleSamplers* samplers = app->getSamplers();
 
     ComPtr<ID3D12Resource> irradianceMap = resources->createCubemapRenderTarget(format, size, Vector4(0.0f, 0.0f, 0.0f, 1.0f), "HDR To Cubemap");
@@ -51,7 +52,7 @@ ComPtr<ID3D12Resource> HDRToCubemapPass::generate(UINT skybox, DXGI_FORMAT forma
     commandList->SetPipelineState(pso.Get());
     commandList->SetGraphicsRootSignature(rootSignature.Get());
 
-    ID3D12DescriptorHeap* descriptorHeaps[] = { descriptors->getHeap(), samplers->getHeap() };
+    ID3D12DescriptorHeap* descriptorHeaps[] = { app->getShaderDescriptors()->getHeap(), samplers->getHeap() };
     commandList->SetDescriptorHeaps(2, descriptorHeaps);
 
     // set viewport and scissor

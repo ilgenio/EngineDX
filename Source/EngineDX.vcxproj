@@ -220,9 +220,11 @@
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="SimpleMath.h" />
+    <ClInclude Include="SingleDescriptors.h" />
     <ClInclude Include="Skybox.h" />
     <ClInclude Include="SkyboxRenderPass.h" />
     <ClInclude Include="SphereMesh.h" />
+    <ClInclude Include="TableDescriptors.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
@@ -354,9 +356,11 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="SingleDescriptors.cpp" />
     <ClCompile Include="Skybox.cpp" />
     <ClCompile Include="SkyboxRenderPass.cpp" />
     <ClCompile Include="SphereMesh.cpp" />
+    <ClCompile Include="TableDescriptors.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="EngineDX.rc" />

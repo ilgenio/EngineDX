@@ -2,16 +2,23 @@
 
 #include "Module.h"
 
+//-----------------------------------------------------------------------------
+// ModuleCamera manages the application's main camera.
+// It handles camera position, rotation, and view matrix updates based on
+// mouse, keyboard, and gamepad input. Provides methods to access the
+// current view matrix, orientation, and position, as well as to configure
+// perspective projection.
+//-----------------------------------------------------------------------------
 class ModuleCamera : public Module
 {
-	struct Params
-	{
+    struct Params
+    {
         float  polar;
         float  azimuthal;
         Vector3 panning;
-	};
+    };
 
-	Params    params = { 0.0f, 0.0f , {0.0f , 2.0f , 10.0f }};
+    Params    params = { 0.0f, 0.0f , {0.0f , 2.0f , 10.0f }};
     int       dragPosX = 0;
     int       dragPosY = 0;
 
@@ -21,8 +28,8 @@ class ModuleCamera : public Module
     bool enabled = true;
 public:
 
-	bool init() override;
-	void update() override;
+    bool init() override;
+    void update() override;
 
     void setEnable(bool flag) { enabled = flag; }
     bool getEnabled() const { return enabled;  }

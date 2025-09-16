@@ -5,6 +5,7 @@
 #include "Application.h"
 #include "ModuleResources.h"
 #include "ModuleShaderDescriptors.h"
+#include "SingleDescriptors.h"
 
 void Skybox::load(const char *backgroundFile, const char* diffuseFile, const char* specularFile, const char* brdfFile)
 {
@@ -25,7 +26,7 @@ void Skybox::load(const char *backgroundFile, const char* diffuseFile, const cha
         iblMipLevels = specular->GetDesc().MipLevels;
     }
 
-    ModuleShaderDescriptors* descriptors  = app->getShaderDescriptors();
+    SingleDescriptors* descriptors  = app->getShaderDescriptors()->getSingle();
 
     backgroundDesc = descriptors->createTextureSRV(background.Get());
     diffuseDesc = descriptors->createTextureSRV(diffuse.Get());

@@ -4,6 +4,7 @@
 #include "ModuleSamplers.h"
 #include "ModuleD3D12.h"
 #include "ModuleShaderDescriptors.h"
+#include "SingleDescriptors.h"
 
 #include "SkyboxRenderPass.h"
 #include "CubemapMesh.h"
@@ -36,7 +37,7 @@ void SkyboxRenderPass::record(ID3D12GraphicsCommandList* commandList, UINT cubem
     vp = vp.Transpose();
 
     commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &vp, 0);
-    commandList->SetGraphicsRootDescriptorTable(1, descriptors->getGPUHandle(cubemapSRV));
+    commandList->SetGraphicsRootDescriptorTable(1, descriptors->getSingle()->getGPUHandle(cubemapSRV));
     commandList->SetGraphicsRootDescriptorTable(2, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
     cubemapMesh->draw(commandList);
 

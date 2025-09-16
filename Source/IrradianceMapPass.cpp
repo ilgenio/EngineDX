@@ -6,6 +6,7 @@
 #include "ModuleResources.h"
 #include "ModuleRTDescriptors.h"
 #include "ModuleShaderDescriptors.h"
+#include "SingleDescriptors.h"
 #include "ModuleSamplers.h"
 #include "CubemapMesh.h"
 #include "ReadData.h"
@@ -60,7 +61,7 @@ ComPtr<ID3D12Resource> IrradianceMapPass::generate(UINT cubeMapDesc, size_t size
     commandList->RSSetViewports(1, &viewport);
     commandList->RSSetScissorRects(1, &scissor);
 
-    commandList->SetGraphicsRootDescriptorTable(2, descriptors->getGPUHandle(cubeMapDesc));
+    commandList->SetGraphicsRootDescriptorTable(2, descriptors->getSingle()->getGPUHandle(cubeMapDesc));
     commandList->SetGraphicsRootDescriptorTable(3, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
 
     // create render target view for each face

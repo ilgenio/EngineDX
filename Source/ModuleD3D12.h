@@ -6,6 +6,12 @@
 #include <cstdint>
 #include <chrono>
 
+//-----------------------------------------------------------------------------
+// ModuleD3D12 manages the Direct3D 12 graphics device and swap chain.
+// It handles device creation, resource management, rendering synchronization,
+// window resizing, and fullscreen toggling. Provides access to core D3D12
+// objects.
+//-----------------------------------------------------------------------------
 class ModuleD3D12 : public Module
 {   
 
