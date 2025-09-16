@@ -5,6 +5,7 @@
 #include "ModuleD3D12.h"
 #include "ModuleCamera.h"
 #include "ModuleShaderDescriptors.h"
+#include "TableDescriptors.h"
 #include "ModuleSamplers.h"
 #include "ModuleRingBuffer.h"
 #include "Model.h"
@@ -267,7 +268,7 @@ void Exercise6::render()
             PerInstance perInstance = { model->getModelMatrix().Transpose(), model->getNormalMatrix().Transpose(), material.getPhongMaterial()};
 
             commandList->SetGraphicsRootConstantBufferView(2, ringBuffer->allocBuffer(&perInstance));
-            commandList->SetGraphicsRootDescriptorTable(3, descriptors->getGPUHandle(tableStartDesc));
+            commandList->SetGraphicsRootDescriptorTable(3, descriptors->getTable()->getGPUHandle(tableStartDesc));
 
             mesh.draw(commandList);
         }

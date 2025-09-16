@@ -104,6 +104,7 @@ ComPtr<ID3D12Resource> IrradianceMapPass::generate(UINT cubeMapDesc, size_t size
 
     ID3D12CommandList *commandLists[] = {commandList.Get()};
     d3d12->getDrawCommandQueue()->ExecuteCommandLists(UINT(std::size(commandLists)), commandLists);
+
     d3d12->flush();
 
     commandAllocator->Reset();

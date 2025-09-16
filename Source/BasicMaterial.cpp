@@ -4,6 +4,8 @@
 #include "Application.h"
 #include "ModuleResources.h"
 #include "ModuleShaderDescriptors.h"
+#include "TableDescriptors.h"
+#include "SingleDescriptors.h"
 
 #include "tiny_gltf.h"
 
@@ -17,6 +19,7 @@ BasicMaterial::BasicMaterial()
 
 BasicMaterial::~BasicMaterial()
 {
+    app->getShaderDescriptors()->getTable()->release(textureTableSRV);
 }
 
 void BasicMaterial::load(const tinygltf::Model& model, const tinygltf::Material& material, Type type, const char* basePath)
@@ -46,8 +49,7 @@ void BasicMaterial::load(const tinygltf::Model& model, const tinygltf::Material&
     };
 
     hasColourTexture = loadTexture(material.pbrMetallicRoughness.baseColorTexture.index, model, basePath, baseColourTex);
-    hasMetallicRoughnessTex = loadTexture(material.pbrMetallicRoughness.metallicRoughnessTexture.index, model, basePath, metallicRoughnessTex);
-
+    hasMetallicRoughnessTex = materialType == METALLIC_ROUGHNESS && loadTexture(material.pbrMetallicRoughness.metallicRoughnessTexture.index, model, basePath, metallicRoughnessTex);
 
     materialType = type;
 
@@ -82,26 +84,27 @@ void BasicMaterial::load(const tinygltf::Model& model, const tinygltf::Material&
 
     // Descriptors 
 
+    TableDescriptors* descriptors = app->getShaderDescriptors()->getTable();
+    textureTableSRV = descriptors->alloc();
+
     if (hasColourTexture)
     {
-        baseColourSRV = app->getShaderDescriptors()->createTextureSRV(baseColourTex.Get());
+        descriptors->createTextureSRV(baseColourTex.Get(), textureTableSRV, 0);
     }
     else
     {
-        baseColourSRV = app->getShaderDescriptors()->createNullTexture2DSRV();
+        descriptors->createNullTexture2DSRV(textureTableSRV, 0);
     }
 
-    if (materialType == METALLIC_ROUGHNESS)
+    if (hasMetallicRoughnessTex)
     {
-        if (hasMetallicRoughnessTex)
-        {
-            app->getShaderDescriptors()->createTextureSRV(metallicRoughnessTex.Get());
-        }
-        else
-        {
-            app->getShaderDescriptors()->createNullTexture2DSRV();
-        }
+        descriptors->createTextureSRV(metallicRoughnessTex.Get(), textureTableSRV, 1);
     }
+    else
+    {
+        descriptors->createNullTexture2DSRV(textureTableSRV, 1);
+    }
+
 }
 
 void BasicMaterial::setPhongMaterial(const PhongMaterialData& phong)
@@ -122,4 +125,12 @@ void BasicMaterial::setPBRPhongMaterial(const PBRPhongMaterialData& pbr)
     }
 }
 
+void BasicMaterial::setMetallicRoughnessMaterial(const MetallicRoughnessMaterialData& pbr)
+{
+    materialData.metallicRoughness = pbr;
+    if (!baseColourTex)
+    {
+        materialData.metallicRoughness.hasBaseColourTex = FALSE;
+    }
+}
 

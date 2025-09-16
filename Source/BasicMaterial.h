@@ -53,7 +53,7 @@ public:
 
     void load(const tinygltf::Model& model, const tinygltf::Material& material, Type materialType, const char* basePath);
 
-    UINT getTexturesTableDescriptor() const { return baseColourSRV;}
+    UINT getTexturesTableDescriptor() const { return textureTableSRV;}
     Type getMaterialType() const { return materialType;  }
 
     const BasicMaterialData& getBasicMaterial() const { _ASSERTE(materialType == BASIC); return materialData.basic; }
@@ -63,6 +63,7 @@ public:
 
     void setPhongMaterial(const PhongMaterialData& phong);
     void setPBRPhongMaterial(const PBRPhongMaterialData& pbr);
+    void setMetallicRoughnessMaterial(const MetallicRoughnessMaterialData& pbr);
 
     const char* getName() const { return name.c_str(); }
 
@@ -79,6 +80,6 @@ private:
 
     ComPtr<ID3D12Resource>  baseColourTex;
     ComPtr<ID3D12Resource>  metallicRoughnessTex;
-    UINT                    baseColourSRV = 0;
+    UINT                    textureTableSRV = 0;
     std::string             name;
 };

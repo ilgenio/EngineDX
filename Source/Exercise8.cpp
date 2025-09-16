@@ -5,6 +5,8 @@
 #include "ModuleD3D12.h"
 #include "ModuleCamera.h"
 #include "ModuleShaderDescriptors.h"
+#include "SingleDescriptors.h"
+#include "TableDescriptors.h"
 #include "ModuleRTDescriptors.h"
 #include "ModuleDSDescriptors.h"
 #include "ModuleSamplers.h"
@@ -29,6 +31,7 @@ Exercise8::Exercise8()
 
 Exercise8::~Exercise8()
 {
+    app->getShaderDescriptors()->getSingle()->release(imguiTextDesc);
 }
 
 bool Exercise8::init() 
@@ -40,7 +43,7 @@ bool Exercise8::init()
     if(ok)
     {
         ModuleD3D12* d3d12 = app->getD3D12();
-        ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
+        SingleDescriptors* descriptors = app->getShaderDescriptors()->getSingle();
 
         debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue());
 
@@ -307,7 +310,7 @@ void Exercise8::imGuiCommands()
 
     if(renderTexture->isValid())
     {
-        ImGui::Image((ImTextureID)descriptors->getGPUHandle(renderTexture->getSRVHandle()).ptr, canvasSize);
+        ImGui::Image((ImTextureID)descriptors->getSingle()->getGPUHandle(renderTexture->getSRVHandle()).ptr, canvasSize);
     }
 
     if (showGuizmo)
@@ -396,7 +399,7 @@ void Exercise8::renderToTexture(ID3D12GraphicsCommandList* commandList)
             PerInstance perInstance = { model->getModelMatrix().Transpose(), model->getNormalMatrix().Transpose(), material.getPBRPhongMaterial()};
 
             commandList->SetGraphicsRootConstantBufferView(2, ringBuffer->allocBuffer(&perInstance));
-            commandList->SetGraphicsRootDescriptorTable(6, descriptors->getGPUHandle(tableStartDesc));
+            commandList->SetGraphicsRootDescriptorTable(6, descriptors->getTable()->getGPUHandle(tableStartDesc));
 
             mesh.draw(commandList);
         }

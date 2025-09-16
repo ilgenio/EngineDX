@@ -6,6 +6,7 @@
 #include "ModuleCamera.h"
 #include "ModuleResources.h"
 #include "ModuleShaderDescriptors.h"
+#include "SingleDescriptors.h"
 
 #include "ReadData.h"
 
@@ -46,7 +47,7 @@ bool Exercise4::init()
 
         if((ok = textureDog) == true)
         {
-            dogDescriptor = descriptors->createTextureSRV(textureDog.Get());
+            dogDescriptor = descriptors->getSingle()->createTextureSRV(textureDog.Get());
         }
     }
 
@@ -136,7 +137,7 @@ void Exercise4::render()
     commandList->SetDescriptorHeaps(2, descriptorHeaps);
 
     commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix)/sizeof(UINT32), &mvp, 0);
-    commandList->SetGraphicsRootDescriptorTable(1, descriptors->getGPUHandle(dogDescriptor));
+    commandList->SetGraphicsRootDescriptorTable(1, descriptors->getSingle()->getGPUHandle(dogDescriptor));
     commandList->SetGraphicsRootDescriptorTable(2, samplers->getGPUHandle(ModuleSamplers::Type(sampler)));
 
     commandList->DrawInstanced(6, 1, 0, 0);

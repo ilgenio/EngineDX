@@ -5,6 +5,7 @@
 #include "ModuleD3D12.h"
 #include "ModuleCamera.h"
 #include "ModuleShaderDescriptors.h"
+#include "SingleDescriptors.h"
 #include "ModuleResources.h"
 #include "ModuleSamplers.h"
 #include "Model.h"
@@ -199,7 +200,7 @@ void Exercise5::render()
             
             UINT tableStartDesc = material.getTexturesTableDescriptor();
             commandList->SetGraphicsRootConstantBufferView(1, materialBuffers[mesh.getMaterialIndex()]->GetGPUVirtualAddress());
-            commandList->SetGraphicsRootDescriptorTable(2, descriptors->getGPUHandle(tableStartDesc));
+            commandList->SetGraphicsRootDescriptorTable(2, descriptors->getSingle()->getGPUHandle(tableStartDesc));
 
             mesh.draw(commandList);
         }

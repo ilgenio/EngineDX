@@ -5,6 +5,8 @@
 #include "ModuleD3D12.h"
 #include "ModuleCamera.h"
 #include "ModuleShaderDescriptors.h"
+#include "SingleDescriptors.h"
+#include "TableDescriptors.h"
 #include "ModuleRTDescriptors.h"
 #include "ModuleDSDescriptors.h"
 #include "ModuleSamplers.h"
@@ -28,6 +30,7 @@ Exercise10::Exercise10()
 
 Exercise10::~Exercise10()
 {
+    app->getShaderDescriptors()->getSingle()->release(imguiTextDesc);
 }
 
 bool Exercise10::init() 
@@ -39,11 +42,11 @@ bool Exercise10::init()
     if(ok)
     {
         ModuleD3D12* d3d12 = app->getD3D12();
-        ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
+        SingleDescriptors* descriptors = app->getShaderDescriptors()->getSingle();
 
         debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue());
 
-        UINT imguiTextDesc = descriptors->alloc();
+        imguiTextDesc = descriptors->alloc();
         imguiPass = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd(), 
             descriptors->getCPUHandle(imguiTextDesc), descriptors->getGPUHandle(imguiTextDesc));
 
@@ -258,27 +261,27 @@ void Exercise10::imGuiCommands()
 
             if (ImGui::CollapsingHeader(tmp, ImGuiTreeNodeFlags_DefaultOpen))
             {
-                PBRPhongMaterialData pbr = material.getPBRPhongMaterial();
-                if (ImGui::ColorEdit3("Diffuse Colour", reinterpret_cast<float*>(&pbr.diffuseColour)))
+                MetallicRoughnessMaterialData matData = material.getMetallicRoughnessMaterial();
+                if (ImGui::ColorEdit3("Base Colour", reinterpret_cast<float*>(&matData.baseColour)))
                 {
-                    material.setPBRPhongMaterial(pbr);
+                    material.setMetallicRoughnessMaterial(matData);
                 }
 
-                bool hasTexture = pbr.hasDiffuseTex;
+                bool hasTexture = matData.hasBaseColourTex;
                 if (ImGui::Checkbox("Use Texture", &hasTexture))
                 {
-                    pbr.hasDiffuseTex = hasTexture;
-                    material.setPBRPhongMaterial(pbr);
+                    matData.hasBaseColourTex = hasTexture;
+                    material.setMetallicRoughnessMaterial(matData);
                 }
       
-                if (ImGui::ColorEdit3("Specular Colour", reinterpret_cast<float*>(&pbr.specularColour)))
+                if (ImGui::DragFloat("Metallic Factor", reinterpret_cast<float*>(&matData.metallicFactor)))
                 {
-                    material.setPBRPhongMaterial(pbr);
+                    material.setMetallicRoughnessMaterial(matData);
                 }
 
-                if (ImGui::DragFloat("shininess", &pbr.shininess))
+                if (ImGui::DragFloat("Roughness factor", &matData.roughnessFactor))
                 {
-                    material.setPBRPhongMaterial(pbr);
+                    material.setMetallicRoughnessMaterial(matData);
                 }
             }
         }
@@ -286,7 +289,7 @@ void Exercise10::imGuiCommands()
 
     ImGui::End();
 
-    ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
+    SingleDescriptors* descriptors = app->getShaderDescriptors()->getSingle();
     ModuleD3D12* d3d12 = app->getD3D12();
 
     ModuleCamera* camera = app->getCamera();
@@ -396,7 +399,7 @@ void Exercise10::renderToTexture(ID3D12GraphicsCommandList* commandList)
             PerInstance perInstance = { model->getModelMatrix().Transpose(), model->getNormalMatrix().Transpose(), material.getMetallicRoughnessMaterial()};
 
             commandList->SetGraphicsRootConstantBufferView(2, ringBuffer->allocBuffer(&perInstance));
-            commandList->SetGraphicsRootDescriptorTable(6, descriptors->getGPUHandle(tableStartDesc));
+            commandList->SetGraphicsRootDescriptorTable(6, descriptors->getTable()->getGPUHandle(tableStartDesc));
 
             mesh.draw(commandList);
         }

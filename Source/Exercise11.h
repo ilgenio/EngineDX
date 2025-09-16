@@ -44,7 +44,7 @@ class Exercise11 : public Module
     // SRV descriptors
     UINT imguiTextDesc = 0;
     UINT cubemapDesc = 0;
-    UINT irradianceMapDesc = 0;
+    UINT iblTableDesc = 0;
     UINT prefilteredEnvMapDesc = 0;
     UINT environmentBRDFDesc = 0;
 

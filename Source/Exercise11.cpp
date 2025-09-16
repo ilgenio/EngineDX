@@ -6,6 +6,8 @@
 #include "ModuleD3D12.h"
 #include "ModuleResources.h"
 #include "ModuleShaderDescriptors.h"
+#include "SingleDescriptors.h"
+#include "TableDescriptors.h"       
 #include "ModuleRTDescriptors.h"
 #include "ModuleDSDescriptors.h"
 #include "ModuleCamera.h"
@@ -38,27 +40,17 @@ Exercise11::~Exercise11()
 
     if (cubemapDesc)
     {
-        descriptors->release(cubemapDesc);
+        descriptors->getSingle()->release(cubemapDesc);
     }
 
     if (imguiTextDesc)
     {
-        descriptors->release(imguiTextDesc);
+        descriptors->getSingle()->release(imguiTextDesc);
     }
 
-    if (irradianceMapDesc)
+    if (iblTableDesc)
     {
-        descriptors->release(irradianceMapDesc);
-    }
-
-    if(environmentBRDFDesc)
-    {
-        descriptors->release(environmentBRDFDesc);
-    }
-    
-    if(prefilteredEnvMapDesc)
-    {
-        descriptors->release(prefilteredEnvMapDesc);
+        descriptors->getTable()->release(iblTableDesc);
     }
 }
 
@@ -72,7 +64,7 @@ bool Exercise11::init()
     if (ok)
     {
         ModuleResources* resources = app->getResources();
-        ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
+        SingleDescriptors* descriptors = app->getShaderDescriptors()->getSingle();
         ModuleD3D12* d3d12 = app->getD3D12();
 
         debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue());
@@ -167,7 +159,7 @@ void Exercise11::renderToTexture(ID3D12GraphicsCommandList* commandList)
     commandList->SetPipelineState(spherePSO.Get());
     commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &mvp, 0);
     commandList->SetGraphicsRootConstantBufferView(1, ringBuffer->allocBuffer(&perInstanceData));
-    commandList->SetGraphicsRootDescriptorTable(2, descriptors->getGPUHandle(irradianceMapDesc));
+    commandList->SetGraphicsRootDescriptorTable(2, descriptors->getTable()->getGPUHandle(iblTableDesc));
     commandList->SetGraphicsRootDescriptorTable(3, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
 
     sphereMesh->draw(commandList);
@@ -200,7 +192,7 @@ void Exercise11::imGuiCommands()
     if (environmentBRDF)
     {
         ImGui::Text("Environment BRDF");
-        ImGui::Image((ImTextureID)descriptors->getGPUHandle(environmentBRDFDesc).ptr, ImVec2(128, 128));
+        ImGui::Image((ImTextureID)descriptors->getTable()->getGPUHandle(iblTableDesc, 2).ptr, ImVec2(128, 128));
     }
 
     ImGui::End();
@@ -221,7 +213,7 @@ void Exercise11::imGuiCommands()
 
     if(renderTexture->isValid())
     {
-        ImGui::Image((ImTextureID)descriptors->getGPUHandle(renderTexture->getSRVHandle()).ptr, canvasSize);
+        ImGui::Image((ImTextureID)descriptors->getSingle()->getGPUHandle(renderTexture->getSRVHandle()).ptr, canvasSize);
     }
 
     ImGui::EndChildFrame();
@@ -236,7 +228,7 @@ void Exercise11::render()
     imGuiCommands();
 
     ModuleD3D12* d3d12 = app->getD3D12();
-    ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
+    TableDescriptors* descriptors = app->getShaderDescriptors()->getTable();
     ModuleSamplers* samplers = app->getSamplers();
     ModuleCamera* camera = app->getCamera();
 
@@ -255,13 +247,15 @@ void Exercise11::render()
     if(!irradianceMap || !prefilterEnvMapPass)
     {
         irradianceMap = irradianceMapPass->generate(cubemapDesc, 512);
-        irradianceMapDesc = descriptors->createCubeTextureSRV(irradianceMap.Get());
+        iblTableDesc = descriptors->alloc();
+        
+        descriptors->createCubeTextureSRV(irradianceMap.Get(), iblTableDesc, 0);
 
         prefilteredEnvMap = prefilterEnvMapPass->generate(cubemapDesc, 512, 5);
-        prefilteredEnvMapDesc = descriptors->createCubeTextureSRV(prefilteredEnvMap.Get());
+        descriptors->createCubeTextureSRV(prefilteredEnvMap.Get(), iblTableDesc, 1);
 
         environmentBRDF = environmentBRDFPass->generate(128);
-        environmentBRDFDesc = descriptors->createTextureSRV(environmentBRDF.Get());
+        descriptors->createTextureSRV(environmentBRDF.Get(), iblTableDesc, 2);
     }
 
     if(renderTexture->isValid())
