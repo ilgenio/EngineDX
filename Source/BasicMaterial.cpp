@@ -25,6 +25,7 @@ BasicMaterial::~BasicMaterial()
 void BasicMaterial::load(const tinygltf::Model& model, const tinygltf::Material& material, Type type, const char* basePath)
 {
     name = material.name;
+    materialType = type;
 
     Vector4 baseColour = Vector4(float(material.pbrMetallicRoughness.baseColorFactor[0]),
                                  float(material.pbrMetallicRoughness.baseColorFactor[1]),
@@ -33,7 +34,7 @@ void BasicMaterial::load(const tinygltf::Model& model, const tinygltf::Material&
 
     BOOL hasColourTexture = FALSE, hasMetallicRoughnessTex = FALSE;
 
-    auto loadTexture = [](int index, const tinygltf::Model& model, const char* basePath, ComPtr<ID3D12Resource>& outTex) -> BOOL
+    auto loadTexture = [](int index, const tinygltf::Model& model, const char* basePath, bool defaultSRGB, ComPtr<ID3D12Resource>& outTex) -> BOOL
     {
         if (index < 0 || index >= int(model.textures.size()))
             return FALSE;
@@ -42,16 +43,14 @@ void BasicMaterial::load(const tinygltf::Model& model, const tinygltf::Material&
         const tinygltf::Image& image = model.images[texture.source];
         if (!image.uri.empty())
         {
-            outTex = app->getResources()->createTextureFromFile(std::string(basePath) + image.uri);
+            outTex = app->getResources()->createTextureFromFile(std::string(basePath) + image.uri, defaultSRGB);
             return TRUE;
         }
         return FALSE;
     };
 
-    hasColourTexture = loadTexture(material.pbrMetallicRoughness.baseColorTexture.index, model, basePath, baseColourTex);
-    hasMetallicRoughnessTex = materialType == METALLIC_ROUGHNESS && loadTexture(material.pbrMetallicRoughness.metallicRoughnessTexture.index, model, basePath, metallicRoughnessTex);
-
-    materialType = type;
+    hasColourTexture = loadTexture(material.pbrMetallicRoughness.baseColorTexture.index, model, basePath, true, baseColourTex);
+    hasMetallicRoughnessTex = materialType == METALLIC_ROUGHNESS && loadTexture(material.pbrMetallicRoughness.metallicRoughnessTexture.index, model, basePath, false, metallicRoughnessTex);
 
     if (materialType == BASIC)
     {

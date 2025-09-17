@@ -64,6 +64,7 @@ bool Exercise4::init()
 
 bool Exercise4::cleanUp()
 {
+    app->getShaderDescriptors()->getSingle()->release(dogDescriptor);
     imguiPass.reset();
 
     return true;

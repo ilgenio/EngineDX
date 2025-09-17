@@ -175,14 +175,14 @@ ComPtr<ID3D12Resource> ModuleResources::createTextureFromMemory(const void* data
     return nullptr;
 }
 
-ComPtr<ID3D12Resource> ModuleResources::createTextureFromFile(const std::filesystem::path& path) 
+ComPtr<ID3D12Resource> ModuleResources::createTextureFromFile(const std::filesystem::path& path, bool defaultSRGB)
 {
     const wchar_t* fileName = path.c_str();
     ScratchImage image;
-    bool ok = SUCCEEDED(LoadFromDDSFile(fileName, DDS_FLAGS_NONE, nullptr, image));
+    bool ok = SUCCEEDED(LoadFromDDSFile(fileName,  DDS_FLAGS_NONE, nullptr, image));
     ok = ok || SUCCEEDED(LoadFromHDRFile(fileName, nullptr, image));
-    ok = ok || SUCCEEDED(LoadFromTGAFile(fileName, TGA_FLAGS_NONE, nullptr, image));
-    ok = ok || SUCCEEDED(LoadFromWICFile(fileName, DirectX::WIC_FLAGS_NONE, nullptr, image));
+    ok = ok || SUCCEEDED(LoadFromTGAFile(fileName, defaultSRGB ? TGA_FLAGS_DEFAULT_SRGB : TGA_FLAGS_NONE, nullptr, image));
+    ok = ok || SUCCEEDED(LoadFromWICFile(fileName, defaultSRGB ? DirectX::WIC_FLAGS_DEFAULT_SRGB : DirectX::WIC_FLAGS_NONE, nullptr, image));
 
     if (ok)
     {

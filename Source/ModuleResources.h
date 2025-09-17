@@ -45,7 +45,7 @@ public:
 
     ComPtr<ID3D12Resource> createRawTexture2D(const void* data, size_t rowSize, size_t width, size_t height, DXGI_FORMAT format);
     ComPtr<ID3D12Resource> createTextureFromMemory(const void* data, size_t size, const char* name);
-    ComPtr<ID3D12Resource> createTextureFromFile(const std::filesystem::path& path);
+    ComPtr<ID3D12Resource> createTextureFromFile(const std::filesystem::path& path, bool defaultSRGB = false);
 
     ComPtr<ID3D12Resource> createRenderTarget(DXGI_FORMAT format, size_t width, size_t height, const Vector4& clearColour, const char* name);
     ComPtr<ID3D12Resource> createDepthStencil(DXGI_FORMAT format, size_t width, size_t height, float clearDepth, uint8_t clearStencil, const char* name);

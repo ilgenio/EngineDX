@@ -79,7 +79,7 @@ UINT SingleDescriptors::createCubeTextureSRV(ID3D12Resource* resource)
         viewDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
         viewDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
         viewDesc.TextureCube.MipLevels = desc.MipLevels;
-        viewDesc.TextureCube.MostDetailedMip = -1;
+        viewDesc.TextureCube.MostDetailedMip = 0;
         viewDesc.Texture1D.ResourceMinLODClamp = 0.0f;
 
         app->getD3D12()->getDevice()->CreateShaderResourceView(resource, &viewDesc, CD3DX12_CPU_DESCRIPTOR_HANDLE(cpuStart, handles.indexFromHandle(handle), descriptorSize));

@@ -8,10 +8,16 @@ float3 Lambert(float3 Cd)
     return Cd / PI;
 }
 
-float3 schlick(float3 rf0, float dotLH)
+float3 F_Schlick(float3 rf0, float3 rf90, float dotVH)
 {
-    return rf0 + (1 - rf0) * pow(1.0-dotLH, 5);
+    return rf0 + (rf90 - rf0) * pow(1.0-dotVH, 5);
 }
+
+float F_Schlick(float rf0, float rf90, float dotVH)
+{
+    return rf0 + (rf90 - rf0) * pow(1.0-dotVH, 5);
+}
+
 
 float D_GGX(float alphaRoughness, float NdotH)
 {
@@ -38,15 +44,12 @@ float V_GGX(float NdotV, float NdotL, float alphaRoughness)
     return 0.0;
 }
 
-float3 GGX(float3 L, float3 N, float3 V, float3 R, float3 Cs, float alphaRoughness)
+float GGX(float NdotL, float NdotV, float NdotH, float alphaRoughness)
 {
-    float3 H = normalize(V + L);
+    float D = D_GGX(alphaRoughness, NdotH);
+    float Vis = V_GGX(NdotV, NdotL, alphaRoughness);
 
-    float3 F = schlick(Cs, saturate(dot(L, H)));
-    float D = D_GGX(alphaRoughness, saturate(dot(N, H)));
-    float Vis = V_GGX(saturate(dot(N, V)), saturate(dot(N, L)), alphaRoughness);
-
-    return 0.25 * F * D * Vis;
+    return 0.25 * D * Vis;
 }
 
 #endif // _GGX_BRDF_HLSLI
