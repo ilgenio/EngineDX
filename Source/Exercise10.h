@@ -73,7 +73,7 @@ class Exercise10 : public Module
     enum ELightType { LIGHT_DIRECTIONAL, LIGHT_POINT, LIGHT_SPOT };
 
     Ambient                             ambient;
-    Directional                         dirLight;
+    Directional                         dirLight[2];
     Point                               pointLight;
     Spot                                spotLight;
     ELightType                          lightType = LIGHT_DIRECTIONAL;

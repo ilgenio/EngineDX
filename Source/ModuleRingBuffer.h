@@ -14,13 +14,20 @@ public:
 
     void preRender() override;
 
-    D3D12_GPU_VIRTUAL_ADDRESS allocBuffer(const void* data, size_t size);
+    D3D12_GPU_VIRTUAL_ADDRESS allocBufferRaw(const void* data, size_t size);
 
     template<typename T>
     D3D12_GPU_VIRTUAL_ADDRESS allocBuffer(const T* data)
     {
-        return allocBuffer(data, alignUp(sizeof(T), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT));
+        return allocBufferRaw(data, alignUp(sizeof(T), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT));
     }
+
+    template<typename T>
+    D3D12_GPU_VIRTUAL_ADDRESS allocBuffer(const T* data, size_t count)
+    {
+        return allocBufferRaw(data, alignUp(sizeof(T)*count, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT));
+    }
+ 
 
 private:
 

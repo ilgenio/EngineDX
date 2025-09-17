@@ -51,13 +51,27 @@ bool Exercise10::init()
             descriptors->getCPUHandle(imguiTextDesc), descriptors->getGPUHandle(imguiTextDesc));
 
 
-        renderTexture = std::make_unique<RenderTexture>("Exercise10", DXGI_FORMAT_R8G8B8A8_UNORM, Vector4(0.2f, 0.2f, 0.2f, 1.0f), DXGI_FORMAT_D32_FLOAT, 1.0f);
+        renderTexture = std::make_unique<RenderTexture>("Exercise10", DXGI_FORMAT_R8G8B8A8_UNORM, Vector4(0.188f, 0.208f, 0.259f, 1.0f), DXGI_FORMAT_D32_FLOAT, 1.0f);
 
         ambient.Lc = Vector3::One * (0.1f);
 
-        dirLight.Ld = Vector3(0.678f, -0.375f, -0.632f);
-        dirLight.Lc = Vector3::One;
-        dirLight.intenisty = 3.0f;
+        Quaternion q0(-0.3535534,
+            -0.353553385f,
+            -0.146446586f,
+            0.8535534f);
+
+        Quaternion q1(-0.8535534f,
+            0.146446645f,
+            -0.353553325f,
+            -0.353553444f); 
+
+        dirLight[0].Ld = Vector3::Transform(Vector3(0.0f, 0.0f, -1.0f), q0);
+        dirLight[0].Lc = Vector3::One;
+        dirLight[0].intenisty = 1.0f;
+
+        dirLight[1].Ld = Vector3::Transform(Vector3(0.0f, 0.0f, -1.0f), q1);
+        dirLight[1].Lc = Vector3::One;
+        dirLight[1].intenisty = 0.5f;
 
         pointLight.Lp = Vector3(-1.5f, 1.5f, 2.5f);
         pointLight.sqRadius = 25.0f;
@@ -236,8 +250,14 @@ void Exercise10::imGuiCommands()
         switch (lightType)
         {
         case LIGHT_DIRECTIONAL:
-            imGuiDirectional(dirLight);
-            if(ddLight) ddDirectional(dirLight, ddDistance, ddSize);
+            imGuiDirectional(dirLight[0]);
+            imGuiDirectional(dirLight[1]);
+            if (ddLight)
+            {
+                ddDirectional(dirLight[0], ddDistance, ddSize);
+                ddDirectional(dirLight[1], ddDistance, ddSize);
+
+            }
             break;
         case LIGHT_POINT:
         {
@@ -363,7 +383,7 @@ void Exercise10::renderToTexture(ID3D12GraphicsCommandList* commandList)
     
     PerFrame perFrame;
     perFrame.ambient  = ambient;
-    perFrame.numDirLights = lightType == LIGHT_DIRECTIONAL ? 1 : 0;
+    perFrame.numDirLights = lightType == LIGHT_DIRECTIONAL ? std::size(dirLight) : 0;
     perFrame.numPointLights = lightType == LIGHT_POINT ? 1 : 0;
     perFrame.numSpotLights = lightType == LIGHT_SPOT ? 1 : 0;
     perFrame.viewPos = camera->getPos();
@@ -380,7 +400,7 @@ void Exercise10::renderToTexture(ID3D12GraphicsCommandList* commandList)
 
     commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &mvp, 0);
     commandList->SetGraphicsRootConstantBufferView(1, ringBuffer->allocBuffer(&perFrame));
-    commandList->SetGraphicsRootShaderResourceView(3, ringBuffer->allocBuffer(&dirLight));
+    commandList->SetGraphicsRootShaderResourceView(3, ringBuffer->allocBuffer(&dirLight, std::size(dirLight)));
     commandList->SetGraphicsRootShaderResourceView(4, ringBuffer->allocBuffer(&pointLight));
     commandList->SetGraphicsRootShaderResourceView(5, ringBuffer->allocBuffer(&spotLight));
 
