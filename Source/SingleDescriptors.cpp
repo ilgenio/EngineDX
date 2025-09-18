@@ -25,9 +25,9 @@ void SingleDescriptors::deferRelease(UINT handle)
     }
 }
 
-void SingleDescriptors::releaseDeferred()
+void SingleDescriptors::collectGarbage()
 {
-    handles.releaseDeferred(app->getD3D12()->getLastCompletedFrame());
+    handles.collectGarbage(app->getD3D12()->getLastCompletedFrame());
 }
 
 UINT SingleDescriptors::createCBV(ID3D12Resource *resource)

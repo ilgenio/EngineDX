@@ -321,6 +321,8 @@ ComPtr<ID3D12Resource> ModuleResources::getUploadHeap(size_t size)
 
 void ModuleResources::preRender() 
 {
+    // collect garbage
+
     UINT completedFrame = app->getD3D12()->getLastCompletedFrame();
 
     for(int i=0; i < deferredFrees.size(); ++i)

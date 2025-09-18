@@ -32,7 +32,7 @@ public:
         deferredFrees[deferredFreeCount++] = { currentFrame, handle};
     }
 
-    void releaseDeferred(UINT completedFrame)
+    void collectGarbage(UINT completedFrame)
     {
         for (size_t i = 0; i < deferredFreeCount; )
         {

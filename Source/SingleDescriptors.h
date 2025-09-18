@@ -14,7 +14,7 @@ public:
     void release(UINT handle) { if (handle) handles.freeHandle(handle); }
     void deferRelease(UINT handle);
 
-    void releaseDeferred();
+    void collectGarbage();
     bool isValid(UINT handle) const { return handles.validHandle(handle); }
 
     UINT createCBV(ID3D12Resource* resource);

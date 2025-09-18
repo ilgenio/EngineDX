@@ -55,7 +55,7 @@ bool Exercise10::init()
 
         ambient.Lc = Vector3::One * (0.1f);
 
-        Quaternion q0(-0.3535534,
+        Quaternion q0(-0.3535534f,
             -0.353553385f,
             -0.146446586f,
             0.8535534f);
@@ -133,6 +133,9 @@ void Exercise10::imGuiDirection(Vector3& dir)
 
 void Exercise10::imGuiDirectional(Directional &dirLight)
 {
+    ImGui::PushID(&dirLight);
+    ImGui::Separator();
+
     imGuiDirection(dirLight.Ld);
     ImGui::ColorEdit3("Colour", reinterpret_cast<float *>(&dirLight.Lc));
     ImGui::DragFloat("Intensity", &dirLight.intenisty, 0.1f, 0.0f, 1000.0f);
@@ -142,10 +145,14 @@ void Exercise10::imGuiDirectional(Directional &dirLight)
         ImGui::DragFloat("DD arrow distance", &ddDistance,  0.1f, 0.0f, 1000.0f);
         ImGui::DragFloat("DD arrow szie", &ddSize, 0.1f, 0.0f, 10.0f);
     }
+
+    ImGui::PopID();
 }
 
 void Exercise10::imGuiPoint(Point &pointLight)
 {
+    ImGui::Separator();
+
     ImGui::DragFloat3("Position", reinterpret_cast<float *>(&pointLight.Lp), 0.1f);
     ImGui::ColorEdit3("Colour", reinterpret_cast<float *>(&pointLight.Lc));
     ImGui::DragFloat("Intensity", &pointLight.intensity, 0.1f, 0.0f, 1000.0f);
@@ -158,6 +165,8 @@ void Exercise10::imGuiPoint(Point &pointLight)
 
 void Exercise10::imGuiSpot(Spot &spotLight)
 {
+    ImGui::Separator();
+
     ImGui::DragFloat3("Position", reinterpret_cast<float *>(&spotLight.Lp), 0.1f);
     imGuiDirection(spotLight.Ld);
 

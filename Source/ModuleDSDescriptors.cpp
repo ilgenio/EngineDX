@@ -11,10 +11,6 @@ ModuleDSDescriptors::ModuleDSDescriptors()
 
 ModuleDSDescriptors::~ModuleDSDescriptors()
 {
-    handles.forceReleaseDeferred();
-
-    _ASSERT_EXPR((handles.getSize() - handles.getFreeCount()) == 0, "ModuleDSDescriptors has leaks!!!");
-
 }
 
 bool ModuleDSDescriptors::init()
@@ -56,15 +52,3 @@ void ModuleDSDescriptors::release(UINT handle)
     }
 }
 
-void ModuleDSDescriptors::deferRelease(UINT handle)
-{
-    if (handle != 0)
-    {
-        handles.deferRelease(handle, app->getD3D12()->getCurrentFrame());
-    }
-}
-
-void ModuleDSDescriptors::preRender()
-{
-    handles.releaseDeferred(app->getD3D12()->getLastCompletedFrame());
-}

@@ -39,7 +39,7 @@ bool ModuleShaderDescriptors::init()
 
 void ModuleShaderDescriptors::preRender()
 {
-    singleDescriptors->releaseDeferred();
-    tableDescriptors->releaseDeferred();
+    singleDescriptors->collectGarbage();
+    tableDescriptors->collectGarbage();
 }
 

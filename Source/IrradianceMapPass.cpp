@@ -96,7 +96,7 @@ ComPtr<ID3D12Resource> IrradianceMapPass::generate(UINT cubeMapDesc, size_t size
         CD3DX12_RESOURCE_BARRIER toSRV = CD3DX12_RESOURCE_BARRIER::Transition(irradianceMap.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, subResource);
         commandList->ResourceBarrier(1, &toSRV);
 
-        rtDescriptors->deferRelease(rtvHandle);
+        rtDescriptors->release(rtvHandle);
     }
 
     END_EVENT(commandList.Get());

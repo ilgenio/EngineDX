@@ -11,9 +11,6 @@ ModuleRTDescriptors::ModuleRTDescriptors()
 
 ModuleRTDescriptors::~ModuleRTDescriptors()
 {
-    handles.forceReleaseDeferred();
-
-    _ASSERT_EXPR((handles.getSize() - handles.getFreeCount()) == 0, "ModuleRTDescriptors has leaks!!!");
 }
 
 bool ModuleRTDescriptors::init()
@@ -75,15 +72,3 @@ void ModuleRTDescriptors::release(UINT handle)
     }
 }
 
-void ModuleRTDescriptors::deferRelease(UINT handle)
-{
-    if (handle != 0)
-    {
-        handles.deferRelease(handle, app->getD3D12()->getCurrentFrame());
-    }
-}
-
-void ModuleRTDescriptors::preRender()
-{
-    handles.releaseDeferred(app->getD3D12()->getLastCompletedFrame());
-}

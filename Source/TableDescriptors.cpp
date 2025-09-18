@@ -29,9 +29,9 @@ void TableDescriptors::deferRelease(UINT handle)
     }
 }
 
-void TableDescriptors::releaseDeferred()
+void TableDescriptors::collectGarbage()
 {
-    handles.releaseDeferred(app->getD3D12()->getLastCompletedFrame());
+    handles.collectGarbage(app->getD3D12()->getLastCompletedFrame());
 }
 
 void TableDescriptors::createCBV(ID3D12Resource *resource, UINT handle, uint8_t slot)

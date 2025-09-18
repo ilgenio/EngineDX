@@ -61,7 +61,7 @@ void ModuleD3D12::preRender()
         WaitForSingleObject(drawEvent, INFINITE);
 
         drawFenceValues[currentBackBufferIdx];
-        lastCompletedFrame = frameValues[currentBackBufferIdx];
+        lastCompletedFrame = std::max(frameValues[currentBackBufferIdx], lastCompletedFrame);
     }
 
     frameIndex++;
@@ -71,6 +71,7 @@ void ModuleD3D12::preRender()
 }
 
 void ModuleD3D12::postRender()
+
 {
     swapChain->Present(0, allowTearing ? DXGI_PRESENT_ALLOW_TEARING : 0);
 

@@ -15,7 +15,7 @@ public:
     void release(UINT handle) { if (handle) handles.freeHandle(handle); }
     void deferRelease(UINT handle);
 
-    void releaseDeferred();
+    void collectGarbage();
 
     void createCBV(ID3D12Resource* resource, UINT handle, uint8_t slot);
     void createTextureSRV(ID3D12Resource* resource, UINT handle, uint8_t slot);
