@@ -15,19 +15,10 @@
 
 PrefilterEnvMapPass::PrefilterEnvMapPass()
 {
-}
-
-PrefilterEnvMapPass::~PrefilterEnvMapPass()
-{
-}
-
-
-bool PrefilterEnvMapPass::init()
-{
     cubemapMesh = std::make_unique<CubemapMesh>();
 
-    ModuleD3D12 *d3d12 = app->getD3D12();
-    ID3D12Device4 *device = d3d12->getDevice();
+    ModuleD3D12* d3d12 = app->getD3D12();
+    ID3D12Device4* device = d3d12->getDevice();
 
     bool ok SUCCEEDED(device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator)));
     ok = ok && SUCCEEDED(device->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&commandList)));
@@ -36,10 +27,14 @@ bool PrefilterEnvMapPass::init()
     ok = ok && createRootSignature();
     ok = ok && createPSO();
 
-    return ok;
+    _ASSERT_EXPR(ok, "PrefilterEnvMapPass can't initialise");
 }
 
-ComPtr<ID3D12Resource> PrefilterEnvMapPass::generate(UINT cubeMapDesc, size_t size, UINT mipLevels)
+PrefilterEnvMapPass::~PrefilterEnvMapPass()
+{
+}
+
+ComPtr<ID3D12Resource> PrefilterEnvMapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE cubemapSRV, size_t size, UINT mipLevels)
 {
     ModuleD3D12* d3d12 = app->getD3D12();
     ModuleResources* resources = app->getResources();
@@ -64,7 +59,7 @@ ComPtr<ID3D12Resource> PrefilterEnvMapPass::generate(UINT cubeMapDesc, size_t si
     commandList->RSSetViewports(1, &viewport);
     commandList->RSSetScissorRects(1, &scissor);
 
-    commandList->SetGraphicsRootDescriptorTable(2, descriptors->getSingle()->getGPUHandle(cubeMapDesc));
+    commandList->SetGraphicsRootDescriptorTable(2, cubemapSRV);
     commandList->SetGraphicsRootDescriptorTable(3, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
 
     // create render target view for each face

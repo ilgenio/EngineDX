@@ -13,15 +13,7 @@
 
 EnvironmentBRDFPass::EnvironmentBRDFPass()
 {
-}
-
-EnvironmentBRDFPass::~EnvironmentBRDFPass()
-{
-}
-
-bool EnvironmentBRDFPass::init()
-{
-    ModuleD3D12* d3d12   = app->getD3D12();
+    ModuleD3D12* d3d12 = app->getD3D12();
     ID3D12Device4* device = d3d12->getDevice();
 
     bool ok SUCCEEDED(device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator)));
@@ -31,7 +23,11 @@ bool EnvironmentBRDFPass::init()
     ok = ok && createRootSignature();
     ok = ok && createPSO();
 
-    return ok;
+    _ASSERT_EXPR(ok, "Error creating EnvironmentBRDFPass");
+}
+
+EnvironmentBRDFPass::~EnvironmentBRDFPass()
+{
 }
 
 ComPtr<ID3D12Resource> EnvironmentBRDFPass::generate(size_t size)

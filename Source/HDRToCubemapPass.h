@@ -15,8 +15,7 @@ public:
     HDRToCubemapPass();
     ~HDRToCubemapPass();
 
-    bool init();
-    ComPtr<ID3D12Resource> generate(UINT skybox, DXGI_FORMAT format, size_t size);
+    ComPtr<ID3D12Resource> generate(D3D12_GPU_DESCRIPTOR_HANDLE hdrSRV, DXGI_FORMAT format, size_t size);
 
 private:
     bool createRootSignature();

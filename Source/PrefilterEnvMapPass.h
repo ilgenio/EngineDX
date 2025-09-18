@@ -25,8 +25,7 @@ public:
     PrefilterEnvMapPass();
     ~PrefilterEnvMapPass();
 
-    bool init();
-    ComPtr<ID3D12Resource> generate(UINT cubeMapDesc, size_t size, UINT mipLevels);
+    ComPtr<ID3D12Resource> generate(D3D12_GPU_DESCRIPTOR_HANDLE cubemapSRV, size_t size, UINT mipLevels);
 
 private:
 

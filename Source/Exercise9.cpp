@@ -105,7 +105,7 @@ void Exercise9::renderToTexture(ID3D12GraphicsCommandList* commandList)
     Matrix view = Matrix::CreateFromQuaternion(invRot);
     Matrix proj = ModuleCamera::getPerspectiveProj(float(width) / float(height));
 
-    skyboxRenderPass->record(commandList, cubemapDesc, view, proj);
+    skyboxRenderPass->record(commandList, descriptors->getSingle()->getGPUHandle(cubemapDesc), view, proj);
 
     END_EVENT(commandList);
 

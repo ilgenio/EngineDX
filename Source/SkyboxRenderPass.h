@@ -16,7 +16,7 @@ public:
     SkyboxRenderPass();
     ~SkyboxRenderPass();
 
-    void record(ID3D12GraphicsCommandList* commandList, UINT cubemapSRV, const Matrix& view, const Matrix projection);
+    void record(ID3D12GraphicsCommandList* commandList, D3D12_GPU_DESCRIPTOR_HANDLE cubemapSRV, const Matrix& view, const Matrix projection);
 
 private:
     bool createRootSignature();

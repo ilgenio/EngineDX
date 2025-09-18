@@ -16,15 +16,7 @@
 HDRToCubemapPass::HDRToCubemapPass()
 {
     cubemapMesh = std::make_unique<CubemapMesh>();
-}
-
-HDRToCubemapPass::~HDRToCubemapPass()
-{
-}
-
-bool HDRToCubemapPass::init()
-{
-    ModuleD3D12* d3d12   = app->getD3D12();
+    ModuleD3D12* d3d12 = app->getD3D12();
     ID3D12Device4* device = d3d12->getDevice();
 
     bool ok SUCCEEDED(device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator)));
@@ -34,10 +26,14 @@ bool HDRToCubemapPass::init()
     ok = ok && createRootSignature();
     ok = ok && createPSO();
 
-    return ok;
+    _ASSERT_EXPR(ok, "Error creating HDRToCubemapPass");
 }
 
-ComPtr<ID3D12Resource> HDRToCubemapPass::generate(UINT skybox, DXGI_FORMAT format, size_t size)
+HDRToCubemapPass::~HDRToCubemapPass()
+{
+}
+
+ComPtr<ID3D12Resource> HDRToCubemapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE hdrSRV, DXGI_FORMAT format, size_t size)
 {
     ModuleD3D12* d3d12 = app->getD3D12();
     ModuleResources* resources = app->getResources();
@@ -62,7 +58,7 @@ ComPtr<ID3D12Resource> HDRToCubemapPass::generate(UINT skybox, DXGI_FORMAT forma
     commandList->RSSetViewports(1, &viewport);
     commandList->RSSetScissorRects(1, &scissor);
 
-    commandList->SetGraphicsRootDescriptorTable(1, descriptors->getGPUHandle(skybox));
+    commandList->SetGraphicsRootDescriptorTable(1, hdrSRV);
     commandList->SetGraphicsRootDescriptorTable(2, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
 
     // create render target view for each face

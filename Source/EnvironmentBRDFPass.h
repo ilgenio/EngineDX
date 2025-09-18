@@ -12,7 +12,6 @@ public:
     EnvironmentBRDFPass();
     ~EnvironmentBRDFPass();
 
-    bool init();
     ComPtr<ID3D12Resource> generate(size_t size);
 
 private:

@@ -15,15 +15,8 @@
 IrradianceMapPass::IrradianceMapPass()
 {
     cubemapMesh = std::make_unique<CubemapMesh>();
-}
 
-IrradianceMapPass::~IrradianceMapPass()
-{
-}
-
-bool IrradianceMapPass::init()
-{
-    ModuleD3D12* d3d12   = app->getD3D12();
+    ModuleD3D12* d3d12 = app->getD3D12();
     ID3D12Device4* device = d3d12->getDevice();
 
     bool ok SUCCEEDED(device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator)));
@@ -33,10 +26,14 @@ bool IrradianceMapPass::init()
     ok = ok && createRootSignature();
     ok = ok && createPSO();
 
-    return ok;
+    _ASSERT_EXPR(ok, "IrradianceMapPass can't initialise");
 }
 
-ComPtr<ID3D12Resource> IrradianceMapPass::generate(UINT cubeMapDesc, size_t size)
+IrradianceMapPass::~IrradianceMapPass()
+{
+}
+
+ComPtr<ID3D12Resource> IrradianceMapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE cubemapSRV, size_t size)
 {
     ModuleD3D12* d3d12 = app->getD3D12();
     ModuleResources* resources = app->getResources();
@@ -61,7 +58,7 @@ ComPtr<ID3D12Resource> IrradianceMapPass::generate(UINT cubeMapDesc, size_t size
     commandList->RSSetViewports(1, &viewport);
     commandList->RSSetScissorRects(1, &scissor);
 
-    commandList->SetGraphicsRootDescriptorTable(2, descriptors->getSingle()->getGPUHandle(cubeMapDesc));
+    commandList->SetGraphicsRootDescriptorTable(2, cubemapSRV);
     commandList->SetGraphicsRootDescriptorTable(3, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
 
     // create render target view for each face

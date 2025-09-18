@@ -24,7 +24,7 @@ SkyboxRenderPass::~SkyboxRenderPass()
 {
 }
 
-void SkyboxRenderPass::record(ID3D12GraphicsCommandList* commandList, UINT cubemapSRV, const Matrix& view, const Matrix projection)
+void SkyboxRenderPass::record(ID3D12GraphicsCommandList* commandList, D3D12_GPU_DESCRIPTOR_HANDLE cubemapSRV, const Matrix& view, const Matrix projection)
 {
     ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
     ModuleSamplers* samplers = app->getSamplers();
@@ -37,7 +37,7 @@ void SkyboxRenderPass::record(ID3D12GraphicsCommandList* commandList, UINT cubem
     vp = vp.Transpose();
 
     commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &vp, 0);
-    commandList->SetGraphicsRootDescriptorTable(1, descriptors->getSingle()->getGPUHandle(cubemapSRV));
+    commandList->SetGraphicsRootDescriptorTable(1, cubemapSRV);
     commandList->SetGraphicsRootDescriptorTable(2, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
     cubemapMesh->draw(commandList);
 
