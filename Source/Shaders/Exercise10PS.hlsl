@@ -1,30 +1,10 @@
 #include "Exercise10.hlsli"
 #include "ggx_brdf.hlsli"
+#include "tonemap.hlsli"
 
 Texture2D baseColourTex : register(t3);
 Texture2D metallicRoughnessTex : register(t4);
 SamplerState materialSamp : register(s0);
-
-float3 PBRNeutralToneMapping(float3 color)
-{
-    const float startCompression = 0.8 - 0.04;
-    const float desaturation = 0.15;
-
-    float x = min(color.r, min(color.g, color.b));
-    float offset = x < 0.08 ? x - 6.25 * x * x : 0.04;
-    color -= offset;
-
-    float peak = max(color.r, max(color.g, color.b));
-    if (peak < startCompression)
-        return color;
-
-    const float d = 1. - startCompression;
-    float newPeak = 1. - d * d / (peak + d - startCompression);
-    color *= newPeak / peak;
-
-    float g = 1. - 1. / (desaturation * (peak - newPeak) + 1.);
-    return lerp(color, newPeak, g);
-}
 
 float3 computeLighting(float3 V, float3 N, float3 L, float3 lightColour, float3 baseColour, float roughness, float metallic)
 {
@@ -126,6 +106,6 @@ float4 exercise10PS(float3 worldPos : POSITION, float3 normal : NORMAL, float2 c
     
     float3 ldr = PBRNeutralToneMapping(colour);
     
-    return float4(pow(ldr, 1.0 / 2.2), 1.0);
+    return float4(linearTosRGB(ldr), 1.0);
 }
 

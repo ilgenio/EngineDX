@@ -378,6 +378,7 @@
     <None Include="Shaders\Exercise8.hlsli" />
     <None Include="Shaders\ggx_brdf.hlsli" />
     <None Include="Shaders\sampling.hlsli" />
+    <None Include="Shaders\tonemap.hlsli" />
     <None Include="SimpleMath.inl" />
   </ItemGroup>
   <ItemGroup>

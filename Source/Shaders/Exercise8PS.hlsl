@@ -1,4 +1,5 @@
 #include "Exercise8.hlsli"
+#include "tonemap.hlsli"
 
 Texture2D diffuseTex : register(t3);
 SamplerState diffuseSamp : register(s0);
@@ -96,8 +97,8 @@ float4 exercise8PS(float3 worldPos : POSITION, float3 normal : NORMAL, float2 co
         colour += computeLighting(V, N, spotLights[i], worldPos, Cd, Cs, material.shininess);
 
     // Reinhard tone mapping (HDR to LDR)
-    float3 ldr = colour.rgb / (colour.rgb + 1.0);
+    float3 ldr = PBRNeutralToneMapping(colour);
     
-    return float4(ldr, 1.0);
+    return float4(linearTosRGB(ldr), 1.0);
 }
 
