@@ -48,8 +48,6 @@ class Exercise11 : public Module
     UINT imguiTextDesc = 0;
     UINT hdrSkyDesc = 0;
     UINT iblTableDesc = 0;
-    UINT prefilteredEnvMapDesc = 0;
-    UINT environmentBRDFDesc = 0;
 
     std::unique_ptr<RenderTexture> renderTexture;
     ImVec2 canvasSize;

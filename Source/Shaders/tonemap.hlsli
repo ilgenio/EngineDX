@@ -15,7 +15,6 @@ float4 linearTosRGB(float4 color)
     return float4(pow(color.rgb, INV_GAMMA), 1.0);
 }
 
-
 // sRGB to linear approximation
 float3 sRGBToLinear(float3 srgbIn)
 {

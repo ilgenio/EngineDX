@@ -8,6 +8,7 @@
 #include "ModuleResources.h"
 #include "ModuleShaderDescriptors.h"
 #include "SingleDescriptors.h"
+#include "TableDescriptors.h"
 #include "ModuleRTDescriptors.h"
 
 #include "CubemapMesh.h"
@@ -23,8 +24,8 @@ HDRToCubemapPass::HDRToCubemapPass()
     ok = ok && SUCCEEDED(device->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&commandList)));
     ok = ok && SUCCEEDED(commandList->Reset(commandAllocator.Get(), nullptr));
 
-    ok = ok && createRootSignature();
-    ok = ok && createPSO();
+    ok = ok && createRootSignatures();
+    ok = ok && createPSOs();
 
     _ASSERT_EXPR(ok, "Error creating HDRToCubemapPass");
 }
@@ -37,10 +38,12 @@ ComPtr<ID3D12Resource> HDRToCubemapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE hd
 {
     ModuleD3D12* d3d12 = app->getD3D12();
     ModuleResources* resources = app->getResources();
-    SingleDescriptors* descriptors = app->getShaderDescriptors()->getSingle();
+    TableDescriptors* table = app->getShaderDescriptors()->getTable();
     ModuleSamplers* samplers = app->getSamplers();
 
-    ComPtr<ID3D12Resource> irradianceMap = resources->createCubemapRenderTarget(format, size, Vector4(0.0f, 0.0f, 0.0f, 1.0f), "HDR To Cubemap");
+    UINT numMips = UINT(std::log2f(float(size)));
+
+    ComPtr<ID3D12Resource> cubemap = resources->createCubemapRenderTarget(format, size, numMips+1, Vector4(0.0f, 0.0f, 0.0f, 1.0f), "HDR To Cubemap");
 
     BEGIN_EVENT(commandList.Get(), "HDR To Cubemap");
 
@@ -72,21 +75,61 @@ ComPtr<ID3D12Resource> HDRToCubemapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE hd
 
         commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &mvpMatrix, 0);
 
-        UINT subResource = D3D12CalcSubresource(0, i, 0, 1, 6);
+        UINT subResource = D3D12CalcSubresource(0, i, 0, UINT(numMips), 6);
 
-        CD3DX12_RESOURCE_BARRIER toRT = CD3DX12_RESOURCE_BARRIER::Transition(irradianceMap.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET, subResource);
+        CD3DX12_RESOURCE_BARRIER toRT = CD3DX12_RESOURCE_BARRIER::Transition(cubemap.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET, subResource);
         commandList->ResourceBarrier(1, &toRT);
 
-        UINT rtvHandle = rtDescriptors->create(irradianceMap.Get(), i, 0, DXGI_FORMAT_R16G16B16A16_FLOAT);
+        UINT rtvHandle = rtDescriptors->create(cubemap.Get(), i, 0, DXGI_FORMAT_R16G16B16A16_FLOAT);
         D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = rtDescriptors->getCPUHandle(rtvHandle);
         commandList->OMSetRenderTargets(1, &cpuHandle, FALSE, nullptr);
 
         cubemapMesh->draw(commandList.Get());
 
-        CD3DX12_RESOURCE_BARRIER toSRV = CD3DX12_RESOURCE_BARRIER::Transition(irradianceMap.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, subResource);
+        CD3DX12_RESOURCE_BARRIER toSRV = CD3DX12_RESOURCE_BARRIER::Transition(cubemap.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, subResource);
         commandList->ResourceBarrier(1, &toSRV);
 
         rtDescriptors->release(rtvHandle);
+    }
+
+
+    // Generate mips
+
+    commandList->SetComputeRootSignature(mipsRS.Get());
+    commandList->SetPipelineState(mipsPSO.Get());
+
+    auto getGroupCount = [](UINT size, UINT groupSize) -> UINT
+        {
+            return (size + (groupSize-1)) / groupSize;
+        };
+
+    for (UINT i = 0; i < numMips; ++i)
+    {
+        UINT dim = UINT(size >> i);
+        commandList->SetComputeRoot32BitConstants(0, 2, &dim, 0);
+
+        for (UINT j = 0; j < 6; ++j)
+        {
+            UINT subResource = D3D12CalcSubresource(i+1, j, 0, numMips, 6);
+
+            CD3DX12_RESOURCE_BARRIER toRT = CD3DX12_RESOURCE_BARRIER::Transition(cubemap.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, subResource);
+            commandList->ResourceBarrier(1, &toRT);
+
+            UINT tableDesc = table->alloc();
+            table->createTexture2DSRV(cubemap.Get(), j, i, tableDesc, 0);
+            table->createTexture2DUAV(cubemap.Get(), j, i + 1, tableDesc, 1);
+
+            commandList->SetComputeRootDescriptorTable(1, table->getGPUHandle(tableDesc));
+
+            // execute compute shader
+            UINT count = getGroupCount(UINT(size >> i), 32);
+            commandList->Dispatch(count, count, 1);
+
+            CD3DX12_RESOURCE_BARRIER toSRV = CD3DX12_RESOURCE_BARRIER::Transition(cubemap.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, subResource);
+            commandList->ResourceBarrier(1, &toSRV);
+
+            table->deferRelease(tableDesc);
+        }
     }
 
     END_EVENT(commandList.Get());
@@ -95,26 +138,25 @@ ComPtr<ID3D12Resource> HDRToCubemapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE hd
 
     ID3D12CommandList *commandLists[] = {commandList.Get()};
     d3d12->getDrawCommandQueue()->ExecuteCommandLists(UINT(std::size(commandLists)), commandLists);
-    d3d12->flush();
 
     commandAllocator->Reset();
     SUCCEEDED(commandList->Reset(commandAllocator.Get(), nullptr));
 
-    return irradianceMap;
+    return cubemap;
 }
 
-bool HDRToCubemapPass::createRootSignature()
+bool HDRToCubemapPass::createRootSignatures()
 {
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
     CD3DX12_ROOT_PARAMETER rootParameters[3] = {};
-    CD3DX12_DESCRIPTOR_RANGE tableRanges;
+    CD3DX12_DESCRIPTOR_RANGE tableRanges[2];
     CD3DX12_DESCRIPTOR_RANGE sampRange;
 
-    tableRanges.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
+    tableRanges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
     sampRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, ModuleSamplers::COUNT, 0);
 
     rootParameters[0].InitAsConstants((sizeof(Matrix) / sizeof(UINT32)), 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
-    rootParameters[1].InitAsDescriptorTable(1, &tableRanges, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[1].InitAsDescriptorTable(1, &tableRanges[0], D3D12_SHADER_VISIBILITY_PIXEL);
     rootParameters[2].InitAsDescriptorTable(1, &sampRange, D3D12_SHADER_VISIBILITY_PIXEL);
 
     rootSignatureDesc.Init(3, rootParameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
@@ -131,10 +173,30 @@ bool HDRToCubemapPass::createRootSignature()
         return false;
     }
 
+
+    // Mips RS
+
+    tableRanges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
+    tableRanges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0);
+
+    rootParameters[0].InitAsConstants(2, 0, 0, D3D12_SHADER_VISIBILITY_ALL);
+    rootParameters[1].InitAsDescriptorTable(2, &tableRanges[0], D3D12_SHADER_VISIBILITY_ALL);
+    rootSignatureDesc.Init(2, rootParameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_NONE);
+
+    if (FAILED(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &rootSignatureBlob, nullptr)))
+    {
+        return false;
+    }
+
+    if (FAILED(app->getD3D12()->getDevice()->CreateRootSignature(0, rootSignatureBlob->GetBufferPointer(), rootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&mipsRS))))
+    {
+        return false;
+    }
+
     return true;
 }
 
-bool HDRToCubemapPass::createPSO()
+bool HDRToCubemapPass::createPSOs()
 {
     auto dataVS = DX::ReadData(L"skyboxVS.cso");
     auto dataPS = DX::ReadData(L"HDRToCubemapPS.cso");
@@ -157,5 +219,14 @@ bool HDRToCubemapPass::createPSO()
     psoDesc.NumRenderTargets = 1;                                                                   
 
     // create the pso
-    return SUCCEEDED(app->getD3D12()->getDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pso)));
+    bool ok = SUCCEEDED(app->getD3D12()->getDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pso)));
+
+    auto dataCS = DX::ReadData(L"MipChainCS.cso");
+
+    D3D12_COMPUTE_PIPELINE_STATE_DESC mipsDesc = {};
+    mipsDesc.pRootSignature = mipsRS.Get();
+    mipsDesc.CS = { dataCS.data(), dataCS.size() };
+
+    return ok && SUCCEEDED(app->getD3D12()->getDevice()->CreateComputePipelineState(&mipsDesc, IID_PPV_ARGS(&mipsPSO)));
 }
+

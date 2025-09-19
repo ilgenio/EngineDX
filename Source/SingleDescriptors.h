@@ -19,6 +19,7 @@ public:
 
     UINT createCBV(ID3D12Resource* resource);
     UINT createTextureSRV(ID3D12Resource* resource);
+    UINT createTexture2DSRV(ID3D12Resource* resource, UINT arraySlice, UINT mipSlice);
     UINT createCubeTextureSRV(ID3D12Resource* resource);
     UINT createNullTexture2DSRV();
 

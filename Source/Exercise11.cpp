@@ -187,7 +187,7 @@ void Exercise11::imGuiCommands()
     if (environmentBRDF)
     {
         ImGui::Text("Environment BRDF");
-        ImGui::Image((ImTextureID)descriptors->getTable()->getGPUHandle(iblTableDesc, 2).ptr, ImVec2(128, 128));
+        ImGui::Image((ImTextureID)descriptors->getTable()->getGPUHandle(iblTableDesc, 3).ptr, ImVec2(128, 128));
     }
 
     ImGui::End();
@@ -215,7 +215,6 @@ void Exercise11::imGuiCommands()
     ImGui::End();
 
     app->getCamera()->setEnable(viewerFocused);
-
 }
 
 void Exercise11::render()
@@ -244,15 +243,15 @@ void Exercise11::render()
     {
         iblTableDesc = tableDescriptors->alloc();
 
-        skybox = hdrToCubemapPass->generate(singleDescriptors->getGPUHandle(hdrSkyDesc), DXGI_FORMAT_R16G16B16A16_FLOAT, 512);
+        skybox = hdrToCubemapPass->generate(singleDescriptors->getGPUHandle(hdrSkyDesc), DXGI_FORMAT_R16G16B16A16_FLOAT, 1024);
         tableDescriptors->createCubeTextureSRV(skybox.Get(), iblTableDesc, 0);
 
         D3D12_GPU_DESCRIPTOR_HANDLE cubemapSRV = tableDescriptors->getGPUHandle(iblTableDesc, 0);
 
-        irradianceMap = irradianceMapPass->generate(cubemapSRV, 512);
+        irradianceMap = irradianceMapPass->generate(cubemapSRV, 1024);
         tableDescriptors->createCubeTextureSRV(irradianceMap.Get(), iblTableDesc, 1);
 
-        prefilteredEnvMap = prefilterEnvMapPass->generate(cubemapSRV, 512, 5);
+        prefilteredEnvMap = prefilterEnvMapPass->generate(cubemapSRV, 1024, 5);
         tableDescriptors->createCubeTextureSRV(prefilteredEnvMap.Get(), iblTableDesc, 2);
 
         environmentBRDF = environmentBRDFPass->generate(128);

@@ -17,15 +17,17 @@ public:
 
     void collectGarbage();
 
-    void createCBV(ID3D12Resource* resource, UINT handle, uint8_t slot);
-    void createTextureSRV(ID3D12Resource* resource, UINT handle, uint8_t slot);
-    void createCubeTextureSRV(ID3D12Resource* resource, UINT handle, uint8_t slot);
-    void createNullTexture2DSRV(UINT handle, uint8_t slot);
+    void createCBV(ID3D12Resource* resource, UINT handle, UINT8 slot);
+    void createTextureSRV(ID3D12Resource* resource, UINT handle, UINT8 slot);
+    void createTexture2DSRV(ID3D12Resource* resource, UINT arraySlice, UINT mipSlice, UINT handle, UINT8 slot);
+    void createTexture2DUAV(ID3D12Resource* resource, UINT arraySlice, UINT mipSlice, UINT handle, UINT8 slot);
+    void createCubeTextureSRV(ID3D12Resource* resource, UINT handle, UINT8 slot);
+    void createNullTexture2DSRV(UINT handle, UINT8 slot);
 
     bool isValid(UINT handle) const { return handles.validHandle(handle); }
 
-    D3D12_GPU_DESCRIPTOR_HANDLE getGPUHandle(UINT handle, UINT slot = 0) const { return CD3DX12_GPU_DESCRIPTOR_HANDLE(gpuStart, handles.indexFromHandle(handle)*DESCRIPTORS_PER_TABLE+slot, descriptorSize); }
-    D3D12_CPU_DESCRIPTOR_HANDLE getCPUHandle(UINT handle, UINT slot = 0) const { return CD3DX12_CPU_DESCRIPTOR_HANDLE(cpuStart, handles.indexFromHandle(handle)*DESCRIPTORS_PER_TABLE+slot, descriptorSize); }
+    D3D12_GPU_DESCRIPTOR_HANDLE getGPUHandle(UINT handle, UINT8 slot = 0) const { return CD3DX12_GPU_DESCRIPTOR_HANDLE(gpuStart, handles.indexFromHandle(handle)*DESCRIPTORS_PER_TABLE+slot, descriptorSize); }
+    D3D12_CPU_DESCRIPTOR_HANDLE getCPUHandle(UINT handle, UINT8 slot = 0) const { return CD3DX12_CPU_DESCRIPTOR_HANDLE(cpuStart, handles.indexFromHandle(handle)*DESCRIPTORS_PER_TABLE+slot, descriptorSize); }
 
 private:
 
