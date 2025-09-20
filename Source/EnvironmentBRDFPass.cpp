@@ -73,6 +73,7 @@ ComPtr<ID3D12Resource> EnvironmentBRDFPass::generate(size_t size)
     commandList->Close();
     ID3D12CommandList *commandLists[] = {commandList.Get()};
     d3d12->getDrawCommandQueue()->ExecuteCommandLists(UINT(std::size(commandLists)), commandLists);
+    d3d12->flush();
 
     commandAllocator->Reset();
     SUCCEEDED(commandList->Reset(commandAllocator.Get(), nullptr));
