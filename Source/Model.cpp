@@ -46,7 +46,17 @@ void Model::load(const char* fileName, const char* basePath, BasicMaterial::Type
 
 void Model::loadMeshes(const tinygltf::Model& model)
 {
-    numMeshes = uint32_t(model.meshes.size());
+    auto countPrimitves = [](const tinygltf::Model& m) -> size_t {
+        size_t count = 0;
+        for (const tinygltf::Mesh& mesh : m.meshes)
+        {
+            count += mesh.primitives.size();
+        }
+        return count;
+        };
+
+    numMeshes = uint32_t(countPrimitves(model));
+
     meshes = std::make_unique<Mesh[]>(numMeshes);
     int meshIndex = 0;
 
