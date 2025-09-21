@@ -3,7 +3,7 @@
 #include "Module.h"
 #include "BasicMaterial.h"
 
-class SphereMesh;
+class Model;
 class DebugDrawPass;
 class ImGuiPass;
 class IrradianceMapPass;
@@ -15,6 +15,12 @@ class RenderTexture;
 
 class Exercise11 : public Module
 {
+    struct PerFrame
+    {
+        Vector3 camPos;
+        float   roughnessLevels;
+    };
+
     struct PerInstance
     {
         Matrix modelMat;
@@ -23,10 +29,9 @@ class Exercise11 : public Module
         MetallicRoughnessMaterialData material;
     };
 
-    ComPtr<ID3D12RootSignature>         sphereRS;
-    ComPtr<ID3D12PipelineState>         spherePSO;
+    ComPtr<ID3D12RootSignature>             rootSignature;
+    ComPtr<ID3D12PipelineState>             pso;
 
-    std::unique_ptr<SphereMesh>             sphereMesh;
     std::unique_ptr<DebugDrawPass>          debugDrawPass;
     std::unique_ptr<ImGuiPass>              imguiPass;
     std::unique_ptr<IrradianceMapPass>      irradianceMapPass;
@@ -40,6 +45,8 @@ class Exercise11 : public Module
     ComPtr<ID3D12Resource>                  prefilteredEnvMap;
     ComPtr<ID3D12Resource>                  environmentBRDF;
     ComPtr<ID3D12Resource>                  skybox;
+
+    std::unique_ptr<Model>                  model;
 
     bool showAxis = true;
     bool showGrid = true;
@@ -65,9 +72,9 @@ public:
 
 private:
     void imGuiCommands();
-    void resizeRenderTexture();
     void renderToTexture(ID3D12GraphicsCommandList* commandList);
 
-    bool createSphereRS();
-    bool createSpherePSO();
+    bool createRootSignature();
+    bool createPSO();
+    bool loadModel();
 };

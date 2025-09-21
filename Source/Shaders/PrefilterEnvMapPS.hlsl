@@ -22,13 +22,17 @@ float4 PrefilterEnvMapPS(float3 texcoords : TEXCOORD) : SV_Target
     float weight      = 0.0;
     float3x3 tangentSpace = computeTangetSpace(N);
 
+    float alphaRoughness = roughness*roughness;
+
+    alphaRoughness = max(alphaRoughness, 0.001); // avoid singularities
+
     for( int i = 0; i < numSamples; ++i ) 
     {
-        float3 dir = ggxSample( hammersley2D(i, numSamples), roughness);
+        float3 dir = ggxSample( hammersley2D(i, numSamples), alphaRoughness);
 
-        // float pdf = D_GGX(NoH, roughness) * NoH / (4.0 * VoH);
+        // float pdf = D_GGX(roughness, NoH) * NoH / (4.0 * VoH);
         // but since V = N => VoH == NoH
-        float pdf = D_GGX(dir.z, roughness)/4.0;
+        float pdf = D_GGX(alphaRoughness, dir.z) / 4.0;
         float lod = computeLod(pdf, numSamples, cubemapSize);
 
         float3 H = normalize(mul(dir, tangentSpace));

@@ -41,7 +41,7 @@ ComPtr<ID3D12Resource> PrefilterEnvMapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE
     ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
     ModuleSamplers* samplers = app->getSamplers();
 
-    ComPtr<ID3D12Resource> prefilterMap = resources->createCubemapRenderTarget(DXGI_FORMAT_R16G16B16A16_FLOAT, size, mipLevels, Vector4(0.0f, 0.0f, 0.0f , 1.0f), "Irradiance Map");
+    ComPtr<ID3D12Resource> prefilterMap = resources->createCubemapRenderTarget(DXGI_FORMAT_R16G16B16A16_FLOAT, size, mipLevels, Vector4(0.0f, 0.0f, 0.0f , 1.0f), "Prefilter EnvMap");
 
     BEGIN_EVENT(commandList.Get(), "Prefilter Map");
 
@@ -53,12 +53,6 @@ ComPtr<ID3D12Resource> PrefilterEnvMapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE
     commandList->SetDescriptorHeaps(2, descriptorHeaps);
 
     // set viewport and scissor
-
-    D3D12_VIEWPORT viewport{ 0.0f, 0.0f, float(size), float(size), 0.0f, 1.0f };
-    D3D12_RECT scissor = { 0, 0, LONG(size), LONG(size) };
-    commandList->RSSetViewports(1, &viewport);
-    commandList->RSSetScissorRects(1, &scissor);
-
     commandList->SetGraphicsRootDescriptorTable(2, cubemapSRV);
     commandList->SetGraphicsRootDescriptorTable(3, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
 
@@ -67,7 +61,7 @@ ComPtr<ID3D12Resource> PrefilterEnvMapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE
     Matrix projMatrix = Matrix::CreatePerspectiveFieldOfView(M_HALF_PI, 1.0f, 0.1f, 100.0f);
 
     Constants constants = {};
-    constants.samples = 1024;
+    constants.samples = 256;
     constants.cubeMapSize = static_cast<INT>(size);
     constants.lodBias = 0;
 
@@ -75,6 +69,8 @@ ComPtr<ID3D12Resource> PrefilterEnvMapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE
     {
         float roughness = mipLevels > 1 ? (roughnessLevel) / float(mipLevels - 1) : 0.0f;
         constants.roughness = roughness;
+
+        UINT dim = (UINT(size) >> roughnessLevel);
 
         for(int i=0; i<6; ++i)
         {
@@ -91,6 +87,11 @@ ComPtr<ID3D12Resource> PrefilterEnvMapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE
             UINT rtvHandle = rtDescriptors->create(prefilterMap.Get(), i, roughnessLevel, DXGI_FORMAT_R16G16B16A16_FLOAT);
             D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = rtDescriptors->getCPUHandle(rtvHandle);
             commandList->OMSetRenderTargets(1, &cpuHandle, FALSE, nullptr);
+
+            D3D12_VIEWPORT viewport{ 0.0f, 0.0f, float(dim), float(dim), 0.0f, 1.0f };
+            D3D12_RECT scissor = { 0, 0, LONG(dim), LONG(dim) };
+            commandList->RSSetViewports(1, &viewport);
+            commandList->RSSetScissorRects(1, &scissor);
 
             cubemapMesh->draw(commandList.Get());
 

@@ -13,6 +13,8 @@
 #include "ModuleCamera.h"
 #include "ModuleRingBuffer.h"
 
+#include "Model.h"
+
 #include "DebugDrawPass.h"
 
 #include "IrradianceMapPass.h"
@@ -23,8 +25,6 @@
 #include "ImGuiPass.h"
 #include "SkyboxRenderPass.h"
 
-#include "CubemapMesh.h"
-#include "SphereMesh.h"
 #include "ReadData.h"
 #include "RenderTexture.h"
 
@@ -57,10 +57,9 @@ Exercise11::~Exercise11()
 
 bool Exercise11::init() 
 {
-    sphereMesh = std::make_unique<SphereMesh>(64, 64);
-
-    bool ok = createSphereRS();
-    ok = ok && createSpherePSO();
+    bool ok = createRootSignature();
+    ok = ok && createPSO();
+    ok = ok && loadModel();
 
     if (ok)
     {
@@ -85,6 +84,7 @@ bool Exercise11::init()
         imguiTextDesc = descriptors->alloc();
         imguiPass = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd(), descriptors->getCPUHandle(imguiTextDesc), descriptors->getGPUHandle(imguiTextDesc));
         renderTexture = std::make_unique<RenderTexture>("Exercise11", DXGI_FORMAT_R8G8B8A8_UNORM, Vector4(0.188f, 0.208f, 0.259f, 1.0f), DXGI_FORMAT_D32_FLOAT, 1.0f);
+
     }
 
     return true;
@@ -121,9 +121,7 @@ void Exercise11::renderToTexture(ID3D12GraphicsCommandList* commandList)
     
     const Matrix & view = camera->getView();
     Matrix proj = ModuleCamera::getPerspectiveProj(float(width) / float(height));
-    Matrix model = Matrix::CreateScale(1.0f);
-    Matrix normalMatrix = model;
-    Matrix mvp = model * view * proj;
+    Matrix mvp = model->getModelMatrix() * view * proj;
     mvp = mvp.Transpose();
 
     BEGIN_EVENT(commandList, "Exercise11 Render to Texture");
@@ -142,24 +140,38 @@ void Exercise11::renderToTexture(ID3D12GraphicsCommandList* commandList)
 
     skyboxRenderPass->record(commandList, descriptors->getTable()->getGPUHandle(iblTableDesc, 0), Matrix::CreateFromQuaternion(invRot), proj);
 
-    BEGIN_EVENT(commandList, "Exercise11 Render Sphere");
+    BEGIN_EVENT(commandList, "Model Render Pass");
 
-    PerInstance perInstanceData;
-    perInstanceData.modelMat = model;
-    perInstanceData.normalMat = Matrix::Identity;
+    PerFrame perFrameData;
+    perFrameData.camPos = camera->getPos();
+    perFrameData.roughnessLevels = 8.0f;
 
     ModuleRingBuffer* ringBuffer = app->getRingBuffer();
 
-    commandList->SetGraphicsRootSignature(sphereRS.Get());
-    commandList->SetPipelineState(spherePSO.Get());
+    commandList->SetGraphicsRootSignature(rootSignature.Get());
+    commandList->SetPipelineState(pso.Get());
+
     commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &mvp, 0);
-    commandList->SetGraphicsRootConstantBufferView(1, ringBuffer->allocBuffer(&perInstanceData));
-    commandList->SetGraphicsRootDescriptorTable(2, descriptors->getTable()->getGPUHandle(iblTableDesc, 1));
-    commandList->SetGraphicsRootDescriptorTable(3, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
+    commandList->SetGraphicsRootConstantBufferView(1, ringBuffer->allocBuffer(&perFrameData));
+    commandList->SetGraphicsRootDescriptorTable(3, descriptors->getTable()->getGPUHandle(iblTableDesc, 1));
+    commandList->SetGraphicsRootDescriptorTable(5, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
 
-    sphereMesh->draw(commandList);
+    for (const Mesh& mesh : model->getMeshes())
+    {
+        if (mesh.getMaterialIndex() < model->getNumMaterials())
+        {
+            const BasicMaterial& material = model->getMaterials()[mesh.getMaterialIndex()];
 
-    END_EVENT(commandList);
+            UINT tableStartDesc = material.getTexturesTableDescriptor();
+
+            PerInstance perInstance = { model->getModelMatrix().Transpose(), model->getNormalMatrix().Transpose(), material.getMetallicRoughnessMaterial() };
+
+            commandList->SetGraphicsRootConstantBufferView(2, ringBuffer->allocBuffer(&perInstance));
+            commandList->SetGraphicsRootDescriptorTable(4, descriptors->getTable()->getGPUHandle(tableStartDesc));
+
+            mesh.draw(commandList);
+        }
+    }
 
     END_EVENT(commandList);
 
@@ -169,6 +181,9 @@ void Exercise11::renderToTexture(ID3D12GraphicsCommandList* commandList)
     debugDrawPass->record(commandList, width, height, camera->getView(), proj);
 
     renderTexture->transitionToSRV(commandList);
+
+    END_EVENT(commandList);
+
 }
 
 void Exercise11::imGuiCommands()
@@ -251,7 +266,7 @@ void Exercise11::render()
         irradianceMap = irradianceMapPass->generate(cubemapSRV, 1024);
         tableDescriptors->createCubeTextureSRV(irradianceMap.Get(), iblTableDesc, 1);
 
-        prefilteredEnvMap = prefilterEnvMapPass->generate(cubemapSRV, 1024, 5);
+        prefilteredEnvMap = prefilterEnvMapPass->generate(cubemapSRV, 1024, 8);
         tableDescriptors->createCubeTextureSRV(prefilteredEnvMap.Get(), iblTableDesc, 2);
 
         environmentBRDF = environmentBRDFPass->generate(128);
@@ -301,22 +316,25 @@ void Exercise11::render()
 #endif 
 }
 
-bool Exercise11::createSphereRS()
+bool Exercise11::createRootSignature()
 {
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-    CD3DX12_ROOT_PARAMETER rootParameters[4] = {};
-    CD3DX12_DESCRIPTOR_RANGE tableRanges;
+    CD3DX12_ROOT_PARAMETER rootParameters[6] = {};
+    CD3DX12_DESCRIPTOR_RANGE iblTableRange, materialTableRange;
     CD3DX12_DESCRIPTOR_RANGE sampRange;
 
-    tableRanges.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
+    iblTableRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 0);
+    materialTableRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 3);
     sampRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, ModuleSamplers::COUNT, 0);
 
     rootParameters[0].InitAsConstants((sizeof(Matrix) / sizeof(UINT32)), 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
     rootParameters[1].InitAsConstantBufferView(1, 0, D3D12_SHADER_VISIBILITY_ALL);
-    rootParameters[2].InitAsDescriptorTable(1, &tableRanges, D3D12_SHADER_VISIBILITY_PIXEL);
-    rootParameters[3].InitAsDescriptorTable(1, &sampRange, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[2].InitAsConstantBufferView(2, 0, D3D12_SHADER_VISIBILITY_ALL);
+    rootParameters[3].InitAsDescriptorTable(1, &iblTableRange, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[4].InitAsDescriptorTable(1, &materialTableRange, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[5].InitAsDescriptorTable(1, &sampRange, D3D12_SHADER_VISIBILITY_PIXEL);
 
-    rootSignatureDesc.Init(4, rootParameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+    rootSignatureDesc.Init(6, rootParameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
     ComPtr<ID3DBlob> rootSignatureBlob;
 
@@ -325,7 +343,7 @@ bool Exercise11::createSphereRS()
         return false;
     }
 
-    if (FAILED(app->getD3D12()->getDevice()->CreateRootSignature(0, rootSignatureBlob->GetBufferPointer(), rootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&sphereRS))))
+    if (FAILED(app->getD3D12()->getDevice()->CreateRootSignature(0, rootSignatureBlob->GetBufferPointer(), rootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature))))
     {
         return false;
     }
@@ -333,14 +351,18 @@ bool Exercise11::createSphereRS()
     return true;
 }
 
-bool Exercise11::createSpherePSO()
+bool Exercise11::createPSO()
 {
+    D3D12_INPUT_ELEMENT_DESC inputLayout[] = { {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+                                          {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+                                          {"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0} };
+
     auto dataVS = DX::ReadData(L"Exercise11VS.cso");
-    auto dataPS = DX::ReadData(L"Exercise11_irradiancePS.cso");
+    auto dataPS = DX::ReadData(L"Exercise11PS.cso");
 
     D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
-    psoDesc.InputLayout = sphereMesh->getInputLayoutDesc();
-    psoDesc.pRootSignature = sphereRS.Get();                                                        // the root signature that describes the input data this pso needs
+    psoDesc.InputLayout = { inputLayout, sizeof(inputLayout) / sizeof(D3D12_INPUT_ELEMENT_DESC) };  // the structure describing our input layout
+    psoDesc.pRootSignature = rootSignature.Get();                                                   // the root signature that describes the input data this pso needs
     psoDesc.VS = { dataVS.data(), dataVS.size() };                                                  // structure describing where to find the vertex shader bytecode and how large it is
     psoDesc.PS = { dataPS.data(), dataPS.size() };                                                  // same as VS but for pixel shader
     psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;                         // type of topology we are drawing
@@ -349,11 +371,21 @@ bool Exercise11::createSpherePSO()
     psoDesc.SampleDesc = {1, 0};                                                                    // must be the same sample description as the swapchain and depth/stencil buffer
     psoDesc.SampleMask = 0xffffffff;                                                                // sample mask has to do with multi-sampling. 0xffffffff means point sampling is done
     psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);                               // a default rasterizer state.
-    psoDesc.RasterizerState.FrontCounterClockwise = FALSE;                                           // our models are counter clock wise
+    psoDesc.RasterizerState.FrontCounterClockwise = TRUE;                                           // our models are counter clock wise
     psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
     psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);                                         // a default blend state.
     psoDesc.NumRenderTargets = 1;                                                                   // we are only binding one render target
 
     // create the pso
-    return SUCCEEDED(app->getD3D12()->getDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&spherePSO)));
+    return SUCCEEDED(app->getD3D12()->getDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pso)));
 }
+
+bool Exercise11::loadModel()
+{
+    model = std::make_unique<Model>();
+    model->load("Assets/Models/MetalRoughSpheresNoTextures/MetalRoughSpheresNoTextures.gltf", "Assets/Models/MetalRoughSpheresNoTextures/", BasicMaterial::METALLIC_ROUGHNESS);
+    //model->setModelMatrix(Matrix::CreateRotationX(M_HALF_PI));
+
+    return true;
+}
+

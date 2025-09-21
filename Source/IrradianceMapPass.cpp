@@ -66,7 +66,7 @@ ComPtr<ID3D12Resource> IrradianceMapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE c
     Matrix projMatrix = Matrix::CreatePerspectiveFieldOfView(M_HALF_PI, 1.0f, 0.1f, 100.0f);
 
     Constants constants = {};
-    constants.samples = 1024;
+    constants.samples = 256;
     constants.cubeMapSize = static_cast<INT>(size);
     constants.lodBias = 0;
 

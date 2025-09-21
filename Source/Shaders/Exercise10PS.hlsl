@@ -21,7 +21,7 @@ float3 computeLighting(float3 V, float3 N, float3 L, float3 lightColour, float3 
     float3 diffuse = Lambert(baseColour) * NdotL * lightColour;
     float3 specular = GGX(NdotL, NdotV, NdotH, roughness) * NdotL * lightColour;
 
-    float3 dielectric = lerp(diffuse, specular, dielectricF);
+    float3 dielectric = diffuse + specular*dielectricF;
     float3 metal = specular * metalF;
 
     return lerp(dielectric, metal, metallic);

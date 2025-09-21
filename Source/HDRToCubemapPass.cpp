@@ -64,9 +64,11 @@ ComPtr<ID3D12Resource> HDRToCubemapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE hd
     commandList->SetGraphicsRootDescriptorTable(1, hdrSRV);
     commandList->SetGraphicsRootDescriptorTable(2, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
 
-    // create render target view for each face
+
     ModuleRTDescriptors* rtDescriptors = app->getRTDescriptors();
     Matrix projMatrix = Matrix::CreatePerspectiveFieldOfView(M_HALF_PI, 1.0f, 0.1f, 100.0f);
+
+    // Convert HDR equirectangular to cubemap 
 
     for(int i=0; i<6; ++i)
     {
@@ -93,7 +95,7 @@ ComPtr<ID3D12Resource> HDRToCubemapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE hd
     }
 
 
-    // Generate mips
+    // Generate mips for each cubemap face
 
     commandList->SetGraphicsRootSignature(mipsRS.Get());
     commandList->SetPipelineState(mipsPSO.Get());
