@@ -1,5 +1,6 @@
-#include "ibl_common.hlsli"
 #include "Exercise11.hlsli"
+#include "ibl_common.hlsli"
+#include "tonemap.hlsli"
 
 TextureCube irradiance : register(t0);
 TextureCube radiance : register(t1);
@@ -41,5 +42,9 @@ float4 Exercise11PS(float3 positionWS : POSITION, float3 normalWS : NORMAL, floa
     float3 dielectric_colour = diffuse + specular * brdf_dielectric_fresnel;
     float3 metal_colour = specular * brdf_metal_fresnel;
 
-    return float4(lerp(dielectric_colour, metal_colour, metallic).rgb, 1.0);
+    float3 colour = lerp(dielectric_colour, metal_colour, metallic);
+
+    float3 ldr = PBRNeutralToneMapping(colour);
+    
+    return float4(linearTosRGB(ldr), 1.0);
 }

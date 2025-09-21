@@ -383,8 +383,8 @@ bool Exercise11::createPSO()
 bool Exercise11::loadModel()
 {
     model = std::make_unique<Model>();
-    model->load("Assets/Models/MetalRoughSpheresNoTextures/MetalRoughSpheresNoTextures.gltf", "Assets/Models/MetalRoughSpheresNoTextures/", BasicMaterial::METALLIC_ROUGHNESS);
-    //model->setModelMatrix(Matrix::CreateRotationX(M_HALF_PI));
+    model->load("Assets/Models/MetalRoughSpheres/MetalRoughSpheres.gltf", "Assets/Models/MetalRoughSpheres/", BasicMaterial::METALLIC_ROUGHNESS);
+    model->setModelMatrix(Matrix::CreateRotationZ(M_HALF_PI) * Matrix::CreateRotationX(-M_HALF_PI) * Matrix::CreateRotationY(M_HALF_PI) * Matrix::CreateScale(0.4f));
 
     return true;
 }
