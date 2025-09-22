@@ -38,15 +38,21 @@ float4 Exercise11PS(float3 positionWS : POSITION, float3 normalWS : NORMAL, floa
     float NdotV = saturate(dot(N, V));
 
     float3 diffuse = getIBLIrradiance(N, irradiance, bilinearWrap) * baseColour;
-    float3 specular = getIBLRadiance(R, roughness, roughnessLevels, radiance, bilinearWrap);
+    
+    float3 colour = diffuse;
+    if(!useOnlyIrradiance)
+    {
+        float3 specular = getIBLRadiance(R, roughness, roughnessLevels, radiance, bilinearWrap);
 
-    float3 brdf_metal_fresnel = getIBLBRDF(NdotV, roughness, baseColour, brdfLUT, bilinearClamp);
-    float3 brdf_dielectric_fresnel = getIBLBRDF(NdotV, roughness, 0.04, brdfLUT, bilinearClamp);
+        float3 brdf_metal_fresnel = getIBLBRDF(NdotV, roughness, baseColour, brdfLUT, bilinearClamp);
+        float3 brdf_dielectric_fresnel = getIBLBRDF(NdotV, roughness, 0.04, brdfLUT, bilinearClamp);
 
-    float3 dielectric_colour = diffuse + specular * brdf_dielectric_fresnel;
-    float3 metal_colour = specular * brdf_metal_fresnel;
+        float3 dielectric_colour = diffuse + specular * brdf_dielectric_fresnel;
+        float3 metal_colour = specular * brdf_metal_fresnel;
 
-    float3 colour = lerp(dielectric_colour, metal_colour, metallic);
+        colour = lerp(dielectric_colour, metal_colour, metallic);
+    }
+    
 
     float3 ldr = PBRNeutralToneMapping(colour);
     

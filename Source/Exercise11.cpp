@@ -147,6 +147,7 @@ void Exercise11::renderToTexture(ID3D12GraphicsCommandList* commandList)
     PerFrame perFrameData;
     perFrameData.camPos = camera->getPos();
     perFrameData.roughnessLevels = 8.0f;
+    perFrameData.useOnlyIrradiance = useOnlyIrradiance;
 
     ModuleRingBuffer* ringBuffer = app->getRingBuffer();
 
@@ -198,6 +199,10 @@ void Exercise11::imGuiCommands()
     ImGui::Separator();
     ImGui::Checkbox("Show grid", &showGrid);
     ImGui::Checkbox("Show axis", &showAxis);
+
+    ImGui::Separator();
+
+    ImGui::Checkbox("Use only irradiance", &useOnlyIrradiance);
 
     ImGui::Separator();
 
@@ -394,7 +399,7 @@ bool Exercise11::loadModel()
     models[0].setModelMatrix(Matrix::CreateRotationZ(M_HALF_PI) * Matrix::CreateRotationX(-M_HALF_PI) * Matrix::CreateTranslation(Vector3(0.0, 10.0, 0.0)) * Matrix::CreateScale(0.4f));
 
     models[1].load("Assets/Models/DamagedHelmet/DamagedHelmet.gltf", "Assets/Models/DamagedHelmet/", BasicMaterial::METALLIC_ROUGHNESS);
-    models[1].setModelMatrix(Matrix::CreateRotationX(M_HALF_PI));
+    models[1].setModelMatrix(Matrix::CreateRotationX(M_HALF_PI) * Matrix::CreateRotationY(M_HALF_PI));
 
     return true;
 }

@@ -19,6 +19,7 @@ class Exercise11 : public Module
     {
         Vector3 camPos;
         float   roughnessLevels;
+        BOOL    useOnlyIrradiance;
     };
 
     struct PerInstance
@@ -51,6 +52,7 @@ class Exercise11 : public Module
 
     bool showAxis = true;
     bool showGrid = true;
+    bool useOnlyIrradiance = false;
 
     // SRV descriptors
     UINT imguiTextDesc = 0;
