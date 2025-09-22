@@ -28,6 +28,13 @@ public:
     ComPtr<ID3D12Resource> generate(D3D12_GPU_DESCRIPTOR_HANDLE cubemapSRV, size_t size, UINT mipLevels);
 
 private:
+    struct SkyParams
+    {
+        Matrix vp;
+        BOOL   flipX;
+        BOOL   flipZ;
+        UINT   padding[2];
+    };
 
     bool createRootSignature();
     bool createPSO();

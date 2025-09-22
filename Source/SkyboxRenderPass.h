@@ -19,6 +19,14 @@ public:
     void record(ID3D12GraphicsCommandList* commandList, D3D12_GPU_DESCRIPTOR_HANDLE cubemapSRV, const Matrix& view, const Matrix& projection);
 
 private:
+    struct SkyParams
+    {
+        Matrix vp;
+        BOOL   flipX;
+        BOOL   flipZ;
+        UINT   padding[2];
+    };
+
     bool createRootSignature();
     bool createPSO();
 };

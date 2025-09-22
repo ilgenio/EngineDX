@@ -53,8 +53,8 @@ ComPtr<ID3D12Resource> PrefilterEnvMapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE
     commandList->SetDescriptorHeaps(2, descriptorHeaps);
 
     // set viewport and scissor
-    commandList->SetGraphicsRootDescriptorTable(3, cubemapSRV);
-    commandList->SetGraphicsRootDescriptorTable(4, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
+    commandList->SetGraphicsRootDescriptorTable(2, cubemapSRV);
+    commandList->SetGraphicsRootDescriptorTable(3, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
 
     // create render target view for each face
     ModuleRTDescriptors* rtDescriptors = app->getRTDescriptors();
@@ -65,12 +65,6 @@ ComPtr<ID3D12Resource> PrefilterEnvMapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE
     constants.cubeMapSize = static_cast<INT>(size);
     constants.lodBias = 0;
 
-    struct Params
-    {
-        BOOL flipX;
-        BOOL flipZ;
-    };
-    
     for(UINT  roughnessLevel=0; roughnessLevel<mipLevels; ++roughnessLevel)
     {
         float roughness = mipLevels > 1 ? (roughnessLevel) / float(mipLevels - 1) : 0.0f;
@@ -80,17 +74,14 @@ ComPtr<ID3D12Resource> PrefilterEnvMapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE
 
         for(int i=0; i<6; ++i)
         {
-            Params params = {};
-
-            params.flipZ = i == CubemapMesh::POSITIVE_X || i == CubemapMesh::NEGATIVE_X;
-            params.flipX = !params.flipZ;
-
-            Matrix viewMatrix = cubemapMesh->getViewMatrix(CubemapMesh::Direction(i));
+            CubemapMesh::Direction dir = CubemapMesh::Direction(i);
+            Matrix viewMatrix = cubemapMesh->getViewMatrix(dir);
             Matrix mvpMatrix = (viewMatrix * projMatrix).Transpose();
 
-            commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &mvpMatrix, 0);
-            commandList->SetGraphicsRoot32BitConstants(1, 2, &params, 0);
-            commandList->SetGraphicsRoot32BitConstants(2, sizeof(Constants) / sizeof(UINT32), &constants, 0);
+            SkyParams params = { mvpMatrix, cubemapMesh->flipX(dir), cubemapMesh->flipZ(dir) };
+
+            commandList->SetGraphicsRoot32BitConstants(0, sizeof(SkyParams) / sizeof(UINT32), &params, 0);
+            commandList->SetGraphicsRoot32BitConstants(1, sizeof(Constants) / sizeof(UINT32), &constants, 0);
 
             UINT subResource = D3D12CalcSubresource(roughnessLevel, i, 0, mipLevels, 6);
             CD3DX12_RESOURCE_BARRIER toRT = CD3DX12_RESOURCE_BARRIER::Transition(prefilterMap.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET, subResource);
@@ -131,20 +122,19 @@ ComPtr<ID3D12Resource> PrefilterEnvMapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE
 bool PrefilterEnvMapPass::createRootSignature()
 {
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-    CD3DX12_ROOT_PARAMETER rootParameters[5] = {};
+    CD3DX12_ROOT_PARAMETER rootParameters[4] = {};
     CD3DX12_DESCRIPTOR_RANGE tableRanges;
     CD3DX12_DESCRIPTOR_RANGE sampRange;
 
     tableRanges.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
     sampRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, ModuleSamplers::COUNT, 0);
 
-    rootParameters[0].InitAsConstants((sizeof(Matrix) / sizeof(UINT32)), 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
-    rootParameters[1].InitAsConstants(2, 1, 0, D3D12_SHADER_VISIBILITY_VERTEX);
-    rootParameters[2].InitAsConstants((sizeof(Constants) / sizeof(UINT32)), 2, 0, D3D12_SHADER_VISIBILITY_PIXEL);
-    rootParameters[3].InitAsDescriptorTable(1, &tableRanges, D3D12_SHADER_VISIBILITY_PIXEL);
-    rootParameters[4].InitAsDescriptorTable(1, &sampRange, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[0].InitAsConstants((sizeof(SkyParams) / sizeof(UINT32)), 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
+    rootParameters[1].InitAsConstants((sizeof(Constants) / sizeof(UINT32)), 2, 0, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[2].InitAsDescriptorTable(1, &tableRanges, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[3].InitAsDescriptorTable(1, &sampRange, D3D12_SHADER_VISIBILITY_PIXEL);
 
-    rootSignatureDesc.Init(5, rootParameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+    rootSignatureDesc.Init(4, rootParameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
     ComPtr<ID3DBlob> rootSignatureBlob;
 

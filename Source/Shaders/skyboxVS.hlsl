@@ -2,13 +2,11 @@
 cbuffer VP : register(b0)
 {
     float4x4 vp;  
-};
-
-cbuffer SkyboxParams : register(b1)
-{
     bool flipX;
     bool flipZ;
+    uint padding[2];
 };
+
 
 struct VertexOutput
 {
@@ -23,6 +21,7 @@ VertexOutput skyboxVS(float3 position : POSITION)
     output.texCoord = position;
     float4 clipPos = mul(float4(position, 1.0), vp);
     output.position = clipPos.xyww;
+    
     if(flipX)
         output.texCoord.x = -output.texCoord.x;
     if (flipZ)    

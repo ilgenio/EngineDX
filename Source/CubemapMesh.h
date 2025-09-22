@@ -24,6 +24,8 @@ public:
     const Vector3& getFrontDir(Direction dir) const { return front[uint32_t(dir)]; }
     const Vector3& getUpDir(Direction dir) const { return up[uint32_t(dir)]; }
     Matrix         getViewMatrix(Direction dir) const {return Matrix::CreateLookAt(Vector3(0.0), front[dir], up[dir]);}
+    bool           flipZ(Direction dir) const { return dir == POSITIVE_X || dir == NEGATIVE_X; }
+    bool           flipX(Direction dir) const { return !flipZ(dir); }
 
     // Input Layout Descriptor
     const D3D12_INPUT_LAYOUT_DESC& getInputLayoutDesc() { return inputLayoutDesc; }

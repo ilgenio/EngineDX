@@ -61,8 +61,8 @@ ComPtr<ID3D12Resource> HDRToCubemapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE hd
     commandList->RSSetViewports(1, &viewport);
     commandList->RSSetScissorRects(1, &scissor);
 
-    commandList->SetGraphicsRootDescriptorTable(2, hdrSRV);
-    commandList->SetGraphicsRootDescriptorTable(3, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
+    commandList->SetGraphicsRootDescriptorTable(1, hdrSRV);
+    commandList->SetGraphicsRootDescriptorTable(2, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
 
 
     ModuleRTDescriptors* rtDescriptors = app->getRTDescriptors();
@@ -70,25 +70,16 @@ ComPtr<ID3D12Resource> HDRToCubemapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE hd
 
     // Convert HDR equirectangular to cubemap 
 
-    struct Params
-    {
-        BOOL flipX;
-        BOOL flipZ;
-    };
-
-
     for(int i=0; i<6; ++i)
     {
-        Params params = {};
+        CubemapMesh::Direction dir = CubemapMesh::Direction(i);
 
-        params.flipZ = i == CubemapMesh::POSITIVE_X || i == CubemapMesh::NEGATIVE_X;
-        params.flipX = !params.flipZ;
-
-        Matrix viewMatrix = cubemapMesh->getViewMatrix(CubemapMesh::Direction(i));
+        Matrix viewMatrix = cubemapMesh->getViewMatrix(dir);
         Matrix mvpMatrix = (viewMatrix * projMatrix).Transpose();
 
-        commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &mvpMatrix, 0);
-        commandList->SetGraphicsRoot32BitConstants(1, 2, &params, 0);
+        SkyParams params = { mvpMatrix, cubemapMesh->flipX(dir), cubemapMesh->flipZ(dir) };
+
+        commandList->SetGraphicsRoot32BitConstants(0, sizeof(SkyParams) / sizeof(UINT32), &params, 0);
 
         UINT subResource = D3D12CalcSubresource(0, i, 0, UINT(numMips), 6);
 
@@ -170,19 +161,18 @@ ComPtr<ID3D12Resource> HDRToCubemapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE hd
 bool HDRToCubemapPass::createRootSignatures()
 {
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-    CD3DX12_ROOT_PARAMETER rootParameters[4] = {};
+    CD3DX12_ROOT_PARAMETER rootParameters[3] = {};
     CD3DX12_DESCRIPTOR_RANGE tableRanges[2];
     CD3DX12_DESCRIPTOR_RANGE sampRange;
 
     tableRanges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
     sampRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, ModuleSamplers::COUNT, 0);
 
-    rootParameters[0].InitAsConstants((sizeof(Matrix) / sizeof(UINT32)), 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
-    rootParameters[1].InitAsConstants(2, 1, 0, D3D12_SHADER_VISIBILITY_VERTEX);
-    rootParameters[2].InitAsDescriptorTable(1, &tableRanges[0], D3D12_SHADER_VISIBILITY_PIXEL);
-    rootParameters[3].InitAsDescriptorTable(1, &sampRange, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[0].InitAsConstants((sizeof(SkyParams) / sizeof(UINT32)), 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
+    rootParameters[1].InitAsDescriptorTable(1, &tableRanges[0], D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[2].InitAsDescriptorTable(1, &sampRange, D3D12_SHADER_VISIBILITY_PIXEL);
 
-    rootSignatureDesc.Init(4, rootParameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+    rootSignatureDesc.Init(3, rootParameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
     ComPtr<ID3DBlob> rootSignatureBlob;
 
