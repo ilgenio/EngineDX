@@ -46,7 +46,8 @@ class Exercise11 : public Module
     ComPtr<ID3D12Resource>                  environmentBRDF;
     ComPtr<ID3D12Resource>                  skybox;
 
-    std::unique_ptr<Model>                  model;
+    std::unique_ptr<Model[]>                models;
+    UINT                                    activeModel = 0;   
 
     bool showAxis = true;
     bool showGrid = true;

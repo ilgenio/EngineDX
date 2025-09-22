@@ -118,6 +118,8 @@ void Exercise11::renderToTexture(ID3D12GraphicsCommandList* commandList)
     const Quaternion& rot = camera->getRot();
     Quaternion invRot;
     rot.Inverse(invRot);
+
+    Model* model = &models[activeModel];
     
     const Matrix & view = camera->getView();
     Matrix proj = ModuleCamera::getPerspectiveProj(float(width) / float(height));
@@ -196,6 +198,10 @@ void Exercise11::imGuiCommands()
     ImGui::Separator();
     ImGui::Checkbox("Show grid", &showGrid);
     ImGui::Checkbox("Show axis", &showAxis);
+
+    ImGui::Separator();
+
+    ImGui::Combo("Model", (int*)&activeModel, "MetallicRoughness\0DamagedHelmet\0");
 
     ImGui::Separator();
 
@@ -382,9 +388,13 @@ bool Exercise11::createPSO()
 
 bool Exercise11::loadModel()
 {
-    model = std::make_unique<Model>();
-    model->load("Assets/Models/MetalRoughSpheres/MetalRoughSpheres.gltf", "Assets/Models/MetalRoughSpheres/", BasicMaterial::METALLIC_ROUGHNESS);
-    model->setModelMatrix(Matrix::CreateRotationZ(M_HALF_PI) * Matrix::CreateRotationX(-M_HALF_PI) *  Matrix::CreateScale(0.4f));
+    models = std::make_unique<Model[]>(2);
+
+    models[0].load("Assets/Models/MetalRoughSpheres/MetalRoughSpheres.gltf", "Assets/Models/MetalRoughSpheres/", BasicMaterial::METALLIC_ROUGHNESS);
+    models[0].setModelMatrix(Matrix::CreateRotationZ(M_HALF_PI) * Matrix::CreateRotationX(-M_HALF_PI) * Matrix::CreateTranslation(Vector3(0.0, 10.0, 0.0)) * Matrix::CreateScale(0.4f));
+
+    models[1].load("Assets/Models/DamagedHelmet/DamagedHelmet.gltf", "Assets/Models/DamagedHelmet/", BasicMaterial::METALLIC_ROUGHNESS);
+    models[1].setModelMatrix(Matrix::CreateRotationX(M_HALF_PI));
 
     return true;
 }
