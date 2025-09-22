@@ -2,7 +2,7 @@
 #include "sampling.hlsli"
 #include "ibl_common.hlsli"
 
-cbuffer Constants : register(b1)
+cbuffer Constants : register(b2)
 {
     float roughness;
     int numSamples;

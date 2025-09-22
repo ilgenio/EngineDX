@@ -24,7 +24,7 @@ SkyboxRenderPass::~SkyboxRenderPass()
 {
 }
 
-void SkyboxRenderPass::record(ID3D12GraphicsCommandList* commandList, D3D12_GPU_DESCRIPTOR_HANDLE cubemapSRV, const Matrix& view, const Matrix projection)
+void SkyboxRenderPass::record(ID3D12GraphicsCommandList* commandList, D3D12_GPU_DESCRIPTOR_HANDLE cubemapSRV, const Matrix& view, const Matrix& projection)
 {
     ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
     ModuleSamplers* samplers = app->getSamplers();
@@ -36,9 +36,18 @@ void SkyboxRenderPass::record(ID3D12GraphicsCommandList* commandList, D3D12_GPU_
     Matrix vp = view * projection;
     vp = vp.Transpose();
 
+    struct Params
+    {
+        BOOL flipX;
+        BOOL flipY;
+    };
+
+    Params params = {};
+
     commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &vp, 0);
-    commandList->SetGraphicsRootDescriptorTable(1, cubemapSRV);
-    commandList->SetGraphicsRootDescriptorTable(2, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
+    commandList->SetGraphicsRoot32BitConstants(1, 2, &params, 0);
+    commandList->SetGraphicsRootDescriptorTable(2, cubemapSRV);
+    commandList->SetGraphicsRootDescriptorTable(3, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
     cubemapMesh->draw(commandList);
 
     END_EVENT(commandList);
@@ -48,7 +57,7 @@ void SkyboxRenderPass::record(ID3D12GraphicsCommandList* commandList, D3D12_GPU_
 bool SkyboxRenderPass::createRootSignature()
 {
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-    CD3DX12_ROOT_PARAMETER rootParameters[3] = {};
+    CD3DX12_ROOT_PARAMETER rootParameters[4] = {};
     CD3DX12_DESCRIPTOR_RANGE tableRanges;
     CD3DX12_DESCRIPTOR_RANGE sampRange;
 
@@ -56,10 +65,11 @@ bool SkyboxRenderPass::createRootSignature()
     sampRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, ModuleSamplers::COUNT, 0);
 
     rootParameters[0].InitAsConstants((sizeof(Matrix) / sizeof(UINT32)), 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
-    rootParameters[1].InitAsDescriptorTable(1, &tableRanges, D3D12_SHADER_VISIBILITY_PIXEL);
-    rootParameters[2].InitAsDescriptorTable(1, &sampRange, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[1].InitAsConstants(2, 1, 0, D3D12_SHADER_VISIBILITY_VERTEX);
+    rootParameters[2].InitAsDescriptorTable(1, &tableRanges, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[3].InitAsDescriptorTable(1, &sampRange, D3D12_SHADER_VISIBILITY_PIXEL);
 
-    rootSignatureDesc.Init(3, rootParameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+    rootSignatureDesc.Init(4, rootParameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
     ComPtr<ID3DBlob> rootSignatureBlob;
 

@@ -58,22 +58,35 @@ ComPtr<ID3D12Resource> IrradianceMapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE c
     commandList->RSSetViewports(1, &viewport);
     commandList->RSSetScissorRects(1, &scissor);
 
-    commandList->SetGraphicsRootDescriptorTable(2, cubemapSRV);
-    commandList->SetGraphicsRootDescriptorTable(3, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
+    commandList->SetGraphicsRootDescriptorTable(3, cubemapSRV);
+    commandList->SetGraphicsRootDescriptorTable(4, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
 
     // create render target view for each face
     ModuleRTDescriptors* rtDescriptors = app->getRTDescriptors();
     Matrix projMatrix = Matrix::CreatePerspectiveFieldOfView(M_HALF_PI, 1.0f, 0.1f, 100.0f);
 
     Constants constants = {};
-    constants.samples = 256;
+    constants.samples = 1024;
     constants.cubeMapSize = static_cast<INT>(size);
     constants.lodBias = 0;
 
-    commandList->SetGraphicsRoot32BitConstants(1, sizeof(Constants) / sizeof(UINT32), &constants, 0);
+    commandList->SetGraphicsRoot32BitConstants(2, sizeof(Constants) / sizeof(UINT32), &constants, 0);
+
+    struct Params
+    {
+        BOOL flipX;
+        BOOL flipZ;
+    };
+
 
     for (int i = 0; i < 6; ++i)
     {
+        Params params = {};
+        params.flipZ = i == CubemapMesh::POSITIVE_X || i == CubemapMesh::NEGATIVE_X;
+        params.flipX = !params.flipZ;
+
+        commandList->SetGraphicsRoot32BitConstants(1, 2, &params, 0);
+
         Matrix viewMatrix = cubemapMesh->getViewMatrix(CubemapMesh::Direction(i));
         Matrix mvpMatrix = (viewMatrix * projMatrix).Transpose();
 
@@ -113,7 +126,7 @@ ComPtr<ID3D12Resource> IrradianceMapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE c
 bool IrradianceMapPass::createRootSignature()
 {
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-    CD3DX12_ROOT_PARAMETER rootParameters[4] = {};
+    CD3DX12_ROOT_PARAMETER rootParameters[5] = {};
     CD3DX12_DESCRIPTOR_RANGE tableRanges;
     CD3DX12_DESCRIPTOR_RANGE sampRange;
 
@@ -121,11 +134,12 @@ bool IrradianceMapPass::createRootSignature()
     sampRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, ModuleSamplers::COUNT, 0);
 
     rootParameters[0].InitAsConstants((sizeof(Matrix) / sizeof(UINT32)), 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
-    rootParameters[1].InitAsConstants((sizeof(Constants) / sizeof(UINT32)), 1, 0, D3D12_SHADER_VISIBILITY_PIXEL);
-    rootParameters[2].InitAsDescriptorTable(1, &tableRanges, D3D12_SHADER_VISIBILITY_PIXEL);
-    rootParameters[3].InitAsDescriptorTable(1, &sampRange, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[1].InitAsConstants(2, 1, 0, D3D12_SHADER_VISIBILITY_VERTEX);
+    rootParameters[2].InitAsConstants((sizeof(Constants) / sizeof(UINT32)), 2, 0, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[3].InitAsDescriptorTable(1, &tableRanges, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[4].InitAsDescriptorTable(1, &sampRange, D3D12_SHADER_VISIBILITY_PIXEL);
 
-    rootSignatureDesc.Init(4, rootParameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+    rootSignatureDesc.Init(5, rootParameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
     ComPtr<ID3DBlob> rootSignatureBlob;
 

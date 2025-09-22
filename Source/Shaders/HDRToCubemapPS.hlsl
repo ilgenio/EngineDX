@@ -8,12 +8,12 @@ float2 CartesianToEquirectangular(in float3 dir)
     float phi;
 
     phi = atan2(dir.z, dir.x); // between -PI , PI
-    phi = phi/(2.0*PI)+0.5;
+    phi = 1.0-phi/(2.0*PI)+0.5;
 
     float theta = asin(dir.y);  // between -PI/2 ,  PI/2
     theta = theta/PI+0.5;
 
-    return float2(phi, 1.0-theta);
+    return float2(1.0-phi, 1.0-theta);
 }
 
 float4 HDRToCubemapPS(float3 coords : TEXCOORD) : SV_Target
