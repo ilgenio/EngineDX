@@ -11,6 +11,7 @@ ModuleRTDescriptors::ModuleRTDescriptors()
 
 ModuleRTDescriptors::~ModuleRTDescriptors()
 {
+    _ASSERTE(handles.getFreeCount() == handles.getSize());
 }
 
 bool ModuleRTDescriptors::init()

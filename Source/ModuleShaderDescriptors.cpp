@@ -13,6 +13,9 @@ ModuleShaderDescriptors::ModuleShaderDescriptors()
 
 ModuleShaderDescriptors::~ModuleShaderDescriptors()
 {
+    handles.forceCollectGarbage();
+
+    _ASSERTE(handles.getFreeCount() == handles.getSize());
 }
 
 bool ModuleShaderDescriptors::init()

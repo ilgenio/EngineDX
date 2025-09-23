@@ -33,10 +33,10 @@ EnvironmentBRDFPass::~EnvironmentBRDFPass()
 ComPtr<ID3D12Resource> EnvironmentBRDFPass::generate(size_t size)
 {
     ModuleD3D12* d3d12 = app->getD3D12();
-    ModuleResources* resources = app->getResources();
     ModuleRTDescriptors* rtDescriptors = app->getRTDescriptors();
     ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
     ModuleSamplers* samplers = app->getSamplers();
+    ModuleResources* resources = app->getResources();
 
     ComPtr<ID3D12Resource> environmentMap = resources->createRenderTarget(DXGI_FORMAT_R16G16_FLOAT, size, size, Vector4(0.0f, 0.0f, 0.0f, 1.0f), "EnvironmentBRDF Map");
 

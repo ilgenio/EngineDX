@@ -11,6 +11,7 @@ ModuleDSDescriptors::ModuleDSDescriptors()
 
 ModuleDSDescriptors::~ModuleDSDescriptors()
 {
+    _ASSERTE(handles.getFreeCount() == handles.getSize());
 }
 
 bool ModuleDSDescriptors::init()

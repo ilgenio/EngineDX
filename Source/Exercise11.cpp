@@ -193,7 +193,7 @@ void Exercise11::imGuiCommands()
     if (environmentBRDF)
     {
         ImGui::Text("Environment BRDF");
-        ImGui::Image((ImTextureID)tableDesc.getCPUHandle(5).ptr, ImVec2(128, 128));
+        ImGui::Image((ImTextureID)tableDesc.getGPUHandle(5).ptr, ImVec2(128, 128));
     }
 
     ImGui::End();
@@ -243,7 +243,7 @@ void Exercise11::render()
     ID3D12GraphicsCommandList* commandList = d3d12->getCommandList();
     commandList->Reset(d3d12->getCommandAllocator(), nullptr);
 
-    if(!irradianceMap || !prefilterEnvMapPass || !environmentBRDF || !skybox)
+    if(!irradianceMap || !prefilterEnvMapPass || !environmentBRDF ||  !skybox)
     {
         skybox = hdrToCubemapPass->generate(tableDesc.getGPUHandle(1), DXGI_FORMAT_R16G16B16A16_FLOAT, 1024);
         tableDesc.createCubeTextureSRV(skybox.Get(), 2);
