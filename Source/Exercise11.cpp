@@ -58,14 +58,14 @@ bool Exercise11::init()
         skyboxRenderPass    = std::make_unique<SkyboxRenderPass>();
 
         tableDesc = descriptors->allocTable();        
-        imguiPass = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd(), tableDesc.getCPUHandle(0), tableDesc.getGPUHandle(0));
+        imguiPass = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd(), tableDesc.getCPUHandle(TEX_SLOT_IMGUI), tableDesc.getGPUHandle(TEX_SLOT_IMGUI));
         renderTexture = std::make_unique<RenderTexture>("Exercise11", DXGI_FORMAT_R8G8B8A8_UNORM, Vector4(0.188f, 0.208f, 0.259f, 1.0f), DXGI_FORMAT_D32_FLOAT, 1.0f);
 
         hdrSky = resources->createTextureFromFile(std::wstring(L"Assets/Textures/footprint_court.hdr"));
 
         if ((ok = hdrSky) == true)
         {
-            tableDesc.createTextureSRV(hdrSky.Get(), 1);
+            tableDesc.createTextureSRV(hdrSky.Get(), TEX_SLOT_HDR);
         }
     }
 
@@ -122,7 +122,7 @@ void Exercise11::renderToTexture(ID3D12GraphicsCommandList* commandList)
     commandList->RSSetViewports(1, &viewport);
     commandList->RSSetScissorRects(1, &scissor);
 
-    skyboxRenderPass->record(commandList, tableDesc.getGPUHandle(2), Matrix::CreateFromQuaternion(invRot), proj);
+    skyboxRenderPass->record(commandList, tableDesc.getGPUHandle(TEX_SLOT_CUBEMAP), Matrix::CreateFromQuaternion(invRot), proj);
 
     BEGIN_EVENT(commandList, "Model Render Pass");
 
@@ -138,7 +138,7 @@ void Exercise11::renderToTexture(ID3D12GraphicsCommandList* commandList)
 
     commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &mvp, 0);
     commandList->SetGraphicsRootConstantBufferView(1, ringBuffer->allocBuffer(&perFrameData));
-    commandList->SetGraphicsRootDescriptorTable(3, tableDesc.getGPUHandle(3));
+    commandList->SetGraphicsRootDescriptorTable(3, tableDesc.getGPUHandle(TEX_SLOT_IBL));
     commandList->SetGraphicsRootDescriptorTable(5, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
 
     for (const Mesh& mesh : model->getMeshes())
@@ -193,7 +193,7 @@ void Exercise11::imGuiCommands()
     if (environmentBRDF)
     {
         ImGui::Text("Environment BRDF");
-        ImGui::Image((ImTextureID)tableDesc.getGPUHandle(5).ptr, ImVec2(128, 128));
+        ImGui::Image((ImTextureID)tableDesc.getGPUHandle(TEX_SLOT_ENV_BRDF).ptr, ImVec2(128, 128));
     }
 
     ImGui::End();
@@ -245,17 +245,17 @@ void Exercise11::render()
 
     if(!irradianceMap || !prefilterEnvMapPass || !environmentBRDF ||  !skybox)
     {
-        skybox = hdrToCubemapPass->generate(tableDesc.getGPUHandle(1), DXGI_FORMAT_R16G16B16A16_FLOAT, 1024);
-        tableDesc.createCubeTextureSRV(skybox.Get(), 2);
+        skybox = hdrToCubemapPass->generate(tableDesc.getGPUHandle(TEX_SLOT_HDR), DXGI_FORMAT_R16G16B16A16_FLOAT, 1024);
+        tableDesc.createCubeTextureSRV(skybox.Get(), TEX_SLOT_CUBEMAP);
 
-        irradianceMap = irradianceMapPass->generate(tableDesc.getGPUHandle(2), 1024);
-        tableDesc.createCubeTextureSRV(irradianceMap.Get(), 3);
+        irradianceMap = irradianceMapPass->generate(tableDesc.getGPUHandle(TEX_SLOT_CUBEMAP), 1024);
+        tableDesc.createCubeTextureSRV(irradianceMap.Get(), TEX_SLOT_IRRADIANCE);
 
-        prefilteredEnvMap = prefilterEnvMapPass->generate(tableDesc.getGPUHandle(2), 1024, 8);
-        tableDesc.createCubeTextureSRV(prefilteredEnvMap.Get(), 4);
+        prefilteredEnvMap = prefilterEnvMapPass->generate(tableDesc.getGPUHandle(TEX_SLOT_CUBEMAP), 1024, 8);
+        tableDesc.createCubeTextureSRV(prefilteredEnvMap.Get(), TEX_SLOT_PREFILTERED_ENV);
 
         environmentBRDF = environmentBRDFPass->generate(128);
-        tableDesc.createTextureSRV(environmentBRDF.Get(), 5);
+        tableDesc.createTextureSRV(environmentBRDF.Get(), TEX_SLOT_ENV_BRDF);
     }
 
     if(renderTexture->isValid())

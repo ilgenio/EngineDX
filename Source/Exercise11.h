@@ -55,6 +55,18 @@ class Exercise11 : public Module
     bool showGrid = true;
     bool useOnlyIrradiance = false;
 
+    enum TexSlots
+    {
+        TEX_SLOT_IMGUI = 0,
+        TEX_SLOT_HDR = 1,
+        TEX_SLOT_CUBEMAP = 2,
+        TEX_SLOT_IRRADIANCE = 3,
+        TEX_SLOT_PREFILTERED_ENV = 4,
+        TEX_SLOT_ENV_BRDF = 5,
+        TEX_SLOT_IBL = TEX_SLOT_IRRADIANCE,
+        TEX_SLOT_COUNT = 6
+    };
+
     ShaderTableDesc tableDesc;
 
     std::unique_ptr<RenderTexture> renderTexture;
