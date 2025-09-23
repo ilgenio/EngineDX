@@ -16,7 +16,7 @@ TableDescriptors::TableDescriptors(ComPtr<ID3D12DescriptorHeap> heap, UINT first
 
 TableDescriptors::~TableDescriptors()
 {
-    handles.forceReleaseDeferred();
+    handles.forceCollectGarbage();
 
     _ASSERTE(handles.getSize() == handles.getFreeCount());
 }

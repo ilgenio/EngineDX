@@ -1,5 +1,7 @@
 #pragma once
 
+#include "ShaderTableDesc.h"
+
 namespace tinygltf { class Model; struct Material;  }
 
 struct BasicMaterialData
@@ -53,7 +55,8 @@ public:
 
     void load(const tinygltf::Model& model, const tinygltf::Material& material, Type materialType, const char* basePath);
 
-    UINT getTexturesTableDescriptor() const { return textureTableSRV;}
+    const ShaderTableDesc& getTexturesTableDesc() const { return textureTableDesc;}
+
     Type getMaterialType() const { return materialType;  }
 
     const BasicMaterialData& getBasicMaterial() const { _ASSERTE(materialType == BASIC); return materialData.basic; }
@@ -80,6 +83,6 @@ private:
 
     ComPtr<ID3D12Resource>  baseColourTex;
     ComPtr<ID3D12Resource>  metallicRoughnessTex;
-    UINT                    textureTableSRV = 0;
+    ShaderTableDesc         textureTableDesc;
     std::string             name;
 };

@@ -14,7 +14,6 @@ RenderTexture::~RenderTexture()
     if (texture)
     {
         app->getRTDescriptors()->release(rtvHandle);
-        app->getShaderDescriptors()->getSingle()->deferRelease(srvHandle);
 
         if (depthFormat != DXGI_FORMAT_UNKNOWN)
         {
@@ -34,7 +33,7 @@ void RenderTexture::resize(int width, int height)
 
     ModuleResources* resources = app->getResources();
     ModuleRTDescriptors* rtDescriptors = app->getRTDescriptors();
-    SingleDescriptors* descriptors = app->getShaderDescriptors()->getSingle();
+    ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
 
     // Create Render Target 
     resources->deferRelease(texture);
@@ -45,8 +44,8 @@ void RenderTexture::resize(int width, int height)
     rtvHandle = rtDescriptors->create(texture.Get());
 
     // Create SRV.
-    descriptors->deferRelease(srvHandle);
-    srvHandle = descriptors->createTextureSRV(texture.Get());
+    srvDesc = descriptors->allocTable();
+    srvDesc.createTextureSRV(texture.Get());
 
     if(depthFormat != DXGI_FORMAT_UNKNOWN)
     {
@@ -102,6 +101,5 @@ void RenderTexture::clear(ID3D12GraphicsCommandList* cmdList)
 
 void RenderTexture::bindAsShaderResource(ID3D12GraphicsCommandList *cmdList, int slot)
 {
-    D3D12_GPU_DESCRIPTOR_HANDLE srv = app->getShaderDescriptors()->getSingle()->getGPUHandle(srvHandle);
-    cmdList->SetGraphicsRootDescriptorTable(slot, srv);
+    cmdList->SetGraphicsRootDescriptorTable(slot, getSRVHandle());
 }

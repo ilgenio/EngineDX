@@ -96,7 +96,8 @@ class Exercise10 : public Module
     ImVec2                              canvasSize;
     ImVec2                              canvasPos;
 
-    UINT                                imguiTextDesc = 0;
+    ShaderTableDesc                     debugTableDesc;
+
 
 public:
     Exercise10();

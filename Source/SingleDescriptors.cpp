@@ -12,7 +12,7 @@ SingleDescriptors::SingleDescriptors(ComPtr<ID3D12DescriptorHeap> heap, UINT des
 
 SingleDescriptors::~SingleDescriptors()
 {
-    handles.forceReleaseDeferred();
+    handles.forceCollectGarbage();
 
     _ASSERTE(handles.getSize() == handles.getFreeCount());
 }

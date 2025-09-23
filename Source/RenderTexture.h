@@ -1,5 +1,8 @@
 #pragma once
 
+
+#include "ShaderTableDesc.h"
+
 // RenderTexture encapsulates a DirectX 12 render target and optional depth stencil.
 // It manages creation, resizing, resource transitions, and descriptor handles for rendering and shader access.
 // Use this class to render to textures and bind them as shader resources in your pipeline.
@@ -17,8 +20,8 @@ class RenderTexture
     Vector4 clearColour;
     FLOAT clearDepth;
 
+    ShaderTableDesc srvDesc;
     UINT rtvHandle = 0;
-    UINT srvHandle = 0; 
     UINT dsvHandle = 0;
 
 public:
@@ -40,6 +43,6 @@ public:
     void bindAsShaderResource(ID3D12GraphicsCommandList* cmdList, int slot);
 
     UINT getRTVHandle() const { return rtvHandle; }
-    UINT getSRVHandle() const { return srvHandle; }
+    D3D12_GPU_DESCRIPTOR_HANDLE getSRVHandle() const { return srvDesc.getGPUHandle(); }
     UINT getDSVHandle() const { return dsvHandle; }
 };

@@ -50,7 +50,7 @@ public:
         }
     }
 
-    void forceReleaseDeferred()
+    void forceCollectGarbage()
     {
         for (size_t i = 0; i < deferredFreeCount; ++i)
         {

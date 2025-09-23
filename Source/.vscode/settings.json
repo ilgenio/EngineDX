@@ -81,5 +81,6 @@
         "xtr1common": "cpp",
         "xtree": "cpp",
         "xutility": "cpp"
-    }
+    },
+    "cmake.sourceDirectory": "C:/Users/User/Documents/GitHub/EngineDX/Source/3rdParty/tinygltf/examples/common/glm/util/conan-package/test_package"
 }

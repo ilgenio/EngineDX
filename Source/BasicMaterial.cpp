@@ -19,7 +19,6 @@ BasicMaterial::BasicMaterial()
 
 BasicMaterial::~BasicMaterial()
 {
-    app->getShaderDescriptors()->getTable()->release(textureTableSRV);
 }
 
 void BasicMaterial::load(const tinygltf::Model& model, const tinygltf::Material& material, Type type, const char* basePath)
@@ -83,25 +82,25 @@ void BasicMaterial::load(const tinygltf::Model& model, const tinygltf::Material&
 
     // Descriptors 
 
-    TableDescriptors* descriptors = app->getShaderDescriptors()->getTable();
-    textureTableSRV = descriptors->alloc();
+    ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
+    textureTableDesc = descriptors->allocTable();
 
     if (hasColourTexture)
     {
-        descriptors->createTextureSRV(baseColourTex.Get(), textureTableSRV, 0);
+        textureTableDesc.createTextureSRV(baseColourTex.Get(), 0);
     }
     else
     {
-        descriptors->createNullTexture2DSRV(textureTableSRV, 0);
+        textureTableDesc.createNullTexture2DSRV(0);
     }
 
     if (hasMetallicRoughnessTex)
     {
-        descriptors->createTextureSRV(metallicRoughnessTex.Get(), textureTableSRV, 1);
+        textureTableDesc.createTextureSRV(metallicRoughnessTex.Get(), 1);
     }
     else
     {
-        descriptors->createNullTexture2DSRV(textureTableSRV, 1);
+        textureTableDesc.createNullTexture2DSRV(1);
     }
 
 }

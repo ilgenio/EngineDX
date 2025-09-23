@@ -16,6 +16,7 @@ ModuleResources::~ModuleResources()
 {
 }
 
+
 bool ModuleResources::init()
 {
     ModuleD3D12* d3d12   = app->getD3D12();

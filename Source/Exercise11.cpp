@@ -32,27 +32,10 @@
 
 Exercise11::Exercise11()
 {
-
 }
 
 Exercise11::~Exercise11()
 {
-    ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
-
-    if (hdrSkyDesc)
-    {
-        descriptors->getSingle()->release(hdrSkyDesc);
-    }
-
-    if (imguiTextDesc)
-    {
-        descriptors->getSingle()->release(imguiTextDesc);
-    }
-
-    if (iblTableDesc)
-    {
-        descriptors->getTable()->release(iblTableDesc);
-    }
 }
 
 bool Exercise11::init() 
@@ -64,7 +47,7 @@ bool Exercise11::init()
     if (ok)
     {
         ModuleResources* resources = app->getResources();
-        SingleDescriptors* descriptors = app->getShaderDescriptors()->getSingle();
+        ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
         ModuleD3D12* d3d12 = app->getD3D12();
 
         debugDrawPass       = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue());
@@ -74,17 +57,16 @@ bool Exercise11::init()
         hdrToCubemapPass    = std::make_unique<HDRToCubemapPass>();
         skyboxRenderPass    = std::make_unique<SkyboxRenderPass>();
 
+        tableDesc = descriptors->allocTable();        
+        imguiPass = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd(), tableDesc.getCPUHandle(0), tableDesc.getGPUHandle(0));
+        renderTexture = std::make_unique<RenderTexture>("Exercise11", DXGI_FORMAT_R8G8B8A8_UNORM, Vector4(0.188f, 0.208f, 0.259f, 1.0f), DXGI_FORMAT_D32_FLOAT, 1.0f);
+
         hdrSky = resources->createTextureFromFile(std::wstring(L"Assets/Textures/footprint_court.hdr"));
 
         if ((ok = hdrSky) == true)
         {
-            hdrSkyDesc = descriptors->createTextureSRV(hdrSky.Get());
+            tableDesc.createTextureSRV(hdrSky.Get(), 1);
         }
-
-        imguiTextDesc = descriptors->alloc();
-        imguiPass = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd(), descriptors->getCPUHandle(imguiTextDesc), descriptors->getGPUHandle(imguiTextDesc));
-        renderTexture = std::make_unique<RenderTexture>("Exercise11", DXGI_FORMAT_R8G8B8A8_UNORM, Vector4(0.188f, 0.208f, 0.259f, 1.0f), DXGI_FORMAT_D32_FLOAT, 1.0f);
-
     }
 
     return true;
@@ -140,7 +122,7 @@ void Exercise11::renderToTexture(ID3D12GraphicsCommandList* commandList)
     commandList->RSSetViewports(1, &viewport);
     commandList->RSSetScissorRects(1, &scissor);
 
-    skyboxRenderPass->record(commandList, descriptors->getTable()->getGPUHandle(iblTableDesc, 0), Matrix::CreateFromQuaternion(invRot), proj);
+    skyboxRenderPass->record(commandList, tableDesc.getGPUHandle(2), Matrix::CreateFromQuaternion(invRot), proj);
 
     BEGIN_EVENT(commandList, "Model Render Pass");
 
@@ -156,7 +138,7 @@ void Exercise11::renderToTexture(ID3D12GraphicsCommandList* commandList)
 
     commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &mvp, 0);
     commandList->SetGraphicsRootConstantBufferView(1, ringBuffer->allocBuffer(&perFrameData));
-    commandList->SetGraphicsRootDescriptorTable(3, descriptors->getTable()->getGPUHandle(iblTableDesc, 1));
+    commandList->SetGraphicsRootDescriptorTable(3, tableDesc.getGPUHandle(3));
     commandList->SetGraphicsRootDescriptorTable(5, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
 
     for (const Mesh& mesh : model->getMeshes())
@@ -165,12 +147,10 @@ void Exercise11::renderToTexture(ID3D12GraphicsCommandList* commandList)
         {
             const BasicMaterial& material = model->getMaterials()[mesh.getMaterialIndex()];
 
-            UINT tableStartDesc = material.getTexturesTableDescriptor();
-
             PerInstance perInstance = { model->getModelMatrix().Transpose(), model->getNormalMatrix().Transpose(), material.getMetallicRoughnessMaterial() };
 
             commandList->SetGraphicsRootConstantBufferView(2, ringBuffer->allocBuffer(&perInstance));
-            commandList->SetGraphicsRootDescriptorTable(4, descriptors->getTable()->getGPUHandle(tableStartDesc));
+            commandList->SetGraphicsRootDescriptorTable(4, material.getTexturesTableDesc().getGPUHandle());
 
             mesh.draw(commandList);
         }
@@ -213,7 +193,7 @@ void Exercise11::imGuiCommands()
     if (environmentBRDF)
     {
         ImGui::Text("Environment BRDF");
-        ImGui::Image((ImTextureID)descriptors->getTable()->getGPUHandle(iblTableDesc, 3).ptr, ImVec2(128, 128));
+        ImGui::Image((ImTextureID)tableDesc.getCPUHandle(5).ptr, ImVec2(128, 128));
     }
 
     ImGui::End();
@@ -234,7 +214,7 @@ void Exercise11::imGuiCommands()
 
     if(renderTexture->isValid())
     {
-        ImGui::Image((ImTextureID)descriptors->getSingle()->getGPUHandle(renderTexture->getSRVHandle()).ptr, canvasSize);
+        ImGui::Image((ImTextureID)renderTexture->getSRVHandle().ptr, canvasSize);
     }
 
     ImGui::EndChildFrame();
@@ -248,8 +228,6 @@ void Exercise11::render()
     imGuiCommands();
 
     ModuleD3D12* d3d12 = app->getD3D12();
-    TableDescriptors* tableDescriptors = app->getShaderDescriptors()->getTable();
-    SingleDescriptors* singleDescriptors = app->getShaderDescriptors()->getSingle();
     ModuleSamplers* samplers = app->getSamplers();
     ModuleCamera* camera = app->getCamera();
 
@@ -267,21 +245,17 @@ void Exercise11::render()
 
     if(!irradianceMap || !prefilterEnvMapPass || !environmentBRDF || !skybox)
     {
-        iblTableDesc = tableDescriptors->alloc();
+        skybox = hdrToCubemapPass->generate(tableDesc.getGPUHandle(1), DXGI_FORMAT_R16G16B16A16_FLOAT, 1024);
+        tableDesc.createCubeTextureSRV(skybox.Get(), 2);
 
-        skybox = hdrToCubemapPass->generate(singleDescriptors->getGPUHandle(hdrSkyDesc), DXGI_FORMAT_R16G16B16A16_FLOAT, 1024);
-        tableDescriptors->createCubeTextureSRV(skybox.Get(), iblTableDesc, 0);
+        irradianceMap = irradianceMapPass->generate(tableDesc.getGPUHandle(2), 1024);
+        tableDesc.createCubeTextureSRV(irradianceMap.Get(), 3);
 
-        D3D12_GPU_DESCRIPTOR_HANDLE cubemapSRV = tableDescriptors->getGPUHandle(iblTableDesc, 0);
-
-        irradianceMap = irradianceMapPass->generate(cubemapSRV, 1024);
-        tableDescriptors->createCubeTextureSRV(irradianceMap.Get(), iblTableDesc, 1);
-
-        prefilteredEnvMap = prefilterEnvMapPass->generate(cubemapSRV, 1024, 8);
-        tableDescriptors->createCubeTextureSRV(prefilteredEnvMap.Get(), iblTableDesc, 2);
+        prefilteredEnvMap = prefilterEnvMapPass->generate(tableDesc.getGPUHandle(2), 1024, 8);
+        tableDesc.createCubeTextureSRV(prefilteredEnvMap.Get(), 4);
 
         environmentBRDF = environmentBRDFPass->generate(128);
-        tableDescriptors->createTextureSRV(environmentBRDF.Get(), iblTableDesc, 3);
+        tableDesc.createTextureSRV(environmentBRDF.Get(), 5);
     }
 
     if(renderTexture->isValid())
