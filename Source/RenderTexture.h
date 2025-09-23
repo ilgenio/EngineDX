@@ -42,7 +42,8 @@ public:
     void clear(ID3D12GraphicsCommandList* cmdList);
     void bindAsShaderResource(ID3D12GraphicsCommandList* cmdList, int slot);
 
+    D3D12_GPU_DESCRIPTOR_HANDLE getSrvHandle() const { return srvDesc.getGPUHandle(); }
+    const ShaderTableDesc& getSrvTableDesc() const { return srvDesc;  }
     UINT getRTVHandle() const { return rtvHandle; }
-    D3D12_GPU_DESCRIPTOR_HANDLE getSRVHandle() const { return srvDesc.getGPUHandle(); }
     UINT getDSVHandle() const { return dsvHandle; }
 };

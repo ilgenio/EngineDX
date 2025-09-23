@@ -2,6 +2,7 @@
 
 #include "Module.h"
 #include "ImGuiPass.h"
+#include "ShaderTableDesc.h"
 
 class DebugDrawPass;
 class SkyboxRenderPass;
@@ -22,8 +23,7 @@ class Exercise9 : public Module
 
     bool                                showAxis        = true;
     bool                                showGrid        = true;
-    UINT                                cubemapDesc     = 0;
-    UINT                                imguiTextDesc   = 0;
+    ShaderTableDesc                     tableDesc;
 
     std::unique_ptr<RenderTexture>      renderTexture;
     ImVec2                              canvasSize;

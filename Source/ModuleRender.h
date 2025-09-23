@@ -1,5 +1,6 @@
 #pragma once
 #include "Module.h"
+#include "ShaderTableDesc.h"
 
 class DebugDrawPass;
 class ImGuiPass;
@@ -23,7 +24,7 @@ private:
 private:
 
     std::unique_ptr<DebugDrawPass> debugDrawPass;
-    UINT                           debugFontDebugDraw = 0;
+    ShaderTableDesc debugTableDesc;
 
     std::unique_ptr<ImGuiPass> imguiPass;
 

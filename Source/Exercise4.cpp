@@ -47,7 +47,8 @@ bool Exercise4::init()
 
         if((ok = textureDog) == true)
         {
-            dogDescriptor = descriptors->getSingle()->createTextureSRV(textureDog.Get());
+            dogDescriptor = app->getShaderDescriptors()->allocTable();
+            dogDescriptor.createTextureSRV(textureDog.Get());
         }
     }
 
@@ -64,7 +65,6 @@ bool Exercise4::init()
 
 bool Exercise4::cleanUp()
 {
-    app->getShaderDescriptors()->getSingle()->release(dogDescriptor);
     imguiPass.reset();
 
     return true;
@@ -138,7 +138,7 @@ void Exercise4::render()
     commandList->SetDescriptorHeaps(2, descriptorHeaps);
 
     commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix)/sizeof(UINT32), &mvp, 0);
-    commandList->SetGraphicsRootDescriptorTable(1, descriptors->getSingle()->getGPUHandle(dogDescriptor));
+    commandList->SetGraphicsRootDescriptorTable(1, dogDescriptor.getGPUHandle());
     commandList->SetGraphicsRootDescriptorTable(2, samplers->getGPUHandle(ModuleSamplers::Type(sampler)));
 
     commandList->DrawInstanced(6, 1, 0, 0);

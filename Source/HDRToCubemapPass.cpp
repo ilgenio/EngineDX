@@ -38,7 +38,7 @@ ComPtr<ID3D12Resource> HDRToCubemapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE hd
 {
     ModuleD3D12* d3d12 = app->getD3D12();
     ModuleResources* resources = app->getResources();
-    TableDescriptors* table = app->getShaderDescriptors()->getTable();
+    ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
     ModuleSamplers* samplers = app->getSamplers();
 
     UINT numMips = UINT(std::log2f(float(size)))+1;
@@ -108,7 +108,7 @@ ComPtr<ID3D12Resource> HDRToCubemapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE hd
 
     for (UINT i = 1; i < numMips; ++i)
     {
-        UINT tableDesc = table->alloc();
+        ShaderTableDesc tableDesc = descriptors->allocTable();
         UINT dim = UINT(size >> i);
 
         for (UINT j = 0; j < 6; ++j)
@@ -127,9 +127,9 @@ ComPtr<ID3D12Resource> HDRToCubemapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE hd
             commandList->RSSetViewports(1, &viewport);
             commandList->RSSetScissorRects(1, &scissor);
 
-            table->createTexture2DSRV(cubemap.Get(), j, (i-1), tableDesc, j);
+            tableDesc.createTexture2DSRV(cubemap.Get(), j, (i-1), j);
 
-            commandList->SetGraphicsRootDescriptorTable(0, table->getGPUHandle(tableDesc, j));
+            commandList->SetGraphicsRootDescriptorTable(0, tableDesc.getGPUHandle(j));
 
             commandList->IASetVertexBuffers(0, 0, nullptr);
             commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -140,8 +140,6 @@ ComPtr<ID3D12Resource> HDRToCubemapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE hd
 
             rtDescriptors->release(rtvHandle);
         }
-
-        table->deferRelease(tableDesc);
     }
 
     END_EVENT(commandList.Get());

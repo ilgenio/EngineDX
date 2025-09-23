@@ -26,11 +26,11 @@ void Skybox::load(const char *backgroundFile, const char* diffuseFile, const cha
         iblMipLevels = specular->GetDesc().MipLevels;
     }
 
-    SingleDescriptors* descriptors  = app->getShaderDescriptors()->getSingle();
+    tableDesc = app->getShaderDescriptors()->allocTable();
 
-    backgroundDesc = descriptors->createTextureSRV(background.Get());
-    diffuseDesc = descriptors->createTextureSRV(diffuse.Get());
-    specularDesc = descriptors->createTextureSRV(specular.Get());
-    brdfDesc  = descriptors->createTextureSRV(brdf.Get());
+    tableDesc.createTextureSRV(background.Get(), TEX_SLOT_BACGROUND);
+    tableDesc.createTextureSRV(diffuse.Get(), TEX_SLOT_DIFFUSE);
+    tableDesc.createTextureSRV(specular.Get(), TEX_SLOT_SPECULAR);
+    tableDesc.createTextureSRV(brdf.Get(), TEX_SLOT_BRDF);
 }
 

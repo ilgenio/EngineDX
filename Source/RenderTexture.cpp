@@ -101,5 +101,5 @@ void RenderTexture::clear(ID3D12GraphicsCommandList* cmdList)
 
 void RenderTexture::bindAsShaderResource(ID3D12GraphicsCommandList *cmdList, int slot)
 {
-    cmdList->SetGraphicsRootDescriptorTable(slot, getSRVHandle());
+    cmdList->SetGraphicsRootDescriptorTable(slot, getSrvHandle());
 }

@@ -46,7 +46,7 @@ ShaderTableDesc ModuleShaderDescriptors::allocTable()
 {
     UINT handle = alloc();
 
-    _ASSERTE(handle < NUM_DESCRIPTORS);
+    _ASSERTE(handles.validHandle(handle));
 
     return ShaderTableDesc(handle, &refCounts[indexFromHandle(handle)]);
 }

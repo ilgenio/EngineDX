@@ -199,9 +199,8 @@ void Exercise5::render()
         {
             const BasicMaterial& material = model->getMaterials()[mesh.getMaterialIndex()];
             
-            UINT tableStartDesc = material.getTexturesTableDescriptor();
             commandList->SetGraphicsRootConstantBufferView(1, materialBuffers[mesh.getMaterialIndex()]->GetGPUVirtualAddress());
-            commandList->SetGraphicsRootDescriptorTable(2, descriptors->getTable()->getGPUHandle(tableStartDesc));
+            commandList->SetGraphicsRootDescriptorTable(2, material.getTexturesTableDesc().getGPUHandle());
 
             mesh.draw(commandList);
         }

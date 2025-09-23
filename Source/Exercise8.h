@@ -6,6 +6,7 @@
 #include <imgui.h>
 #include "ImGuizmo.h"
 #include "BasicMaterial.h"
+#include "ShaderTableDesc.h"
 
 class Model;
 class RenderTexture;
@@ -96,7 +97,7 @@ class Exercise8 : public Module
     ImVec2                              canvasSize;
     ImVec2                              canvasPos;
 
-    UINT imguiTextDesc = 0;
+    ShaderTableDesc                     tableDesc;
 
 public:
     Exercise8();

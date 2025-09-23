@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CubemapMesh.h"
-
+#include "ShaderTableDesc.h"
 
 
 class Skybox
@@ -22,13 +22,19 @@ public:
 private:
     ComPtr<ID3D12Resource>   background;
 
+    enum 
+    {
+        TEX_SLOT_BACGROUND = 0,
+        TEX_SLOT_SPECULAR,
+        TEX_SLOT_DIFFUSE,
+        TEX_SLOT_BRDF,
+        TEX_SLOT_COUNT
+    };
+
     ComPtr<ID3D12Resource>  specular;
     ComPtr<ID3D12Resource>  diffuse;
     ComPtr<ID3D12Resource>  brdf;
-    UINT                    backgroundDesc = UINT32_MAX;
-    UINT                    specularDesc = UINT32_MAX;
-    UINT                    diffuseDesc = UINT32_MAX;
-    UINT                    brdfDesc = UINT32_MAX;
+    ShaderTableDesc         tableDesc;
 
     CubemapMesh             mesh;
     uint32_t                iblMipLevels = 0;

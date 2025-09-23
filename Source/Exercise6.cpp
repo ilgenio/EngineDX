@@ -263,12 +263,10 @@ void Exercise6::render()
         {
             const BasicMaterial& material = model->getMaterials()[mesh.getMaterialIndex()];
 
-            UINT tableStartDesc = material.getTexturesTableDescriptor();
-
             PerInstance perInstance = { model->getModelMatrix().Transpose(), model->getNormalMatrix().Transpose(), material.getPhongMaterial()};
 
             commandList->SetGraphicsRootConstantBufferView(2, ringBuffer->allocBuffer(&perInstance));
-            commandList->SetGraphicsRootDescriptorTable(3, descriptors->getTable()->getGPUHandle(tableStartDesc));
+            commandList->SetGraphicsRootDescriptorTable(3, material.getTexturesTableDesc().getGPUHandle());
 
             mesh.draw(commandList);
         }

@@ -336,7 +336,7 @@ void Exercise10::imGuiCommands()
 
     if(renderTexture->isValid())
     {
-        ImGui::Image((ImTextureID)renderTexture->getSRVHandle().ptr, canvasSize);
+        ImGui::Image((ImTextureID)renderTexture->getSrvHandle().ptr, canvasSize);
     }
     
     if (showGuizmo)

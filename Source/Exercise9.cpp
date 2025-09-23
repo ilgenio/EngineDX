@@ -23,39 +23,28 @@ Exercise9::Exercise9()
 
 Exercise9::~Exercise9()
 {
-    SingleDescriptors* descriptors = app->getShaderDescriptors()->getSingle();
-
-    if(cubemapDesc)
-    {
-        descriptors->release(cubemapDesc);
-    }
-
-    if (imguiTextDesc)
-    {
-        descriptors->release(imguiTextDesc);
-    }
 }
 
 bool Exercise9::init() 
 {
     ModuleResources* resources = app->getResources();
-    SingleDescriptors* descriptors = app->getShaderDescriptors()->getSingle();
+    ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
     ModuleD3D12* d3d12 = app->getD3D12();
 
     debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue());
     skyboxRenderPass = std::make_unique<SkyboxRenderPass>();
 
+    renderTexture = std::make_unique<RenderTexture>("Exercise9", DXGI_FORMAT_R8G8B8A8_UNORM, Vector4(0.188f, 0.208f, 0.259f, 1.0f), DXGI_FORMAT_D32_FLOAT, 1.0f);
+
+    tableDesc = descriptors->allocTable();
+    imguiPass = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd(), tableDesc.getCPUHandle(0), tableDesc.getGPUHandle(0));
+
     cubemap = resources->createTextureFromFile(std::wstring(L"Assets/Textures/cubemap.dds"));
 
     if (cubemap)
     {
-        cubemapDesc = descriptors->createCubeTextureSRV(cubemap.Get());
+        tableDesc.createCubeTextureSRV(cubemap.Get(), 1);
     }
-
-    renderTexture = std::make_unique<RenderTexture>("Exercise9", DXGI_FORMAT_R8G8B8A8_UNORM, Vector4(0.188f, 0.208f, 0.259f, 1.0f), DXGI_FORMAT_D32_FLOAT, 1.0f);
-
-    imguiTextDesc = descriptors->alloc();
-    imguiPass = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd(), descriptors->getCPUHandle(imguiTextDesc), descriptors->getGPUHandle(imguiTextDesc));
 
     return true;
 }
@@ -105,7 +94,7 @@ void Exercise9::renderToTexture(ID3D12GraphicsCommandList* commandList)
     Matrix view = Matrix::CreateFromQuaternion(invRot);
     Matrix proj = ModuleCamera::getPerspectiveProj(float(width) / float(height));
 
-    skyboxRenderPass->record(commandList, descriptors->getSingle()->getGPUHandle(cubemapDesc), view, proj);
+    skyboxRenderPass->record(commandList, tableDesc.getGPUHandle(1), view, proj);
 
     END_EVENT(commandList);
 
@@ -119,8 +108,6 @@ void Exercise9::renderToTexture(ID3D12GraphicsCommandList* commandList)
 
 void Exercise9::imGuiCommands()
 {
-    SingleDescriptors* descriptors = app->getShaderDescriptors()->getSingle();
-
     bool viewerFocused = false;
     ImGui::Begin("Scene");
     const char* frameName = "Scene Frame";
@@ -137,7 +124,7 @@ void Exercise9::imGuiCommands()
 
     if (renderTexture->isValid())
     {
-        ImGui::Image((ImTextureID)descriptors->getGPUHandle(renderTexture->getSRVHandle()).ptr, canvasSize);
+        ImGui::Image((ImTextureID)renderTexture->getSrvHandle().ptr, canvasSize);
     }
 
     ImGui::EndChildFrame();

@@ -1,5 +1,8 @@
 #pragma once
 
+
+#include "ShaderTableDesc.h"
+
 namespace tinygltf { struct Material; class Model; }
 
 class Material
@@ -59,6 +62,17 @@ private:
         MATERIAL_FLAGS_TRANSMISSION_TEX = 1 << 4
     };
 
+    enum     {
+        TEX_SLOT_BASECOLOUR = 0,
+        TEX_SLOT_METALLIC_ROUGHNESS = 1,
+        TEX_SLOT_NORMAL = 2,
+        TEX_SLOT_OCCLUSION = 3,
+        TEX_SLOT_IRIDESCENCE = 4,
+        TEX_SLOT_IRIDESCENCE_THICKNESS = 5,
+        TEX_SLOT_TRANSMISSION = 6,
+        TEX_SLOT_COUNT = 7
+    };
+
     struct MaterialData
     {
         Vector4      baseColor = Vector4::One;
@@ -86,14 +100,7 @@ private:
     ComPtr<ID3D12Resource>  transmissionTex;
     ALPHAMODE               alphaMode = ALPHA_MODE_OPAQUE;
     float                   alphaCutoff = 0.5f;
-    UINT                    baseColourDesc = UINT32_MAX;
-    UINT                    metalRoughDesc = UINT32_MAX;
-    UINT                    normalDesc = UINT32_MAX;
-    UINT                    occlusionDesc = UINT32_MAX;
-    UINT                    iridiscenceDesc = UINT32_MAX;
-    UINT                    iridiscenceThicknessDesc = UINT32_MAX;
-    UINT                    transmissionDesc = UINT32_MAX;
-    UINT                    materialDesc = UINT32_MAX;
+    ShaderTableDesc         textureTableDesc;
 
     static ComPtr<ID3D12RootSignature> rootSignature;
     static ComPtr<ID3D12Resource> whiteFallback;

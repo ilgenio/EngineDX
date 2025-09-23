@@ -28,8 +28,8 @@ bool ModuleRender::init()
     ID3D12Device2* device = d3d12->getDevice();
     ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
 
-    debugFontDebugDraw = descriptors->getSingle()->alloc();
-    debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue(), descriptors->getSingle()->getCPUHandle(debugFontDebugDraw), descriptors->getSingle()->getGPUHandle(debugFontDebugDraw));
+    debugTableDesc = descriptors->allocTable();
+    debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue(), debugTableDesc.getCPUHandle(), debugTableDesc.getGPUHandle());
 
     bool ok = SUCCEEDED(device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, d3d12->getCommandAllocator(), nullptr, IID_PPV_ARGS(&commandList)));
     ok = ok && SUCCEEDED(commandList->Close());

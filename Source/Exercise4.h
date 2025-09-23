@@ -4,11 +4,12 @@
 #include "DebugDrawPass.h"
 #include "ImGuiPass.h"
 #include "ModuleSamplers.h"
+#include "ShaderTableDesc.h"
 
 class Exercise4 : public Module
 {
     ComPtr<ID3D12Resource>          textureDog;
-    UINT                            dogDescriptor = 0;
+    ShaderTableDesc                 dogDescriptor;
     ComPtr<ID3D12Resource>          vertexBuffer;
     D3D12_VERTEX_BUFFER_VIEW        vertexBufferView;
     ComPtr<ID3D12RootSignature>     rootSignature;

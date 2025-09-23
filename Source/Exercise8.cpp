@@ -31,7 +31,6 @@ Exercise8::Exercise8()
 
 Exercise8::~Exercise8()
 {
-    app->getShaderDescriptors()->getSingle()->release(imguiTextDesc);
 }
 
 bool Exercise8::init() 
@@ -43,13 +42,12 @@ bool Exercise8::init()
     if(ok)
     {
         ModuleD3D12* d3d12 = app->getD3D12();
-        SingleDescriptors* descriptors = app->getShaderDescriptors()->getSingle();
+        ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
 
         debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue());
 
-        imguiTextDesc = descriptors->alloc();
-        imguiPass = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd(), 
-            descriptors->getCPUHandle(imguiTextDesc), descriptors->getGPUHandle(imguiTextDesc));
+        tableDesc = descriptors->allocTable();
+        imguiPass = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd(), tableDesc.getCPUHandle(), tableDesc.getGPUHandle());
 
         renderTexture = std::make_unique<RenderTexture>("Exercise8", DXGI_FORMAT_R8G8B8A8_UNORM, Vector4(0.188f, 0.208f, 0.259f, 1.0f), DXGI_FORMAT_D32_FLOAT, 1.0f);
 
@@ -307,9 +305,9 @@ void Exercise8::imGuiCommands()
     ImGui::BeginChildFrame(id, canvasSize, ImGuiWindowFlags_NoScrollbar);
     viewerFocused = ImGui::IsWindowFocused();
 
-    if(renderTexture->isValid())
+    if(renderTexture->getSrvTableDesc())
     {
-        ImGui::Image((ImTextureID)descriptors->getSingle()->getGPUHandle(renderTexture->getSRVHandle()).ptr, canvasSize);
+        ImGui::Image((ImTextureID)renderTexture->getSrvHandle().ptr, canvasSize);
     }
 
     if (showGuizmo)
@@ -393,12 +391,10 @@ void Exercise8::renderToTexture(ID3D12GraphicsCommandList* commandList)
         {
             const BasicMaterial& material = model->getMaterials()[mesh.getMaterialIndex()];
 
-            UINT tableStartDesc = material.getTexturesTableDescriptor();
-
             PerInstance perInstance = { model->getModelMatrix().Transpose(), model->getNormalMatrix().Transpose(), material.getPBRPhongMaterial()};
 
             commandList->SetGraphicsRootConstantBufferView(2, ringBuffer->allocBuffer(&perInstance));
-            commandList->SetGraphicsRootDescriptorTable(6, descriptors->getTable()->getGPUHandle(tableStartDesc));
+            commandList->SetGraphicsRootDescriptorTable(6, material.getTexturesTableDesc().getGPUHandle());
 
             mesh.draw(commandList);
         }

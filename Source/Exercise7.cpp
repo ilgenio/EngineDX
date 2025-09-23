@@ -30,7 +30,6 @@ Exercise7::Exercise7()
 
 Exercise7::~Exercise7()
 {
-    app->getShaderDescriptors()->getSingle()->release(imguiTextDesc);
 }
 
 bool Exercise7::init() 
@@ -42,13 +41,12 @@ bool Exercise7::init()
     if(ok)
     {
         ModuleD3D12* d3d12 = app->getD3D12();
-        SingleDescriptors* descriptors = app->getShaderDescriptors()->getSingle();
+        ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
 
         debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue());
 
-        imguiTextDesc = descriptors->alloc();
-        imguiPass = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd(), 
-            descriptors->getCPUHandle(imguiTextDesc), descriptors->getGPUHandle(imguiTextDesc));
+        descTable = descriptors->allocTable();
+        imguiPass = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd(), descTable.getCPUHandle(), descTable.getGPUHandle());
 
         renderTexture = std::make_unique<RenderTexture>("Exercise7", DXGI_FORMAT_R8G8B8A8_UNORM, Vector4(0.188f, 0.208f, 0.259f, 1.0f), DXGI_FORMAT_D32_FLOAT, 1.0f);
     }
@@ -164,7 +162,6 @@ void Exercise7::imGuiCommands()
 
     ImGui::End();
 
-    SingleDescriptors* descriptors = app->getShaderDescriptors()->getSingle();
     ModuleD3D12* d3d12 = app->getD3D12();
 
     ModuleCamera* camera = app->getCamera();
@@ -183,9 +180,9 @@ void Exercise7::imGuiCommands()
     ImGui::BeginChildFrame(id, canvasSize, ImGuiWindowFlags_NoScrollbar);
     viewerFocused = ImGui::IsWindowFocused();
     
-    if (descriptors->isValid(renderTexture->getSRVHandle()))
+    if (renderTexture->getSrvTableDesc())
     {
-        ImGui::Image((ImTextureID)descriptors->getGPUHandle(renderTexture->getSRVHandle()).ptr, canvasSize);
+        ImGui::Image((ImTextureID)renderTexture->getSrvHandle().ptr, canvasSize);
     }
     
     if (showGuizmo)
@@ -269,7 +266,7 @@ void Exercise7::renderToTexture(ID3D12GraphicsCommandList* commandList)
             PerInstance perInstance = { model->getModelMatrix().Transpose(), model->getNormalMatrix().Transpose(), material.getPBRPhongMaterial()};
 
             commandList->SetGraphicsRootConstantBufferView(2, ringBuffer->allocBuffer(&perInstance));
-            commandList->SetGraphicsRootDescriptorTable(3, descriptors->getTable()->getGPUHandle(material.getTexturesTableDescriptor()));
+            commandList->SetGraphicsRootDescriptorTable(3, material.getTexturesTableDesc().getGPUHandle());
 
             mesh.draw(commandList);
         }

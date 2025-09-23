@@ -54,7 +54,7 @@ class Exercise7 : public Module
     ImVec2                              canvasSize;
     ImVec2                              canvasPos;
 
-    UINT imguiTextDesc = 0;
+    ShaderTableDesc descTable;
 
 public:
     Exercise7();
