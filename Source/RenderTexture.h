@@ -2,6 +2,8 @@
 
 
 #include "ShaderTableDesc.h"
+#include "RenderTargetDesc.h"
+#include "DepthStencilDesc.h"
 
 // RenderTexture encapsulates a DirectX 12 render target and optional depth stencil.
 // It manages creation, resizing, resource transitions, and descriptor handles for rendering and shader access.
@@ -21,8 +23,8 @@ class RenderTexture
     FLOAT clearDepth;
 
     ShaderTableDesc srvDesc;
-    UINT rtvHandle = 0;
-    UINT dsvHandle = 0;
+    RenderTargetDesc rtvDesc;
+    DepthStencilDesc dsvDesc;
 
 public:
 
@@ -44,6 +46,7 @@ public:
 
     D3D12_GPU_DESCRIPTOR_HANDLE getSrvHandle() const { return srvDesc.getGPUHandle(); }
     const ShaderTableDesc& getSrvTableDesc() const { return srvDesc;  }
-    UINT getRTVHandle() const { return rtvHandle; }
-    UINT getDSVHandle() const { return dsvHandle; }
+    const RenderTargetDesc& getRtvDesc() const { return rtvDesc; }
+    const DepthStencilDesc& getDsvDesc() const { return dsvDesc; }
 };
+

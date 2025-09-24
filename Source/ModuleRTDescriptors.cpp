@@ -34,7 +34,7 @@ bool ModuleRTDescriptors::init()
 }
 
 
-UINT ModuleRTDescriptors::create(ID3D12Resource *resource)
+RenderTargetDesc ModuleRTDescriptors::create(ID3D12Resource *resource)
 {
     UINT handle = handles.allocHandle();
 
@@ -42,10 +42,10 @@ UINT ModuleRTDescriptors::create(ID3D12Resource *resource)
 
     app->getD3D12()->getDevice()->CreateRenderTargetView(resource, nullptr, CD3DX12_CPU_DESCRIPTOR_HANDLE(cpuStart, handles.indexFromHandle(handle), descriptorSize));
 
-    return handle;
+    return RenderTargetDesc(handle, &refCounts[indexFromHandle(handle)]);
 }
 
-UINT ModuleRTDescriptors::create(ID3D12Resource *resource, UINT arraySlice, UINT mipSlice, DXGI_FORMAT format)
+RenderTargetDesc ModuleRTDescriptors::create(ID3D12Resource *resource, UINT arraySlice, UINT mipSlice, DXGI_FORMAT format)
 {
     UINT handle = handles.allocHandle();
 
@@ -61,7 +61,7 @@ UINT ModuleRTDescriptors::create(ID3D12Resource *resource, UINT arraySlice, UINT
 
     app->getD3D12()->getDevice()->CreateRenderTargetView(resource, &rtvDesc, CD3DX12_CPU_DESCRIPTOR_HANDLE(cpuStart, handles.indexFromHandle(handle), descriptorSize));
 
-    return handle;
+    return RenderTargetDesc(handle, &refCounts[indexFromHandle(handle)]);
 
 }
 

@@ -6,21 +6,10 @@
 #include "ModuleRTDescriptors.h"
 #include "ModuleDSDescriptors.h"
 #include "ModuleShaderDescriptors.h"
-#include "SingleDescriptors.h"
 #include "ModuleD3D12.h"
 
 RenderTexture::~RenderTexture()
 {
-    if (texture)
-    {
-        app->getRTDescriptors()->release(rtvHandle);
-
-        if (depthFormat != DXGI_FORMAT_UNKNOWN)
-        {
-            ModuleDSDescriptors *dsDescriptors = app->getDSDescriptors();
-            dsDescriptors->release(dsvHandle);
-        }
-    }
 }
 
 void RenderTexture::resize(int width, int height)
@@ -40,8 +29,7 @@ void RenderTexture::resize(int width, int height)
     texture = resources->createRenderTarget(format, size_t(width), size_t(height), clearColour, name);
 
     // Create RTV.
-    rtDescriptors->release(rtvHandle);
-    rtvHandle = rtDescriptors->create(texture.Get());
+    rtvDesc = rtDescriptors->create(texture.Get());
 
     // Create SRV.
     srvDesc = descriptors->allocTable();
@@ -56,8 +44,7 @@ void RenderTexture::resize(int width, int height)
         depthTexture = resources->createDepthStencil(depthFormat, size_t(width), size_t(height), clearDepth, 0, name);
 
         // Create DSV
-        dsDescriptors->release(dsvHandle);
-        dsvHandle = dsDescriptors->create(depthTexture.Get());
+        dsvDesc = dsDescriptors->create(depthTexture.Get());
     }
 }
 
@@ -75,7 +62,7 @@ void RenderTexture::transitionToSRV(ID3D12GraphicsCommandList* cmdList)
 
 void RenderTexture::bindAsRenderTarget(ID3D12GraphicsCommandList *cmdList)
 {
-    D3D12_CPU_DESCRIPTOR_HANDLE rtv = app->getRTDescriptors()->getCPUHandle(rtvHandle);
+    D3D12_CPU_DESCRIPTOR_HANDLE rtv = rtvDesc.getCPUHandle();
 
     if(depthFormat == DXGI_FORMAT_UNKNOWN)
     {
@@ -83,18 +70,18 @@ void RenderTexture::bindAsRenderTarget(ID3D12GraphicsCommandList *cmdList)
     }
     else
     {
-        D3D12_CPU_DESCRIPTOR_HANDLE dsv = app->getDSDescriptors()->getCPUHandle(dsvHandle);
+        D3D12_CPU_DESCRIPTOR_HANDLE dsv = dsvDesc.getCPUHandle();
         cmdList->OMSetRenderTargets(1, &rtv, FALSE, &dsv);
     }
 }
 
 void RenderTexture::clear(ID3D12GraphicsCommandList* cmdList)
 {
-    cmdList->ClearRenderTargetView(app->getRTDescriptors()->getCPUHandle(rtvHandle), reinterpret_cast<float*>(&clearColour), 0, nullptr);
+    cmdList->ClearRenderTargetView(rtvDesc.getCPUHandle(), reinterpret_cast<float*>(&clearColour), 0, nullptr);
 
     if (depthFormat != DXGI_FORMAT_UNKNOWN)
     {
-        cmdList->ClearDepthStencilView(app->getDSDescriptors()->getCPUHandle(dsvHandle), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+        cmdList->ClearDepthStencilView(dsvDesc.getCPUHandle(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
     }
 }
 

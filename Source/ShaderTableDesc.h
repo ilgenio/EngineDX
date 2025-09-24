@@ -7,7 +7,8 @@ class ShaderTableDesc
 
 public:
 
-    ShaderTableDesc(UINT handle = 0, UINT* refCount = nullptr) : handle(handle), refCount(refCount) { addRef(); }
+    ShaderTableDesc() = default;
+    ShaderTableDesc(UINT handle, UINT* refCount) : handle(handle), refCount(refCount) { addRef(); }
     ShaderTableDesc(const ShaderTableDesc& other) : handle(other.handle), refCount(other.refCount) { addRef(); }
     ShaderTableDesc(ShaderTableDesc&& other) noexcept : handle(other.handle), refCount(other.refCount) { other.handle = 0; other.refCount = nullptr; }
     ~ShaderTableDesc() { release(); }

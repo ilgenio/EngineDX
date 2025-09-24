@@ -7,8 +7,6 @@
 #include "ModuleSamplers.h"
 #include "ModuleResources.h"
 #include "ModuleShaderDescriptors.h"
-#include "SingleDescriptors.h"
-#include "TableDescriptors.h"
 #include "ModuleRTDescriptors.h"
 
 #include "CubemapMesh.h"
@@ -86,16 +84,14 @@ ComPtr<ID3D12Resource> HDRToCubemapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE hd
         CD3DX12_RESOURCE_BARRIER toRT = CD3DX12_RESOURCE_BARRIER::Transition(cubemap.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET, subResource);
         commandList->ResourceBarrier(1, &toRT);
 
-        UINT rtvHandle = rtDescriptors->create(cubemap.Get(), i, 0, DXGI_FORMAT_R16G16B16A16_FLOAT);
-        D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = rtDescriptors->getCPUHandle(rtvHandle);
+        RenderTargetDesc rtvDesc = rtDescriptors->create(cubemap.Get(), i, 0, DXGI_FORMAT_R16G16B16A16_FLOAT);
+        D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = rtvDesc.getCPUHandle();
         commandList->OMSetRenderTargets(1, &cpuHandle, FALSE, nullptr);
 
         cubemapMesh->draw(commandList.Get());
 
         CD3DX12_RESOURCE_BARRIER toSRV = CD3DX12_RESOURCE_BARRIER::Transition(cubemap.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, subResource);
         commandList->ResourceBarrier(1, &toSRV);
-
-        rtDescriptors->release(rtvHandle);
     }
 
 
@@ -118,8 +114,8 @@ ComPtr<ID3D12Resource> HDRToCubemapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE hd
             CD3DX12_RESOURCE_BARRIER toRT = CD3DX12_RESOURCE_BARRIER::Transition(cubemap.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET, subResource);
             commandList->ResourceBarrier(1, &toRT);
 
-            UINT rtvHandle = rtDescriptors->create(cubemap.Get(), j, i, DXGI_FORMAT_R16G16B16A16_FLOAT);
-            D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = rtDescriptors->getCPUHandle(rtvHandle);
+            RenderTargetDesc rtvDesc = rtDescriptors->create(cubemap.Get(), j, i, DXGI_FORMAT_R16G16B16A16_FLOAT);
+            D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = rtvDesc.getCPUHandle();
             commandList->OMSetRenderTargets(1, &cpuHandle, FALSE, nullptr);
 
             D3D12_VIEWPORT viewport{ 0.0f, 0.0f, float(dim), float(dim), 0.0f, 1.0f };
@@ -137,8 +133,6 @@ ComPtr<ID3D12Resource> HDRToCubemapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE hd
 
             CD3DX12_RESOURCE_BARRIER toSRV = CD3DX12_RESOURCE_BARRIER::Transition(cubemap.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, subResource);
             commandList->ResourceBarrier(1, &toSRV);
-
-            rtDescriptors->release(rtvHandle);
         }
     }
 

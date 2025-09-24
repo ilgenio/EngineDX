@@ -4,7 +4,6 @@
 #include "Application.h"
 #include "ModuleResources.h"
 #include "ModuleShaderDescriptors.h"
-#include "SingleDescriptors.h"
 #include "ModuleD3D12.h"
 
 #include "tiny_gltf.h"

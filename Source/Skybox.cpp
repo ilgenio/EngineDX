@@ -5,7 +5,6 @@
 #include "Application.h"
 #include "ModuleResources.h"
 #include "ModuleShaderDescriptors.h"
-#include "SingleDescriptors.h"
 
 void Skybox::load(const char *backgroundFile, const char* diffuseFile, const char* specularFile, const char* brdfFile)
 {

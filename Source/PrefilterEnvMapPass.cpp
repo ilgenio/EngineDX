@@ -6,7 +6,6 @@
 #include "ModuleD3D12.h"
 #include "ModuleResources.h"
 #include "ModuleShaderDescriptors.h"
-#include "SingleDescriptors.h"
 #include "ModuleSamplers.h"
 #include "ModuleRTDescriptors.h"
 
@@ -87,8 +86,8 @@ ComPtr<ID3D12Resource> PrefilterEnvMapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE
             CD3DX12_RESOURCE_BARRIER toRT = CD3DX12_RESOURCE_BARRIER::Transition(prefilterMap.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET, subResource);
             commandList->ResourceBarrier(1, &toRT);
 
-            UINT rtvHandle = rtDescriptors->create(prefilterMap.Get(), i, roughnessLevel, DXGI_FORMAT_R16G16B16A16_FLOAT);
-            D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = rtDescriptors->getCPUHandle(rtvHandle);
+            RenderTargetDesc rtDesc = rtDescriptors->create(prefilterMap.Get(), i, roughnessLevel, DXGI_FORMAT_R16G16B16A16_FLOAT);
+            D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = rtDesc.getCPUHandle();
             commandList->OMSetRenderTargets(1, &cpuHandle, FALSE, nullptr);
 
             D3D12_VIEWPORT viewport{ 0.0f, 0.0f, float(dim), float(dim), 0.0f, 1.0f };
@@ -100,8 +99,6 @@ ComPtr<ID3D12Resource> PrefilterEnvMapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE
 
             CD3DX12_RESOURCE_BARRIER toSRV = CD3DX12_RESOURCE_BARRIER::Transition(prefilterMap.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, subResource);
             commandList->ResourceBarrier(1, &toSRV);
-
-            rtDescriptors->release(rtvHandle);
         }
     }
     

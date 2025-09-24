@@ -174,6 +174,7 @@
     <ClInclude Include="D3D12MemAlloc.h" />
     <ClInclude Include="DebugDrawPass.h" />
     <ClInclude Include="debug_draw.hpp" />
+    <ClInclude Include="DepthStencilDesc.h" />
     <ClInclude Include="EngineDX.h" />
     <ClInclude Include="EnvironmentBRDFPass.h" />
     <ClInclude Include="Exercise1.h" />
@@ -216,16 +217,15 @@
     <ClInclude Include="PlatformHelpers.h" />
     <ClInclude Include="PrefilterEnvMapPass.h" />
     <ClInclude Include="ReadData.h" />
+    <ClInclude Include="RenderTargetDesc.h" />
     <ClInclude Include="RenderTexture.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="ShaderTableDesc.h" />
     <ClInclude Include="SimpleMath.h" />
-    <ClInclude Include="SingleDescriptors.h" />
     <ClInclude Include="Skybox.h" />
     <ClInclude Include="SkyboxRenderPass.h" />
     <ClInclude Include="SphereMesh.h" />
-    <ClInclude Include="TableDescriptors.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
@@ -305,6 +305,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="DepthStencilDesc.cpp" />
     <ClCompile Include="EngineDX.cpp" />
     <ClCompile Include="EnvironmentBRDFPass.cpp" />
     <ClCompile Include="Exercise1.cpp" />
@@ -351,6 +352,7 @@
     <ClCompile Include="ModuleShaderDescriptors.cpp" />
     <ClCompile Include="Mouse.cpp" />
     <ClCompile Include="PrefilterEnvMapPass.cpp" />
+    <ClCompile Include="RenderTargetDesc.cpp" />
     <ClCompile Include="RenderTexture.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="ShaderTableDesc.cpp" />
@@ -358,11 +360,9 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="SingleDescriptors.cpp" />
     <ClCompile Include="Skybox.cpp" />
     <ClCompile Include="SkyboxRenderPass.cpp" />
     <ClCompile Include="SphereMesh.cpp" />
-    <ClCompile Include="TableDescriptors.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="EngineDX.rc" />

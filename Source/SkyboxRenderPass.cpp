@@ -4,7 +4,6 @@
 #include "ModuleSamplers.h"
 #include "ModuleD3D12.h"
 #include "ModuleShaderDescriptors.h"
-#include "SingleDescriptors.h"
 
 #include "SkyboxRenderPass.h"
 #include "CubemapMesh.h"

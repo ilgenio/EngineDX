@@ -34,7 +34,7 @@ bool ModuleDSDescriptors::init()
 }
 
 
-UINT ModuleDSDescriptors::create(ID3D12Resource *resource)
+DepthStencilDesc ModuleDSDescriptors::create(ID3D12Resource *resource)
 {
     UINT handle = handles.allocHandle();
 
@@ -42,7 +42,7 @@ UINT ModuleDSDescriptors::create(ID3D12Resource *resource)
 
     app->getD3D12()->getDevice()->CreateDepthStencilView(resource, nullptr, CD3DX12_CPU_DESCRIPTOR_HANDLE(cpuStart, handles.indexFromHandle(handle), descriptorSize));
 
-    return handle;
+    return DepthStencilDesc(handle, &refCounts[indexFromHandle(handle)]);
 }
 
 void ModuleDSDescriptors::release(UINT handle)

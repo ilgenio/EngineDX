@@ -6,7 +6,6 @@
 #include "ModuleCamera.h"
 #include "ModuleResources.h"
 #include "ModuleShaderDescriptors.h"
-#include "SingleDescriptors.h"
 
 #include "ReadData.h"
 

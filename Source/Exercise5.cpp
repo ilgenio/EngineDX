@@ -5,8 +5,6 @@
 #include "ModuleD3D12.h"
 #include "ModuleCamera.h"
 #include "ModuleShaderDescriptors.h"
-#include "SingleDescriptors.h"
-#include "TableDescriptors.h"
 #include "ModuleResources.h"
 #include "ModuleSamplers.h"
 #include "Model.h"

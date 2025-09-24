@@ -9,8 +9,6 @@
 #include "Application.h"
 #include "ModuleD3D12.h"
 #include "ModuleShaderDescriptors.h"
-#include "SingleDescriptors.h"
-
 #include <imgui.h>
 
 ModuleRender::ModuleRender()
