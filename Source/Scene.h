@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <span>
 
 class Mesh;
 class Material;
@@ -8,41 +9,62 @@ class Skybox;
 
 namespace tinygltf { class Model;  class Node; }
 
-struct MeshInstance
+struct RenderMesh
 {
-    uint32_t meshIndex = 0;
-    Matrix transformation;
+    const Mesh *mesh = nullptr;
+    const Material *material = nullptr;
+    Matrix worldTransform;
 };
 
 class Scene
 {
-public:
+private:
+    struct Node
+    {
+        std::string name;
+        Matrix localTransform;
+        Matrix worldTransform;
+        bool dirtyWorld = true;
+        INT parent = -1;
+    };
+
+    struct MeshInstance
+    {
+        UINT meshIndex = 0;
+        UINT materialIndex = 0;
+        INT  skinIndex = 0;
+        UINT nodeIndex = 0;
+    };
+
+    typedef std::vector<Mesh*> MeshList;
+    typedef std::vector<Material*> MaterialList;
+    typedef std::vector<Node> NodeList;
+    typedef std::vector<MeshInstance> InstanceList;
+
+    MeshList     meshes;
+    MaterialList materials;
+    NodeList     nodes;
+    InstanceList instances;
 
 public:
     Scene();
     ~Scene();
 
     void loadSkybox(const char* background, const char* diffuse, const char* specular, const char* brdf);
-    void load(const tinygltf::Model& srcModel, const char* basePath);
+    bool load(const char* fileName, const char* basePath);
 
-    uint32_t getNumMeshes() const {return uint32_t(meshes.size());}
-    const Mesh* getMesh(uint32_t index) const {return meshes[index].get(); }
+    // TODO: Use std::span
+    std::span<const Mesh* const>     getMeshes() const { return std::span<const Mesh* const>(meshes.data(), meshes.size()); }
+    std::span<const Material* const> getMaterials() const { return std::span<const Material* const>(materials.data(), materials.size()); }
 
-    uint32_t getNumMaterials() const {return uint32_t(materials.size());}
-    const Material* getMaterial(uint32_t index ) const {return materials[index].get();}
-
-    uint32_t getNumInstances() const {return uint32_t(instances.size());}
-    const MeshInstance& getInstance(uint32_t index) const {return instances[index];}
-
-  //  const Skybox* getSkybox() const {return skybox.get();}
+    void updateWorldTransforms();
+    void getRenderList(std::vector<RenderMesh>& renderList) const;
 
 private:
 
-    void generateInstancesRec(const tinygltf::Model& srcModel, int nodeIndex, const Matrix& transform);
+    bool load(const tinygltf::Model& srcModel, const char* basePath);
+    void generateNodes(const tinygltf::Model& model, UINT nodeIndex, INT parentIndex, const std::vector<int>& materialMapping,
+                        UINT nodeOffset, UINT meshOffset, UINT materialOffset);
     
 private:
-    std::vector<std::unique_ptr<Mesh> >     meshes;
-    std::vector<std::unique_ptr<Material> > materials;
-    std::vector<MeshInstance>               instances;
-    //std::unique_ptr<Skybox>                 skybox;
 };

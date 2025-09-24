@@ -9,6 +9,7 @@
 #include "Application.h"
 #include "ModuleD3D12.h"
 #include "ModuleShaderDescriptors.h"
+#include "ModuleSamplers.h"
 #include <imgui.h>
 
 ModuleRender::ModuleRender()
@@ -27,12 +28,12 @@ bool ModuleRender::init()
     ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
 
     debugTableDesc = descriptors->allocTable();
-    debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue(), debugTableDesc.getCPUHandle(), debugTableDesc.getGPUHandle());
+    debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue(), debugTableDesc.getCPUHandle(0), debugTableDesc.getGPUHandle(0));
 
     bool ok = SUCCEEDED(device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, d3d12->getCommandAllocator(), nullptr, IID_PPV_ARGS(&commandList)));
     ok = ok && SUCCEEDED(commandList->Close());
 
-    imguiPass = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd());
+    imguiPass = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd(), debugTableDesc.getCPUHandle(1), debugTableDesc.getGPUHandle(1));
 
     return ok;
 }
@@ -77,6 +78,9 @@ void ModuleRender::render()
     char lTmp[1024];
     sprintf_s(lTmp, 1023, "FPS: [%d]. Avg. elapsed (Ms): [%g] ", uint32_t(app->getFPS()), app->getAvgElapsedMs());
     dd::screenText(lTmp, ddConvert(Vector3(10.0f, 10.0f, 0.0f)), dd::colors::White, 0.6f);
+
+    ID3D12DescriptorHeap* descriptorHeaps[] = { app->getShaderDescriptors()->getHeap(), app->getSamplers()->getHeap()};
+    commandList->SetDescriptorHeaps(2, descriptorHeaps);
 
     debugDrawPass->record(commandList.Get(), width, height, camera->getView(), ModuleCamera::getPerspectiveProj(float(width) / float(height)));
 

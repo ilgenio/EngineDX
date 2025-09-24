@@ -66,7 +66,7 @@ void ModuleLevel::loadScene(const char* assetFileName, const char* basePath)
     if (loadOk)
     {
         scene = std::make_unique<Scene>();
-        scene->load(model, basePath);
+        //scene->load(model, basePath);
     }
     else
     {

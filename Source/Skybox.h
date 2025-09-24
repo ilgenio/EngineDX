@@ -13,11 +13,7 @@ public:
     const CubemapMesh& getCubemapMesh() const { return mesh;  }
 
     uint32_t getSpecularIBLMipLevels() const {return iblMipLevels; }
-
-    ID3D12Resource* getBackgroundImage() const {return background.Get(); }
-    ID3D12Resource* getDiffuseImage() const {return diffuse.Get();}
-    ID3D12Resource* getSpecularImage() const {return specular.Get();}
-    ID3D12Resource* getBRDFImage() const {return brdf.Get();}
+    const ShaderTableDesc& getTextureTableDesc() const { return tableDesc; }
 
 private:
     ComPtr<ID3D12Resource>   background;

@@ -18,7 +18,6 @@ float F_Schlick(float rf0, float rf90, float dotVH)
     return rf0 + (rf90 - rf0) * pow(1.0-dotVH, 5);
 }
 
-
 float D_GGX(float alphaRoughness, float NdotH)
 {
     float a2 = alphaRoughness * alphaRoughness;

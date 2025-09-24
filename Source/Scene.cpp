@@ -5,7 +5,15 @@
 #include "Material.h"
 //#include "Skybox.h"
 
+#define TINYGLTF_NO_STB_IMAGE_WRITE
+#define TINYGLTF_NO_STB_IMAGE
+#define TINYGLTF_NO_EXTERNAL_IMAGE 
+#pragma warning(push)
+#pragma warning(disable : 4018) 
+#pragma warning(disable : 4267) 
 #include "tiny_gltf.h"
+#pragma warning(pop)
+
 
 
 Scene::Scene()
@@ -22,9 +30,31 @@ void Scene::loadSkybox(const char* background, const char* diffuse, const char* 
     //skybox->load(background, diffuse, specular, brdf);
 }
 
-void Scene::load(const tinygltf::Model &srcModel, const char *basePath)
+bool Scene::load(const char* fileName, const char* basePath)
 {
-    meshes.reserve(srcModel.meshes.size());
+    tinygltf::TinyGLTF gltfContext;
+    tinygltf::Model model;
+    std::string error, warning;
+
+    bool loadOk = gltfContext.LoadASCIIFromFile(&model, &error, &warning, fileName);
+    if (loadOk)
+    {
+        return load(model, basePath);
+    }
+
+    LOG("Error loading %s: %s", fileName, error.c_str());
+
+    return false;
+}
+
+bool Scene::load(const tinygltf::Model& srcModel, const char* basePath)
+{
+    UINT nodeOffset = UINT(nodes.size());
+    UINT meshOffset = UINT(meshes.size());
+    UINT materialOffset = UINT(materials.size());
+
+    std::vector<int> materialMappings;
+    materialMappings.reserve(srcModel.meshes.size());
 
     for (const auto& srcMesh : srcModel.meshes)
     {
@@ -34,10 +64,14 @@ void Scene::load(const tinygltf::Model &srcModel, const char *basePath)
             mesh->load(srcModel, srcMesh, primitive);
 
             meshes.emplace_back(mesh);
+
+            // TODO: remove material index from mesh
+            materialMappings.push_back(primitive.material);
         }
     }
 
-    materials.reserve(srcModel.materials.size());
+    MaterialList tmpMaterials;
+    tmpMaterials.reserve(srcModel.materials.size());
 
     for(const auto& srcMaterial : srcModel.materials)
     {
@@ -53,68 +87,113 @@ void Scene::load(const tinygltf::Model &srcModel, const char *basePath)
     {
         for (int nodeIndex : srcModel.scenes[0].nodes)
         {
-            generateInstancesRec(srcModel, nodeIndex, Matrix::Identity);
+            generateNodes(srcModel, nodeIndex, -1, materialMappings, nodeOffset, meshOffset, materialOffset);
         }
     }
+
+    // TODO: Skins
+
+    return true;
 }
 
-void Scene::generateInstancesRec(const tinygltf::Model& srcModel, int nodeIndex, const Matrix& transform)
+void Scene::generateNodes(const tinygltf::Model& model, UINT nodeIndex, INT parentIndex, const std::vector<int>& materialMapping, 
+                          UINT nodeOffset, UINT meshOffset, UINT materialOffset)
 {
-    const tinygltf::Node& node = srcModel.nodes[nodeIndex];
-    
+    const tinygltf::Node& node = model.nodes[nodeIndex];
+
     Matrix local = Matrix::Identity;
 
     if (node.matrix.size() == 16)
     {
-        int k = 0;
-        for (uint32_t i = 0; i < 4; ++i)
-            for (uint32_t j = 0; j < 4; ++j)
-                local.m[j][i] = float(node.matrix[k++]);
+        float* ptr = reinterpret_cast<float*>(&local);
+        for (UINT i = 0; i < 16; ++i) ptr[i] = float(node.matrix[i]);
+
+        // TODO: Do we need this ? 
+        local.Transpose();
     }
     else
     {
-        Vector3 translation = Vector3::Zero, scale = Vector3::One;
+        Vector3 translation = Vector3::Zero;
+        Vector3 scale = Vector3::One;
         Quaternion rotation = Quaternion::Identity;
 
-        if (node.translation.size() == 3)
-        {
-            translation.x = float(node.translation[0]);
-            translation.y = float(node.translation[1]);
-            translation.z = float(node.translation[2]);
-        }
-        if (node.rotation.size() == 4)
-        {
-            rotation.x = float(node.rotation[0]);
-            rotation.y = float(node.rotation[1]);
-            rotation.z = float(node.rotation[2]);
-            rotation.w = float(node.rotation[3]);
-        }
-        if (node.scale.size() == 3)
-        {
-            scale.x = float(node.scale[0]);
-            scale.y = float(node.scale[1]);
-            scale.z = float(node.scale[2]);
-        }
-        
-        Matrix matrix = matrix.CreateFromQuaternion(rotation);
-        matrix.Translation(translation);
-        matrix.Right(scale.x * matrix.Right());
-        matrix.Up(scale.y * matrix.Up());
-        matrix.Forward(scale.z * matrix.Forward());
+        if (node.translation.size() == 3) translation = Vector3(float(node.translation[0]), float(node.translation[1]), float(node.translation[2]));
+        if (node.rotation.size() == 4) rotation = Quaternion(float(node.rotation[0]), float(node.rotation[1]), float(node.rotation[2]), float(node.rotation[3]));
+        if (node.scale.size() == 3) scale = Vector3(float(node.scale[0]), float(node.scale[1]), float(node.scale[2]));
+
+        local = Matrix::CreateTranslation(translation) * Matrix::CreateFromQuaternion(rotation) * Matrix::CreateScale(scale); 
     }
 
-    Matrix newTransform = local * transform;
+    Node dst;
+    dst.localTransform = local;
+    dst.dirtyWorld = true;
+    dst.name = node.name;
+    dst.parent = parentIndex+nodeOffset;
 
-    if(node.mesh >= 0)
+    if (node.mesh >= 0)
     {
-        MeshInstance instance = { (uint32_t)node.mesh, instance.transformation = newTransform };
+        MeshInstance instance;
+        instance.meshIndex     = node.mesh+meshOffset;
+        instance.materialIndex = materialMapping[node.mesh]+materialOffset;
+        instance.nodeIndex     = nodeIndex+nodeOffset;
+        instance.skinIndex     = node.skin;
 
         instances.push_back(instance);
     }
 
-    for(int childIndex : node.children)
+    nodes.push_back(dst);
+    parentIndex = nodeIndex;
+
+    for (int childIndex : node.children)
     {
-        generateInstancesRec(srcModel, childIndex, newTransform);
+        generateNodes(model, childIndex, parentIndex, materialMapping, nodeOffset, meshOffset, materialOffset);
+    }
+}
+
+void Scene::updateWorldTransforms()
+{
+    for(Node& node : nodes)
+    {
+        if (node.dirtyWorld)
+        {
+            INT parentIndex = node.parent;
+            if (parentIndex >= 0)
+            {
+                Node& parent = nodes[parentIndex];
+                _ASSERTE(parent.dirtyWorld == false);
+
+                // Parent is clean, so we can use its world transform directly
+                node.worldTransform = node.localTransform * parent.worldTransform;
+            }
+            else
+            {
+                // No parent, so local is world
+                node.worldTransform = node.localTransform;
+            }
+            node.dirtyWorld = false;
+        }
+    }
+}
+
+void Scene::getRenderList(std::vector<RenderMesh>& renderList) const
+{
+    renderList.clear();
+    renderList.reserve(instances.size());
+
+    for (const auto& instance : instances)
+    {
+        _ASSERTE(instance.meshIndex < meshes.size());
+        _ASSERTE(instance.materialIndex < materials.size());
+        _ASSERTE(instance.nodeIndex < nodes.size());
+
+        RenderMesh renderMesh;
+        renderMesh.mesh     = meshes[instance.meshIndex];
+        renderMesh.material = materials[instance.materialIndex];
+        _ASSERTE(nodes[instance.nodeIndex].dirtyWorld == false);
+
+        renderMesh.worldTransform = nodes[instance.nodeIndex].worldTransform;
+
+        renderList.push_back(renderMesh);
     }
 }
 

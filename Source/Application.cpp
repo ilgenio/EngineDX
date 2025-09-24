@@ -24,6 +24,8 @@
 #include "Exercise10.h"
 #include "Exercise11.h"
 
+#include "Demo.h"
+
 Application::Application(int argc, wchar_t** argv, void* hWnd)
 {
     modules.push_back(d3d12 = new ModuleD3D12((HWND)hWnd));
@@ -82,6 +84,7 @@ Application::Application(int argc, wchar_t** argv, void* hWnd)
     }
     else
     {
+        modules.push_back(new Demo);
         modules.push_back(render = new ModuleRender());
         modules.push_back(level = new ModuleLevel());
     }
