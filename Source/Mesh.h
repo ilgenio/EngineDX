@@ -29,8 +29,6 @@ public:
 
     void draw(ID3D12GraphicsCommandList* commandList) const;
 
-    uint32_t getMaterialIndex() const {return materialIndex;}
-
     // Input Layout Descriptor
     static const D3D12_INPUT_LAYOUT_DESC& getInputLayoutDesc() { return inputLayoutDesc; }
 
@@ -56,7 +54,6 @@ private:
     uint32_t numVertices = 0;
     uint32_t numIndices = 0;
     uint32_t indexElementSize = 0;
-    uint32_t materialIndex = 0;
 
     VertexArray vertices;
     IndexArray indices;

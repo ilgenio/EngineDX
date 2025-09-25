@@ -79,8 +79,6 @@ void Mesh::load(const tinygltf::Model& model, const tinygltf::Mesh& mesh, const 
                 indexBufferView.SizeInBytes = numIndices*indexElementSize;
             }
         }
-
-        materialIndex = primitive.material;
     }
 }
 
