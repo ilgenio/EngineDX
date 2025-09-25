@@ -85,8 +85,8 @@ Application::Application(int argc, wchar_t** argv, void* hWnd)
     else
     {
         modules.push_back(new Demo);
-        modules.push_back(render = new ModuleRender());
-        modules.push_back(level = new ModuleLevel());
+        //modules.push_back(render = new ModuleRender());
+        //modules.push_back(level = new ModuleLevel());
     }
 }
 

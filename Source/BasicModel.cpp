@@ -1,5 +1,5 @@
 #include "Globals.h"
-#include "Model.h"
+#include "BasicModel.h"
 
 #include "Application.h"
 #include "ModuleShaderDescriptors.h"
@@ -16,15 +16,15 @@
 #pragma warning(pop)
 
 
-Model::Model() 
+BasicModel::BasicModel() 
 {
 }
 
-Model::~Model()
+BasicModel::~BasicModel()
 {
 }
 
-void Model::load(const char* fileName, const char* basePath, BasicMaterial::Type materialType)
+void BasicModel::load(const char* fileName, const char* basePath, BasicMaterial::Type materialType)
 {
     tinygltf::TinyGLTF gltfContext;
     tinygltf::Model model;
@@ -44,7 +44,7 @@ void Model::load(const char* fileName, const char* basePath, BasicMaterial::Type
     }
 }
 
-void Model::loadMeshes(const tinygltf::Model& model)
+void BasicModel::loadMeshes(const tinygltf::Model& model)
 {
     auto countPrimitves = [](const tinygltf::Model& m) -> size_t {
         size_t count = 0;
@@ -57,7 +57,7 @@ void Model::loadMeshes(const tinygltf::Model& model)
 
     numMeshes = uint32_t(countPrimitves(model));
 
-    meshes = std::make_unique<Mesh[]>(numMeshes);
+    meshes = std::make_unique<BasicMesh[]>(numMeshes);
     int meshIndex = 0;
 
     for(const tinygltf::Mesh& mesh : model.meshes)
@@ -69,7 +69,7 @@ void Model::loadMeshes(const tinygltf::Model& model)
     }
 }
 
-void Model::loadMaterials(const tinygltf::Model& model, const char* basePath, BasicMaterial::Type materialType)
+void BasicModel::loadMaterials(const tinygltf::Model& model, const char* basePath, BasicMaterial::Type materialType)
 {
     ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
     ModuleResources* resources = app->getResources();

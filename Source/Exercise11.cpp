@@ -11,7 +11,7 @@
 #include "ModuleCamera.h"
 #include "ModuleRingBuffer.h"
 
-#include "Model.h"
+#include "BasicModel.h"
 
 #include "DebugDrawPass.h"
 
@@ -99,7 +99,7 @@ void Exercise11::renderToTexture(ID3D12GraphicsCommandList* commandList)
     Quaternion invRot;
     rot.Inverse(invRot);
 
-    Model* model = &models[activeModel];
+    BasicModel* model = &models[activeModel];
     
     const Matrix & view = camera->getView();
     Matrix proj = ModuleCamera::getPerspectiveProj(float(width) / float(height));
@@ -139,9 +139,9 @@ void Exercise11::renderToTexture(ID3D12GraphicsCommandList* commandList)
     commandList->SetGraphicsRootDescriptorTable(3, tableDesc.getGPUHandle(TEX_SLOT_IBL));
     commandList->SetGraphicsRootDescriptorTable(5, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
 
-    for (const Mesh& mesh : model->getMeshes())
+    for (const BasicMesh& mesh : model->getMeshes())
     {
-        if (mesh.getMaterialIndex() < model->getNumMaterials())
+        if (UINT(mesh.getMaterialIndex()) < model->getNumMaterials())
         {
             const BasicMaterial& material = model->getMaterials()[mesh.getMaterialIndex()];
 
@@ -365,7 +365,7 @@ bool Exercise11::createPSO()
 
 bool Exercise11::loadModel()
 {
-    models = std::make_unique<Model[]>(2);
+    models = std::make_unique<BasicModel[]>(2);
 
     models[0].load("Assets/Models/MetalRoughSpheres/MetalRoughSpheres.gltf", "Assets/Models/MetalRoughSpheres/", BasicMaterial::METALLIC_ROUGHNESS);
     models[0].setModelMatrix(Matrix::CreateRotationZ(M_HALF_PI) * Matrix::CreateRotationX(-M_HALF_PI) * Matrix::CreateTranslation(Vector3(0.0, 10.0, 0.0)) * Matrix::CreateScale(0.4f));

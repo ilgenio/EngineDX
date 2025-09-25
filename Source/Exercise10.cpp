@@ -10,8 +10,8 @@
 #include "ModuleSamplers.h"
 #include "ModuleRingBuffer.h"
 #include "ModuleResources.h"
-#include "Model.h"
-#include "Mesh.h"
+#include "BasicModel.h"
+#include "BasicMesh.h"
 
 #include "ReadData.h"
 #include "Math.h"
@@ -212,7 +212,7 @@ void Exercise10::imGuiCommands()
     ImGui::Checkbox("Show guizmo", &showGuizmo);
     ImGui::Text("Model loaded %s with %d meshes and %d materials", model->getSrcFile().c_str(), model->getNumMeshes(), model->getNumMaterials());
 
-    for (const Mesh& mesh : model->getMeshes())
+    for (const BasicMesh& mesh : model->getMeshes())
     {
         ImGui::Text("Mesh %s with %d vertices and %d triangles", mesh.getName().c_str(), mesh.getNumVertices(), mesh.getNumIndices() / 3);
     }
@@ -412,9 +412,9 @@ void Exercise10::renderToTexture(ID3D12GraphicsCommandList* commandList)
 
     BEGIN_EVENT(commandList, "Model Render Pass");
 
-    for (const Mesh& mesh : model->getMeshes())
+    for (const BasicMesh& mesh : model->getMeshes())
     {
-        if (mesh.getMaterialIndex() < model->getNumMaterials())
+        if (UINT(mesh.getMaterialIndex()) < model->getNumMaterials())
         {
             const BasicMaterial& material = model->getMaterials()[mesh.getMaterialIndex()];
 
@@ -549,7 +549,7 @@ bool Exercise10::createPSO()
 
 bool Exercise10::loadModel()
 {
-    model = std::make_unique<Model>();
+    model = std::make_unique<BasicModel>();
     model->load("Assets/Models/DamagedHelmet/DamagedHelmet.gltf", "Assets/Models/DamagedHelmet/", BasicMaterial::METALLIC_ROUGHNESS);
     model->setModelMatrix(Matrix::CreateRotationX(M_HALF_PI));
 

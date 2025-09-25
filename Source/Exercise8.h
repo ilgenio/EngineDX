@@ -8,7 +8,7 @@
 #include "BasicMaterial.h"
 #include "ShaderTableDesc.h"
 
-class Model;
+class BasicModel;
 class RenderTexture;
 
 class Exercise8 : public Module
@@ -90,7 +90,7 @@ class Exercise8 : public Module
     bool                                showGrid = true;
     bool                                showGuizmo = false;
     ImGuizmo::OPERATION                 moOperation = ImGuizmo::TRANSLATE;
-    std::unique_ptr<Model>              model;
+    std::unique_ptr<BasicModel>         model;
 
 
     std::unique_ptr<RenderTexture>      renderTexture;

@@ -16,6 +16,11 @@ struct RenderMesh
     Matrix worldTransform;
 };
 
+//-----------------------------------------------------------------------------
+// Scene manages the collection of meshes, materials, and nodes for a 3D scene.
+// It supports loading scene data from glTF files, organizing node hierarchies,
+// updating world transforms, and preparing render lists for rendering.
+//-----------------------------------------------------------------------------
 class Scene
 {
 private:
@@ -26,6 +31,7 @@ private:
         Matrix worldTransform;
         bool dirtyWorld = true;
         INT parent = -1;
+        UINT numChilds = 0;
     };
 
     struct MeshInstance
@@ -38,8 +44,8 @@ private:
 
     typedef std::vector<Mesh*> MeshList;
     typedef std::vector<Material*> MaterialList;
-    typedef std::vector<Node> NodeList;
-    typedef std::vector<MeshInstance> InstanceList;
+    typedef std::vector<Node*> NodeList;
+    typedef std::vector<MeshInstance*> InstanceList;
 
     MeshList     meshes;
     MaterialList materials;
@@ -53,18 +59,15 @@ public:
     void loadSkybox(const char* background, const char* diffuse, const char* specular, const char* brdf);
     bool load(const char* fileName, const char* basePath);
 
-    // TODO: Use std::span
-    std::span<const Mesh* const>     getMeshes() const { return std::span<const Mesh* const>(meshes.data(), meshes.size()); }
-    std::span<const Material* const> getMaterials() const { return std::span<const Material* const>(materials.data(), materials.size()); }
-
     void updateWorldTransforms();
     void getRenderList(std::vector<RenderMesh>& renderList) const;
 
 private:
 
     bool load(const tinygltf::Model& srcModel, const char* basePath);
-    void generateNodes(const tinygltf::Model& model, UINT nodeIndex, INT parentIndex, const std::vector<int>& materialMapping,
-                        UINT nodeOffset, UINT meshOffset, UINT materialOffset);
+    UINT generateNodes(const tinygltf::Model& model, UINT nodeIndex, INT parentIndex, 
+                       const std::vector<std::pair<UINT, UINT> >& meshMapping, 
+                       const std::vector<int>& materialMapping);
     
 private:
 };

@@ -4,7 +4,7 @@
 #include "BasicMaterial.h"
 #include "ShaderTableDesc.h"
 
-class Model;
+class BasicModel;
 class DebugDrawPass;
 class ImGuiPass;
 class IrradianceMapPass;
@@ -48,7 +48,7 @@ class Exercise11 : public Module
     ComPtr<ID3D12Resource>                  environmentBRDF;
     ComPtr<ID3D12Resource>                  skybox;
 
-    std::unique_ptr<Model[]>                models;
+    std::unique_ptr<BasicModel[]>           models;
     UINT                                    activeModel = 0;   
 
     bool showAxis = true;

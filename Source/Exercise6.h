@@ -7,7 +7,7 @@
 #include "ImGuizmo.h"
 #include "BasicMaterial.h"
 
-class Model;
+class BasicModel;
 
 class Exercise6 : public Module
 {
@@ -47,7 +47,7 @@ class Exercise6 : public Module
     bool                            showGrid = true;
     bool                            showGuizmo = false;
     ImGuizmo::OPERATION             gizmoOperation = ImGuizmo::TRANSLATE;
-    std::unique_ptr<Model>          model;
+    std::unique_ptr<BasicModel>     model;
 
 public:
     Exercise6();

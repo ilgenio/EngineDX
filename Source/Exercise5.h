@@ -6,7 +6,7 @@
 #include <imgui.h>
 #include "ImGuizmo.h"
 
-class Model;
+class BasicModel;
 
 class Exercise5 : public Module
 {
@@ -19,7 +19,7 @@ class Exercise5 : public Module
     bool                                showGrid = true;
     bool                                showGuizmo = true;
     ImGuizmo::OPERATION                 gizmoOperation = ImGuizmo::TRANSLATE;
-    std::unique_ptr<Model>              model;
+    std::unique_ptr<BasicModel>         model;
 
 public:
     Exercise5();

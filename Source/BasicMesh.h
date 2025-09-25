@@ -4,7 +4,7 @@
 
 namespace tinygltf { class Model;  struct Mesh; struct Primitive;  }
 
-class Mesh
+class BasicMesh
 {
 public:
     struct Vertex
@@ -17,8 +17,8 @@ public:
 
 public:
 
-    Mesh();
-    ~Mesh();
+    BasicMesh();
+    ~BasicMesh();
 
     void load(const tinygltf::Model& model, const tinygltf::Mesh& mesh, const tinygltf::Primitive& primitive);
 
@@ -29,15 +29,15 @@ public:
 
     void draw(ID3D12GraphicsCommandList* commandList) const;
 
-    uint32_t getMaterialIndex() const {return materialIndex;}
-
     // Input Layout Descriptor
     static const D3D12_INPUT_LAYOUT_DESC& getInputLayoutDesc() { return inputLayoutDesc; }
 
+    int getMaterialIndex() const { return materialIndex; }
+
 private:
 
-    Mesh(const Mesh&) = delete;
-    Mesh& operator=(const Mesh&) = delete;
+    BasicMesh(const BasicMesh&) = delete;
+    BasicMesh& operator=(const BasicMesh&) = delete;
 
     void clean();
     void computeTSpace();
@@ -56,7 +56,7 @@ private:
     uint32_t numVertices = 0;
     uint32_t numIndices = 0;
     uint32_t indexElementSize = 0;
-    uint32_t materialIndex = 0;
+    int32_t  materialIndex = -1;
 
     VertexArray vertices;
     IndexArray indices;

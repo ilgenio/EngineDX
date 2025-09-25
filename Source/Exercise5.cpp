@@ -7,8 +7,8 @@
 #include "ModuleShaderDescriptors.h"
 #include "ModuleResources.h"
 #include "ModuleSamplers.h"
-#include "Model.h"
-#include "Mesh.h"
+#include "BasicModel.h"
+#include "BasicMesh.h"
 
 #include "ReadData.h"
 
@@ -73,7 +73,7 @@ void Exercise5::imGuiCommands()
     ImGui::Checkbox("Show guizmo", &showGuizmo);
     ImGui::Text("Model loaded %s with %d meshes and %d materials", model->getSrcFile().c_str(), model->getNumMeshes(), model->getNumMaterials());
 
-    for (const Mesh& mesh : model->getMeshes())
+    for (const BasicMesh& mesh : model->getMeshes())
     {
         ImGui::Text("Mesh %s with %d vertices and %d triangles", mesh.getName().c_str(), mesh.getNumVertices(), mesh.getNumIndices() / 3);
     }
@@ -191,9 +191,9 @@ void Exercise5::render()
 
     BEGIN_EVENT(commandList, "Model Render Pass");
 
-    for (const Mesh& mesh : model->getMeshes())
+    for (const BasicMesh& mesh : model->getMeshes())
     {
-        if (mesh.getMaterialIndex() < model->getNumMaterials())
+        if (UINT(mesh.getMaterialIndex()) < model->getNumMaterials())
         {
             const BasicMaterial& material = model->getMaterials()[mesh.getMaterialIndex()];
             
@@ -256,7 +256,7 @@ bool Exercise5::createRootSignature()
 
 bool Exercise5::loadModel()
 {
-    model = std::make_unique<Model>();
+    model = std::make_unique<BasicModel>();
     //model->load("Assets/Models/BoxInterleaved/BoxInterleaved.gltf", "Assets/Models/BoxInterleaved/");
     //model->load("Assets/Models/BoxTextured/BoxTextured.gltf", "Assets/Models/BoxTextured/");
     model->load("Assets/Models/Duck/duck.gltf", "Assets/Models/Duck/", BasicMaterial::BASIC);

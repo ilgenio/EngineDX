@@ -22,6 +22,10 @@ Scene::Scene()
 
 Scene::~Scene()
 {
+    for (Mesh* mesh : meshes) delete mesh;
+    for (Material* material : materials) delete material;
+    for (Node* node : nodes) delete node;
+    for (MeshInstance* instance : instances) delete instance;
 }
 
 void Scene::loadSkybox(const char* background, const char* diffuse, const char* specular, const char* brdf)
@@ -56,14 +60,19 @@ bool Scene::load(const tinygltf::Model& srcModel, const char* basePath)
     std::vector<int> materialMappings;
     materialMappings.reserve(srcModel.meshes.size());
 
+    std::vector<std::pair<UINT, UINT>> meshMappings;
+    meshMappings.reserve(srcModel.meshes.size());
+
     for (const auto& srcMesh : srcModel.meshes)
     {
+        meshMappings.push_back({ int(materialMappings.size()), int(srcMesh.primitives.size()) });
+
         for (const auto& primitive : srcMesh.primitives)
         {
             Mesh* mesh = new Mesh;
             mesh->load(srcModel, srcMesh, primitive);
 
-            meshes.emplace_back(mesh);
+            meshes.push_back(mesh);
 
             // TODO: remove material index from mesh
             materialMappings.push_back(primitive.material);
@@ -87,7 +96,7 @@ bool Scene::load(const tinygltf::Model& srcModel, const char* basePath)
     {
         for (int nodeIndex : srcModel.scenes[0].nodes)
         {
-            generateNodes(srcModel, nodeIndex, -1, materialMappings, nodeOffset, meshOffset, materialOffset);
+            generateNodes(srcModel, nodeIndex, -1, meshMappings, materialMappings);
         }
     }
 
@@ -96,8 +105,9 @@ bool Scene::load(const tinygltf::Model& srcModel, const char* basePath)
     return true;
 }
 
-void Scene::generateNodes(const tinygltf::Model& model, UINT nodeIndex, INT parentIndex, const std::vector<int>& materialMapping, 
-                          UINT nodeOffset, UINT meshOffset, UINT materialOffset)
+UINT Scene::generateNodes(const tinygltf::Model& model, UINT nodeIndex, INT parentIndex, 
+                          const std::vector<std::pair<UINT, UINT>>& meshMapping, 
+                          const std::vector<int>& materialMapping)
 {
     const tinygltf::Node& node = model.nodes[nodeIndex];
 
@@ -108,8 +118,7 @@ void Scene::generateNodes(const tinygltf::Model& model, UINT nodeIndex, INT pare
         float* ptr = reinterpret_cast<float*>(&local);
         for (UINT i = 0; i < 16; ++i) ptr[i] = float(node.matrix[i]);
 
-        // TODO: Do we need this ? 
-        local.Transpose();
+        // Column major + post multiply  So don't need to be transposed because we are row major + pre multiply
     }
     else
     {
@@ -121,56 +130,67 @@ void Scene::generateNodes(const tinygltf::Model& model, UINT nodeIndex, INT pare
         if (node.rotation.size() == 4) rotation = Quaternion(float(node.rotation[0]), float(node.rotation[1]), float(node.rotation[2]), float(node.rotation[3]));
         if (node.scale.size() == 3) scale = Vector3(float(node.scale[0]), float(node.scale[1]), float(node.scale[2]));
 
-        local = Matrix::CreateTranslation(translation) * Matrix::CreateFromQuaternion(rotation) * Matrix::CreateScale(scale); 
+        local = Matrix::CreateScale(scale) * Matrix::CreateFromQuaternion(rotation) * Matrix::CreateTranslation(translation);
     }
 
-    Node dst;
-    dst.localTransform = local;
-    dst.dirtyWorld = true;
-    dst.name = node.name;
-    dst.parent = parentIndex+nodeOffset;
+    // Note: nodes are guaranteed to be stored in preorder
+
+    Node* dst = new Node;
+    dst->localTransform = local;
+    dst->dirtyWorld = true;
+    dst->name = node.name;
+    dst->parent = parentIndex;
+    dst->numChilds = UINT(node.children.size());
+
+    UINT realIndex = UINT(nodes.size());
 
     if (node.mesh >= 0)
     {
-        MeshInstance instance;
-        instance.meshIndex     = node.mesh+meshOffset;
-        instance.materialIndex = materialMapping[node.mesh]+materialOffset;
-        instance.nodeIndex     = nodeIndex+nodeOffset;
-        instance.skinIndex     = node.skin;
+        // as we have one mesh per primitive one gltf mesh generates more than one of our meshes
+        for(UINT i = 0; i < meshMapping[node.mesh].second; ++i)
+        {
+            // TODO: assign pointers instead of indices
+            MeshInstance* instance = new MeshInstance;
+            instance->meshIndex     = UINT(meshMapping[node.mesh].first + i + meshes.size());
+            instance->materialIndex = UINT(materialMapping[meshMapping[node.mesh].first + i] + materials.size());
+            instance->nodeIndex     = realIndex;
+            instance->skinIndex     = node.skin;
 
-        instances.push_back(instance);
+            instances.push_back(instance);
+        }
     }
 
     nodes.push_back(dst);
-    parentIndex = nodeIndex;
 
     for (int childIndex : node.children)
     {
-        generateNodes(model, childIndex, parentIndex, materialMapping, nodeOffset, meshOffset, materialOffset);
+        dst->numChilds += generateNodes(model, childIndex, realIndex, meshMapping, materialMapping);
     }
+
+    return dst->numChilds;
 }
 
 void Scene::updateWorldTransforms()
 {
-    for(Node& node : nodes)
+    for(Node* node : nodes)
     {
-        if (node.dirtyWorld)
+        if (node->dirtyWorld)
         {
-            INT parentIndex = node.parent;
+            INT parentIndex = node->parent;
             if (parentIndex >= 0)
             {
-                Node& parent = nodes[parentIndex];
-                _ASSERTE(parent.dirtyWorld == false);
+                Node* parent = nodes[parentIndex];
+                _ASSERTE(parent->dirtyWorld == false);
 
                 // Parent is clean, so we can use its world transform directly
-                node.worldTransform = node.localTransform * parent.worldTransform;
+                node->worldTransform = node->localTransform * parent->worldTransform;
             }
             else
             {
                 // No parent, so local is world
-                node.worldTransform = node.localTransform;
+                node->worldTransform = node->localTransform;
             }
-            node.dirtyWorld = false;
+            node->dirtyWorld = false;
         }
     }
 }
@@ -180,18 +200,19 @@ void Scene::getRenderList(std::vector<RenderMesh>& renderList) const
     renderList.clear();
     renderList.reserve(instances.size());
 
-    for (const auto& instance : instances)
+    for (const MeshInstance* instance : instances)
     {
-        _ASSERTE(instance.meshIndex < meshes.size());
-        _ASSERTE(instance.materialIndex < materials.size());
-        _ASSERTE(instance.nodeIndex < nodes.size());
+        _ASSERTE(instance->meshIndex < meshes.size());
+        _ASSERTE(instance->materialIndex < materials.size());
+        _ASSERTE(instance->nodeIndex < nodes.size());
 
         RenderMesh renderMesh;
-        renderMesh.mesh     = meshes[instance.meshIndex];
-        renderMesh.material = materials[instance.materialIndex];
-        _ASSERTE(nodes[instance.nodeIndex].dirtyWorld == false);
+        renderMesh.mesh     = meshes[instance->meshIndex];
+        renderMesh.material = materials[instance->materialIndex];
 
-        renderMesh.worldTransform = nodes[instance.nodeIndex].worldTransform;
+        _ASSERTE(nodes[instance->nodeIndex]->dirtyWorld == false);
+
+        renderMesh.worldTransform = nodes[instance->nodeIndex]->worldTransform;
 
         renderList.push_back(renderMesh);
     }

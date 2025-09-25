@@ -7,7 +7,7 @@
 #include "ModuleShaderDescriptors.h"
 #include "ModuleSamplers.h"
 #include "ModuleRingBuffer.h"
-#include "Model.h"
+#include "BasicModel.h"
 #include "Mesh.h"
 
 #include "ReadData.h"
@@ -76,7 +76,7 @@ void Exercise6::imGuiCommands()
     ImGui::Checkbox("Show guizmo", &showGuizmo);
     ImGui::Text("Model loaded %s with %d meshes and %d materials", model->getSrcFile().c_str(), model->getNumMeshes(), model->getNumMaterials());
 
-    for (const Mesh& mesh : model->getMeshes())
+    for (const BasicMesh& mesh : model->getMeshes())
     {
         ImGui::Text("Mesh %s with %d vertices and %d triangles", mesh.getName().c_str(), mesh.getNumVertices(), mesh.getNumIndices() / 3);
     }
@@ -256,9 +256,9 @@ void Exercise6::render()
 
     BEGIN_EVENT(commandList, "Model Render Pass");
 
-    for (const Mesh& mesh : model->getMeshes())
+    for (const BasicMesh& mesh : model->getMeshes())
     {
-        if (mesh.getMaterialIndex() < model->getNumMaterials())
+        if (UINT(mesh.getMaterialIndex()) < model->getNumMaterials())
         {
             const BasicMaterial& material = model->getMaterials()[mesh.getMaterialIndex()];
 
@@ -353,7 +353,7 @@ bool Exercise6::createPSO()
 
 bool Exercise6::loadModel()
 {
-    model = std::make_unique<Model>();
+    model = std::make_unique<BasicModel>();
     model->load("Assets/Models/Duck/duck.gltf", "Assets/Models/Duck/", BasicMaterial::PHONG);
     model->setModelMatrix(Matrix::CreateScale(0.01f, 0.01f, 0.01f));
 

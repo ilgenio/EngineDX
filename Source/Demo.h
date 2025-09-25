@@ -27,9 +27,12 @@ public:
 
     virtual bool init() override;
     virtual bool cleanUp() override;
+    virtual void update() override;
     virtual void preRender() override;
     virtual void render() override;
 
 private:
     bool loadScene();
+    void debugDraw();
+    void imGuiDraw();
 };

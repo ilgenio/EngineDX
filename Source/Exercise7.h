@@ -7,7 +7,7 @@
 #include "ImGuizmo.h"
 #include "BasicMaterial.h"
 
-class Model;
+class BasicModel;
 class RenderTexture;
 
 class Exercise7 : public Module
@@ -48,7 +48,7 @@ class Exercise7 : public Module
     bool                                showGrid = true;
     bool                                showGuizmo = false;
     ImGuizmo::OPERATION                 moOperation = ImGuizmo::TRANSLATE;
-    std::unique_ptr<Model>              model;
+    std::unique_ptr<BasicModel>         model;
 
     std::unique_ptr<RenderTexture>      renderTexture;
     ImVec2                              canvasSize;

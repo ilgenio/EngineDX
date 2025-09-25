@@ -1,24 +1,24 @@
 #pragma once
 
 #include <span>
-#include "Mesh.h"
+#include "BasicMesh.h"
 #include "BasicMaterial.h"
 
 namespace tinygltf { class Model; }
 
-class Model
+class BasicModel
 {
 public:
 
-    Model();
-    ~Model();
+    BasicModel();
+    ~BasicModel();
 
     void load(const char* fileName, const char* basePath, BasicMaterial::Type materialType);
 
     uint32_t getNumMeshes() const { return numMeshes; }
     uint32_t getNumMaterials() const { return numMaterials;  }
 
-    std::span<const Mesh> getMeshes() const { return std::span<const Mesh>(meshes.get(), numMeshes); }
+    std::span<const BasicMesh> getMeshes() const { return std::span<const BasicMesh>(meshes.get(), numMeshes); }
     std::span<const BasicMaterial> getMaterials() const { return std::span<const BasicMaterial>(materials.get(), numMaterials); }
     std::span<BasicMaterial> getMaterials() { return std::span<BasicMaterial>(materials.get(), numMaterials); }
 
@@ -58,7 +58,7 @@ private:
 
     Matrix matrix = Matrix::Identity;
     std::unique_ptr<BasicMaterial[]> materials;
-    std::unique_ptr<Mesh[]> meshes;
+    std::unique_ptr<BasicMesh[]> meshes;
     uint32_t numMeshes = 0;
     uint32_t numMaterials = 0;
     std::string srcFile;

@@ -170,6 +170,8 @@
     <ClInclude Include="3rdParty\mikktspace\weldmesh.h" />
     <ClInclude Include="Application.h" />
     <ClInclude Include="BasicMaterial.h" />
+    <ClInclude Include="BasicMesh.h" />
+    <ClInclude Include="BasicModel.h" />
     <ClInclude Include="CubemapMesh.h" />
     <ClInclude Include="D3D12MemAlloc.h" />
     <ClInclude Include="DebugDrawPass.h" />
@@ -201,7 +203,6 @@
     <ClInclude Include="Material.h" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="Mesh.h" />
-    <ClInclude Include="Model.h" />
     <ClInclude Include="Module.h" />
     <ClInclude Include="ModuleCamera.h" />
     <ClInclude Include="ModuleD3D12.h" />
@@ -300,6 +301,8 @@
     </ClCompile>
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="BasicMaterial.cpp" />
+    <ClCompile Include="BasicMesh.cpp" />
+    <ClCompile Include="BasicModel.cpp" />
     <ClCompile Include="CubemapMesh.cpp" />
     <ClCompile Include="D3D12MemAlloc.cpp" />
     <ClCompile Include="DebugDrawPass.cpp">
@@ -340,7 +343,6 @@
     <ClCompile Include="Material.cpp" />
     <ClCompile Include="Math.cpp" />
     <ClCompile Include="Mesh.cpp" />
-    <ClCompile Include="Model.cpp" />
     <ClCompile Include="ModuleCamera.cpp" />
     <ClCompile Include="ModuleD3D12.cpp" />
     <ClCompile Include="ModuleDSDescriptors.cpp" />
