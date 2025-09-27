@@ -131,9 +131,11 @@ void Demo::renderMeshes(ID3D12GraphicsCommandList *commandList, const Matrix& vi
     renderMeshPass->render(commandList, renderList, ringBuffer->allocBuffer(&perFrameData), scene->getSkybox()->getIBLTable(), view*projection);
 }
 
-void Demo::renderSkybox(ID3D12GraphicsCommandList *commandList, const Matrix& view, const Matrix& projection)
+void Demo::renderSkybox(ID3D12GraphicsCommandList *commandList, const Quaternion& cameraRot, const Matrix& projection)
 {
-    skyboxPass->record(commandList, scene->getSkybox()->getCubemapSRV(), view, projection);
+    ModuleCamera* camera = app->getCamera();
+
+    skyboxPass->record(commandList, scene->getSkybox()->getCubemapSRV(), cameraRot, projection);
 }
 
 void Demo::render()
@@ -159,7 +161,7 @@ void Demo::render()
     commandList->ResourceBarrier(1, &barrier);
 
     setRenderTarget(commandList);
-    renderSkybox(commandList, view, projection);
+    renderSkybox(commandList, camera->getRot(), projection);
     renderDebugDraw(commandList, width, height, view, projection);
     renderImGui(commandList);
     renderMeshes(commandList, view, projection);

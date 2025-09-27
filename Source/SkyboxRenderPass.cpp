@@ -23,7 +23,7 @@ SkyboxRenderPass::~SkyboxRenderPass()
 {
 }
 
-void SkyboxRenderPass::record(ID3D12GraphicsCommandList* commandList, D3D12_GPU_DESCRIPTOR_HANDLE cubemapSRV, const Matrix& view, const Matrix& projection)
+void SkyboxRenderPass::record(ID3D12GraphicsCommandList* commandList, D3D12_GPU_DESCRIPTOR_HANDLE cubemapSRV, const Quaternion& cameraRot, const Matrix& projection)
 {
     ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
     ModuleSamplers* samplers = app->getSamplers();
@@ -31,6 +31,11 @@ void SkyboxRenderPass::record(ID3D12GraphicsCommandList* commandList, D3D12_GPU_
     BEGIN_EVENT(commandList, "Sky Cubemap Render Pass");
     commandList->SetGraphicsRootSignature(rootSignature.Get());
     commandList->SetPipelineState(pso.Get());
+
+    Quaternion invRot;
+    cameraRot.Inverse(invRot);
+
+    Matrix view = Matrix::CreateFromQuaternion(invRot);
 
     Matrix vp = view * projection;
     vp = vp.Transpose();

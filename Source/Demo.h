@@ -52,7 +52,7 @@ private:
     void renderDebugDraw(ID3D12GraphicsCommandList* commandList, UINT width, UINT height, const Matrix& view, const Matrix& projection );
     void renderImGui(ID3D12GraphicsCommandList* commandList);
     void renderMeshes(ID3D12GraphicsCommandList* commandList, const Matrix& view, const Matrix& projection);
-    void renderSkybox(ID3D12GraphicsCommandList* commandList, const Matrix& view, const Matrix& projection);
+    void renderSkybox(ID3D12GraphicsCommandList* commandList, const Quaternion& cameraRot, const Matrix& projection);
 
     bool loadScene();
     void debugDrawCommands();

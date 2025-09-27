@@ -87,13 +87,9 @@ void Exercise9::renderToTexture(ID3D12GraphicsCommandList* commandList)
     ID3D12DescriptorHeap* descriptorHeaps[] = { descriptors->getHeap(), samplers->getHeap() };
     commandList->SetDescriptorHeaps(2, descriptorHeaps);
 
-    const Quaternion& rot = camera->getRot();
-    Quaternion invRot;
-    rot.Inverse(invRot);
-    Matrix view = Matrix::CreateFromQuaternion(invRot);
     Matrix proj = ModuleCamera::getPerspectiveProj(float(width) / float(height));
 
-    skyboxRenderPass->record(commandList, tableDesc.getGPUHandle(1), view, proj);
+    skyboxRenderPass->record(commandList, tableDesc.getGPUHandle(1), camera->getRot(), proj);
 
     END_EVENT(commandList);
 

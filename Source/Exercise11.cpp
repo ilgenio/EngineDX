@@ -95,10 +95,6 @@ void Exercise11::renderToTexture(ID3D12GraphicsCommandList* commandList)
     unsigned width = unsigned(canvasSize.x);
     unsigned height = unsigned(canvasSize.y);
 
-    const Quaternion& rot = camera->getRot();
-    Quaternion invRot;
-    rot.Inverse(invRot);
-
     BasicModel* model = &models[activeModel];
     
     const Matrix & view = camera->getView();
@@ -120,7 +116,7 @@ void Exercise11::renderToTexture(ID3D12GraphicsCommandList* commandList)
     commandList->RSSetViewports(1, &viewport);
     commandList->RSSetScissorRects(1, &scissor);
 
-    skyboxRenderPass->record(commandList, tableDesc.getGPUHandle(TEX_SLOT_CUBEMAP), Matrix::CreateFromQuaternion(invRot), proj);
+    skyboxRenderPass->record(commandList, tableDesc.getGPUHandle(TEX_SLOT_CUBEMAP), camera->getRot(), proj);
 
     BEGIN_EVENT(commandList, "Model Render Pass");
 
