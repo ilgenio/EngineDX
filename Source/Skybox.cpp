@@ -30,11 +30,16 @@ Skybox::~Skybox()
 
 }
 
-void Skybox::loadHDR(const char* hdrFile)
+bool Skybox::loadHDR(const char* hdrFile)
 {
     ModuleResources* resources = app->getResources();
 
     ComPtr<ID3D12Resource> hdr = resources->createTextureFromFile(hdrFile);
+    if (!hdr)
+    {
+        LOG("Error loading HDR image %s", hdrFile);
+        return false;
+    }
 
     tableDesc = app->getShaderDescriptors()->allocTable();
 
@@ -61,5 +66,7 @@ void Skybox::loadHDR(const char* hdrFile)
     tableDesc.createCubeTextureSRV(irradianceMap.Get(), TEX_SLOT_IRRADIANCE);
     tableDesc.createCubeTextureSRV(prefilteredEnvMap.Get(), TEX_SLOT_PREFILTERED_ENV);
     tableDesc.createTextureSRV(environmentBRDF.Get(), TEX_SLOT_ENV_BRDF);
+
+    return true;
 }
 

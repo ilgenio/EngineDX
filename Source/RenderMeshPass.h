@@ -3,7 +3,7 @@
 #include "Material.h"
 #include <span>
 
-class RenderMesh;
+struct RenderMesh;
 
 class RenderMeshPass
 {
@@ -33,7 +33,7 @@ public:
     ~RenderMeshPass();
 
     bool init();
-    void render(std::span<const RenderMesh* const> meshes, D3D12_GPU_VIRTUAL_ADDRESS perFrameData, const Matrix& viewProjection, , const ShaderTableDesc& lightsTableDesc, ID3D12GraphicsCommandList* commandList);
+    void render(ID3D12GraphicsCommandList* commandList, std::span<const RenderMesh> meshes, D3D12_GPU_VIRTUAL_ADDRESS perFrameData, D3D12_GPU_DESCRIPTOR_HANDLE iblTable, const Matrix& viewProjection);
 
 private:
     bool createRootSignature();

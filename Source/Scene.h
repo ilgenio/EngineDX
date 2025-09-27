@@ -58,7 +58,7 @@ public:
     Scene();
     ~Scene();
 
-    void loadSkyboxHDR(const char* hdrFileName);
+    bool loadSkyboxHDR(const char* hdrFileName);
     bool load(const char* fileName, const char* basePath);
 
     void updateWorldTransforms();

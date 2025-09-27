@@ -2,6 +2,7 @@
 #define _LIGHTING_HLSLI_
 
 #include "lights.hlsli"
+#include "ggx_brdf.hlsli"
 
 float3 computeLighting(float3 V, float3 N, float3 L, float3 lightColour, float3 baseColour, float roughness, float metallic)
 {

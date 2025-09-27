@@ -2,7 +2,7 @@
 
 #include "lighting.hlsli"
 #include "tonemap.hlsli"
-
+#include "ibl.hlsli"
 
 float4 main(float3 worldPos : POSITION, float3 normal : NORMAL, float2 texCoord : TEXCOORD) : SV_TARGET
 {

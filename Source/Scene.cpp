@@ -3,7 +3,7 @@
 #include "Scene.h"
 #include "Mesh.h"
 #include "Material.h"
-//#include "Skybox.h"
+#include "Skybox.h"
 
 #define TINYGLTF_NO_STB_IMAGE_WRITE
 #define TINYGLTF_NO_STB_IMAGE
@@ -29,9 +29,9 @@ Scene::~Scene()
     for (MeshInstance* instance : instances) delete instance;
 }
 
-void Scene::loadSkyboxHDR(const char* hdrFileName);
+bool Scene::loadSkyboxHDR(const char* hdrFileName)
 {
-    skybox->loadHDR(hdrFileName);
+    return skybox->loadHDR(hdrFileName);
 }
 
 bool Scene::load(const char* fileName, const char* basePath)
@@ -212,7 +212,7 @@ void Scene::getRenderList(std::vector<RenderMesh>& renderList) const
 
         _ASSERTE(nodes[instance->nodeIndex]->dirtyWorld == false);
 
-        renderMesh.worldTransform = nodes[instance->nodeIndex]->worldTransform;
+        renderMesh.transform = nodes[instance->nodeIndex]->worldTransform;
 
         renderList.push_back(renderMesh);
     }

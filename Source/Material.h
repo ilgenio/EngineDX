@@ -44,7 +44,7 @@ public:
     ALPHAMODE getAlphaMode() const {return alphaMode;}
     const Data& getData() const { return data; }
 
-    const ShaderTableDesc& getTextureTableDesc() const { return textureTableDesc; }
+    D3D12_GPU_DESCRIPTOR_HANDLE getTextureTable() const { return textureTableDesc.getGPUHandle(); }
 
 private:
 

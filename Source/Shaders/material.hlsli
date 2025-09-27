@@ -19,7 +19,7 @@ struct Material
 };
 
 void getMetallicRoughness(in Material material, in Texture2D baseColourTex, in Texture2D metallicRoughnessTex,
-                          in float2 coord, out float3 baseColour, out float roghness, out float alphaRoughness, out float metallic)
+                          in float2 coord, out float3 baseColour, out float roughness, out float alphaRoughness, out float metallic)
 {
     baseColour = material.baseColour.rgb;
 

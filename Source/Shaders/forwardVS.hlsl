@@ -16,8 +16,7 @@ VS_OUTPUT main(float3 position : POSITION, float2 texCoord : TEXCOORD, float3 no
     output.position = mul(float4(position, 1.0), mvp);
     output.worldPos = worldPos.xyz;
 
-    float3 normal   = normalize(mul(normal, (float3x3)normalMat));
-    output.normal   = normal;
+    output.normal = normalize(mul(normal, (float3x3) normalMat));
     output.texCoord = texCoord;
 
     return output;

@@ -4,11 +4,13 @@
 
 #include "ShaderTableDesc.h"
 
+struct RenderMesh;
 class Scene;
 class DebugDrawPass;
 class ImGuiPass;
 class RenderTexture;
 class RenderMeshPass;
+class SkyboxRenderPass;
 
 class Demo : public Module
 {
@@ -22,12 +24,13 @@ class Demo : public Module
         float pad1;
     };
 
-    std::unique_ptr<DebugDrawPass>  debugDrawPass;
-    std::unique_ptr<ImGuiPass>      imguiPass;
-    std::unique_ptr<RenderMeshPass> renderMeshPass;
+    std::unique_ptr<DebugDrawPass>    debugDrawPass;
+    std::unique_ptr<ImGuiPass>        imguiPass;
+    std::unique_ptr<RenderMeshPass>   renderMeshPass;
+    std::unique_ptr<SkyboxRenderPass> skyboxPass;
 
-    std::unique_ptr<Scene>          scene;
-    std::vector<const RenderMesh*>  renderList;
+    std::unique_ptr<Scene>            scene;
+    std::vector<RenderMesh>           renderList;
 
     bool showAxis = true;
     bool showGrid = true;
@@ -46,9 +49,11 @@ public:
 
 private:
     void setRenderTarget(ID3D12GraphicsCommandList* commandList);
-    void renderDebugDraw(ID3D12GraphicsCommandList* commandList);
+    void renderDebugDraw(ID3D12GraphicsCommandList* commandList, UINT width, UINT height, const Matrix& view, const Matrix& projection );
     void renderImGui(ID3D12GraphicsCommandList* commandList);
-    void renderMeshes(ID3D12GraphicsCommandList* commandList);
+    void renderMeshes(ID3D12GraphicsCommandList* commandList, const Matrix& view, const Matrix& projection);
+    void renderSkybox(ID3D12GraphicsCommandList* commandList, const Matrix& view, const Matrix& projection);
+
     bool loadScene();
     void debugDrawCommands();
     void imGuiDrawCommands();

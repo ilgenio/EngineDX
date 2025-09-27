@@ -40,8 +40,9 @@ public:
     Skybox();
     ~Skybox();
 
-    void loadHDR(const char* hdrFileName);
+    bool loadHDR(const char* hdrFileName);
 
     UINT  getNumIBLMipLevels() const {return iblMipLevels; }
-    const ShaderTableDesc& getIBLTableDesc() const { return tableDesc; }
+    D3D12_GPU_DESCRIPTOR_HANDLE getIBLTable() const { return tableDesc.getGPUHandle(); }
+    D3D12_GPU_DESCRIPTOR_HANDLE getCubemapSRV() const { return tableDesc.getGPUHandle(TEX_SLOT_SKYBOX); }
 };

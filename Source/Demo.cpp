@@ -11,8 +11,10 @@
 #include "DebugDrawPass.h"
 #include "ImGuiPass.h"
 #include "RenderMeshPass.h"
+#include "SkyboxRenderPass.h"
 
 #include "Scene.h"
+#include "Skybox.h"
 
 Demo::Demo()
 {
@@ -35,9 +37,9 @@ bool Demo::init()
 
         debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue(), debugDesc.getCPUHandle(0), debugDesc.getGPUHandle(0));
         imguiPass = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd(), debugDesc.getCPUHandle(1), debugDesc.getGPUHandle(1));
-        renderMeshesPass = std::make_unique<RenderMeshPass>();
+        renderMeshPass = std::make_unique<RenderMeshPass>();
 
-        ok = ok && renderMeshesPass->init();
+        ok = ok && renderMeshPass->init();
     }
 
     _ASSERT_EXPR(ok, "Error creating Demo");
@@ -101,15 +103,9 @@ void Demo::setRenderTarget(ID3D12GraphicsCommandList *commandList)
     commandList->RSSetScissorRects(1, &scissor);
 }
 
-void Demo::renderDebugDraw(ID3D12GraphicsCommandList *commandList)
+void Demo::renderDebugDraw(ID3D12GraphicsCommandList *commandList, UINT width, UINT height, const Matrix& view, const Matrix& projection )
 {
-    ModuleD3D12* d3d12 = app->getD3D12();
-    ModuleCamera* camera = app->getCamera();
-
-    unsigned width = d3d12->getWindowWidth();
-    unsigned height = d3d12->getWindowHeight();
-
-    debugDrawPass->record(commandList, width, height, camera->getView(), ModuleCamera::getPerspectiveProj(float(width) / float(height)));
+    debugDrawPass->record(commandList, width, height, view, projection);
 }
 
 void Demo::renderImGui(ID3D12GraphicsCommandList *commandList)
@@ -117,7 +113,7 @@ void Demo::renderImGui(ID3D12GraphicsCommandList *commandList)
     imguiPass->record(commandList);
 }
 
-void Demo::renderMeshes(ID3D12GraphicsCommandList *commandList)
+void Demo::renderMeshes(ID3D12GraphicsCommandList *commandList, const Matrix& view, const Matrix& projection)
 {
     ModuleRingBuffer* ringBuffer = app->getRingBuffer();
 
@@ -125,17 +121,29 @@ void Demo::renderMeshes(ID3D12GraphicsCommandList *commandList)
     perFrameData.numDirectionalLights = 0;
     perFrameData.numPointLights = 0;
     perFrameData.numSpotLights = 0;
-    perFrameData.numRoughnessLevels = 0;
-    perFrameData.cameraPosition = app->getCamera()->getPosition();
+    perFrameData.numRoughnessLevels = scene->getSkybox()->getNumIBLMipLevels()  ;
+    perFrameData.cameraPosition = app->getCamera()->getPos();
 
     scene->getRenderList(renderList);
 
-    renderMeshesPass->render(renderList, ringBuffer->allocBuffer(&perFrameData), app->getCamera()->getViewProjection(), scene->getSkybox()->getTextureTableDesc(), commandList);
+    renderMeshPass->render(commandList, renderList, ringBuffer->allocBuffer(&perFrameData), scene->getSkybox()->getIBLTable(), view*projection);
+}
+
+void Demo::renderSkybox(ID3D12GraphicsCommandList *commandList, const Matrix& view, const Matrix& projection)
+{
+    skyboxPass->record(commandList, scene->getSkybox()->getCubemapSRV(), view, projection);
 }
 
 void Demo::render()
 {
     ModuleD3D12* d3d12 = app->getD3D12();
+    ModuleCamera* camera = app->getCamera();
+
+    UINT width = d3d12->getWindowWidth();
+    UINT height = d3d12->getWindowHeight();
+
+    Matrix view = camera->getView();
+    Matrix projection = ModuleCamera::getPerspectiveProj(float(width) / float(height));
 
     ID3D12GraphicsCommandList* commandList = d3d12->getCommandList();
     commandList->Reset(d3d12->getCommandAllocator(), nullptr);
@@ -144,9 +152,10 @@ void Demo::render()
     commandList->ResourceBarrier(1, &barrier);
 
     setRenderTarget(commandList);
-    renderDebugDraw(commandList);
+    renderSkybox(commandList, view, projection);
+    renderDebugDraw(commandList, width, height, view, projection);
     renderImGui(commandList);
-    renderMeshes(commandList);
+    renderMeshes(commandList, view, projection);
 
     barrier = CD3DX12_RESOURCE_BARRIER::Transition(d3d12->getBackBuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
     commandList->ResourceBarrier(1, &barrier);

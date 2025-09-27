@@ -219,6 +219,7 @@
     <ClInclude Include="PlatformHelpers.h" />
     <ClInclude Include="PrefilterEnvMapPass.h" />
     <ClInclude Include="ReadData.h" />
+    <ClInclude Include="RenderMeshPass.h" />
     <ClInclude Include="RenderTargetDesc.h" />
     <ClInclude Include="RenderTexture.h" />
     <ClInclude Include="Resource.h" />
@@ -356,6 +357,7 @@
     <ClCompile Include="ModuleShaderDescriptors.cpp" />
     <ClCompile Include="Mouse.cpp" />
     <ClCompile Include="PrefilterEnvMapPass.cpp" />
+    <ClCompile Include="RenderMeshPass.cpp" />
     <ClCompile Include="RenderTargetDesc.cpp" />
     <ClCompile Include="RenderTexture.cpp" />
     <ClCompile Include="Scene.cpp" />
@@ -382,8 +384,11 @@
     <None Include="Shaders\Exercise6.hlsli" />
     <None Include="Shaders\Exercise7.hlsli" />
     <None Include="Shaders\Exercise8.hlsli" />
+    <None Include="Shaders\forward.hlsli" />
     <None Include="Shaders\ggx_brdf.hlsli" />
     <None Include="Shaders\ibl.hlsli" />
+    <None Include="Shaders\lighting.hlsli" />
+    <None Include="Shaders\material.hlsli" />
     <None Include="Shaders\sampling.hlsli" />
     <None Include="Shaders\tonemap.hlsli" />
     <None Include="SimpleMath.inl" />
@@ -566,6 +571,20 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.0</ShaderModel>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">exercise8VS</EntryPointName>
+    </FxCompile>
+    <FxCompile Include="Shaders\forwardPS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.0</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="Shaders\forwardVS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.0</ShaderModel>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">-Qembed_debug %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">-Qembed_debug %(AdditionalOptions)</AdditionalOptions>
     </FxCompile>
     <FxCompile Include="Shaders\fullscreenVS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
