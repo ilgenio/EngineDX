@@ -71,6 +71,7 @@ private:
     bool load(const tinygltf::Model& srcModel, const char* basePath);
     UINT generateNodes(const tinygltf::Model& model, UINT nodeIndex, INT parentIndex, 
                        const std::vector<std::pair<UINT, UINT> >& meshMapping, 
-                       const std::vector<int>& materialMapping);
+                       const std::vector<int>& materialMapping, UINT meshOffset, 
+                       UINT materialOffset);
     
 };

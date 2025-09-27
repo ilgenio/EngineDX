@@ -14,8 +14,6 @@
 #include "tiny_gltf.h"
 #pragma warning(pop)
 
-
-
 Scene::Scene()
 {
     skybox = std::make_unique<Skybox>();
@@ -53,7 +51,6 @@ bool Scene::load(const char* fileName, const char* basePath)
 
 bool Scene::load(const tinygltf::Model& srcModel, const char* basePath)
 {
-    UINT nodeOffset = UINT(nodes.size());
     UINT meshOffset = UINT(meshes.size());
     UINT materialOffset = UINT(materials.size());
 
@@ -79,6 +76,9 @@ bool Scene::load(const tinygltf::Model& srcModel, const char* basePath)
         }
     }
 
+    _ASSERTE(meshes.size() == materialMappings.size());
+
+
     MaterialList tmpMaterials;
     tmpMaterials.reserve(srcModel.materials.size());
 
@@ -96,7 +96,7 @@ bool Scene::load(const tinygltf::Model& srcModel, const char* basePath)
     {
         for (int nodeIndex : srcModel.scenes[0].nodes)
         {
-            generateNodes(srcModel, nodeIndex, -1, meshMappings, materialMappings);
+            generateNodes(srcModel, nodeIndex, -1, meshMappings, materialMappings, meshOffset, materialOffset);
         }
     }
 
@@ -107,7 +107,8 @@ bool Scene::load(const tinygltf::Model& srcModel, const char* basePath)
 
 UINT Scene::generateNodes(const tinygltf::Model& model, UINT nodeIndex, INT parentIndex, 
                           const std::vector<std::pair<UINT, UINT>>& meshMapping, 
-                          const std::vector<int>& materialMapping)
+                          const std::vector<int>& materialMapping, UINT meshOffset, 
+                          UINT materialOffset)
 {
     const tinygltf::Node& node = model.nodes[nodeIndex];
 
@@ -151,10 +152,13 @@ UINT Scene::generateNodes(const tinygltf::Model& model, UINT nodeIndex, INT pare
         {
             // TODO: assign pointers instead of indices
             MeshInstance* instance = new MeshInstance;
-            instance->meshIndex     = UINT(meshMapping[node.mesh].first + i + meshes.size());
-            instance->materialIndex = UINT(materialMapping[meshMapping[node.mesh].first + i] + materials.size());
+            instance->meshIndex     = UINT(meshMapping[node.mesh].first + i + meshOffset);
+            instance->materialIndex = UINT(materialMapping[meshMapping[node.mesh].first + i] + materialOffset);
             instance->nodeIndex     = realIndex;
             instance->skinIndex     = node.skin;
+
+            _ASSERTE(instance->meshIndex < meshes.size());
+            _ASSERTE(instance->materialIndex < materials.size());
 
             instances.push_back(instance);
         }
@@ -164,7 +168,7 @@ UINT Scene::generateNodes(const tinygltf::Model& model, UINT nodeIndex, INT pare
 
     for (int childIndex : node.children)
     {
-        dst->numChilds += generateNodes(model, childIndex, realIndex, meshMapping, materialMapping);
+        dst->numChilds += generateNodes(model, childIndex, realIndex, meshMapping, materialMapping, meshOffset, materialOffset);
     }
 
     return dst->numChilds;

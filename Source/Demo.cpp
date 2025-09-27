@@ -5,6 +5,7 @@
 #include "Application.h"
 #include "ModuleD3D12.h"
 #include "ModuleShaderDescriptors.h"
+#include "ModuleSamplers.h"
 #include "ModuleRingBuffer.h"
 #include "ModuleCamera.h"
 
@@ -38,6 +39,7 @@ bool Demo::init()
         debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue(), debugDesc.getCPUHandle(0), debugDesc.getGPUHandle(0));
         imguiPass = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd(), debugDesc.getCPUHandle(1), debugDesc.getGPUHandle(1));
         renderMeshPass = std::make_unique<RenderMeshPass>();
+        skyboxPass = std::make_unique<SkyboxRenderPass>();
 
         ok = ok && renderMeshPass->init();
     }
@@ -147,6 +149,11 @@ void Demo::render()
 
     ID3D12GraphicsCommandList* commandList = d3d12->getCommandList();
     commandList->Reset(d3d12->getCommandAllocator(), nullptr);
+
+    ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
+    ModuleSamplers* samplers = app->getSamplers();
+    ID3D12DescriptorHeap* descriptorHeaps[] = { descriptors->getHeap(), samplers->getHeap() };
+    commandList->SetDescriptorHeaps(2, descriptorHeaps);
 
     CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(d3d12->getBackBuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
     commandList->ResourceBarrier(1, &barrier);
