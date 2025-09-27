@@ -28,69 +28,64 @@ RenderMeshPass::~RenderMeshPass()
 bool RenderMeshPass::init()
 {
 
+    bool ok = createRootSignature();
+    ok  = ok && createPSO();
 
+    _ASSERT_EXPR(ok, "Error creating RenderMeshPass");
+
+    return ok;
 }
 
-void RenderMeshPass::render(std::span<const RenderMesh*> meshes)
+void RenderMeshPass::render(std::span<const RenderMesh* const> meshes, D3D12_GPU_VIRTUAL_ADDRESS perFrameData, const Matrix& viewProjection, const ShaderTableDesc& lightsTableDesc, ID3D12GraphicsCommandList* commandList)
 {
     BEGIN_EVENT(commandList, "RenderMesh Pass");
 
-    /**
-    PerFrame perFrameData;
-    perFrameData.camPos = camera->getPos();
-    perFrameData.roughnessLevels = 8.0f;
-    perFrameData.useOnlyIrradiance = useOnlyIrradiance;
-    */
-
-    /*
     ModuleRingBuffer* ringBuffer = app->getRingBuffer();
+    ModuleSamplers* samplers = app->getSamplers();
 
     commandList->SetGraphicsRootSignature(rootSignature.Get());
     commandList->SetPipelineState(pso.Get());
 
-    commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &mvp, 0);
-    commandList->SetGraphicsRootConstantBufferView(1, ringBuffer->allocBuffer(&perFrameData));
-    commandList->SetGraphicsRootDescriptorTable(3, tableDesc.getGPUHandle(TEX_SLOT_IBL));
-    commandList->SetGraphicsRootDescriptorTable(5, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
-    */
+    commandList->SetGraphicsRootConstantBufferView(SLOT_PER_FRAME_CB, perFrameData);
+    commandList->SetGraphicsRootDescriptorTable(SLOT_LIGHTS_TABLE, lightsTableDesc.getGPUHandle());
+    commandList->SetGraphicsRootDescriptorTable(SLOT_SAMPLERS, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
 
     for (const RenderMesh* mesh : meshes)
     {
-#if 0
-        if (mesh.getMaterialIndex() < model->getNumMaterials())
+        if( mesh->material )
         {
-            const BasicMaterial& material = model->getMaterials()[mesh.getMaterialIndex()];
+            Matrix mvp = (mesh->transform * viewProjection).Transpose();
+            commandList->SetGraphicsRoot32BitConstants(SLOT_MVP_MATRIX, sizeof(Matrix) / sizeof(UINT32), &mvp, 0);
 
-            PerInstance perInstance = { model->getModelMatrix().Transpose(), model->getNormalMatrix().Transpose(), material.getMetallicRoughnessMaterial() };
+            PerInstance perInstance;
+            perInstance.modelMat = mesh->transform.Transpose();
+            perInstance.normalMat = mesh->normalMatrix.Transpose();
+            perInstance.material = mesh->material->getData();
 
-            commandList->SetGraphicsRootConstantBufferView(2, ringBuffer->allocBuffer(&perInstance));
-            commandList->SetGraphicsRootDescriptorTable(4, material.getTexturesTableDesc().getGPUHandle());
-
-            mesh.draw(commandList);
+            commandList->SetGraphicsRootConstantBufferView(SLOT_PER_INSTANCE_CB, ringBuffer->allocBuffer(&perInstance));
+            commandList->SetGraphicsRootDescriptorTable(SLOT_TEXTURES_TABLE, material->getTexturesTableDesc().getGPUHandle());
+            mesh->mesh->draw(commandList);
         }
-#endif 
     }
 
     END_EVENT(commandList);
-
-
 }
 
 bool RenderMeshPass::createRootSignature()
 {
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
     CD3DX12_ROOT_PARAMETER rootParameters[SLOT_COUNT] = {};
-    CD3DX12_DESCRIPTOR_RANGE iblTableRange, materialTableRange;
+    CD3DX12_DESCRIPTOR_RANGE lightsTableRange,materialTableRange;
     CD3DX12_DESCRIPTOR_RANGE sampRange;
 
-    iblTableRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 0);
-    materialTableRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 3);
+    lightsTableRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 6, 0);
+    materialTableRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 6);
     sampRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, ModuleSamplers::COUNT, 0);
 
     rootParameters[SLOT_MVP_MATRIX].InitAsConstants((sizeof(Matrix) / sizeof(UINT32)), 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
     rootParameters[SLOT_PER_FRAME_CB].InitAsConstantBufferView(1, 0, D3D12_SHADER_VISIBILITY_ALL);
     rootParameters[SLOT_PER_INSTANCE_CB].InitAsConstantBufferView(2, 0, D3D12_SHADER_VISIBILITY_ALL);
-    rootParameters[SLOT_IBL_TABLE].InitAsDescriptorTable(1, &iblTableRange, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[SLOT_LIGHTS_TABLE].InitAsDescriptorTable(1, &lightsTableRange, D3D12_SHADER_VISIBILITY_PIXEL);
     rootParameters[SLOT_MATERIAL_TABLE].InitAsDescriptorTable(1, &materialTableRange, D3D12_SHADER_VISIBILITY_PIXEL);
     rootParameters[SLOT_SAMPLERS].InitAsDescriptorTable(1, &sampRange, D3D12_SHADER_VISIBILITY_PIXEL);
 

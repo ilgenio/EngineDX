@@ -27,8 +27,6 @@ ModuleLevel::~ModuleLevel()
 
 bool ModuleLevel::init() 
 {
-    Material::createSharedData();
-
     //const char* assetFileName = "Assets/Models/IridescenceSuzanne/IridescenceSuzanne.gltf"; 
     //const char* basePath = "Assets/Models/IridescenceSuzanne/";
     //const char* assetFileName = "Assets/Models/SciFiHelmet/SciFiHelmet.gltf";
@@ -49,8 +47,6 @@ bool ModuleLevel::init()
 bool ModuleLevel::cleanUp() 
 {
     scene.reset();
-
-    Material::destroySharedData();
 
     return true;
 }

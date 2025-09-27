@@ -33,14 +33,14 @@ PrefilterEnvMapPass::~PrefilterEnvMapPass()
 {
 }
 
-ComPtr<ID3D12Resource> PrefilterEnvMapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE cubemapSRV, size_t size, UINT mipLevels)
+ComPtr<ID3D12Resource> PrefilterEnvMapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE cubemapSRV, size_t cubeSize, size_t prefilterSize, UINT mipLevels)
 {
     ModuleD3D12* d3d12 = app->getD3D12();
     ModuleResources* resources = app->getResources();
     ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
     ModuleSamplers* samplers = app->getSamplers();
 
-    ComPtr<ID3D12Resource> prefilterMap = resources->createCubemapRenderTarget(DXGI_FORMAT_R16G16B16A16_FLOAT, size, mipLevels, Vector4(0.0f, 0.0f, 0.0f , 1.0f), "Prefilter EnvMap");
+    ComPtr<ID3D12Resource> prefilterMap = resources->createCubemapRenderTarget(DXGI_FORMAT_R16G16B16A16_FLOAT, prefilterSize, mipLevels, Vector4(0.0f, 0.0f, 0.0f , 1.0f), "Prefilter EnvMap");
 
     BEGIN_EVENT(commandList.Get(), "Prefilter Map");
 
@@ -61,7 +61,7 @@ ComPtr<ID3D12Resource> PrefilterEnvMapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE
 
     Constants constants = {};
     constants.samples = 256;
-    constants.cubeMapSize = static_cast<INT>(size);
+    constants.cubeMapSize = static_cast<INT>(cubeSize);
     constants.lodBias = 0;
 
     for(UINT  roughnessLevel=0; roughnessLevel<mipLevels; ++roughnessLevel)
@@ -69,7 +69,7 @@ ComPtr<ID3D12Resource> PrefilterEnvMapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE
         float roughness = mipLevels > 1 ? (roughnessLevel) / float(mipLevels - 1) : 0.0f;
         constants.roughness = roughness;
 
-        UINT dim = (UINT(size) >> roughnessLevel);
+        UINT dim = (UINT(prefilterSize) >> roughnessLevel);
 
         for(int i=0; i<6; ++i)
         {

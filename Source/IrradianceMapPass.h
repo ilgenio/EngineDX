@@ -25,7 +25,7 @@ public:
     IrradianceMapPass();
     ~IrradianceMapPass();
 
-    ComPtr<ID3D12Resource> generate(D3D12_GPU_DESCRIPTOR_HANDLE cubemapSRV, size_t size);
+    ComPtr<ID3D12Resource> generate(D3D12_GPU_DESCRIPTOR_HANDLE cubemapSRV, size_t cubeSize, size_t irradianceSize);
 
 private:
     struct SkyParams

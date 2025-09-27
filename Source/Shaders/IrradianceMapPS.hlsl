@@ -1,6 +1,6 @@
 #include "common.hlsli"
 #include "sampling.hlsli"
-#include "ibl_common.hlsli"
+#include "ibl.hlsli"
 
 cbuffer Constants : register(b2)
 {

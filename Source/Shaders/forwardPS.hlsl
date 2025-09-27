@@ -3,28 +3,35 @@
 #include "lighting.hlsli"
 #include "tonemap.hlsli"
 
+
 float4 main(float3 worldPos : POSITION, float3 normal : NORMAL, float2 texCoord : TEXCOORD) : SV_TARGET
 {
     float3 baseColour;
     float roughness;
+    float alphaRoughness;
     float metallic;
-    getMaterialProperties(material, baseColourTex, metallicRoughnessTex, texCoord, baseColour, roughness, metallic);
+    getMetallicRoughness(material, baseColourTex, metallicRoughnessTex, texCoord, baseColour, roughness, alphaRoughness, metallic);
 
     float3 V  = normalize(viewPos - worldPos);
     float3 N  = normalize(normal);
     
-    float3 colour = 0.0; 
+    // IBL
+    // TODO :use alphaRoughness instead of roughness ? 
+    float3 colour = computeLighting(V, N, irradiance, radiance, brdfLUT, numRoughnessLevels, baseColour, roughness, metallic);
 
+    // Direct lights
     for (uint i = 0; i < numDirLights; i++)
-        colour += computeLighting(V, N, dirLights[i], baseColour, roughness, metallic);
+        colour += computeLighting(V, N, dirLights[i], baseColour, alphaRoughness, metallic);
     
     for (uint i = 0; i < numPointLights; i++) 
-        colour += computeLighting(V, N, pointLights[i], worldPos, baseColour, roughness, metallic);
+        colour += computeLighting(V, N, pointLights[i], worldPos, baseColour, alphaRoughness, metallic);
 
     for( uint i = 0; i< numSpotLights; i++)
-        colour += computeLighting(V, N, spotLights[i], worldPos, baseColour, roughness, metallic);
-    
+        colour += computeLighting(V, N, spotLights[i], worldPos, baseColour, alphaRoughness, metallic);
+
+    // tonemapping
     float3 ldr = PBRNeutralToneMapping(colour);
     
+    // gamma correction
     return float4(linearTosRGB(ldr), 1.0);
 }

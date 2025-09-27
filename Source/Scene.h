@@ -13,7 +13,8 @@ struct RenderMesh
 {
     const Mesh *mesh = nullptr;
     const Material *material = nullptr;
-    Matrix worldTransform;
+    Matrix transform;
+    Matrix normalMatrix;
 };
 
 //-----------------------------------------------------------------------------
@@ -51,16 +52,19 @@ private:
     MaterialList materials;
     NodeList     nodes;
     InstanceList instances;
+    std::unique_ptr<Skybox> skybox;
 
 public:
     Scene();
     ~Scene();
 
-    void loadSkybox(const char* background, const char* diffuse, const char* specular, const char* brdf);
+    void loadSkyboxHDR(const char* hdrFileName);
     bool load(const char* fileName, const char* basePath);
 
     void updateWorldTransforms();
     void getRenderList(std::vector<RenderMesh>& renderList) const;
+
+    const Skybox* getSkybox() const { return skybox.get(); }
 
 private:
 
@@ -69,5 +73,4 @@ private:
                        const std::vector<std::pair<UINT, UINT> >& meshMapping, 
                        const std::vector<int>& materialMapping);
     
-private:
 };

@@ -1,37 +1,66 @@
-#ifndef _IBL_GLSL_
-#define _IBL_GLSL_
+#ifndef ibl_hlsli
+#define ibl_hlsli    
 
-#include "globalMaps.glsl"
-#include "globalUBO.glsl"
-#include "brdf.glsl"
-#include "iridescence.glsl"
+#include "common.hlsli"
+#include "samplers.hlsli"
 
-vec3 evaluateIBLGGX(in vec3 albedo, in vec3 F0, in float roughness, in vec3 N, in vec3 R, in float dotNV)
+// https://developer.nvidia.com/gpugems/gpugems3/part-iii-rendering/chapter-20-gpu-based-importance-sampling
+// https://cgg.mff.cuni.cz/~jaroslav/papers/2007-sketch-fis/Final_sap_0073.pdf
+float computeLod(float pdf, int numSamples, int width)
 {
-    vec3 irradiance = textureLod(diffuseIBL, normalize(N), 0.0).rgb;
-    vec3 radiance   = textureLod(specularIBL, R, roughness*(global.iblMipCount-1)).rgb;
-    vec2 fab        = texture(brdfIBL, vec2(dotNV, roughness)).rg;
+    // Solid angle of current sample -- bigger for less likely samples
+    precise float solidAngle = 1.0 / (float(numSamples) * pdf + 1e-6);
 
-    return (albedo*(1-F0))*irradiance+radiance*(F0*fab.x+fab.y);
+    // Solid angle of texel
+    precise float texelSolidAngle = 4.0 * PI / (6.0 * width * width);
+
+    // mip level, 0.5*log2 because each mip level is 4x smaller
+    return max(0.5*log2(solidAngle/texelSolidAngle), 0.0);
 }
 
-vec3 evaluateIBLIridescene(in vec3 albedo, in vec3 F0, in vec3 iridescenceFr, in float iridescenceFactor, 
-                           in float iridescenceIOR, in float roughness, in vec3 N, in vec3 R, in float dotNV)
+float3 getIBLIrradiance(float3 N, TextureCube irradianceMap)
 {
-    vec3 irradiance    = textureLod(diffuseIBL, normalize(N), 0.0).rgb;
+    return irradianceMap.Sample(bilinearClamp, N).rgb;
+}
 
-    vec3 iridescenceF0 = SchlickToF0(dotNV, iridescenceFr);
-    vec3 Kd            = albedo*(1-max(iridescenceF0.r, max(iridescenceF0.g, iridescenceF0.b)));
+float3 getIBLRadiance(float3 R, float roughness, float roughnessLevels, TextureCube prefilteredEnvMap)
+{
+    return prefilteredEnvMap.SampleLevel(bilinearClamp, R, roughness * (roughnessLevels - 1)).rgb;
+}
 
-    vec3 mixedF0 = mix(F0, iridescenceF0, iridescenceFactor);
+float3 getIBLBRDF(float NdotV, float roughness, float F0, Texture2D brdfLUT)
+{
+    float2 ab = brdfLUT.Sample(bilinearClamp, float2(NdotV, roughness)).rg;
+    return F0 * ab.x + ab.y;
+}
 
-    vec3 radiance   = textureLod(specularIBL, R, roughness*(global.iblMipCount-1)).rgb;
-    vec2 fab        = texture(brdfIBL, clamp(vec2(dotNV, roughness), 0.0, 1.0)).rg;
-    vec3 Ks         = (mixedF0*fab.x+fab.y);
-
-    return Kd*irradiance+Ks*radiance;
+float3 getIBLBRDF(float NdotV, float roughness, float3 F0, Texture2D brdfLUT)
+{
+    float2 ab = brdfLUT.Sample(bilinearClamp, float2(NdotV, roughness)).rg;
+    return F0 * ab.x + ab.y;
 }
 
 
+float3 computeLighting(in float3 V, in float3 N, in TextureCube irradiance, in TextureCube prefilteredEnv, in Texture2D brdfLUT, in float roughnessLevels, 
+                       in float3 baseColour, in float roughness, in float metallic)
+{
+    float3 R  = reflect(-V, N);
+    float NdotV = saturate(dot(N, V));
 
-#endif /* _IBL_GLSL_ */
+    float3 diffuse = getIBLIrradiance(N, irradiance) * baseColour;
+
+    float3 colour = diffuse;
+    float3 specular = getIBLRadiance(R, roughness, roughnessLevels, prefilteredEnv);
+
+    float3 brdf_metal_fresnel = getIBLBRDF(NdotV, roughness, baseColour, brdfLUT);
+    float3 brdf_dielectric_fresnel = getIBLBRDF(NdotV, roughness, 0.04, brdfLUT);
+
+    float3 dielectric_colour = diffuse + specular * brdf_dielectric_fresnel;
+    float3 metal_colour = specular * brdf_metal_fresnel;
+
+    colour = lerp(dielectric_colour, metal_colour, metallic);
+     
+    return colour;
+}
+    
+#endif /* ibl_hlsli */

@@ -1,19 +1,13 @@
 #include "Exercise11.hlsli"
-#include "ibl_common.hlsli"
+#include "ibl.hlsli"
 #include "tonemap.hlsli"
 
 TextureCube irradiance : register(t0);
 TextureCube radiance : register(t1);
-Texture2D  brdfLUT : register(t2);
+Texture2D   brdfLUT : register(t2);
 
 Texture2D baseColourTex : register(t3);
 Texture2D metallicRoughnessTex : register(t4);
-
-SamplerState bilinearWrap : register(s0);
-SamplerState pointWrap : register(s1);
-SamplerState bilinearClamp : register(s2);
-SamplerState pointClamp : register(s3);
-
 
 void getMaterialProperties(out float3 baseColour, out float roughness, out float metallic, in float2 coord)
 {
@@ -37,15 +31,15 @@ float4 Exercise11PS(float3 positionWS : POSITION, float3 normalWS : NORMAL, floa
 
     float NdotV = saturate(dot(N, V));
 
-    float3 diffuse = getIBLIrradiance(N, irradiance, bilinearWrap) * baseColour;
+    float3 diffuse = getIBLIrradiance(N, irradiance) * baseColour;
     
     float3 colour = diffuse;
     if(!useOnlyIrradiance)
     {
-        float3 specular = getIBLRadiance(R, roughness, roughnessLevels, radiance, bilinearWrap);
+        float3 specular = getIBLRadiance(R, roughness, roughnessLevels, radiance);
 
-        float3 brdf_metal_fresnel = getIBLBRDF(NdotV, roughness, baseColour, brdfLUT, bilinearClamp);
-        float3 brdf_dielectric_fresnel = getIBLBRDF(NdotV, roughness, 0.04, brdfLUT, bilinearClamp);
+        float3 brdf_metal_fresnel = getIBLBRDF(NdotV, roughness, baseColour, brdfLUT);
+        float3 brdf_dielectric_fresnel = getIBLBRDF(NdotV, roughness, 0.04, brdfLUT);
 
         float3 dielectric_colour = diffuse + specular * brdf_dielectric_fresnel;
         float3 metal_colour = specular * brdf_metal_fresnel;

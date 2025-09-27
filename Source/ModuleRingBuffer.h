@@ -3,6 +3,9 @@
 #include "Module.h"
 
 
+// ModuleRingBuffer implements a dynamic ring buffer for fast, frame-based GPU constant buffer allocations in DirectX 12.
+// It manages a large upload heap and provides template allocation functions for type-safe buffer uploads.
+// The buffer is reset each frame to maximize memory reuse and minimize allocation overhead.
 class ModuleRingBuffer : public Module
 {
 public:
@@ -13,8 +16,6 @@ public:
     bool init() override;
 
     void preRender() override;
-
-    D3D12_GPU_VIRTUAL_ADDRESS allocBufferRaw(const void* data, size_t size);
 
     template<typename T>
     D3D12_GPU_VIRTUAL_ADDRESS allocBuffer(const T* data)
@@ -27,7 +28,10 @@ public:
     {
         return allocBufferRaw(data, alignUp(sizeof(T)*count, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT));
     }
- 
+
+private:
+
+    D3D12_GPU_VIRTUAL_ADDRESS allocBufferRaw(const void* data, size_t size);
 
 private:
 

@@ -246,10 +246,10 @@ void Exercise11::render()
         skybox = hdrToCubemapPass->generate(tableDesc.getGPUHandle(TEX_SLOT_HDR), DXGI_FORMAT_R16G16B16A16_FLOAT, 1024);
         tableDesc.createCubeTextureSRV(skybox.Get(), TEX_SLOT_CUBEMAP);
 
-        irradianceMap = irradianceMapPass->generate(tableDesc.getGPUHandle(TEX_SLOT_CUBEMAP), 1024);
+        irradianceMap = irradianceMapPass->generate(tableDesc.getGPUHandle(TEX_SLOT_CUBEMAP), 1024, 1024);
         tableDesc.createCubeTextureSRV(irradianceMap.Get(), TEX_SLOT_IRRADIANCE);
 
-        prefilteredEnvMap = prefilterEnvMapPass->generate(tableDesc.getGPUHandle(TEX_SLOT_CUBEMAP), 1024, 8);
+        prefilteredEnvMap = prefilterEnvMapPass->generate(tableDesc.getGPUHandle(TEX_SLOT_CUBEMAP), 1024, 1024, 8);
         tableDesc.createCubeTextureSRV(prefilteredEnvMap.Get(), TEX_SLOT_PREFILTERED_ENV);
 
         environmentBRDF = environmentBRDFPass->generate(128);

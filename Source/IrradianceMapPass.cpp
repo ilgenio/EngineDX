@@ -32,14 +32,14 @@ IrradianceMapPass::~IrradianceMapPass()
 {
 }
 
-ComPtr<ID3D12Resource> IrradianceMapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE cubemapSRV, size_t size)
+ComPtr<ID3D12Resource> IrradianceMapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE cubemapSRV, size_t cubeSize, size_t irradianceSize)
 {
     ModuleD3D12* d3d12 = app->getD3D12();
     ModuleResources* resources = app->getResources();
     ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
     ModuleSamplers* samplers = app->getSamplers();
 
-    ComPtr<ID3D12Resource> irradianceMap = resources->createCubemapRenderTarget(DXGI_FORMAT_R16G16B16A16_FLOAT, size, Vector4(0.0f, 0.0f, 0.0f, 1.0f), "Irradiance Map");
+    ComPtr<ID3D12Resource> irradianceMap = resources->createCubemapRenderTarget(DXGI_FORMAT_R16G16B16A16_FLOAT, irradianceSize, Vector4(0.0f, 0.0f, 0.0f, 1.0f), "Irradiance Map");
 
     BEGIN_EVENT(commandList.Get(), "Irradiance Map");
 
@@ -52,8 +52,8 @@ ComPtr<ID3D12Resource> IrradianceMapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE c
 
     // set viewport and scissor
 
-    D3D12_VIEWPORT viewport{ 0.0f, 0.0f, float(size), float(size), 0.0f, 1.0f };
-    D3D12_RECT scissor = { 0, 0, LONG(size), LONG(size) };
+    D3D12_VIEWPORT viewport{ 0.0f, 0.0f, float(irradianceSize), float(irradianceSize), 0.0f, 1.0f };
+    D3D12_RECT scissor = { 0, 0, LONG(irradianceSize), LONG(irradianceSize) };
     commandList->RSSetViewports(1, &viewport);
     commandList->RSSetScissorRects(1, &scissor);
 
@@ -66,7 +66,7 @@ ComPtr<ID3D12Resource> IrradianceMapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE c
 
     Constants constants = {};
     constants.samples = 1024;
-    constants.cubeMapSize = static_cast<INT>(size);
+    constants.cubeMapSize = static_cast<INT>(cubeSize);
     constants.lodBias = 0;
 
     commandList->SetGraphicsRoot32BitConstants(1, sizeof(Constants) / sizeof(UINT32), &constants, 0);

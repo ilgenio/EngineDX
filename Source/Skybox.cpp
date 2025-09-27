@@ -6,30 +6,60 @@
 #include "ModuleResources.h"
 #include "ModuleShaderDescriptors.h"
 
-void Skybox::load(const char *backgroundFile, const char* diffuseFile, const char* specularFile, const char* brdfFile)
+#include "IrradianceMapPass.h"
+#include "PrefilterEnvMapPass.h"    
+#include "EnvironmentBRDFPass.h"
+#include "HDRToCubemapPass.h"
+
+#define DEFAULT_SKYBOX_SIZE 1024
+#define DEFAULT_ENV_BRDF_SIZE 128
+#define DEFAULT_MIP_LEVELS 8
+
+#define CAPTURE_IBL_GENERATION 1
+
+Skybox::Skybox()
+{
+    irradianceMapPass   = std::make_unique<IrradianceMapPass>();
+    prefilterEnvMapPass = std::make_unique<PrefilterEnvMapPass>();
+    environmentBRDFPass = std::make_unique<EnvironmentBRDFPass>();  
+    hdrToCubemapPass    = std::make_unique<HDRToCubemapPass>();
+}
+
+Skybox::~Skybox()
+{
+
+}
+
+void Skybox::loadHDR(const char* hdrFile)
 {
     ModuleResources* resources = app->getResources();
 
-    auto loadTexture = [=](const char* fileName, ComPtr<ID3D12Resource>& texture)
-    {
-        texture  = resources->createTextureFromFile(backgroundFile);
-    };
-
-    loadTexture(backgroundFile, background);
-    loadTexture(diffuseFile, diffuse);
-    loadTexture(specularFile, specular);
-    loadTexture(brdfFile, brdf);
-
-    if (specular)
-    {
-        iblMipLevels = specular->GetDesc().MipLevels;
-    }
+    ComPtr<ID3D12Resource> hdr = resources->createTextureFromFile(hdrFile);
 
     tableDesc = app->getShaderDescriptors()->allocTable();
 
-    tableDesc.createTextureSRV(background.Get(), TEX_SLOT_BACGROUND);
-    tableDesc.createTextureSRV(diffuse.Get(), TEX_SLOT_DIFFUSE);
-    tableDesc.createTextureSRV(specular.Get(), TEX_SLOT_SPECULAR);
-    tableDesc.createTextureSRV(brdf.Get(), TEX_SLOT_BRDF);
+    tableDesc.createTextureSRV(hdr.Get(), TEX_SLOT_HDR);
+
+#if CAPTURE_IBL_GENERATION
+    PIXBeginCapture(PIX_CAPTURE_GPU, nullptr);
+#endif
+
+    skybox            = hdrToCubemapPass->generate(tableDesc.getGPUHandle(TEX_SLOT_HDR), DXGI_FORMAT_R16G16B16A16_FLOAT, DEFAULT_SKYBOX_SIZE);
+    tableDesc.createCubeTextureSRV(skybox.Get(), TEX_SLOT_SKYBOX);
+
+    irradianceMap     = irradianceMapPass->generate(tableDesc.getGPUHandle(TEX_SLOT_SKYBOX), DEFAULT_SKYBOX_SIZE, DEFAULT_SKYBOX_SIZE);
+
+    iblMipLevels      = DEFAULT_MIP_LEVELS;
+    prefilteredEnvMap = prefilterEnvMapPass->generate(tableDesc.getGPUHandle(TEX_SLOT_SKYBOX), DEFAULT_SKYBOX_SIZE, DEFAULT_SKYBOX_SIZE, iblMipLevels);
+
+    if(!environmentBRDF) environmentBRDF   = environmentBRDFPass->generate(DEFAULT_ENV_BRDF_SIZE);
+
+#if CAPTURE_IBL_GENERATION
+    PIXEndCapture(TRUE);
+#endif
+
+    tableDesc.createCubeTextureSRV(irradianceMap.Get(), TEX_SLOT_IRRADIANCE);
+    tableDesc.createCubeTextureSRV(prefilteredEnvMap.Get(), TEX_SLOT_PREFILTERED_ENV);
+    tableDesc.createTextureSRV(environmentBRDF.Get(), TEX_SLOT_ENV_BRDF);
 }
 

@@ -25,7 +25,7 @@ public:
     PrefilterEnvMapPass();
     ~PrefilterEnvMapPass();
 
-    ComPtr<ID3D12Resource> generate(D3D12_GPU_DESCRIPTOR_HANDLE cubemapSRV, size_t size, UINT mipLevels);
+    ComPtr<ID3D12Resource> generate(D3D12_GPU_DESCRIPTOR_HANDLE cubemapSRV, size_t cubeSize, size_t prefilterSize, UINT mipLevels);
 
 private:
     struct SkyParams

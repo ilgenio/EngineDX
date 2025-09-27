@@ -1,37 +1,47 @@
 #pragma once
 
-#include "CubemapMesh.h"
 #include "ShaderTableDesc.h"
 
+class IrradianceMapPass;
+class PrefilterEnvMapPass;
+class EnvironmentBRDFPass;
+class HDRToCubemapPass;
 
+// Skybox manages environment lighting resources for physically based rendering (PBR) in a DirectX 12 application.
+// It handles loading HDR images, generating cubemaps, irradiance maps, prefiltered environment maps, and BRDF lookup textures.
+// Use this class to set up image-based lighting (IBL) for realistic sky and reflections in your scene.
 class Skybox
 {
-public:
-
-    void load(const char* backgroundFile, const char* specularFile, const char* diffuseFile, const char* brdfFile);
-
-    const CubemapMesh& getCubemapMesh() const { return mesh;  }
-
-    uint32_t getSpecularIBLMipLevels() const {return iblMipLevels; }
-    const ShaderTableDesc& getTextureTableDesc() const { return tableDesc; }
-
-private:
-    ComPtr<ID3D12Resource>   background;
-
     enum 
     {
-        TEX_SLOT_BACGROUND = 0,
-        TEX_SLOT_SPECULAR,
-        TEX_SLOT_DIFFUSE,
-        TEX_SLOT_BRDF,
+        TEX_SLOT_IRRADIANCE = 0,
+        TEX_SLOT_PREFILTERED_ENV,
+        TEX_SLOT_ENV_BRDF,
+        TEX_SLOT_SKYBOX,
+        TEX_SLOT_HDR,
         TEX_SLOT_COUNT
     };
 
-    ComPtr<ID3D12Resource>  specular;
-    ComPtr<ID3D12Resource>  diffuse;
-    ComPtr<ID3D12Resource>  brdf;
-    ShaderTableDesc         tableDesc;
+    std::unique_ptr<IrradianceMapPass>      irradianceMapPass;
+    std::unique_ptr<PrefilterEnvMapPass>    prefilterEnvMapPass;
+    std::unique_ptr<EnvironmentBRDFPass>    environmentBRDFPass ;
+    std::unique_ptr<HDRToCubemapPass>       hdrToCubemapPass;
 
-    CubemapMesh             mesh;
-    uint32_t                iblMipLevels = 0;
+    ComPtr<ID3D12Resource>  skybox;
+    ComPtr<ID3D12Resource>  irradianceMap;
+    ComPtr<ID3D12Resource>  prefilteredEnvMap;
+    ComPtr<ID3D12Resource>  environmentBRDF;
+
+    ShaderTableDesc         tableDesc;
+    UINT                    iblMipLevels = 0;
+
+public:
+
+    Skybox();
+    ~Skybox();
+
+    void loadHDR(const char* hdrFileName);
+
+    UINT  getNumIBLMipLevels() const {return iblMipLevels; }
+    const ShaderTableDesc& getIBLTableDesc() const { return tableDesc; }
 };

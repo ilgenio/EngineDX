@@ -3,23 +3,41 @@
 
 #include "samplers.hlsli"
 
-struct MetallicRoughnessMat
+#define HAS_BASECOLOUR_TEX        0x1  // 0x1 : hasBaseColourTex
+#define HAS_METALLICROUGHNESS_TEX 0x2  // 0x2 : hasMetallicRoughnessTex
+
+struct Material
 {
     float4 baseColour;
     float  metallicFactor;
     float  roughnessFactor;
-    bool   hasBaseColourTex;
-    bool   hasMetallicRoughnessTex;
+    float  normalScale;
+    float  alphaCutoff;
+    float  occlusionStrength;
+    uint   flags;                   // Bitfield flags
+    uint   padding[2];                 // Padding to 16 bytes
 };
 
-void getMaterialProperties(int MaterialRoughnessMat material, in Texture2D baseColourTex, in Texture2D metallicRoughnessTex,
-                           in float2 coord, out float3 baseColour, out float roughness, out float metallic)
+void getMetallicRoughness(in Material material, in Texture2D baseColourTex, in Texture2D metallicRoughnessTex,
+                          in float2 coord, out float3 baseColour, out float roghness, out float alphaRoughness, out float metallic)
 {
-    baseColour = material.hasBaseColourTex ?  baseColourTex.Sample(bilinearClamp, coord).rgb * material.baseColour.rgb : material.baseColour.rgb;
-    float2 metallicRoughness = material.hasMetallicRoughnessTex ? metallicRoughnessTex.Sample(bilinearClamp, coord).bg * float2(material.metallicFactor, material.roughnessFactor) : float2(material.metallicFactor, material.roughnessFactor);
+    baseColour = material.baseColour.rgb;
+
+    if (material.flags & HAS_BASECOLOUR_TEX)
+    {
+        baseColour *= baseColourTex.Sample(bilinearClamp, coord).rgb;
+    }
+
+    float2 metallicRoughness = float2(material.metallicFactor, material.roughnessFactor);
+
+    if (material.flags & HAS_METALLICROUGHNESS_TEX)
+    {
+        metallicRoughness *= metallicRoughnessTex.Sample(bilinearClamp, coord).bg;
+    }
 
     metallic = metallicRoughness.x;
-    roughness = metallicRoughness.y * metallicRoughness.y; // Perceptural roughness
+    roughness = metallicRoughness.y;
+    alphaRoughness = roughness * roughness; // Perceptural roughness
 }
 
 #endif // _MATERIAL_HLSLI_

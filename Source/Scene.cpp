@@ -18,6 +18,7 @@
 
 Scene::Scene()
 {
+    skybox = std::make_unique<Skybox>();
 }
 
 Scene::~Scene()
@@ -28,10 +29,9 @@ Scene::~Scene()
     for (MeshInstance* instance : instances) delete instance;
 }
 
-void Scene::loadSkybox(const char* background, const char* diffuse, const char* specular, const char* brdf)
+void Scene::loadSkyboxHDR(const char* hdrFileName);
 {
-    //skybox = std::make_unique<Skybox>();
-    //skybox->load(background, diffuse, specular, brdf);
+    skybox->loadHDR(hdrFileName);
 }
 
 bool Scene::load(const char* fileName, const char* basePath)

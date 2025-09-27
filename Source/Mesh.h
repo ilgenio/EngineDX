@@ -24,8 +24,8 @@ public:
 
     const std::string& getName() const {return name;}
 
-    uint32_t getNumVertices() const {return numVertices; }
-    uint32_t getNumIndices() const {return numIndices; }
+    UINT getNumVertices() const {return numVertices; }
+    UINT getNumIndices() const {return numIndices; }
 
     void draw(ID3D12GraphicsCommandList* commandList) const;
 
@@ -51,9 +51,9 @@ private:
     std::string name;
 
     // Vertex Data
-    uint32_t numVertices = 0;
-    uint32_t numIndices = 0;
-    uint32_t indexElementSize = 0;
+    UINT numVertices = 0;
+    UINT numIndices = 0;
+    UINT indexElementSize = 0;
 
     VertexArray vertices;
     IndexArray indices;
