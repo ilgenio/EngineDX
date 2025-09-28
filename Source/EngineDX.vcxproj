@@ -168,6 +168,7 @@
     <ClInclude Include="3rdParty\ImGuizmo\ImGuizmo.h" />
     <ClInclude Include="3rdParty\mikktspace\mikktspace.h" />
     <ClInclude Include="3rdParty\mikktspace\weldmesh.h" />
+    <ClInclude Include="AnimationClip.h" />
     <ClInclude Include="Application.h" />
     <ClInclude Include="BasicMaterial.h" />
     <ClInclude Include="BasicMesh.h" />
@@ -301,6 +302,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="AnimationClip.cpp" />
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="BasicMaterial.cpp" />
     <ClCompile Include="BasicMesh.cpp" />
