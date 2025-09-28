@@ -41,3 +41,14 @@ inline bool loadAccessorData(uint8_t* data, size_t elemSize, size_t stride, size
     return false;
 }
 
+template <class T>
+inline void loadAccessorTyped(std::unique_ptr<T[]> &data, uint &count, const tinygltf::Model &model, int index)
+{
+    const tinygltf::Accessor &accessor = model.accessors[index];
+
+    count = uint(accessor.count);
+    data = std::make_unique<T[]>(count);
+
+    return loadAccessorData(reinterpret_cast<uint8_t*>(data.get()), sizeof(T), sizeof(T), count, model, index);
+}
+
