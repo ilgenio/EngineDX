@@ -136,5 +136,4 @@ bool RenderMeshPass::createPSO()
 
     // create the pso
     return SUCCEEDED(app->getD3D12()->getDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pso)));
-
 }

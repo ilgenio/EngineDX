@@ -15,6 +15,7 @@
 #include "SkyboxRenderPass.h"
 
 #include "Scene.h"
+#include "Model.h"
 #include "Skybox.h"
 
 Demo::Demo()
@@ -61,6 +62,9 @@ bool Demo::cleanUp()
 {
     imguiPass.reset();
     debugDrawPass.reset();
+
+    skybox.reset();
+    model.reset();
     scene.reset();
 
     return true;
@@ -131,19 +135,19 @@ void Demo::renderMeshes(ID3D12GraphicsCommandList *commandList, const Matrix& vi
     perFrameData.numDirectionalLights = 0;
     perFrameData.numPointLights = 0;
     perFrameData.numSpotLights = 0;
-    perFrameData.numRoughnessLevels = scene->getSkybox()->getNumIBLMipLevels()  ;
+    perFrameData.numRoughnessLevels = skybox->getNumIBLMipLevels()  ;
     perFrameData.cameraPosition = app->getCamera()->getPos();
 
     scene->getRenderList(renderList);
 
-    renderMeshPass->render(commandList, renderList, ringBuffer->allocBuffer(&perFrameData), scene->getSkybox()->getIBLTable(), view*projection);
+    renderMeshPass->render(commandList, renderList, ringBuffer->allocBuffer(&perFrameData), skybox->getIBLTable(), view*projection);
 }
 
 void Demo::renderSkybox(ID3D12GraphicsCommandList *commandList, const Quaternion& cameraRot, const Matrix& projection)
 {
     ModuleCamera* camera = app->getCamera();
 
-    skyboxPass->record(commandList, scene->getSkybox()->getCubemapSRV(), cameraRot, projection);
+    skyboxPass->record(commandList, skybox->getCubemapSRV(), cameraRot, projection);
 }
 
 void Demo::render()
@@ -188,8 +192,15 @@ bool Demo::loadScene()
 {
     scene = std::make_unique<Scene>();
 
-    bool ok = scene->load("Assets/Models/busterDrone/busterDrone.gltf", "Assets/Models/busterDrone");
-    ok = ok && scene->loadSkyboxHDR("Assets/Textures/footprint_court.hdr");
+    model.reset(scene->loadModel("Assets/Models/busterDrone/busterDrone.gltf", "Assets/Models/busterDrone"));
+    //model.reset(scene->loadModel("Assets/Models/MetalRoughSpheres/MetalRoughSpheres.gltf", "Assets/Models/MetalRoughSpheres/"));
+
+    bool ok = model.get();
+
+    skybox = std::make_unique<Skybox>();
+
+    
+    ok = ok && skybox->loadHDR("Assets/Textures/footprint_court.hdr");
 
     _ASSERT_EXPR(ok, "Error loading scene");
 

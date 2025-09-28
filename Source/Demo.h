@@ -6,6 +6,8 @@
 
 struct RenderMesh;
 class Scene;
+class Model;
+class Skybox;
 class DebugDrawPass;
 class ImGuiPass;
 class RenderTexture;
@@ -21,7 +23,6 @@ class Demo : public Module
         UINT numSpotLights = 0;
         UINT numRoughnessLevels = 0;
         Vector3 cameraPosition;
-        float pad1;
     };
 
     std::unique_ptr<DebugDrawPass>    debugDrawPass;
@@ -30,6 +31,9 @@ class Demo : public Module
     std::unique_ptr<SkyboxRenderPass> skyboxPass;
 
     std::unique_ptr<Scene>            scene;
+    std::unique_ptr<Model>            model;
+    std::unique_ptr<Skybox>           skybox;
+
     std::vector<RenderMesh>           renderList;
 
     bool showAxis = false;
