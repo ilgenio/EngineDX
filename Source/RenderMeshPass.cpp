@@ -47,7 +47,7 @@ void RenderMeshPass::render(ID3D12GraphicsCommandList* commandList, std::span<co
     commandList->SetPipelineState(pso.Get());
 
     commandList->SetGraphicsRootConstantBufferView(SLOT_PER_FRAME_CB, perFrameData);
-    commandList->SetGraphicsRootDescriptorTable(SLOT_LIGHTS_TABLE, iblTable);
+    commandList->SetGraphicsRootDescriptorTable(SLOT_IBL_TABLE, iblTable);
     commandList->SetGraphicsRootDescriptorTable(SLOT_SAMPLERS, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
 
     for (const RenderMesh& mesh : meshes)
@@ -75,10 +75,11 @@ bool RenderMeshPass::createRootSignature()
 {
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
     CD3DX12_ROOT_PARAMETER rootParameters[SLOT_COUNT] = {};
-    CD3DX12_DESCRIPTOR_RANGE lightsTableRange,materialTableRange;
+    CD3DX12_DESCRIPTOR_RANGE lightsTableRange, iblTableRange, materialTableRange;
     CD3DX12_DESCRIPTOR_RANGE sampRange;
 
-    lightsTableRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 6, 0);
+    lightsTableRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 0);
+    iblTableRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 3);
     materialTableRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 6);
     sampRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, ModuleSamplers::COUNT, 0);
 
@@ -86,15 +87,20 @@ bool RenderMeshPass::createRootSignature()
     rootParameters[SLOT_PER_FRAME_CB].InitAsConstantBufferView(1, 0, D3D12_SHADER_VISIBILITY_ALL);
     rootParameters[SLOT_PER_INSTANCE_CB].InitAsConstantBufferView(2, 0, D3D12_SHADER_VISIBILITY_ALL);
     rootParameters[SLOT_LIGHTS_TABLE].InitAsDescriptorTable(1, &lightsTableRange, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[SLOT_IBL_TABLE].InitAsDescriptorTable(1, &iblTableRange, D3D12_SHADER_VISIBILITY_PIXEL);
     rootParameters[SLOT_TEXTURES_TABLE].InitAsDescriptorTable(1, &materialTableRange, D3D12_SHADER_VISIBILITY_PIXEL);
     rootParameters[SLOT_SAMPLERS].InitAsDescriptorTable(1, &sampRange, D3D12_SHADER_VISIBILITY_PIXEL);
 
     rootSignatureDesc.Init(SLOT_COUNT, rootParameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
     ComPtr<ID3DBlob> rootSignatureBlob;
+    ComPtr<ID3DBlob> errorBlob;
 
-    if (FAILED(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &rootSignatureBlob, nullptr)))
+    if (FAILED(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &rootSignatureBlob, &errorBlob)))
     {
+        std::wstring msg((char*)errorBlob->GetBufferPointer(), (char*)errorBlob->GetBufferPointer()+errorBlob->GetBufferSize());
+        _ASSERT_EXPR(false, msg.c_str());
+
         return false;
     }
 

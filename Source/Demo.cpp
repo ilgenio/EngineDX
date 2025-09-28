@@ -44,6 +44,14 @@ bool Demo::init()
         ok = ok && renderMeshPass->init();
     }
 
+    if (ok)
+    {
+        ModuleCamera* camera = app->getCamera();
+        camera->setPolar(0.0f);
+        camera->setAzimuthal(-0.25f);
+        camera->setPanning(Vector3(0.15f, -0.65f, 4.25f));
+    }
+
     _ASSERT_EXPR(ok, "Error creating Demo");
 
     return ok;

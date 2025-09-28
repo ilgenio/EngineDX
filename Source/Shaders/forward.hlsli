@@ -5,17 +5,6 @@
 #include "lights.hlsli"
 #include "material.hlsli"
 
-StructuredBuffer<Directional> dirLights : register(t0);
-StructuredBuffer<Point> pointLights : register(t1);
-StructuredBuffer<Spot>  spotLights  : register(t2);
-
-TextureCube irradiance : register(t3);
-TextureCube radiance : register(t4);
-Texture2D  brdfLUT : register(t5);
-
-Texture2D baseColourTex : register(t6);
-Texture2D metallicRoughnessTex : register(t7);
-
 cbuffer MVP : register(b0)
 {
     float4x4 mvp;  
@@ -41,5 +30,15 @@ cbuffer PerInstance : register(b2)
 };
 
 
+StructuredBuffer<Directional> dirLights : register(t0);
+StructuredBuffer<Point> pointLights : register(t1);
+StructuredBuffer<Spot>  spotLights  : register(t2);
+
+TextureCube irradiance : register(t3);
+TextureCube radiance : register(t4);
+Texture2D  brdfLUT : register(t5);
+
+Texture2D baseColourTex : register(t6);
+Texture2D metallicRoughnessTex : register(t7);
 
 #endif // _FORWARD_HLSLI_

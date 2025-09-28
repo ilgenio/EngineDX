@@ -34,6 +34,14 @@ public:
     void setEnable(bool flag) { enabled = flag; }
     bool getEnabled() const { return enabled;  }
 
+    float getPolar() const { return params.polar; }
+    float getAzimuthal() const { return params.azimuthal;  }
+    const Vector3& getPanning() const { return params.panning; }
+
+    void setPolar(float polar) { params.polar = polar;  }
+    void setAzimuthal(float azimuthal) { params.azimuthal = azimuthal;  }
+    void setPanning(const Vector3& panning) { params.panning = panning;  }
+
     const Matrix&     getView() const {return view;}
     const Quaternion& getRot() const { return rotation; }
     const Vector3&    getPos() const { return position; }

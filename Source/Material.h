@@ -48,7 +48,7 @@ public:
 
 private:
 
-    bool loadTexture(const tinygltf::Model& model, const std::string& basePath, int index, ComPtr<ID3D12Resource>& output);
+    bool loadTexture(const tinygltf::Model& model, const std::string& basePath, int index, bool defaultSRGB, ComPtr<ID3D12Resource>& output);
 
 private:
 

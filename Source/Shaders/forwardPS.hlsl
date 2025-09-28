@@ -19,6 +19,7 @@ float4 main(float3 worldPos : POSITION, float3 normal : NORMAL, float2 texCoord 
     // TODO :use alphaRoughness instead of roughness ? 
     float3 colour = computeLighting(V, N, irradiance, radiance, brdfLUT, numRoughnessLevels, baseColour, roughness, metallic);
 
+#if 0
     // Direct lights
     for (uint i = 0; i < numDirLights; i++)
         colour += computeLighting(V, N, dirLights[i], baseColour, alphaRoughness, metallic);
@@ -28,6 +29,8 @@ float4 main(float3 worldPos : POSITION, float3 normal : NORMAL, float2 texCoord 
 
     for( uint i = 0; i< numSpotLights; i++)
         colour += computeLighting(V, N, spotLights[i], worldPos, baseColour, alphaRoughness, metallic);
+
+#endif
 
     // tonemapping
     float3 ldr = PBRNeutralToneMapping(colour);

@@ -32,8 +32,8 @@ class Demo : public Module
     std::unique_ptr<Scene>            scene;
     std::vector<RenderMesh>           renderList;
 
-    bool showAxis = true;
-    bool showGrid = true;
+    bool showAxis = false;
+    bool showGrid = false;
 
     ShaderTableDesc debugDesc;
 public:

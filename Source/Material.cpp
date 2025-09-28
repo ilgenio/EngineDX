@@ -35,21 +35,21 @@ void Material::load(const tinygltf::Model& model, const tinygltf::Material &mate
     textureTableDesc = app->getShaderDescriptors()->allocTable();
 
     // Base Color Texture
-    if (material.pbrMetallicRoughness.baseColorTexture.index >= 0 && loadTexture(model, base, material.pbrMetallicRoughness.baseColorTexture.index, baseColorTex))
+    if (material.pbrMetallicRoughness.baseColorTexture.index >= 0 && loadTexture(model, base, material.pbrMetallicRoughness.baseColorTexture.index, true, baseColorTex))
     {
         data.flags |= FLAG_HAS_BASECOLOUR_TEX;
         textureTableDesc.createTextureSRV(baseColorTex.Get(), TEX_SLOT_BASECOLOUR);
     }
 
     // Metallic Roughness Texture
-    if (material.pbrMetallicRoughness.metallicRoughnessTexture.index >= 0 && loadTexture(model, base, material.pbrMetallicRoughness.metallicRoughnessTexture.index, metRougTex))
+    if (material.pbrMetallicRoughness.metallicRoughnessTexture.index >= 0 && loadTexture(model, base, material.pbrMetallicRoughness.metallicRoughnessTexture.index, false, metRougTex))
     {
         data.flags |= FLAG_HAS_METALLICROUGHNESS_TEX;
         textureTableDesc.createTextureSRV(metRougTex.Get(), TEX_SLOT_METALLIC_ROUGHNESS);
     }
 
     // Normals Texture
-    if (material.normalTexture.index >= 0 && loadTexture(model, base, material.normalTexture.index, normalTex))
+    if (material.normalTexture.index >= 0 && loadTexture(model, base, material.normalTexture.index, false, normalTex))
     {
         textureTableDesc.createTextureSRV(normalTex.Get(), TEX_SLOT_NORMAL);
     }
@@ -57,7 +57,7 @@ void Material::load(const tinygltf::Model& model, const tinygltf::Material &mate
     data.normalScale = float(material.normalTexture.scale);
 
     // Occlusion Texture
-    if (material.occlusionTexture.index >= 0 && loadTexture(model, base, material.occlusionTexture.index, occlusionTex))
+    if (material.occlusionTexture.index >= 0 && loadTexture(model, base, material.occlusionTexture.index, false, occlusionTex))
     {
         textureTableDesc.createTextureSRV(occlusionTex.Get(), TEX_SLOT_OCCLUSION);
     }
@@ -82,14 +82,16 @@ void Material::load(const tinygltf::Model& model, const tinygltf::Material &mate
 }
 
 
-bool Material::loadTexture(const tinygltf::Model& model, const std::string& basePath, int index, ComPtr<ID3D12Resource>& output)
+bool Material::loadTexture(const tinygltf::Model& model, const std::string& basePath, int index, bool defaultSRGB, ComPtr<ID3D12Resource>& output)
 {
     const tinygltf::Texture& texture = model.textures[index];
     const tinygltf::Image& image = model.images[texture.source];
 
     if (image.mimeType.empty())
     {
-        output = app->getResources()->createTextureFromFile(basePath + image.uri);
+        output = app->getResources()->createTextureFromFile(basePath + image.uri, defaultSRGB);
+
+        _ASSERT_EXPR(output, "Can't load texture");
 
         return true;
     }

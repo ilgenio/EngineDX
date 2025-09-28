@@ -316,9 +316,13 @@ bool Exercise11::createRootSignature()
     rootSignatureDesc.Init(6, rootParameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
     ComPtr<ID3DBlob> rootSignatureBlob;
+    ComPtr<ID3DBlob> errorBlob;
 
-    if (FAILED(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &rootSignatureBlob, nullptr)))
+    if (FAILED(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &rootSignatureBlob, &errorBlob)))
     {
+        std::wstring msg((char*)errorBlob->GetBufferPointer(), (char*)errorBlob->GetBufferPointer() + errorBlob->GetBufferSize());
+        _ASSERT_EXPR(false, msg.c_str());
+
         return false;
     }
 

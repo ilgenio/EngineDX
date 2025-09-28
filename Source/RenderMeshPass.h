@@ -13,8 +13,9 @@ class RenderMeshPass
         SLOT_PER_FRAME_CB = 1,
         SLOT_PER_INSTANCE_CB = 2,
         SLOT_LIGHTS_TABLE = 3,
-        SLOT_TEXTURES_TABLE = 4,
-        SLOT_SAMPLERS = 5,
+        SLOT_IBL_TABLE = 4,
+        SLOT_TEXTURES_TABLE = 5,
+        SLOT_SAMPLERS = 6,
         SLOT_COUNT
     };
 
