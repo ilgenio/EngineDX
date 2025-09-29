@@ -49,6 +49,14 @@ void Scene::onRemoveModel(Model *model)
     auto it = std::erase(models, model);
 }
 
+void Scene::updateAnimations(float deltaTime)
+{
+    for (Model* model : models)
+    {
+        model->updateAnim(deltaTime);
+    }
+}
+
 void Scene::updateWorldTransforms()
 {
     for(Model* model : models)

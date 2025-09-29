@@ -64,6 +64,8 @@ private:
     ComPtr<ID3D12Resource> indexBuffer;
     D3D12_INDEX_BUFFER_VIEW indexBufferView;
 
+    ComPtr<ID3D12Resource> skinningBuffer;
+
     static const uint32_t numVertexAttribs = 4;
     static const D3D12_INPUT_ELEMENT_DESC inputLayout[numVertexAttribs]; 
     static const D3D12_INPUT_LAYOUT_DESC inputLayoutDesc;

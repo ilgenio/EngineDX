@@ -46,12 +46,61 @@ void Mesh::load(const tinygltf::Model& model, const tinygltf::Mesh& mesh, const 
         loadAccessorData(vertexData + offsetof(Vertex, texCoord0), sizeof(Vector2), sizeof(Vertex), numVertices, model, primitive.attributes, "TEXCOORD_0");
         loadAccessorData(vertexData + offsetof(Vertex, normal), sizeof(Vector3), sizeof(Vertex), numVertices, model, primitive.attributes, "NORMAL");
         loadAccessorData(vertexData + offsetof(Vertex, tangent), sizeof(Vector4), sizeof(Vertex), numVertices, model, primitive.attributes, "TANGENT");
-   
+
         vertexBuffer = resources->createDefaultBuffer(vertices.get(), numVertices * sizeof(Vertex), name.c_str());
 
         vertexBufferView.BufferLocation = vertexBuffer->GetGPUVirtualAddress();
         vertexBufferView.StrideInBytes  = sizeof(Vertex);
         vertexBufferView.SizeInBytes    = numVertices * sizeof(Mesh::Vertex);
+
+        // Skinning attributes
+
+        struct BoneIndices
+        {
+            UINT indices[4];
+        };
+
+        UINT numJoints, numWeights;
+        std::unique_ptr<BoneIndices []> boneIndices;
+        std::unique_ptr<Vector4 []> boneWeights;
+
+        loadAccessorTyped(boneIndices, numJoints, model, primitive.attributes, "JOINTS_0");
+        loadAccessorTyped(boneWeights, numWeights, model, primitive.attributes, "WEIGHTS_0");
+
+        _ASSERTE(numJoints == 0 || numJoints == numVertices);
+        _ASSERTE(numWeights == 0 || numWeights == numVertices);
+
+        if(numJoints == numVertices && numWeights == numVertices)
+        {
+            struct SkinVertex
+            {
+                UINT boneIndices[4];
+                Vector4 boneWeights;
+                Vector3 position;
+                Vector3 normal;
+                Vector4 tangent;
+            };
+
+            std::unique_ptr<SkinVertex[]> skinnedVertices = std::make_unique<SkinVertex[]>(numVertices);
+
+            // Copy skinning attributes
+            for (UINT i = 0; i < numVertices; ++i)
+            {
+                for(UINT j = 0; j < 4; ++j)
+                {
+                    skinnedVertices[i].boneIndices[j] = boneIndices[i].indices[j];
+                }
+
+                skinnedVertices[i].boneWeights = boneWeights[i];
+                skinnedVertices[i].boneWeights.Normalize();
+
+                skinnedVertices[i].position = vertices[i].position;
+                skinnedVertices[i].normal = vertices[i].normal;
+                skinnedVertices[i].tangent = vertices[i].tangent;
+            }
+
+            skinningBuffer = resources->createDefaultBuffer(skinnedVertices.get(), numVertices * sizeof(SkinVertex), name.c_str());
+        }
 
         if (primitive.indices >= 0)
         {

@@ -16,6 +16,11 @@ namespace
     template<typename T>
     bool interpolateProperty(const AnimationClip::Property<T> &property, float time, T &out)
     {
+        if(property.count == 0)
+        {
+            return false;
+        }
+
         if (time <= property.times[0])
         {
             out = property.values[0];
@@ -28,19 +33,15 @@ namespace
             return true;
         }
 
-        for (UINT i = 0; i < property.count - 1; ++i)
-        {
-            if (time >= property.times[i] && time <= property.times[i + 1])
-            {
-                float t = (time - property.times[i]) / (property.times[i + 1] - property.times[i]);
+        auto it = std::upper_bound(&property.times[0], &property.times[0] + property.count, time);
+        _ASSERTE(it < &property.times[0] + property.count);
 
-                T::Lerp (property.values[i], property.values[i + 1], t, out);
+        UINT index = static_cast<UINT>(it - &property.times[0] - 1);
+        float t = (time - property.times[index]) / (property.times[index + 1] - property.times[index]);
 
-                return true;
-            }
-        }
+        T::Lerp(property.values[index], property.values[index + 1], t, out);
 
-        return false;
+        return true;
     }
 
 }
@@ -53,6 +54,23 @@ AnimationClip::AnimationClip()
 AnimationClip::~AnimationClip()
 {
 
+}
+
+void AnimationClip::load(const char* fileName, int animationIndex)
+{
+    tinygltf::TinyGLTF gltfContext;
+    tinygltf::Model model;
+    std::string error, warning;
+
+    bool loadOk = gltfContext.LoadASCIIFromFile(&model, &error, &warning, fileName);
+    if (loadOk)
+    {
+        load(model, animationIndex);
+    }
+    else
+    {
+        LOG("Error loading %s: %s", fileName, error.c_str());
+    }
 }
 
 void AnimationClip::load(const tinygltf::Model &model, int animationIndex)

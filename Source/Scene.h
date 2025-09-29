@@ -30,6 +30,7 @@ public:
 
     Model* loadModel(const char* fileName, const char* basePath);
 
+    void updateAnimations(float deltaTime);
     void updateWorldTransforms();
     void getRenderList(std::vector<RenderMesh>& renderList) const;
 

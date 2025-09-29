@@ -52,3 +52,17 @@ inline bool loadAccessorTyped(std::unique_ptr<T[]> &data, UINT&count, const tiny
     return loadAccessorData(reinterpret_cast<uint8_t*>(data.get()), sizeof(T), sizeof(T), count, model, index);
 }
 
+
+template <class T>
+inline bool loadAccessorTyped(std::unique_ptr<T[]> &data, UINT&count, const tinygltf::Model &model, const std::map<std::string, int>& attributes, const char* accesorName)
+{
+    const auto& it = attributes.find(accesorName);
+    if (it != attributes.end())
+    {
+        return loadAccessorTyped(data, count, model, it->second);
+    }
+
+    count = 0;
+
+    return false;
+}

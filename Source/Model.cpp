@@ -4,6 +4,7 @@
 #include "Mesh.h"
 #include "Material.h"
 #include "Scene.h"
+#include "AnimationClip.h"
 
 #define TINYGLTF_NO_STB_IMAGE_WRITE
 #define TINYGLTF_NO_STB_IMAGE
@@ -70,7 +71,7 @@ bool Model::load(const tinygltf::Model &srcModel, const char *basePath)
 
     for(const tinygltf::Scene& scene : srcModel.scenes)
     {
-        for (int nodeIndex : srcModel.scenes[0].nodes)
+        for (int nodeIndex : scene.nodes)
         {
             generateNodes(srcModel, nodeIndex, -1, meshMappings, materialMappings);
         }
@@ -153,9 +154,25 @@ UINT Model::generateNodes(const tinygltf::Model &model, UINT nodeIndex, INT pare
 
 void Model::updateWorldTransforms()
 {
+    UINT numDirty = 0;
+
     for(Node* node : nodes)
     {
-        if (node->dirtyWorld)
+        bool dirty = numDirty > 0;
+
+        if(dirty)
+        {
+            _ASSERT(numDirty > node->numChilds);
+            --numDirty;
+        } 
+        else if(node->dirtyWorld)
+        {
+            // if a node is dirty, all its childs are dirty too
+            dirty = true;
+            numDirty = node->numChilds;
+        }
+
+        if (dirty)
         {
             INT parentIndex = node->parent;
             if (parentIndex >= 0)
@@ -171,6 +188,7 @@ void Model::updateWorldTransforms()
                 // No parent, so local is world
                 node->worldTransform = node->localTransform;
             }
+
             node->dirtyWorld = false;
         }
     }
@@ -201,4 +219,88 @@ void Model::getRenderList(std::vector<RenderMesh> &renderList) const
         renderList.push_back(renderMesh);
     }
 
+}
+
+void Model::PlayAnim(std::shared_ptr<AnimationClip> clip, float fadeIn /*= 0.0f*/)
+{
+    if (!clip) return;
+
+    std::unique_ptr<AnimInstance> newAnim = std::make_unique<AnimInstance>();
+    newAnim->clip = clip;
+    newAnim->fadeIn = fadeIn;
+    newAnim->time = 0.0f;
+
+    newAnim->next = std::move(currentAnim);
+    currentAnim = std::move(newAnim);
+}
+
+void Model::StopAnim()
+{
+    currentAnim.reset();
+}
+
+void Model::updateAnim(float deltaTime)
+{
+    std::vector<AnimInstance*> anims;
+
+    AnimInstance* anim = currentAnim.get();
+
+    while (anim)
+    {
+        anims.push_back(anim);
+
+        anim->time += deltaTime;
+
+        // Loop animation
+        while (anim->time > anim->clip->getDuration())
+        {
+            anim->time -= anim->clip->getDuration();
+        }
+
+        if (anim->time > anim->fadeIn)
+        {
+            anim->next.release();
+            anim = nullptr;
+        }
+        else
+        {
+            anim = anim->next.get();
+        }
+    }
+
+    // update nodes
+
+    for(Node* node : nodes)
+    {
+        Vector3 nodePos = Vector3::Zero;
+        Quaternion nodeRot = Quaternion::Identity;
+
+        for(auto it = anims.rbegin(); it != anims.rend(); ++it)
+        {
+            AnimInstance* anim = *it;
+
+            Vector3 pos = Vector3::Zero;
+            Quaternion rot = Quaternion::Identity;
+
+            if(anim->clip->getPosRot(node->name, anim->time, pos, rot))
+            {
+                if(anim->next)
+                {
+                    float t = std::min(anim->time / anim->fadeIn, 1.0f);
+
+                    nodePos = Vector3::Lerp(nodePos, pos, t);
+                    nodeRot = Quaternion::Lerp(nodeRot, rot, t);
+                }
+                else 
+                {
+                    nodePos = pos;
+                    nodeRot = rot;
+                }
+            }
+
+        }
+
+        node->localTransform = Matrix::CreateTranslation(nodePos) * Matrix::CreateFromQuaternion(nodeRot);
+        node->dirtyWorld = true; 
+    }
 }

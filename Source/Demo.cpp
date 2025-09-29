@@ -17,6 +17,7 @@
 #include "Scene.h"
 #include "Model.h"
 #include "Skybox.h"
+#include "AnimationClip.h"
 
 Demo::Demo()
 {
@@ -73,6 +74,7 @@ bool Demo::cleanUp()
 void Demo::update() 
 {
     // TODO: update animations
+    scene->updateAnimations(float(app->getElapsedMilis()) * 0.001f);
     scene->updateWorldTransforms();
 }
 
@@ -197,8 +199,15 @@ bool Demo::loadScene()
 
     bool ok = model.get();
 
-    skybox = std::make_unique<Skybox>();
+    if (ok)
+    {
+        animation = std::make_shared<AnimationClip>();
+        animation->load("Assets/Models/busterDrone/busterDrone.gltf", 0);
 
+        model->PlayAnim(animation);
+    }
+
+    skybox = std::make_unique<Skybox>();
     
     ok = ok && skybox->loadHDR("Assets/Textures/footprint_court.hdr");
 

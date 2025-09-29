@@ -13,6 +13,7 @@ class ImGuiPass;
 class RenderTexture;
 class RenderMeshPass;
 class SkyboxRenderPass;
+class AnimationClip;
 
 class Demo : public Module
 {
@@ -35,6 +36,7 @@ class Demo : public Module
     std::unique_ptr<Skybox>           skybox;
 
     std::vector<RenderMesh>           renderList;
+    std::shared_ptr<AnimationClip>    animation;
 
     bool showAxis = false;
     bool showGrid = false;

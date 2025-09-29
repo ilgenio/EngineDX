@@ -26,6 +26,7 @@ public:
     AnimationClip();
     ~AnimationClip(); 
 
+    void  load(const char* fileName, int animationIndex);
     void  load(const tinygltf::Model& model, int animationIndex);
     float getDuration() const { return duration; }
 
