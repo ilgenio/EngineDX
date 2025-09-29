@@ -97,7 +97,8 @@ void Exercise10::preRender()
     imguiPass->startFrame();
     ImGuizmo::BeginFrame();
 
-    renderTexture->resize(int(canvasSize.x), int(canvasSize.y));
+    if(canvasSize.x > 0.0f && canvasSize.y > 0.0f)
+        renderTexture->resize(int(canvasSize.x), int(canvasSize.y));
 
 }
 
@@ -351,8 +352,6 @@ void Exercise10::imGuiCommands()
     ImGui::EndChildFrame();
     ImGui::End();
 
-    ImGuiIO& io = ImGui::GetIO();
-
     camera->setEnable(viewerFocused && !ImGuizmo::IsUsing());
 
     if (ImGuizmo::IsUsing())
@@ -451,7 +450,7 @@ void Exercise10::render()
 
     commandList->Reset(d3d12->getCommandAllocator(), nullptr);
 
-    if (renderTexture->isValid())
+    if (renderTexture->isValid() && canvasSize.x > 0.0f && canvasSize.y > 0.0f)
     {
         renderToTexture(commandList);
     }

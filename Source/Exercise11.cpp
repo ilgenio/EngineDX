@@ -50,21 +50,11 @@ bool Exercise11::init()
 
         debugDrawPass       = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue());
         irradianceMapPass   = std::make_unique<IrradianceMapPass>();
-        prefilterEnvMapPass = std::make_unique<PrefilterEnvMapPass>();
-        environmentBRDFPass = std::make_unique<EnvironmentBRDFPass>();
-        hdrToCubemapPass    = std::make_unique<HDRToCubemapPass>();
         skyboxRenderPass    = std::make_unique<SkyboxRenderPass>();
 
         tableDesc = descriptors->allocTable();        
         imguiPass = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd(), tableDesc.getCPUHandle(TEX_SLOT_IMGUI), tableDesc.getGPUHandle(TEX_SLOT_IMGUI));
         renderTexture = std::make_unique<RenderTexture>("Exercise11", DXGI_FORMAT_R8G8B8A8_UNORM, Vector4(0.188f, 0.208f, 0.259f, 1.0f), DXGI_FORMAT_D32_FLOAT, 1.0f);
-
-        hdrSky = resources->createTextureFromFile(std::wstring(L"Assets/Textures/footprint_court.hdr"));
-
-        if ((ok = hdrSky) == true)
-        {
-            tableDesc.createTextureSRV(hdrSky.Get(), TEX_SLOT_HDR);
-        }
     }
 
     return true;
@@ -81,7 +71,8 @@ void Exercise11::preRender()
 {
     imguiPass->startFrame();
 
-    renderTexture->resize(unsigned(canvasSize.x), unsigned(canvasSize.y));
+    if(canvasSize.x > 0.0f && canvasSize.y > 0.0f)
+        renderTexture->resize(unsigned(canvasSize.x), unsigned(canvasSize.y));
 }
 
 void Exercise11::renderToTexture(ID3D12GraphicsCommandList* commandList)
@@ -94,9 +85,8 @@ void Exercise11::renderToTexture(ID3D12GraphicsCommandList* commandList)
 
     unsigned width = unsigned(canvasSize.x);
     unsigned height = unsigned(canvasSize.y);
-
-    BasicModel* model = &models[activeModel];
     
+   
     const Matrix & view = camera->getView();
     Matrix proj = ModuleCamera::getPerspectiveProj(float(width) / float(height));
     Matrix mvp = model->getModelMatrix() * view * proj;
@@ -123,7 +113,6 @@ void Exercise11::renderToTexture(ID3D12GraphicsCommandList* commandList)
     PerFrame perFrameData;
     perFrameData.camPos = camera->getPos();
     perFrameData.roughnessLevels = 8.0f;
-    perFrameData.useOnlyIrradiance = useOnlyIrradiance;
 
     ModuleRingBuffer* ringBuffer = app->getRingBuffer();
 
@@ -167,28 +156,12 @@ void Exercise11::imGuiCommands()
 {
     ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
 
-    ImGui::Begin("IBL Viewer Options");
+    ImGui::Begin("Irradiance Viewer Options");
     ImGui::Separator();
     ImGui::Text("FPS: [%d]. Avg. elapsed (Ms): [%g] ", uint32_t(app->getFPS()), app->getAvgElapsedMs());
     ImGui::Separator();
     ImGui::Checkbox("Show grid", &showGrid);
     ImGui::Checkbox("Show axis", &showAxis);
-
-    ImGui::Separator();
-
-    ImGui::Checkbox("Use only irradiance", &useOnlyIrradiance);
-
-    ImGui::Separator();
-
-    ImGui::Combo("Model", (int*)&activeModel, "MetallicRoughness\0DamagedHelmet\0");
-
-    ImGui::Separator();
-
-    if (environmentBRDF)
-    {
-        ImGui::Text("Environment BRDF");
-        ImGui::Image((ImTextureID)tableDesc.getGPUHandle(TEX_SLOT_ENV_BRDF).ptr, ImVec2(128, 128));
-    }
 
     ImGui::End();
 
@@ -226,8 +199,8 @@ void Exercise11::render()
     ModuleCamera* camera = app->getCamera();
 
 #if CAPTURE_IBL_GENERATION
-    
-    bool takeCapture = (!irradianceMap || !prefilteredEnvMap || !environmentBRDF || !skybox) && PIXIsAttachedForGpuCapture();
+
+    bool takeCapture = (!irradianceMap || !skybox) && PIXIsAttachedForGpuCapture();
     if (takeCapture)
     {
         PIXBeginCapture(PIX_CAPTURE_GPU, nullptr);
@@ -237,22 +210,16 @@ void Exercise11::render()
     ID3D12GraphicsCommandList* commandList = d3d12->getCommandList();
     commandList->Reset(d3d12->getCommandAllocator(), nullptr);
 
-    if(!irradianceMap || !prefilterEnvMapPass || !environmentBRDF ||  !skybox)
+    if (!irradianceMap || !skybox)
     {
-        skybox = hdrToCubemapPass->generate(tableDesc.getGPUHandle(TEX_SLOT_HDR), DXGI_FORMAT_R16G16B16A16_FLOAT, 1024);
+        skybox = app->getResources()->createTextureFromFile(std::wstring(L"Assets/Textures/cubemap.dds"));
         tableDesc.createCubeTextureSRV(skybox.Get(), TEX_SLOT_CUBEMAP);
 
         irradianceMap = irradianceMapPass->generate(tableDesc.getGPUHandle(TEX_SLOT_CUBEMAP), 1024, 1024);
         tableDesc.createCubeTextureSRV(irradianceMap.Get(), TEX_SLOT_IRRADIANCE);
-
-        prefilteredEnvMap = prefilterEnvMapPass->generate(tableDesc.getGPUHandle(TEX_SLOT_CUBEMAP), 1024, 1024, 8);
-        tableDesc.createCubeTextureSRV(prefilteredEnvMap.Get(), TEX_SLOT_PREFILTERED_ENV);
-
-        environmentBRDF = environmentBRDFPass->generate(128);
-        tableDesc.createTextureSRV(environmentBRDF.Get(), TEX_SLOT_ENV_BRDF);
     }
 
-    if(renderTexture->isValid())
+    if (renderTexture->isValid() && canvasSize.x > 0.0f && canvasSize.y > 0.0f)
     {
         renderToTexture(commandList);
     }
@@ -285,7 +252,7 @@ void Exercise11::render()
     {
         ID3D12CommandList* commandLists[] = { commandList };
         d3d12->getDrawCommandQueue()->ExecuteCommandLists(UINT(std::size(commandLists)), commandLists);
-    }    
+    }
 
 #if CAPTURE_IBL_GENERATION
     if (takeCapture)
@@ -365,13 +332,11 @@ bool Exercise11::createPSO()
 
 bool Exercise11::loadModel()
 {
-    models = std::make_unique<BasicModel[]>(2);
+    model = std::make_unique<BasicModel>();
 
-    models[0].load("Assets/Models/MetalRoughSpheres/MetalRoughSpheres.gltf", "Assets/Models/MetalRoughSpheres/", BasicMaterial::METALLIC_ROUGHNESS);
-    models[0].setModelMatrix(Matrix::CreateRotationZ(M_HALF_PI) * Matrix::CreateRotationX(-M_HALF_PI) * Matrix::CreateTranslation(Vector3(0.0, 10.0, 0.0)) * Matrix::CreateScale(0.4f));
+    model->load("Assets/Models/WhiteSphere/WhiteSphere.gltf", "Assets/Models/WhiteSphere/", BasicMaterial::METALLIC_ROUGHNESS);
+    model->setModelMatrix(Matrix::CreateTranslation(Vector3(0.0, 0.0, 0.0)));
 
-    models[1].load("Assets/Models/DamagedHelmet/DamagedHelmet.gltf", "Assets/Models/DamagedHelmet/", BasicMaterial::METALLIC_ROUGHNESS);
-    models[1].setModelMatrix(Matrix::CreateRotationX(M_HALF_PI) * Matrix::CreateRotationY(M_HALF_PI));
 
     return true;
 }

@@ -3,8 +3,6 @@
 #include "tonemap.hlsli"
 
 TextureCube irradiance : register(t0);
-TextureCube radiance : register(t1);
-Texture2D   brdfLUT : register(t2);
 
 Texture2D baseColourTex : register(t3);
 Texture2D metallicRoughnessTex : register(t4);
@@ -31,22 +29,7 @@ float4 Exercise11PS(float3 positionWS : POSITION, float3 normalWS : NORMAL, floa
 
     float NdotV = saturate(dot(N, V));
 
-    float3 diffuse = getIBLIrradiance(N, irradiance) * baseColour;
-    
-    float3 colour = diffuse;
-    if(!useOnlyIrradiance)
-    {
-        float3 specular = getIBLRadiance(R, roughness, roughnessLevels, radiance);
-
-        float3 brdf_metal_fresnel = getIBLBRDF(NdotV, roughness, baseColour, brdfLUT);
-        float3 brdf_dielectric_fresnel = getIBLBRDF(NdotV, roughness, 0.04, brdfLUT);
-
-        float3 dielectric_colour = diffuse + specular * brdf_dielectric_fresnel;
-        float3 metal_colour = specular * brdf_metal_fresnel;
-
-        colour = lerp(dielectric_colour, metal_colour, metallic);
-    }
-    
+    float3 colour = getIBLIrradiance(N, irradiance) * baseColour;
 
     float3 ldr = PBRNeutralToneMapping(colour);
     

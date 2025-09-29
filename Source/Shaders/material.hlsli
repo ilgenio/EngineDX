@@ -25,14 +25,14 @@ void getMetallicRoughness(in Material material, in Texture2D baseColourTex, in T
 
     if (material.flags & HAS_BASECOLOUR_TEX)
     {
-        baseColour *= baseColourTex.Sample(bilinearClamp, coord).rgb;
+        baseColour *= baseColourTex.Sample(bilinearWrap, coord).rgb;
     }
 
     float2 metallicRoughness = float2(material.metallicFactor, material.roughnessFactor);
 
     if (material.flags & HAS_METALLICROUGHNESS_TEX)
     {
-        metallicRoughness *= metallicRoughnessTex.Sample(bilinearClamp, coord).bg;
+        metallicRoughness *= metallicRoughnessTex.Sample(bilinearWrap, coord).bg;
     }
 
     metallic = metallicRoughness.x;

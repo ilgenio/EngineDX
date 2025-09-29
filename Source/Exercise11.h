@@ -20,7 +20,6 @@ class Exercise11 : public Module
     {
         Vector3 camPos;
         float   roughnessLevels;
-        BOOL    useOnlyIrradiance;
     };
 
     struct PerInstance
@@ -37,32 +36,21 @@ class Exercise11 : public Module
     std::unique_ptr<DebugDrawPass>          debugDrawPass;
     std::unique_ptr<ImGuiPass>              imguiPass;
     std::unique_ptr<IrradianceMapPass>      irradianceMapPass;
-    std::unique_ptr<PrefilterEnvMapPass>    prefilterEnvMapPass;
-    std::unique_ptr<EnvironmentBRDFPass>    environmentBRDFPass ;
     std::unique_ptr<SkyboxRenderPass>       skyboxRenderPass;
-    std::unique_ptr<HDRToCubemapPass>       hdrToCubemapPass;
 
-    ComPtr<ID3D12Resource>                  hdrSky;
     ComPtr<ID3D12Resource>                  irradianceMap;
-    ComPtr<ID3D12Resource>                  prefilteredEnvMap;
-    ComPtr<ID3D12Resource>                  environmentBRDF;
     ComPtr<ID3D12Resource>                  skybox;
 
-    std::unique_ptr<BasicModel[]>           models;
-    UINT                                    activeModel = 0;   
+    std::unique_ptr<BasicModel>             model;
 
     bool showAxis = true;
     bool showGrid = true;
-    bool useOnlyIrradiance = false;
 
     enum TexSlots
     {
         TEX_SLOT_IMGUI = 0,
-        TEX_SLOT_HDR = 1,
-        TEX_SLOT_CUBEMAP = 2,
-        TEX_SLOT_IRRADIANCE = 3,
-        TEX_SLOT_PREFILTERED_ENV = 4,
-        TEX_SLOT_ENV_BRDF = 5,
+        TEX_SLOT_CUBEMAP = 1,
+        TEX_SLOT_IRRADIANCE = 2,
         TEX_SLOT_IBL = TEX_SLOT_IRRADIANCE,
         TEX_SLOT_COUNT = 6
     };

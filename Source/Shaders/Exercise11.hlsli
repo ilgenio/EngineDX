@@ -16,7 +16,6 @@ cbuffer PerFrame : register(b1)
 {
     float3 viewPos;             // Camera position
     float  roughnessLevels;
-    bool   useOnlyIrradiance;
 };
 
 cbuffer PerInstance : register(b2)

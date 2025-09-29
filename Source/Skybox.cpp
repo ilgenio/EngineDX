@@ -46,7 +46,7 @@ bool Skybox::loadHDR(const char* hdrFile)
     tableDesc.createTextureSRV(hdr.Get(), TEX_SLOT_HDR);
 
 #if CAPTURE_IBL_GENERATION
-    PIXBeginCapture(PIX_CAPTURE_GPU, nullptr);
+    if(PIXIsAttachedForGpuCapture()) PIXBeginCapture(PIX_CAPTURE_GPU, nullptr);
 #endif
 
     skybox            = hdrToCubemapPass->generate(tableDesc.getGPUHandle(TEX_SLOT_HDR), DXGI_FORMAT_R16G16B16A16_FLOAT, DEFAULT_SKYBOX_SIZE);
@@ -60,7 +60,7 @@ bool Skybox::loadHDR(const char* hdrFile)
     if(!environmentBRDF) environmentBRDF   = environmentBRDFPass->generate(DEFAULT_ENV_BRDF_SIZE);
 
 #if CAPTURE_IBL_GENERATION
-    PIXEndCapture(TRUE);
+    if (PIXIsAttachedForGpuCapture()) PIXEndCapture(TRUE);
 #endif
 
     tableDesc.createCubeTextureSRV(irradianceMap.Get(), TEX_SLOT_IRRADIANCE);

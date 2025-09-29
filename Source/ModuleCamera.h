@@ -19,6 +19,7 @@ class ModuleCamera : public Module
     };
 
     Params    params = { 0.0f, 0.0f , {0.0f , 2.0f , 10.0f }};
+    Params    tmpParams = { 0.0f, 0.0f , {0.0f , 0.0f , 0.0f } };
     int       dragPosX = 0;
     int       dragPosY = 0;
 

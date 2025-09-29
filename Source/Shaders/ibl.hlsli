@@ -23,7 +23,7 @@ float3 getIBLIrradiance(float3 N, TextureCube irradianceMap)
     return irradianceMap.Sample(bilinearClamp, N).rgb;
 }
 
-float3 getIBLRadiance(float3 R, float roughness, float roughnessLevels, TextureCube prefilteredEnvMap)
+float3 getIBLRadiance(in float3 R, in float roughness, in float roughnessLevels, TextureCube prefilteredEnvMap)
 {
     return prefilteredEnvMap.SampleLevel(bilinearClamp, R, roughness * (roughnessLevels - 1)).rgb;
 }
@@ -47,7 +47,7 @@ float3 computeLighting(in float3 V, in float3 N, in TextureCube irradiance, in T
     float3 R  = reflect(-V, N);
     float NdotV = saturate(dot(N, V));
 
-    float3 diffuse = getIBLIrradiance(N, irradiance) * baseColour;
+    float3 diffuse = getIBLIrradiance(N, irradiance) * baseColour ;
 
     float3 colour = diffuse;
     float3 specular = getIBLRadiance(R, roughness, roughnessLevels, prefilteredEnv);

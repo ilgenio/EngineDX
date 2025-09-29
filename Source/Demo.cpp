@@ -52,6 +52,12 @@ bool Demo::init()
         camera->setPolar(0.0f);
         camera->setAzimuthal(-0.25f);
         camera->setPanning(Vector3(0.15f, -0.65f, 4.25f));
+
+        /*
+        camera->setPolar(-0.85f);
+        camera->setAzimuthal(-0.063f);
+        camera->setPanning(Vector3(-6.7f, 1.94f, 14.44f));
+        */
     }
 
     _ASSERT_EXPR(ok, "Error creating Demo");
@@ -80,7 +86,7 @@ void Demo::update()
 
 void Demo::preRender()
 {
-    imguiPass->startFrame();
+    //imguiPass->startFrame();
 
     debugDrawCommands();
     imGuiDrawCommands();
@@ -90,6 +96,11 @@ void Demo::debugDrawCommands()
 {
     if (showGrid) dd::xzSquareGrid(-10.0f, 10.0f, 0.0f, 1.0f, dd::colors::LightGray);
     if (showAxis) dd::axisTriad(ddConvert(Matrix::Identity), 0.1f, 2.0f);
+
+    char lTmp[1024];
+    sprintf_s(lTmp, 1023, "FPS: [%d]. Avg. elapsed (Ms): [%g] ", uint32_t(app->getFPS()), app->getAvgElapsedMs());
+    dd::screenText(lTmp, ddConvert(Vector3(10.0f, 10.0f, 0.0f)), dd::colors::White, 0.6f);
+
 }
 
 void Demo::imGuiDrawCommands()
@@ -126,7 +137,7 @@ void Demo::renderDebugDraw(ID3D12GraphicsCommandList *commandList, UINT width, U
 
 void Demo::renderImGui(ID3D12GraphicsCommandList *commandList)
 {
-    imguiPass->record(commandList);
+    //imguiPass->record(commandList);
 }
 
 void Demo::renderMeshes(ID3D12GraphicsCommandList *commandList, const Matrix& view, const Matrix& projection)
@@ -176,9 +187,9 @@ void Demo::render()
 
     setRenderTarget(commandList);
     renderSkybox(commandList, camera->getRot(), projection);
-    renderDebugDraw(commandList, width, height, view, projection);
-    renderImGui(commandList);
     renderMeshes(commandList, view, projection);
+    renderImGui(commandList);
+    renderDebugDraw(commandList, width, height, view, projection);
 
     barrier = CD3DX12_RESOURCE_BARRIER::Transition(d3d12->getBackBuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
     commandList->ResourceBarrier(1, &barrier);
@@ -194,8 +205,8 @@ bool Demo::loadScene()
 {
     scene = std::make_unique<Scene>();
 
+
     model.reset(scene->loadModel("Assets/Models/busterDrone/busterDrone.gltf", "Assets/Models/busterDrone"));
-    //model.reset(scene->loadModel("Assets/Models/MetalRoughSpheres/MetalRoughSpheres.gltf", "Assets/Models/MetalRoughSpheres/"));
 
     bool ok = model.get();
 
@@ -206,12 +217,17 @@ bool Demo::loadScene()
 
         model->PlayAnim(animation);
     }
+    
+    
+    model.reset(scene->loadModel("Assets/Models/BistroExterior/BistroExterior.gltf", "Assets/Models/BistroExterior/"));
+    
 
     skybox = std::make_unique<Skybox>();
     
     ok = ok && skybox->loadHDR("Assets/Textures/footprint_court.hdr");
+    //ok = ok && skybox->loadHDR("Assets/Models/BistroExterior/san_giuseppe_bridge_4k.hdr");
 
-    _ASSERT_EXPR(ok, "Error loading scene");
+    _ASSERT_EXPR(ok, L"Error loading scene");
 
     return scene != nullptr;
 }

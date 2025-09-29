@@ -59,7 +59,8 @@ void Exercise9::preRender()
 {
     imguiPass->startFrame();
 
-    renderTexture->resize(unsigned(canvasSize.x), unsigned(canvasSize.y));
+    if(canvasSize.x > 0.0f && canvasSize.y > 0.0f)
+        renderTexture->resize(unsigned(canvasSize.x), unsigned(canvasSize.y));
 }
 
 void Exercise9::renderToTexture(ID3D12GraphicsCommandList* commandList)
@@ -140,7 +141,7 @@ void Exercise9::render()
     ID3D12GraphicsCommandList* commandList = d3d12->getCommandList();
     commandList->Reset(d3d12->getCommandAllocator(), nullptr);
 
-    if(renderTexture->isValid())
+    if(renderTexture->isValid() && canvasSize.x > 0.0f && canvasSize.y > 0.0f)
     {
         renderToTexture(commandList);
     }

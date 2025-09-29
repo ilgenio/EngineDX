@@ -56,9 +56,6 @@ bool Model::load(const tinygltf::Model &srcModel, const char *basePath)
     _ASSERTE(meshes.size() == materialMappings.size());
 
 
-    MaterialList tmpMaterials;
-    tmpMaterials.reserve(srcModel.materials.size());
-
     for(const auto& srcMaterial : srcModel.materials)
     {
         Material* material = new Material;

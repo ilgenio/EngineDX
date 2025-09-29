@@ -64,7 +64,8 @@ void Exercise7::preRender()
     imguiPass->startFrame();
     ImGuizmo::BeginFrame();
 
-    renderTexture->resize(int(canvasSize.x), int(canvasSize.y));
+    if(canvasSize.x > 0.0f && canvasSize.y > 0.0f)
+        renderTexture->resize(int(canvasSize.x), int(canvasSize.y));
 }
 
 void Exercise7::imGuiCommands()
@@ -292,7 +293,7 @@ void Exercise7::render()
 
     commandList->Reset(d3d12->getCommandAllocator(), nullptr);
 
-    if (renderTexture->isValid())
+    if (renderTexture->isValid() && canvasSize.x > 0.0f && canvasSize.y > 0.0f)
     {
         renderToTexture(commandList);
     }

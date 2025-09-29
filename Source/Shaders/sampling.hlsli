@@ -30,9 +30,9 @@ float3 cosineSample(float u1, float u2)
     return float3(x, y, z);
 }
 
-float3 ggxSample(in float2 rand, float roughness)
+float3 ggxSample(in float2 rand, float alphaRoughness)
 {
-    float a2 = roughness * roughness;
+    float a2 = alphaRoughness * alphaRoughness;
     float phi = 2.0*PI*rand.x;
     float cos_theta = sqrt((1.0-rand.y)/(rand.y*(a2-1)+1));
     float sin_theta = sqrt(1-cos_theta*cos_theta);

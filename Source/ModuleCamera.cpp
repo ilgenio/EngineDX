@@ -13,8 +13,8 @@
 
 namespace
 {
-    constexpr float getRotationSpeed() { return 0.075f; }
-    constexpr float getTranslationSpeed() { return 0.003f; }
+    constexpr float getRotationSpeed() { return 25.0f; }
+    constexpr float getTranslationSpeed() { return 2.5f; } 
 }
 
 bool ModuleCamera::init()
@@ -46,91 +46,67 @@ void ModuleCamera::update()
         const Keyboard::State& keyState = keyboard.GetState();
         GamePad::State padState = pad.GetState(0);
        
-        enum EAction { ROTATING, PANNING, NONE } action = NONE;
-        float relX = 0.0f;
-        float relY = 0.0f;
-        float relZ = 0.0f;
+        float elapsedSec = app->getElapsedMilis()*0.001f;
+
+        Vector3 translate = Vector3::Zero;
+        Vector2 rotate = Vector2::Zero;
 
         // Check game pad
         if (padState.IsConnected())
         {
-            relX = -padState.thumbSticks.rightX;
-            relY = -padState.thumbSticks.rightY;
+            rotate.x = -padState.thumbSticks.rightX * elapsedSec;
+            rotate.y = -padState.thumbSticks.rightY * elapsedSec;
 
-            if (relX != 0.0f || relY != 0.0f)
+            translate.x = padState.thumbSticks.leftX  * elapsedSec;
+            translate.z = -padState.thumbSticks.leftY * elapsedSec;
+
+            if (padState.IsLeftTriggerPressed())
             {
-                action = ROTATING;
+                translate.y = 0.25f * elapsedSec;
             }
-            else
+            else if (padState.IsRightTriggerPressed())
             {
-                relX = -padState.thumbSticks.leftX*0.25f;
-                relZ = -padState.thumbSticks.leftY * 0.25f;
-
-                if (padState.IsLeftTriggerPressed())
-                {
-                    relY = 0.15f;
-                }
-                else if (padState.IsRightTriggerPressed())
-                {
-                    relY -= 0.15f;
-                }
-
-                if (relX != 0.0f || relY != 0.0f || relZ != 0.0f)
-                {
-                    action = PANNING;
-                }
+                translate.y -= 0.25f * elapsedSec;
             }
         }
         
-        // Check mouse and keyboard
-        if (action == NONE)
+        if (mouseState.leftButton)
         {
-            if (mouseState.leftButton)
-            {
-                relX = float(dragPosX - mouseState.x);
-                relY = float(dragPosY - mouseState.y);
-                action = (keyState.LeftControl) ? PANNING : ROTATING;
-            }
-   
-            if (mouseState.rightButton && keyState.LeftControl)
-            {
-                relZ = float(mouseState.y - dragPosY);
-                action = PANNING;
-            }
+            rotate.x = float(dragPosX - mouseState.x) * 0.005f;
+            rotate.y = float(dragPosY - mouseState.y) * 0.005f;
         }
 
-        switch (action)
-        {
-            case PANNING:
-                params.panning.x += -getTranslationSpeed() * relX;
-                params.panning.y += getTranslationSpeed() * relY;
-                params.panning.z += getTranslationSpeed() * relZ;
-                break;
-            case ROTATING:
-                params.polar += XMConvertToRadians(getRotationSpeed() * relX);
-                params.azimuthal += XMConvertToRadians(getRotationSpeed() * relY);
-                break;
-            case NONE:
-            default:
-                break;
-        }
+        if (keyState.W) translate.z -= 0.45f * elapsedSec;
+        if (keyState.S) translate.z += 0.45f * elapsedSec;
+        if (keyState.A) translate.x -= 0.45f * elapsedSec;
+        if (keyState.D) translate.x += 0.45f * elapsedSec;
+        if (keyState.Q) translate.y += 0.45f * elapsedSec;
+        if (keyState.E) translate.y -= 0.45f * elapsedSec;
 
+
+        Vector3 localDir = Vector3::Transform(translate, rotation);
+        params.panning += localDir * getTranslationSpeed();
+        params.polar += XMConvertToRadians(getRotationSpeed() * rotate.x);
+        params.azimuthal += XMConvertToRadians(getRotationSpeed() * rotate.y);
+
+            
         // Updates camera view 
 
         Quaternion rotation_polar = Quaternion::CreateFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), params.polar);
         Quaternion rotation_azimuthal = Quaternion::CreateFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), params.azimuthal);
         rotation = rotation_azimuthal * rotation_polar;
-        position = Vector3::Transform(params.panning, rotation);
+        position = params.panning; // Vector3::Transform(params.panning, rotation);
 
         Quaternion invRot;
         rotation.Inverse(invRot);
 
         view = Matrix::CreateFromQuaternion(invRot);
         view.Translation(Vector3::Transform(-position, invRot));
-    }
 
-    dragPosX = mouseState.x;
-    dragPosY = mouseState.y;
+        dragPosX = mouseState.x;
+        dragPosY = mouseState.y;
+
+    }
 }
 
 Matrix ModuleCamera::getPerspectiveProj(float aspect) 

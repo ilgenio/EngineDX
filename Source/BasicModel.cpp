@@ -40,6 +40,7 @@ void BasicModel::load(const char* fileName, const char* basePath, BasicMaterial:
     }
     else
     {
+
         LOG("Error loading %s: %s", fileName, error.c_str());
     }
 }

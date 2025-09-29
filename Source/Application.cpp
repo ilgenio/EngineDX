@@ -23,6 +23,7 @@
 #include "Exercise9.h"
 #include "Exercise10.h"
 #include "Exercise11.h"
+#include "Exercise12.h"
 
 #include "Demo.h"
 
@@ -81,6 +82,10 @@ Application::Application(int argc, wchar_t** argv, void* hWnd)
     else if(argc > 1 && wcscmp(argv[1], L"Exercise11") == 0)
     {
         modules.push_back(new Exercise11);
+    }
+    else if (argc > 1 && wcscmp(argv[1], L"Exercise12") == 0)
+    {
+        modules.push_back(new Exercise12);
     }
     else
     {
