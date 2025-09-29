@@ -274,6 +274,7 @@ void Model::updateAnim(float deltaTime)
     {
         Vector3 nodePos = Vector3::Zero;
         Quaternion nodeRot = Quaternion::Identity;
+        bool updated = false;
 
         for(auto it = anims.rbegin(); it != anims.rend(); ++it)
         {
@@ -284,6 +285,8 @@ void Model::updateAnim(float deltaTime)
 
             if(anim->clip->getPosRot(node->name, anim->time, pos, rot))
             {
+                updated = true;
+
                 if(anim->next)
                 {
                     float t = std::min(anim->time / anim->fadeIn, 1.0f);
@@ -300,7 +303,10 @@ void Model::updateAnim(float deltaTime)
 
         }
 
-        node->localTransform = Matrix::CreateTranslation(nodePos) * Matrix::CreateFromQuaternion(nodeRot);
-        node->dirtyWorld = true; 
+        if (updated)
+        {
+            node->localTransform = Matrix::CreateFromQuaternion(nodeRot) * Matrix::CreateTranslation(nodePos);
+            node->dirtyWorld = true;
+        }
     }
 }

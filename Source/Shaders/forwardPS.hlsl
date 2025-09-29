@@ -17,7 +17,7 @@ float4 main(float3 worldPos : POSITION, float3 normal : NORMAL, float2 texCoord 
     
     // IBL
     // TODO :use alphaRoughness instead of roughness ? 
-    float3 colour = computeLighting(V, N, irradiance, radiance, brdfLUT, numRoughnessLevels, baseColour, alphaRoughness, metallic);
+    float3 colour = computeLighting(V, N, irradiance, radiance, brdfLUT, numRoughnessLevels, baseColour, roughness, metallic);
 
 #if 0
     // Direct lights
