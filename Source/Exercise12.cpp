@@ -106,13 +106,7 @@ void Exercise12::renderToTexture(ID3D12GraphicsCommandList* commandList)
     BEGIN_EVENT(commandList, "Exercise12 Render to Texture");
 
     renderTexture->transitionToRTV(commandList);
-    renderTexture->bindAsRenderTarget(commandList);
-    renderTexture->clear(commandList);
-
-    D3D12_VIEWPORT viewport{ 0.0f, 0.0f, float(width), float(height), 0.0f, 1.0f };
-    D3D12_RECT scissor = { 0, 0, LONG(width), LONG(height) };
-    commandList->RSSetViewports(1, &viewport);
-    commandList->RSSetScissorRects(1, &scissor);
+    renderTexture->setRenderTarget(commandList);
 
     skyboxRenderPass->record(commandList, tableDesc.getGPUHandle(TEX_SLOT_CUBEMAP), camera->getRot(), proj);
 

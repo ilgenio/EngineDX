@@ -355,8 +355,7 @@ void Exercise8::renderToTexture(ID3D12GraphicsCommandList* commandList)
     mvp = mvp.Transpose();
         
     renderTexture->transitionToRTV(commandList);
-    renderTexture->bindAsRenderTarget(commandList);
-    renderTexture->clear(commandList);
+    renderTexture->setRenderTarget(commandList);
     
     PerFrame perFrame;
     perFrame.ambient  = ambient;
@@ -365,14 +364,7 @@ void Exercise8::renderToTexture(ID3D12GraphicsCommandList* commandList)
     perFrame.numSpotLights = lightType == LIGHT_SPOT ? 1 : 0;
     perFrame.viewPos = camera->getPos();
 
-    ID3D12DescriptorHeap* descriptorHeaps[] = { descriptors->getHeap(), samplers->getHeap() };
-    commandList->SetDescriptorHeaps(2, descriptorHeaps);
     commandList->SetGraphicsRootSignature(rootSignature.Get());
-
-    D3D12_VIEWPORT viewport{ 0.0f, 0.0f, float(width), float(height), 0.0f, 1.0f };
-    D3D12_RECT scissor = { 0, 0, LONG(width), LONG(height) };
-    commandList->RSSetViewports(1, &viewport);
-    commandList->RSSetScissorRects(1, &scissor);
 
     commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &mvp, 0);
     commandList->SetGraphicsRootConstantBufferView(1, ringBuffer->allocBuffer(&perFrame));
@@ -421,6 +413,9 @@ void Exercise8::render()
 
     commandList->Reset(d3d12->getCommandAllocator(), nullptr);
 
+    ID3D12DescriptorHeap* descriptorHeaps[] = { descriptors->getHeap(), samplers->getHeap() };
+    commandList->SetDescriptorHeaps(2, descriptorHeaps);
+
     if (renderTexture->isValid() && canvasSize.x > 0.0f && canvasSize.y > 0.0f)
     {
         renderToTexture(commandList);
@@ -436,9 +431,6 @@ void Exercise8::render()
 
     float clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
     commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
-
-    ID3D12DescriptorHeap* descriptorHeaps[] = { descriptors->getHeap(), samplers->getHeap() };
-    commandList->SetDescriptorHeaps(2, descriptorHeaps);
 
     imguiPass->record(commandList);
 

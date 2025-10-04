@@ -95,16 +95,7 @@ void Exercise11::renderToTexture(ID3D12GraphicsCommandList* commandList)
     BEGIN_EVENT(commandList, "Exercise11 Render to Texture");
 
     renderTexture->transitionToRTV(commandList);
-    renderTexture->bindAsRenderTarget(commandList);
-    renderTexture->clear(commandList);
-
-    ID3D12DescriptorHeap* descriptorHeaps[] = { descriptors->getHeap(), samplers->getHeap() };
-    commandList->SetDescriptorHeaps(2, descriptorHeaps);
-
-    D3D12_VIEWPORT viewport{ 0.0f, 0.0f, float(width), float(height), 0.0f, 1.0f };
-    D3D12_RECT scissor = { 0, 0, LONG(width), LONG(height) };
-    commandList->RSSetViewports(1, &viewport);
-    commandList->RSSetScissorRects(1, &scissor);
+    renderTexture->setRenderTarget(commandList);    
 
     skyboxRenderPass->record(commandList, tableDesc.getGPUHandle(TEX_SLOT_CUBEMAP), camera->getRot(), proj);
 
@@ -218,6 +209,9 @@ void Exercise11::render()
         irradianceMap = irradianceMapPass->generate(tableDesc.getGPUHandle(TEX_SLOT_CUBEMAP), 1024, 1024);
         tableDesc.createCubeTextureSRV(irradianceMap.Get(), TEX_SLOT_IRRADIANCE);
     }
+
+    ID3D12DescriptorHeap* descriptorHeaps[] = { app->getShaderDescriptors()->getHeap(), samplers->getHeap()};
+    commandList->SetDescriptorHeaps(2, descriptorHeaps);
 
     if (renderTexture->isValid() && canvasSize.x > 0.0f && canvasSize.y > 0.0f)
     {

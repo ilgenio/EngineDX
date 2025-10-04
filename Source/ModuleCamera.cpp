@@ -103,10 +103,10 @@ void ModuleCamera::update()
         view = Matrix::CreateFromQuaternion(invRot);
         view.Translation(Vector3::Transform(-position, invRot));
 
-        dragPosX = mouseState.x;
-        dragPosY = mouseState.y;
-
     }
+
+    dragPosX = mouseState.x;
+    dragPosY = mouseState.y;
 }
 
 Matrix ModuleCamera::getPerspectiveProj(float aspect) 

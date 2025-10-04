@@ -42,6 +42,11 @@ class Demo : public Module
     bool showGrid = false;
 
     ShaderTableDesc debugDesc;
+
+    std::unique_ptr<RenderTexture> renderTexture;
+    ImVec2 canvasSize;
+    ImVec2 canvasPos;
+
 public:
 
     Demo();
@@ -54,6 +59,7 @@ public:
     virtual void render() override;
 
 private:
+    void renderToTexture(ID3D12GraphicsCommandList* commandList);
     void setRenderTarget(ID3D12GraphicsCommandList* commandList);
     void renderDebugDraw(ID3D12GraphicsCommandList* commandList, UINT width, UINT height, const Matrix& view, const Matrix& projection );
     void renderImGui(ID3D12GraphicsCommandList* commandList);

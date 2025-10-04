@@ -13,8 +13,8 @@ class RenderTexture
     ComPtr<ID3D12Resource> texture;
     ComPtr<ID3D12Resource> depthTexture;
 
-    int width = 0;
-    int height = 0;
+    UINT width = 0;
+    UINT height = 0;
 
     DXGI_FORMAT format;
     DXGI_FORMAT depthFormat;
@@ -35,15 +35,17 @@ public:
     ~RenderTexture();
 
     bool isValid() const { return width > 0 || height > 0;  }
-    void resize(int width, int height);
+    void resize(UINT width, UINT height);
 
     void transitionToRTV(ID3D12GraphicsCommandList* cmdList);
     void transitionToSRV(ID3D12GraphicsCommandList* cmdList);
 
-    void bindAsRenderTarget(ID3D12GraphicsCommandList* cmdList);
-    void clear(ID3D12GraphicsCommandList* cmdList);
+    void setRenderTarget(ID3D12GraphicsCommandList* cmdList);
+
     void bindAsShaderResource(ID3D12GraphicsCommandList* cmdList, int slot);
 
+    UINT getWidth() const { return width;  }
+    UINT getHeight() const { return height;  }
     D3D12_GPU_DESCRIPTOR_HANDLE getSrvHandle() const { return srvDesc.getGPUHandle(); }
     const ShaderTableDesc& getSrvTableDesc() const { return srvDesc;  }
     const RenderTargetDesc& getRtvDesc() const { return rtvDesc; }

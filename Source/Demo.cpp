@@ -18,6 +18,7 @@
 #include "Model.h"
 #include "Skybox.h"
 #include "AnimationClip.h"
+#include "RenderTexture.h"
 
 Demo::Demo()
 {
@@ -40,8 +41,9 @@ bool Demo::init()
 
         debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue(), debugDesc.getCPUHandle(0), debugDesc.getGPUHandle(0));
         imguiPass = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd(), debugDesc.getCPUHandle(1), debugDesc.getGPUHandle(1));
-        renderMeshPass = std::make_unique<RenderMeshPass>();
         skyboxPass = std::make_unique<SkyboxRenderPass>();
+        renderTexture = std::make_unique<RenderTexture>("Exercise12", DXGI_FORMAT_R8G8B8A8_UNORM, Vector4(0.188f, 0.208f, 0.259f, 1.0f), DXGI_FORMAT_D32_FLOAT, 1.0f);
+        renderMeshPass = std::make_unique<RenderMeshPass>();
 
         ok = ok && renderMeshPass->init();
     }
@@ -51,7 +53,7 @@ bool Demo::init()
         ModuleCamera* camera = app->getCamera();
         camera->setPolar(0.0f);
         camera->setAzimuthal(-0.25f);
-        camera->setPanning(Vector3(0.15f, -0.65f, 4.25f));
+        camera->setPanning(Vector3(0.15f, 0.95f, 4.25f));
 
         /*
         camera->setPolar(-0.85f);
@@ -86,10 +88,13 @@ void Demo::update()
 
 void Demo::preRender()
 {
-    //imguiPass->startFrame();
+    imguiPass->startFrame();
 
+    imGuiDrawCommands();    
     debugDrawCommands();
-    imGuiDrawCommands();
+
+    if (canvasSize.x > 0.0f && canvasSize.y > 0.0f)
+        renderTexture->resize(unsigned(canvasSize.x), unsigned(canvasSize.y));
 }
 
 void Demo::debugDrawCommands()
@@ -105,7 +110,40 @@ void Demo::debugDrawCommands()
 
 void Demo::imGuiDrawCommands()
 {
+    ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
 
+    ImGui::Begin("Demo Viewer Options");
+    ImGui::Separator();
+    ImGui::Text("FPS: [%d]. Avg. elapsed (Ms): [%g] ", uint32_t(app->getFPS()), app->getAvgElapsedMs());
+    ImGui::Separator();
+    ImGui::Checkbox("Show grid", &showGrid);
+    ImGui::Checkbox("Show axis", &showAxis);
+
+    ImGui::End();
+
+    bool viewerFocused = false;
+    ImGui::Begin("Scene");
+    const char* frameName = "Scene Frame";
+    ImGuiID id(10);
+
+    ImVec2 max = ImGui::GetWindowContentRegionMax();
+    ImVec2 min = ImGui::GetWindowContentRegionMin();
+    canvasPos = min;
+    canvasSize = ImVec2(max.x - min.x, max.y - min.y);
+    ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+
+    ImGui::BeginChildFrame(id, canvasSize, ImGuiWindowFlags_NoScrollbar);
+    viewerFocused = ImGui::IsWindowFocused();
+
+    if (renderTexture->isValid())
+    {
+        ImGui::Image((ImTextureID)renderTexture->getSrvHandle().ptr, canvasSize);
+    }
+
+    ImGui::EndChildFrame();
+    ImGui::End();
+
+    app->getCamera()->setEnable(viewerFocused);
 }
 
 void Demo::setRenderTarget(ID3D12GraphicsCommandList *commandList)
@@ -137,7 +175,7 @@ void Demo::renderDebugDraw(ID3D12GraphicsCommandList *commandList, UINT width, U
 
 void Demo::renderImGui(ID3D12GraphicsCommandList *commandList)
 {
-    //imguiPass->record(commandList);
+    imguiPass->record(commandList);
 }
 
 void Demo::renderMeshes(ID3D12GraphicsCommandList *commandList, const Matrix& view, const Matrix& projection)
@@ -163,33 +201,49 @@ void Demo::renderSkybox(ID3D12GraphicsCommandList *commandList, const Quaternion
     skyboxPass->record(commandList, skybox->getCubemapSRV(), cameraRot, projection);
 }
 
+void Demo::renderToTexture(ID3D12GraphicsCommandList* commandList)
+{
+    ModuleCamera* camera = app->getCamera();
+
+    const Matrix& view = camera->getView();
+    Matrix proj = ModuleCamera::getPerspectiveProj(float(renderTexture->getWidth()) / float(renderTexture->getHeight()));
+
+    BEGIN_EVENT(commandList, "Demo Render Scene to Texture");
+
+    renderTexture->transitionToRTV(commandList);
+
+    renderTexture->setRenderTarget(commandList);
+
+    renderSkybox(commandList, camera->getRot(), proj);
+    renderMeshes(commandList, view, proj);
+    renderDebugDraw(commandList, renderTexture->getWidth(), renderTexture->getHeight(), view, proj);
+
+    renderTexture->transitionToSRV(commandList);
+
+    END_EVENT(commandList);
+
+}
+
 void Demo::render()
 {
     ModuleD3D12* d3d12 = app->getD3D12();
-    ModuleCamera* camera = app->getCamera();
-
-    UINT width = d3d12->getWindowWidth();
-    UINT height = d3d12->getWindowHeight();
-
-    Matrix view = camera->getView();
-    Matrix projection = ModuleCamera::getPerspectiveProj(float(width) / float(height));
 
     ID3D12GraphicsCommandList* commandList = d3d12->getCommandList();
     commandList->Reset(d3d12->getCommandAllocator(), nullptr);
 
-    ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
-    ModuleSamplers* samplers = app->getSamplers();
-    ID3D12DescriptorHeap* descriptorHeaps[] = { descriptors->getHeap(), samplers->getHeap() };
+    ID3D12DescriptorHeap* descriptorHeaps[] = { app->getShaderDescriptors()->getHeap(), app->getSamplers()->getHeap() };
     commandList->SetDescriptorHeaps(2, descriptorHeaps);
+
+    if (renderTexture->isValid() && canvasSize.x > 0.0f && canvasSize.y > 0.0f)
+    {
+        renderToTexture(commandList);
+    }
 
     CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(d3d12->getBackBuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
     commandList->ResourceBarrier(1, &barrier);
 
     setRenderTarget(commandList);
-    renderSkybox(commandList, camera->getRot(), projection);
-    renderMeshes(commandList, view, projection);
     renderImGui(commandList);
-    renderDebugDraw(commandList, width, height, view, projection);
 
     barrier = CD3DX12_RESOURCE_BARRIER::Transition(d3d12->getBackBuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
     commandList->ResourceBarrier(1, &barrier);
@@ -219,13 +273,11 @@ bool Demo::loadScene()
     }
     
     
-    model.reset(scene->loadModel("Assets/Models/BistroExterior/BistroExterior.gltf", "Assets/Models/BistroExterior/"));
-    
+    //model.reset(scene->loadModel("Assets/Models/BistroExterior/BistroExterior.gltf", "Assets/Models/BistroExterior/"));    
 
     skybox = std::make_unique<Skybox>();
     
     ok = ok && skybox->loadHDR("Assets/Textures/footprint_court.hdr");
-    //ok = ok && skybox->loadHDR("Assets/Models/BistroExterior/san_giuseppe_bridge_4k.hdr");
 
     _ASSERT_EXPR(ok, L"Error loading scene");
 

@@ -77,16 +77,7 @@ void Exercise9::renderToTexture(ID3D12GraphicsCommandList* commandList)
     BEGIN_EVENT(commandList, "Sky Cubemap Render Pass");
 
     renderTexture->transitionToRTV(commandList);
-    renderTexture->bindAsRenderTarget(commandList);
-    renderTexture->clear(commandList);
-
-    D3D12_VIEWPORT viewport{ 0.0f, 0.0f, float(width), float(height), 0.0f, 1.0f };
-    D3D12_RECT scissor = { 0, 0, LONG(width), LONG(height) };
-    commandList->RSSetViewports(1, &viewport);
-    commandList->RSSetScissorRects(1, &scissor);
-
-    ID3D12DescriptorHeap* descriptorHeaps[] = { descriptors->getHeap(), samplers->getHeap() };
-    commandList->SetDescriptorHeaps(2, descriptorHeaps);
+    renderTexture->setRenderTarget(commandList);
 
     Matrix proj = ModuleCamera::getPerspectiveProj(float(width) / float(height));
 
@@ -140,6 +131,11 @@ void Exercise9::render()
 
     ID3D12GraphicsCommandList* commandList = d3d12->getCommandList();
     commandList->Reset(d3d12->getCommandAllocator(), nullptr);
+
+
+    ID3D12DescriptorHeap* descriptorHeaps[] = { descriptors->getHeap(), samplers->getHeap() };
+    commandList->SetDescriptorHeaps(2, descriptorHeaps);
+
 
     if(renderTexture->isValid() && canvasSize.x > 0.0f && canvasSize.y > 0.0f)
     {
