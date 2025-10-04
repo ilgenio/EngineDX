@@ -90,6 +90,8 @@ void Demo::preRender()
 {
     imguiPass->startFrame();
 
+    ImGui::DockSpaceOverViewport();
+
     imGuiDrawCommands();    
     debugDrawCommands();
 

@@ -26,6 +26,7 @@
 #include "Exercise12.h"
 
 #include "Demo.h"
+#include "StartMenu.h"  
 
 Application::Application(int argc, wchar_t** argv, void* hWnd)
 {
@@ -87,11 +88,13 @@ Application::Application(int argc, wchar_t** argv, void* hWnd)
     {
         modules.push_back(new Exercise12);
     }
-    else
+    else if (argc > 1 && wcscmp(argv[1], L"Demo") == 0)
     {
         modules.push_back(new Demo);
-        //modules.push_back(render = new ModuleRender());
-        //modules.push_back(level = new ModuleLevel());
+    }
+    else
+    {
+        modules.push_back(new StartMenu);
     }
 }
 
@@ -133,6 +136,21 @@ void Application::update()
 
     if (!app->paused)
     {
+        for(auto it = swapModules.begin(); it != swapModules.end(); ++it)
+        {
+            auto pos = std::find(modules.begin(), modules.end(), it->first);
+            if (pos != modules.end())
+            {
+                (*pos)->cleanUp();
+                delete *pos;
+
+                it->second->init();
+                *pos = it->second;
+            }
+        }
+
+        swapModules.clear();
+
         for (auto it = modules.begin(); it != modules.end(); ++it)
             (*it)->update();
 

@@ -67,7 +67,7 @@ ComPtr<ID3D12Resource> IrradianceMapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE c
     Constants constants = {};
     constants.samples = 1024;
     constants.cubeMapSize = static_cast<INT>(cubeSize);
-    constants.lodBias = 1.0;
+    constants.lodBias = 1;
 
     commandList->SetGraphicsRoot32BitConstants(1, sizeof(Constants) / sizeof(UINT32), &constants, 0);
 

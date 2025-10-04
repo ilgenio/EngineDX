@@ -30,6 +30,7 @@ public:
 	void         update();
 	bool         cleanUp();
 
+    
     ModuleD3D12*                getD3D12() { return d3d12; }
     ModuleCamera*               getCamera() { return camera;  }
     ModuleRender*               getRender() { return render;  }
@@ -38,6 +39,8 @@ public:
     ModuleRTDescriptors*        getRTDescriptors() { return rtDescriptors;  }
     ModuleDSDescriptors*        getDSDescriptors() { return dsDescriptors; }
     ModuleSamplers*             getSamplers() { return samplers;  }
+    void                        swapModule(Module* from, Module* to) { swapModules.push_back(std::make_pair(from, to)); }
+
     ModuleRingBuffer*           getRingBuffer() { return ringBuffer; }
 
     float                       getFPS() const { return 1000.0f * float(MAX_FPS_TICKS) / tickSum; }
@@ -52,6 +55,7 @@ private:
     typedef std::array<uint64_t, MAX_FPS_TICKS> TickList;
 
     std::vector<Module*> modules;
+    std::vector<std::pair<Module*, Module*> > swapModules;
 
     ModuleD3D12* d3d12 = nullptr;
     ModuleCamera* camera = nullptr;

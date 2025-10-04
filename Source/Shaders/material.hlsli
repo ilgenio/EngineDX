@@ -15,7 +15,7 @@ struct Material
     float  alphaCutoff;
     float  occlusionStrength;
     uint   flags;                   // Bitfield flags
-    uint   padding[2];                 // Padding to 16 bytes
+    uint   padding[2];              // Padding to 16 bytes
 };
 
 void getMetallicRoughness(in Material material, in Texture2D baseColourTex, in Texture2D metallicRoughnessTex,

@@ -86,9 +86,6 @@ void ImGuiPass::startFrame()
 
     ImGui::NewFrame();
 
-    ImGui::DockSpaceOverViewport();
-
-
     // imgui commands
     //ImGui::ShowDemoWindow();
 }
