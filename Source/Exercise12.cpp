@@ -81,6 +81,8 @@ void Exercise12::preRender()
 {
     imguiPass->startFrame();
 
+    ImGui::DockSpaceOverViewport();
+
     if(canvasSize.x > 0.0f && canvasSize.y > 0.0f)
         renderTexture->resize(unsigned(canvasSize.x), unsigned(canvasSize.y));
 }

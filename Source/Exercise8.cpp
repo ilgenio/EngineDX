@@ -82,6 +82,9 @@ bool Exercise8::cleanUp()
 void Exercise8::preRender()
 {
     imguiPass->startFrame();
+
+    ImGui::DockSpaceOverViewport();
+
     ImGuizmo::BeginFrame();
 
     if(canvasSize.x > 0.0f && canvasSize.y > 0.0f)

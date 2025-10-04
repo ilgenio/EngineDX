@@ -1,6 +1,5 @@
 #include "Globals.h"
 #include "Application.h"
-#include "ModuleRender.h"
 #include "ModuleD3D12.h"
 #include "ModuleInput.h"
 #include "ModuleCamera.h"
@@ -10,22 +9,8 @@
 #include "ModuleDSDescriptors.h"
 #include "ModuleSamplers.h"
 #include "ModuleRingBuffer.h"
-#include "ModuleLevel.h"
+#include "DemoDescriptors.h"
 
-#include "Exercise1.h"
-#include "Exercise2.h"
-#include "Exercise3.h"
-#include "Exercise4.h"
-#include "Exercise5.h"
-#include "Exercise6.h"
-#include "Exercise7.h"
-#include "Exercise8.h"
-#include "Exercise9.h"
-#include "Exercise10.h"
-#include "Exercise11.h"
-#include "Exercise12.h"
-
-#include "Demo.h"
 #include "StartMenu.h"  
 
 Application::Application(int argc, wchar_t** argv, void* hWnd)
@@ -40,57 +25,17 @@ Application::Application(int argc, wchar_t** argv, void* hWnd)
     modules.push_back(samplers = new ModuleSamplers());
     modules.push_back(ringBuffer = new ModuleRingBuffer());
 
-    if(argc > 1 && wcscmp(argv[1], L"Exercise1") == 0)
-     {
-        modules.push_back(new Exercise1);
-    }
-    else if(argc > 1 && wcscmp(argv[1], L"Exercise2") == 0)
+    if (argc > 1)
     {
-        modules.push_back(new Exercise2);
-    }
-    else if(argc > 1 && wcscmp(argv[1], L"Exercise3") == 0)
-    {
-        modules.push_back(new Exercise3);
-    }
-    else if (argc > 1 && wcscmp(argv[1], L"Exercise4") == 0)
-    {
-        modules.push_back(new Exercise4);
-    }
-    else if (argc > 1 && wcscmp(argv[1], L"Exercise5") == 0)
-    {
-        modules.push_back(new Exercise5);
-    }
-    else if (argc > 1 && wcscmp(argv[1], L"Exercise6") == 0)
-    {
-        modules.push_back(new Exercise6);
-    }
-    else if (argc > 1 && wcscmp(argv[1], L"Exercise7") == 0)
-    {
-        modules.push_back(new Exercise7);
-    }
-    else if (argc > 1 && wcscmp(argv[1], L"Exercise8") == 0)
-    {
-        modules.push_back(new Exercise8);
-    }
-    else if (argc > 1 && wcscmp(argv[1], L"Exercise9") == 0)
-    {
-        modules.push_back(new Exercise9);
-    }
-    else if(argc > 1 && wcscmp(argv[1], L"Exercise10") == 0)
-    {
-        modules.push_back(new Exercise10);
-    }
-    else if(argc > 1 && wcscmp(argv[1], L"Exercise11") == 0)
-    {
-        modules.push_back(new Exercise11);
-    }
-    else if (argc > 1 && wcscmp(argv[1], L"Exercise12") == 0)
-    {
-        modules.push_back(new Exercise12);
-    }
-    else if (argc > 1 && wcscmp(argv[1], L"Demo") == 0)
-    {
-        modules.push_back(new Demo);
+        char cstr[512];
+        size_t converted = 0;
+        wcstombs_s(&converted, cstr, 512, argv[1], 511);
+        for(auto demo : getDemoDescriptors())
+            if (strcmp(cstr, demo.name) == 0)
+            {
+                modules.push_back(demo.createFunc());
+                break;
+            }
     }
     else
     {
