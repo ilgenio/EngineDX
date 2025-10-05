@@ -31,20 +31,23 @@ float4 Exercise12PS(float3 positionWS : POSITION, float3 normalWS : NORMAL, floa
 
     float NdotV = saturate(dot(N, V));
 
-    float3 diffuse = getIBLIrradiance(N, irradiance) * baseColour;
+    float3 diffuse = getDiffuseAmbientLight(N, baseColour, irradiance);
     
-    float3 colour = diffuse;
-    if(!useOnlyIrradiance)
+    float3 colour;
+    ;
+    if(useOnlyIrradiance)
     {
-        float3 specular = getIBLRadiance(R, roughness, roughnessLevels, radiance);
-
-        float3 brdf_metal_fresnel = getIBLBRDF(NdotV, roughness, baseColour, brdfLUT);
-        float3 brdf_dielectric_fresnel = getIBLBRDF(NdotV, roughness, 0.04, brdfLUT);
-
-        float3 dielectric_colour = diffuse + specular * brdf_dielectric_fresnel;
-        float3 metal_colour = specular * brdf_metal_fresnel;
-
-        colour = lerp(dielectric_colour, metal_colour, metallic);
+        colour = diffuse;
+    }
+    else
+    {
+        float3 firstTerm, secondTerm;
+        getSpecularAmbientLightNoFresnel(R, NdotV, roughness, roughnessLevels, radiance, brdfLUT, firstTerm, secondTerm);
+    
+        float3 metal_specular = baseColour * firstTerm + secondTerm;
+        float3 dielectric_specular = 0.04 * firstTerm + secondTerm;
+    
+        colour = lerp(diffuse + dielectric_specular, metal_specular, metallic);
     }
     
 

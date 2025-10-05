@@ -29,7 +29,7 @@ float4 Exercise11PS(float3 positionWS : POSITION, float3 normalWS : NORMAL, floa
 
     float NdotV = saturate(dot(N, V));
 
-    float3 colour = getIBLIrradiance(N, irradiance) * baseColour;
+    float3 colour = getDiffuseAmbientLight(N, baseColour, irradiance);
 
     float3 ldr = PBRNeutralToneMapping(colour);
     

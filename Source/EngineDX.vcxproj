@@ -214,8 +214,6 @@
     <ClInclude Include="ModuleD3D12.h" />
     <ClInclude Include="ModuleDSDescriptors.h" />
     <ClInclude Include="ModuleInput.h" />
-    <ClInclude Include="ModuleLevel.h" />
-    <ClInclude Include="ModuleRender.h" />
     <ClInclude Include="ModuleResources.h" />
     <ClInclude Include="ModuleRingBuffer.h" />
     <ClInclude Include="ModuleRTDescriptors.h" />
@@ -358,8 +356,6 @@
     <ClCompile Include="ModuleD3D12.cpp" />
     <ClCompile Include="ModuleDSDescriptors.cpp" />
     <ClCompile Include="ModuleInput.cpp" />
-    <ClCompile Include="ModuleLevel.cpp" />
-    <ClCompile Include="ModuleRender.cpp" />
     <ClCompile Include="ModuleResources.cpp" />
     <ClCompile Include="ModuleRingBuffer.cpp" />
     <ClCompile Include="ModuleRTDescriptors.cpp" />

@@ -18,28 +18,20 @@ float computeLod(float pdf, int numSamples, int width)
     return max(0.5*log2(solidAngle/texelSolidAngle), 0.0);
 }
 
-float3 getIBLIrradiance(float3 N, TextureCube irradianceMap)
+float3 getDiffuseAmbientLight(float3 N, float3 baseColour, TextureCube irradianceMap)
 {
-    return irradianceMap.Sample(bilinearClamp, N).rgb;
+    return irradianceMap.Sample(bilinearClamp, N).rgb * baseColour;
 }
 
-float3 getIBLRadiance(in float3 R, in float roughness, in float roughnessLevels, TextureCube prefilteredEnvMap)
+void getSpecularAmbientLightNoFresnel(in float3 R, in float NdotV, in float roughness, in float roughnessLevels, in TextureCube prefilteredEnvMap, 
+                                      in Texture2D brdfLUT, out float3 firstTerm, out float3 secondTerm)
 {
-    return prefilteredEnvMap.SampleLevel(bilinearClamp, R, roughness * (roughnessLevels - 1)).rgb;
+    float3 radiance = prefilteredEnvMap.SampleLevel(bilinearClamp, R, roughness * (roughnessLevels - 1)).rgb;
+    float2 fab = brdfLUT.Sample(bilinearClamp, float2(NdotV, roughness)).rg;
+    
+    firstTerm = radiance * fab.x;
+    secondTerm = radiance * fab.y;
 }
-
-float3 getIBLBRDF(float NdotV, float roughness, float F0, Texture2D brdfLUT)
-{
-    float2 ab = brdfLUT.Sample(bilinearClamp, float2(NdotV, roughness)).rg;
-    return F0 * ab.x + ab.y;
-}
-
-float3 getIBLBRDF(float NdotV, float roughness, float3 F0, Texture2D brdfLUT)
-{
-    float2 ab = brdfLUT.Sample(bilinearClamp, float2(NdotV, roughness)).rg;
-    return F0 * ab.x + ab.y;
-}
-
 
 float3 computeLighting(in float3 V, in float3 N, in TextureCube irradiance, in TextureCube prefilteredEnv, in Texture2D brdfLUT, in float roughnessLevels, 
                        in float3 baseColour, in float roughness, in float metallic)
@@ -47,20 +39,15 @@ float3 computeLighting(in float3 V, in float3 N, in TextureCube irradiance, in T
     float3 R  = reflect(-V, N);
     float NdotV = saturate(dot(N, V));
 
-    float3 diffuse = getIBLIrradiance(N, irradiance) * baseColour ;
+    float3 diffuse = getDiffuseAmbientLight(N, baseColour, irradiance);
 
-    float3 colour = diffuse;
-    float3 specular = getIBLRadiance(R, roughness, roughnessLevels, prefilteredEnv);
-
-    float3 brdf_metal_fresnel = getIBLBRDF(NdotV, roughness, baseColour, brdfLUT);
-    float3 brdf_dielectric_fresnel = getIBLBRDF(NdotV, roughness, 0.04, brdfLUT);
-
-    float3 dielectric_colour = diffuse + specular * brdf_dielectric_fresnel;
-    float3 metal_colour = specular * brdf_metal_fresnel;
-
-    colour = lerp(dielectric_colour, metal_colour, metallic);
-     
-    return colour;
+    float3 firstTerm, secondTerm;
+    getSpecularAmbientLightNoFresnel(R, NdotV, roughness, roughnessLevels, prefilteredEnv, brdfLUT, firstTerm, secondTerm);
+    
+    float3 metal_specular = baseColour*firstTerm + secondTerm;    
+    float3 dielectric_specular = 0.04*firstTerm + secondTerm;
+    
+    return lerp(diffuse+dielectric_specular, metal_specular, metallic);
 }
     
 #endif /* ibl_hlsli */

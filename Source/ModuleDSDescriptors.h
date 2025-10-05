@@ -4,6 +4,13 @@
 #include "HandleManager.h"
 #include "DepthStencilDesc.h"
 
+//-----------------------------------------------------------------------------
+// ModuleDSDescriptors manages a pool of depth-stencil view (DSV) descriptors
+// for Direct3D 12 resources. It provides creation, reference counting, and
+// handle management for depth-stencil descriptors, allowing efficient reuse
+// and safe release of DSVs. This module is essential for managing depth
+// resources in the rendering pipeline.
+//-----------------------------------------------------------------------------
 class ModuleDSDescriptors : public Module
 {
     friend class DepthStencilDesc;

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ModuleRender.h"
+#include "Module.h"
 
 class Exercise2 : public Module
 {
