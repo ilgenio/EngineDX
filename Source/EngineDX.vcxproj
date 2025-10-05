@@ -177,7 +177,6 @@
     <ClInclude Include="BasicMesh.h" />
     <ClInclude Include="BasicModel.h" />
     <ClInclude Include="CubemapMesh.h" />
-    <ClInclude Include="D3D12MemAlloc.h" />
     <ClInclude Include="DebugDrawPass.h" />
     <ClInclude Include="debug_draw.hpp" />
     <ClInclude Include="Demo.h" />
@@ -314,7 +313,6 @@
     <ClCompile Include="BasicMesh.cpp" />
     <ClCompile Include="BasicModel.cpp" />
     <ClCompile Include="CubemapMesh.cpp" />
-    <ClCompile Include="D3D12MemAlloc.cpp" />
     <ClCompile Include="DebugDrawPass.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
