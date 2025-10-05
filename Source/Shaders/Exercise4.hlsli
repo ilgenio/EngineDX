@@ -1,7 +1,0 @@
-#ifndef EXERCISE4_HLSLI
-#define EXERCISE4_HLSLI
-
-
-
-
-#endif // EXERCISE4_HLSLI

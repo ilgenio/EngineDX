@@ -1,8 +1,8 @@
 #include "Globals.h"
 #include "Exercise1.h"
 
-#include "Application.h"
-#include "ModuleD3D12.h"
+#include "../Application.h"
+#include "../ModuleD3D12.h"
 
 #include <d3d12.h>
 #include "d3dx12.h"
