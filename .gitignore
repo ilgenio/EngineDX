@@ -116,3 +116,4 @@ Source/.vscode/settings.json
 /Source/.vs
 Source/build/tmp/x64/Release/EngineDX.res
 Source/build/out/x64/Release/EngineDX.exe
+Game/imgui.ini

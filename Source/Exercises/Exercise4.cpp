@@ -76,6 +76,7 @@ void Exercise4::preRender()
 
 void Exercise4::render()
 {
+    ImGui::SetNextWindowSize(ImVec2(300, 200), ImGuiCond_FirstUseEver);
     ImGui::Begin("Texture Viewer Options");
     ImGui::Checkbox("Show grid", &showGrid);
     ImGui::Checkbox("Show axis", &showAxis);

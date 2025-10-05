@@ -30,13 +30,9 @@ bool Exercise9::init()
     ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
     ModuleD3D12* d3d12 = app->getD3D12();
 
-    debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue());
-    skyboxRenderPass = std::make_unique<SkyboxRenderPass>();
-
-    renderTexture = std::make_unique<RenderTexture>("Exercise9", DXGI_FORMAT_R8G8B8A8_UNORM, Vector4(0.188f, 0.208f, 0.259f, 1.0f), DXGI_FORMAT_D32_FLOAT, 1.0f);
-
     tableDesc = descriptors->allocTable();
-    imguiPass = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd(), tableDesc.getCPUHandle(0), tableDesc.getGPUHandle(0));
+    debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue(), tableDesc.getCPUHandle(0), tableDesc.getGPUHandle(0));
+    skyboxRenderPass = std::make_unique<SkyboxRenderPass>();
 
     cubemap = resources->createTextureFromFile(std::wstring(L"Assets/Textures/cubemap.dds"));
 
@@ -50,82 +46,16 @@ bool Exercise9::init()
 
 bool Exercise9::cleanUp()
 {
-    imguiPass.reset();
-
     return true;
 }
 
 void Exercise9::preRender()
 {
-    imguiPass->startFrame();
-
-    ImGui::DockSpaceOverViewport();
-
-    if(canvasSize.x > 0.0f && canvasSize.y > 0.0f)
-        renderTexture->resize(unsigned(canvasSize.x), unsigned(canvasSize.y));
-}
-
-void Exercise9::renderToTexture(ID3D12GraphicsCommandList* commandList)
-{
-    ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
-    ModuleRTDescriptors* rtDescriptors = app->getRTDescriptors();
-    ModuleDSDescriptors* dsDescriptors = app->getDSDescriptors();
-    ModuleSamplers* samplers = app->getSamplers();
-    ModuleCamera* camera = app->getCamera();
-
-    unsigned width = unsigned(canvasSize.x);
-    unsigned height = unsigned(canvasSize.y);
-
-    BEGIN_EVENT(commandList, "Sky Cubemap Render Pass");
-
-    renderTexture->transitionToRTV(commandList);
-    renderTexture->setRenderTarget(commandList);
-
-    Matrix proj = ModuleCamera::getPerspectiveProj(float(width) / float(height));
-
-    skyboxRenderPass->record(commandList, tableDesc.getGPUHandle(1), camera->getRot(), proj);
-
-    END_EVENT(commandList);
-
-    if (showGrid) dd::xzSquareGrid(-10.0f, 10.0f, 0.0f, 1.0f, dd::colors::LightGray);
-    if (showAxis) dd::axisTriad(ddConvert(Matrix::Identity), 0.1f, 1.0f);
-
-    debugDrawPass->record(commandList, width, height, camera->getView(), proj);
-
-    renderTexture->transitionToSRV(commandList);
-}
-
-void Exercise9::imGuiCommands()
-{
-    bool viewerFocused = false;
-    ImGui::Begin("Scene");
-    const char* frameName = "Scene Frame";
-    ImGuiID id(10);
-
-    ImVec2 max = ImGui::GetWindowContentRegionMax();
-    ImVec2 min = ImGui::GetWindowContentRegionMin();
-    canvasPos = min;
-    canvasSize = ImVec2(max.x - min.x, max.y - min.y);
-    ImVec2 cursorPos = ImGui::GetCursorScreenPos();
-
-    ImGui::BeginChildFrame(id, canvasSize, ImGuiWindowFlags_NoScrollbar);
-    viewerFocused = ImGui::IsWindowFocused();
-
-    if (renderTexture->isValid())
-    {
-        ImGui::Image((ImTextureID)renderTexture->getSrvHandle().ptr, canvasSize);
-    }
-
-    ImGui::EndChildFrame();
-    ImGui::End();
-
-    app->getCamera()->setEnable(viewerFocused);
+    dd::axisTriad(ddConvert(Matrix::Identity), 0.1f, 2.0f);
 }
 
 void Exercise9::render()
 {
-    imGuiCommands();
-
     ModuleD3D12* d3d12 = app->getD3D12();
     ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
     ModuleSamplers* samplers = app->getSamplers();
@@ -138,11 +68,6 @@ void Exercise9::render()
     ID3D12DescriptorHeap* descriptorHeaps[] = { descriptors->getHeap(), samplers->getHeap() };
     commandList->SetDescriptorHeaps(2, descriptorHeaps);
 
-
-    if(renderTexture->isValid() && canvasSize.x > 0.0f && canvasSize.y > 0.0f)
-    {
-        renderToTexture(commandList);
-    }
 
     CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(d3d12->getBackBuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
     commandList->ResourceBarrier(1, &barrier);
@@ -164,7 +89,9 @@ void Exercise9::render()
     commandList->RSSetViewports(1, &viewport);
     commandList->RSSetScissorRects(1, &scissor);
 
-    imguiPass->record(commandList);
+    Matrix proj = ModuleCamera::getPerspectiveProj(float(width) / float(height));
+    skyboxRenderPass->record(commandList, tableDesc.getGPUHandle(1), camera->getRot(), proj);
+    debugDrawPass->record(commandList, width, height, camera->getView(), proj);
 
     barrier = CD3DX12_RESOURCE_BARRIER::Transition(d3d12->getBackBuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
     commandList->ResourceBarrier(1, &barrier);

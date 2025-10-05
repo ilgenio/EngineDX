@@ -51,8 +51,9 @@ inline size_t alignUp(size_t value, size_t alignment)
 #define SET_MARKER(commandList, text) PIXSetMarker(commandList, PIX_COLOR_DEFAULT, text)
 #else
 #define BEGIN_EVENT(commandList, text)
-#define END_EVENT()
+#define END_EVENT(commandList)
 #define SET_MARKER(commandList, text) 
-#endif 
+#endif  
 
 #include <imgui.h>
+#include <imgui_internal.h>

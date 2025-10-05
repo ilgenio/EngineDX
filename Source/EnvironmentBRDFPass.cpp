@@ -68,7 +68,7 @@ ComPtr<ID3D12Resource> EnvironmentBRDFPass::generate(size_t size)
     CD3DX12_RESOURCE_BARRIER toSRV = CD3DX12_RESOURCE_BARRIER::Transition(environmentMap.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
     commandList->ResourceBarrier(1, &toSRV);
 
-    END_EVENT();
+    END_EVENT(commandList.Get());
 
     commandList->Close();
     ID3D12CommandList *commandLists[] = {commandList.Get()};

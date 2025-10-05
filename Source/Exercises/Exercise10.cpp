@@ -96,7 +96,25 @@ void Exercise10::preRender()
 {
     imguiPass->startFrame();
 
-    ImGui::DockSpaceOverViewport();
+    ImGuiID dockspace_id = ImGui::GetID("MyDockNodeId");
+    static bool init = true;
+    ImVec2 mainSize = ImGui::GetMainViewport()->Size;
+    if (init)
+    {
+        init = false;
+        ImGui::DockBuilderRemoveNode(dockspace_id);
+        ImGui::DockBuilderAddNode(dockspace_id, ImGuiDockNodeFlags_CentralNode);
+        ImGui::DockBuilderSetNodeSize(dockspace_id, mainSize);
+
+        ImGuiID dock_id_left = 0, dock_id_right = 0;
+        ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Left, 0.75f, &dock_id_left, &dock_id_right);
+        ImGui::DockBuilderDockWindow("Geometry Viewer Options", dock_id_right);
+        ImGui::DockBuilderDockWindow("Scene", dock_id_left);
+
+        ImGui::DockBuilderFinish(dockspace_id);
+    }
+
+
 
     ImGuizmo::BeginFrame();
 
@@ -424,7 +442,7 @@ void Exercise10::renderToTexture(ID3D12GraphicsCommandList* commandList)
         }
     }
 
-    END_EVENT();
+    END_EVENT(commandList);
 
     if (showGrid) dd::xzSquareGrid(-10.0f, 10.0f, 0.0f, 1.0f, dd::colors::LightGray);
     if (showAxis) dd::axisTriad(ddConvert(Matrix::Identity), 0.1f, 1.0f);

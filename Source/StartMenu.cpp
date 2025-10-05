@@ -95,7 +95,7 @@ void StartMenu::render()
 
 void StartMenu::imGuiDrawCommands()
 {
-    ImGui::SetNextWindowSize(ImVec2(500, 400), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(600, 500), ImGuiCond_FirstUseEver);
     ImGui::Begin("Start Menu");
 
     std::span<DemoDescriptors> demos = getDemoDescriptors();

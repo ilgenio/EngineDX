@@ -19,15 +19,10 @@ class Exercise9 : public Module
     ComPtr<ID3D12Resource>              cubemap;
     std::unique_ptr<DebugDrawPass>      debugDrawPass;
     std::unique_ptr<SkyboxRenderPass>   skyboxRenderPass;
-    std::unique_ptr<ImGuiPass>          imguiPass;
 
     bool                                showAxis        = true;
     bool                                showGrid        = true;
     ShaderTableDesc                     tableDesc;
-
-    std::unique_ptr<RenderTexture>      renderTexture;
-    ImVec2                              canvasSize;
-    ImVec2                              canvasPos;
 
 public:
 
@@ -41,8 +36,4 @@ public:
 
 private:
 
-    void imGuiCommands();
-
-    void renderToTexture(ID3D12GraphicsCommandList* commandList);
-    void resizeRenderTexture();
 };
