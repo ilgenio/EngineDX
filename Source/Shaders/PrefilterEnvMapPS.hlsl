@@ -7,7 +7,7 @@ cbuffer Constants : register(b2)
     float roughness;
     int numSamples;
     int cubemapSize;
-    int lodBias;
+    float lodBias;
 };
 
 TextureCube skybox : register(t0);

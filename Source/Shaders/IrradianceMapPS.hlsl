@@ -6,7 +6,7 @@ cbuffer Constants : register(b2)
 {
     int numSamples;
     int cubemapSize;
-    int lodBias;
+    float lodBias;
     int padding; // Padding to ensure 16-byte alignment
 };
 

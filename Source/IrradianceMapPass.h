@@ -11,7 +11,7 @@ class IrradianceMapPass
     {
         UINT    samples;
         INT     cubeMapSize;
-        INT     lodBias;
+        float   lodBias;
         UINT    padding; // Padding to ensure 16-byte alignment
     };
 

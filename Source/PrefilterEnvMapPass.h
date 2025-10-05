@@ -12,7 +12,7 @@ class PrefilterEnvMapPass
         float   roughness;
         UINT    samples;
         INT     cubeMapSize;
-        INT     lodBias;
+        float   lodBias;
     };
 
     ComPtr<ID3D12CommandAllocator>      commandAllocator;

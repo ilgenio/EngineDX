@@ -62,7 +62,7 @@ ComPtr<ID3D12Resource> PrefilterEnvMapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE
     Constants constants = {};
     constants.samples = 256;
     constants.cubeMapSize = static_cast<INT>(cubeSize);
-    constants.lodBias = 0;
+    constants.lodBias = 0.0f;
 
     for(UINT  roughnessLevel=0; roughnessLevel<mipLevels; ++roughnessLevel)
     {

@@ -295,7 +295,8 @@ bool Demo::loadScene()
 
     skybox = std::make_unique<Skybox>();
     
-    ok = ok && skybox->loadHDR("Assets/Textures/footprint_court.hdr");
+    //ok = ok && skybox->loadHDR("Assets/Textures/footprint_court.hdr");
+    ok = ok && skybox->loadHDR("Assets/Textures/san_giuseppe_bridge_4k.hdr");    
 
     _ASSERT_EXPR(ok, L"Error loading scene");
 
