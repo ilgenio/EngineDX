@@ -114,3 +114,5 @@ Source/3rdParty/imgui-1.89.8/examples/libs/glfw/lib-vc2010-64/glfw3.lib
 Source/EngineDX.vcxproj.filters___
 Source/.vscode/settings.json
 /Source/.vs
+Source/build/tmp/x64/Release/EngineDX.res
+Source/build/out/x64/Release/EngineDX.exe

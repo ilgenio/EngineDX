@@ -26,7 +26,11 @@
 #include "ReadData.h"
 #include "RenderTexture.h"
 
+#ifdef _DEBUG
 #define CAPTURE_IBL_GENERATION 1
+#else
+#define CAPTURE_IBL_GENERATION 0
+#endif 
 
 Exercise12::Exercise12()
 {
@@ -144,7 +148,7 @@ void Exercise12::renderToTexture(ID3D12GraphicsCommandList* commandList)
         }
     }
 
-    END_EVENT(commandList);
+    END_EVENT();
 
     if (showGrid) dd::xzSquareGrid(-10.0f, 10.0f, 0.0f, 1.0f, dd::colors::LightGray);
     if (showAxis) dd::axisTriad(ddConvert(Matrix::Identity), 0.1f, 2.0f);
@@ -153,7 +157,7 @@ void Exercise12::renderToTexture(ID3D12GraphicsCommandList* commandList)
 
     renderTexture->transitionToSRV(commandList);
 
-    END_EVENT(commandList);
+    END_EVENT();
 
 }
 

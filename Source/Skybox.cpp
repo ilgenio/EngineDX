@@ -15,7 +15,11 @@
 #define DEFAULT_ENV_BRDF_SIZE 128
 #define DEFAULT_MIP_LEVELS 8
 
+#ifdef _DEBUG
 #define CAPTURE_IBL_GENERATION 1
+#else
+#define CAPTURE_IBL_GENERATION 0
+#endif 
 
 Skybox::Skybox()
 {
