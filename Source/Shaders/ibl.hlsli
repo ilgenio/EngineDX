@@ -8,13 +8,13 @@
 // https://cgg.mff.cuni.cz/~jaroslav/papers/2007-sketch-fis/Final_sap_0073.pdf
 float computeLod(float pdf, int numSamples, int width)
 {
-    // Solid angle of current sample -- bigger for less likely samples
+    // probability of each sample  -- bigger for less likely samples
     precise float solidAngle = 1.0 / (float(numSamples) * pdf + 1e-6);
 
-    // Solid angle of texel
-    precise float texelSolidAngle = 4.0 * PI / (6.0 * width * width);
+    // probaby of each texel -- smaller for bigger cubemaps
+    precise float texelSolidAngle = 1.0 / (6.0 * width * width);
 
-    // mip level, 0.5*log2 because each mip level is 4x smaller
+    // mip level, 0.5*log2 = log4 because each mip level is 4x smaller
     return max(0.5*log2(solidAngle/texelSolidAngle), 0.0);
 }
 

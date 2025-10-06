@@ -60,7 +60,7 @@ ComPtr<ID3D12Resource> PrefilterEnvMapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE
     Matrix projMatrix = Matrix::CreatePerspectiveFieldOfView(M_HALF_PI, 1.0f, 0.1f, 100.0f);
 
     Constants constants = {};
-    constants.samples = 256;
+    constants.samples = 512;
     constants.cubeMapSize = static_cast<INT>(cubeSize);
     constants.lodBias = 0.0f;
 
