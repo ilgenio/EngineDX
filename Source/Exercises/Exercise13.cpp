@@ -291,7 +291,7 @@ bool Exercise13::loadModel()
 {
     model = std::make_unique<BasicModel>();
 
-    model->load("Assets/Models/DamagedHelmet/DamagedHelmet.gltf", "Assets/Models/DamagedHelmet/", BasicMaterial::METALLIC_ROUGHNESS);
+    model->load("Assets/Models/CompareAmbientOcclusion/CompareAmbientOcclusion.gltf", "Assets/Models/CompareAmbientOcclusion/", BasicMaterial::METALLIC_ROUGHNESS);
     model->setModelMatrix(Matrix::CreateRotationX(M_HALF_PI) * Matrix::CreateRotationY(M_HALF_PI));
 
     return true;
