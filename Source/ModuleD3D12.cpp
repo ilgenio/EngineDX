@@ -1,6 +1,11 @@
 #include "Globals.h"
 #include "ModuleD3D12.h"
 
+#include "Application.h"
+#include "ModuleSamplers.h"
+#include "ModuleCamera.h"
+#include "ModuleShaderDescriptors.h"
+
 #include "d3dx12.h"
 
 ModuleD3D12::ModuleD3D12(HWND wnd) : hWnd(wnd)
@@ -415,3 +420,40 @@ D3D12_CPU_DESCRIPTOR_HANDLE ModuleD3D12::getDepthStencilDescriptor()
     return dsDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
 }
 
+ID3D12GraphicsCommandList* ModuleD3D12::beginFrameRender(const Vector4& clearColor /* = Vector4(0.0f, 0.0f, 0.0f, 1.0f) */)
+{
+    commandList->Reset(getCommandAllocator(), nullptr);
+
+    ID3D12DescriptorHeap* descriptorHeaps[] = { app->getShaderDescriptors()->getHeap(), app->getSamplers()->getHeap()};
+    commandList->SetDescriptorHeaps(2, descriptorHeaps);
+
+    // Transition Back Buffer to Render Target
+    CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(getBackBuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+    commandList->ResourceBarrier(1, &barrier);
+
+    D3D12_CPU_DESCRIPTOR_HANDLE rtv = getRenderTargetDescriptor();
+    D3D12_CPU_DESCRIPTOR_HANDLE dsv = getDepthStencilDescriptor();
+
+    commandList->OMSetRenderTargets(1, &rtv, false, &dsv);
+    commandList->ClearRenderTargetView(rtv, &clearColor.x, 0, nullptr);
+    commandList->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+
+    D3D12_VIEWPORT viewport{ 0.0f, 0.0f, float(windowWidth), float(windowHeight), 0.0f, 1.0f };
+    D3D12_RECT scissor = { 0, 0, LONG(windowWidth), LONG(windowHeight) };
+    commandList->RSSetViewports(1, &viewport);
+    commandList->RSSetScissorRects(1, &scissor);
+
+    return commandList.Get();
+}
+
+void ModuleD3D12::endFrameRender()
+{
+    CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(getBackBuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+    commandList->ResourceBarrier(1, &barrier);
+
+    if (SUCCEEDED(commandList->Close()))
+    {
+        ID3D12CommandList* commandLists[] = { commandList.Get() };
+        getDrawCommandQueue()->ExecuteCommandLists(UINT(std::size(commandLists)), commandLists);
+    }    
+}

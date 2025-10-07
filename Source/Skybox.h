@@ -6,6 +6,7 @@ class IrradianceMapPass;
 class PrefilterEnvMapPass;
 class EnvironmentBRDFPass;
 class HDRToCubemapPass;
+class SkyboxRenderPass;
 
 // Skybox manages environment lighting resources for physically based rendering (PBR) in a DirectX 12 application.
 // It handles loading HDR images, generating cubemaps, irradiance maps, prefiltered environment maps, and BRDF lookup textures.
@@ -26,6 +27,7 @@ class Skybox
     std::unique_ptr<PrefilterEnvMapPass>    prefilterEnvMapPass;
     std::unique_ptr<EnvironmentBRDFPass>    environmentBRDFPass ;
     std::unique_ptr<HDRToCubemapPass>       hdrToCubemapPass;
+    std::unique_ptr<SkyboxRenderPass>       skyboxRenderPass;
 
     ComPtr<ID3D12Resource>  skybox;
     ComPtr<ID3D12Resource>  irradianceMap;
@@ -41,6 +43,8 @@ public:
     ~Skybox();
 
     bool loadHDR(const char* hdrFileName);
+
+    void render(ID3D12GraphicsCommandList* cmdList, float aspectRatio);
 
     UINT  getNumIBLMipLevels() const {return iblMipLevels; }
     D3D12_GPU_DESCRIPTOR_HANDLE getIBLTable() const { return tableDesc.getGPUHandle(); }

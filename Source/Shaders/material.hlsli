@@ -3,21 +3,35 @@
 
 #include "samplers.hlsli"
 
+// Bitfield flag: indicates presence of a base colour texture
 #define HAS_BASECOLOUR_TEX        0x1  // 0x1 : hasBaseColourTex
+// Bitfield flag: indicates presence of a metallic-roughness texture
 #define HAS_METALLICROUGHNESS_TEX 0x2  // 0x2 : hasMetallicRoughnessTex
 
+// Material structure for PBR shading.
+// Contains base colour, metallic/roughness factors, normal/occlusion/alpha parameters, and bitfield flags.
 struct Material
 {
-    float4 baseColour;
-    float  metallicFactor;
-    float  roughnessFactor;
-    float  normalScale;
-    float  alphaCutoff;
-    float  occlusionStrength;
-    uint   flags;                   // Bitfield flags
-    uint   padding[2];              // Padding to 16 bytes
+    float4 baseColour;         // Base colour (albedo) of the material
+    float  metallicFactor;     // Scalar metallic factor (0 = dielectric, 1 = metal)
+    float  roughnessFactor;    // Scalar roughness factor (0 = smooth, 1 = rough)
+    float  normalScale;        // Scale for normal map intensity
+    float  alphaCutoff;        // Alpha cutoff threshold for alpha masking
+    float  occlusionStrength;  // Occlusion map strength
+    uint   flags;              // Bitfield flags indicating which textures are present
+    uint   padding[2];         // Padding to align struct to 16 bytes
 };
 
+// Computes the final base colour, roughness, alpha roughness, and metallic values for a material,
+// sampling from textures if the corresponding flags are set.
+// - material: Material parameters and flags
+// - baseColourTex: Base colour texture (if present)
+// - metallicRoughnessTex: Metallic-roughness texture (if present)
+// - coord: Texture coordinates
+// - baseColour: Output final base colour (RGB)
+// - roughness: Output final roughness value
+// - alphaRoughness: Output perceptual roughness (roughness squared)
+// - metallic: Output final metallic value
 void getMetallicRoughness(in Material material, in Texture2D baseColourTex, in Texture2D metallicRoughnessTex,
                           in float2 coord, out float3 baseColour, out float roughness, out float alphaRoughness, out float metallic)
 {
@@ -37,7 +51,7 @@ void getMetallicRoughness(in Material material, in Texture2D baseColourTex, in T
 
     metallic = metallicRoughness.x;
     roughness = metallicRoughness.y;
-    alphaRoughness = roughness * roughness; // Perceptural roughness
+    alphaRoughness = roughness * roughness; // Perceptual roughness
 }
 
 #endif // _MATERIAL_HLSLI_
