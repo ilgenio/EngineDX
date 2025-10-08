@@ -36,22 +36,23 @@ void getSpecularAmbientLightNoFresnel(in float3 R, in float NdotV, in float roug
     secondTerm = radiance * fab.y;
 }
 
+
 // Computes the total ambient lighting (diffuse + specular) for PBR using IBL resources.
 // Blends between dielectric and metallic responses based on the metallic parameter.
 float3 computeLighting(in float3 V, in float3 N, in TextureCube irradiance, in TextureCube prefilteredEnv, in Texture2D brdfLUT, in float roughnessLevels, 
-                       in float3 baseColour, in float roughness, in float metallic)
+                       in float3 baseColour, in float roughness, in float metallic, in float diffuseAO, in float specularAO)
 {
     float3 R  = reflect(-V, N);
     float NdotV = saturate(dot(N, V));
 
-    float3 diffuse = getDiffuseAmbientLight(N, baseColour, irradiance);
+    float3 diffuse = getDiffuseAmbientLight(N, baseColour, irradiance) * diffuseAO;
 
     float3 firstTerm, secondTerm;
     getSpecularAmbientLightNoFresnel(R, NdotV, roughness, roughnessLevels, prefilteredEnv, brdfLUT, firstTerm, secondTerm);
     
-    float3 metal_specular = baseColour*firstTerm + secondTerm;    
-    float3 dielectric_specular = 0.04*firstTerm + secondTerm;
-    
+    float3 metal_specular = (baseColour*firstTerm + secondTerm) * specularAO;
+    float3 dielectric_specular = (0.04*firstTerm + secondTerm) * specularAO;
+
     return lerp(diffuse+dielectric_specular, metal_specular, metallic);
 }
     

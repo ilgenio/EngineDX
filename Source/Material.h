@@ -19,6 +19,7 @@ public:
     {
         FLAG_HAS_BASECOLOUR_TEX        = 0x1,
         FLAG_HAS_METALLICROUGHNESS_TEX = 0x2,
+        FLAG_HAS_OCCLUSION_TEX         = 0x4,
     };
 
     struct Data
@@ -45,6 +46,7 @@ public:
     const Data& getData() const { return data; }
 
     D3D12_GPU_DESCRIPTOR_HANDLE getTextureTable() const { return textureTableDesc.getGPUHandle(); }
+    static UINT getNumTextureSlots() { return TEX_SLOT_COUNT; }
 
 private:
 

@@ -37,15 +37,27 @@ void Material::load(const tinygltf::Model& model, const tinygltf::Material &mate
     // Base Color Texture
     if (material.pbrMetallicRoughness.baseColorTexture.index >= 0 && loadTexture(model, base, material.pbrMetallicRoughness.baseColorTexture.index, true, baseColorTex))
     {
+        _ASSERT_EXPR(baseColorTex, "Can't load base color texture");
+
         data.flags |= FLAG_HAS_BASECOLOUR_TEX;
         textureTableDesc.createTextureSRV(baseColorTex.Get(), TEX_SLOT_BASECOLOUR);
+    }
+    else
+    {
+        textureTableDesc.createNullTexture2DSRV(TEX_SLOT_BASECOLOUR);
     }
 
     // Metallic Roughness Texture
     if (material.pbrMetallicRoughness.metallicRoughnessTexture.index >= 0 && loadTexture(model, base, material.pbrMetallicRoughness.metallicRoughnessTexture.index, false, metRougTex))
     {
+        _ASSERT_EXPR(metRougTex, "Can't load metallic roughness texture");
+
         data.flags |= FLAG_HAS_METALLICROUGHNESS_TEX;
         textureTableDesc.createTextureSRV(metRougTex.Get(), TEX_SLOT_METALLIC_ROUGHNESS);
+    }
+    else
+    {
+        textureTableDesc.createNullTexture2DSRV(TEX_SLOT_METALLIC_ROUGHNESS);
     }
 
     // Normals Texture
@@ -53,16 +65,27 @@ void Material::load(const tinygltf::Model& model, const tinygltf::Material &mate
     {
         textureTableDesc.createTextureSRV(normalTex.Get(), TEX_SLOT_NORMAL);
     }
+    else
+    {
+        textureTableDesc.createNullTexture2DSRV(TEX_SLOT_NORMAL);
+    }
 
     data.normalScale = float(material.normalTexture.scale);
 
     // Occlusion Texture
     if (material.occlusionTexture.index >= 0 && loadTexture(model, base, material.occlusionTexture.index, false, occlusionTex))
     {
+        _ASSERT_EXPR(occlusionTex, "Can't load occlusion texture");
+
+        data.flags |= FLAG_HAS_OCCLUSION_TEX;
         textureTableDesc.createTextureSRV(occlusionTex.Get(), TEX_SLOT_OCCLUSION);
     }
+    else
+    {
+        textureTableDesc.createNullTexture2DSRV(TEX_SLOT_OCCLUSION);
+    }
 
-    // \todo: occlusion strength
+    data.occlusionStrength = float(material.occlusionTexture.strength);
 
     if (material.alphaMode == "BLEND")
     {

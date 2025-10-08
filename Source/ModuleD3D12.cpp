@@ -420,13 +420,18 @@ D3D12_CPU_DESCRIPTOR_HANDLE ModuleD3D12::getDepthStencilDescriptor()
     return dsDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
 }
 
-ID3D12GraphicsCommandList* ModuleD3D12::beginFrameRender(const Vector4& clearColor /* = Vector4(0.0f, 0.0f, 0.0f, 1.0f) */)
+ID3D12GraphicsCommandList* ModuleD3D12::beginFrameRender()
 {
     commandList->Reset(getCommandAllocator(), nullptr);
 
     ID3D12DescriptorHeap* descriptorHeaps[] = { app->getShaderDescriptors()->getHeap(), app->getSamplers()->getHeap()};
     commandList->SetDescriptorHeaps(2, descriptorHeaps);
 
+    return commandList.Get();
+}
+
+void ModuleD3D12::setBackBufferRenderTarget(const Vector4& clearColor /*= Vector4(0.0f, 0.0f, 0.0f, 1.0f)*/)
+{
     // Transition Back Buffer to Render Target
     CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(getBackBuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
     commandList->ResourceBarrier(1, &barrier);
@@ -442,8 +447,6 @@ ID3D12GraphicsCommandList* ModuleD3D12::beginFrameRender(const Vector4& clearCol
     D3D12_RECT scissor = { 0, 0, LONG(windowWidth), LONG(windowHeight) };
     commandList->RSSetViewports(1, &viewport);
     commandList->RSSetScissorRects(1, &scissor);
-
-    return commandList.Get();
 }
 
 void ModuleD3D12::endFrameRender()

@@ -292,6 +292,7 @@ bool Demo::loadScene()
     
     
     //model.reset(scene->loadModel("Assets/Models/BistroExterior/BistroExterior.gltf", "Assets/Models/BistroExterior/"));    
+    //model.reset(scene->loadModel("Assets/Models/CompareAmbientOcclusion/CompareAmbientOcclusion.gltf", "Assets/Models/CompareAmbientOcclusion/"));
 
     skybox = std::make_unique<Skybox>();
     

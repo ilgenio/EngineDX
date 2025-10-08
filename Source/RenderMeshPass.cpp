@@ -80,7 +80,7 @@ bool RenderMeshPass::createRootSignature()
 
     lightsTableRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 0);
     iblTableRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 3);
-    materialTableRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 6);
+    materialTableRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, Material::getNumTextureSlots(), 6);
     sampRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, ModuleSamplers::COUNT, 0);
 
     rootParameters[SLOT_MVP_MATRIX].InitAsConstants((sizeof(Matrix) / sizeof(UINT32)), 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);

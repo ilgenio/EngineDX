@@ -87,7 +87,8 @@ public:
     unsigned                    getWindowWidth() const { return windowWidth; }
     unsigned                    getWindowHeight() const { return windowHeight; }
 
-    ID3D12GraphicsCommandList*  beginFrameRender(const Vector4& clearColor = Vector4(0.0f, 0.0f, 0.0f, 1.0f));
+    ID3D12GraphicsCommandList*  beginFrameRender();
+    void                        setBackBufferRenderTarget(const Vector4& clearColor = Vector4(0.0f, 0.0f, 0.0f, 1.0f));
     void                        endFrameRender();
 
 private:

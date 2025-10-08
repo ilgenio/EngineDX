@@ -8,6 +8,8 @@
 // Bitfield flag: indicates presence of a metallic-roughness texture
 #define HAS_METALLICROUGHNESS_TEX 0x2  // 0x2 : hasMetallicRoughnessTex
 
+#define HAS_OCCLUSION_TEX       0x4  // 0x4 : hasOcclusionTex
+
 // Material structure for PBR shading.
 // Contains base colour, metallic/roughness factors, normal/occlusion/alpha parameters, and bitfield flags.
 struct Material
@@ -22,6 +24,26 @@ struct Material
     uint   padding[2];         // Padding to align struct to 16 bytes
 };
 
+float computeSpecularAO(float NdotV, float ao, float roughness) 
+{
+    return clamp(pow(NdotV + ao, exp2(-16.0 * roughness - 1.0)) - 1.0 + ao, 0.0, 1.0);
+}
+
+void getAmbientOcclusion(in Material material, in Texture2D occlusionTex, in float2 coord, in float NdotV, in float roughness, 
+                         out float diffuseAO, out float specularAO)
+{
+    if (material.flags & HAS_OCCLUSION_TEX)
+    {
+        diffuseAO = occlusionTex.Sample(bilinearWrap, coord).r * material.occlusionStrength;
+        specularAO = computeSpecularAO(NdotV, diffuseAO, roughness);
+    }
+    else
+    {
+        diffuseAO = 1.0;
+        specularAO = 1.0;
+    }
+}
+
 // Computes the final base colour, roughness, alpha roughness, and metallic values for a material,
 // sampling from textures if the corresponding flags are set.
 // - material: Material parameters and flags
@@ -33,7 +55,8 @@ struct Material
 // - alphaRoughness: Output perceptual roughness (roughness squared)
 // - metallic: Output final metallic value
 void getMetallicRoughness(in Material material, in Texture2D baseColourTex, in Texture2D metallicRoughnessTex,
-                          in float2 coord, out float3 baseColour, out float roughness, out float alphaRoughness, out float metallic)
+                          in float2 coord, out float3 baseColour, out float roughness, 
+                          out float alphaRoughness, out float metallic)
 {
     baseColour = material.baseColour.rgb;
 

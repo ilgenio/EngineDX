@@ -127,8 +127,7 @@ void Exercise12::renderToTexture(ID3D12GraphicsCommandList* commandList)
 
     BEGIN_EVENT(commandList, "Exercise12 Render to Texture");
 
-    renderTexture->transitionToRTV(commandList);
-    renderTexture->setRenderTarget(commandList);
+    renderTexture->beginRender(commandList);
 
     skyboxRenderPass->record(commandList, tableDesc.getGPUHandle(TEX_SLOT_CUBEMAP), camera->getRot(), proj);
 
@@ -171,7 +170,7 @@ void Exercise12::renderToTexture(ID3D12GraphicsCommandList* commandList)
 
     debugDrawPass->record(commandList, width, height, camera->getView(), proj);
 
-    renderTexture->transitionToSRV(commandList);
+    renderTexture->endRender(commandList);
 
     END_EVENT(commandList);
 
@@ -248,9 +247,6 @@ void Exercise12::render()
     }
 #endif 
 
-    ID3D12GraphicsCommandList* commandList = d3d12->getCommandList();
-    commandList->Reset(d3d12->getCommandAllocator(), nullptr);
-
     if(!irradianceMap || !prefilterEnvMapPass || !environmentBRDF ||  !skybox)
     {
         skybox = hdrToCubemapPass->generate(tableDesc.getGPUHandle(TEX_SLOT_HDR), DXGI_FORMAT_R16G16B16A16_FLOAT, 1024);
@@ -267,50 +263,26 @@ void Exercise12::render()
         tableDesc.createTextureSRV(environmentBRDF.Get(), TEX_SLOT_ENV_BRDF);
     }
 
-    ID3D12DescriptorHeap* descriptorHeaps[] = { app->getShaderDescriptors()->getHeap(), samplers->getHeap()};
-    commandList->SetDescriptorHeaps(2, descriptorHeaps);
-
-    if(renderTexture->isValid() && canvasSize.x > 0.0f && canvasSize.y > 0.0f)
-    {
-        renderToTexture(commandList);
-    }
-
-    CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(d3d12->getBackBuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-    commandList->ResourceBarrier(1, &barrier);
-
-    unsigned width = d3d12->getWindowWidth();
-    unsigned height = d3d12->getWindowHeight();
-
-    float clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
-    D3D12_CPU_DESCRIPTOR_HANDLE rtv = d3d12->getRenderTargetDescriptor();
-    D3D12_CPU_DESCRIPTOR_HANDLE dsv = d3d12->getDepthStencilDescriptor();
-
-    commandList->OMSetRenderTargets(1, &rtv, false, &dsv);
-    commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
-    commandList->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
-
-    D3D12_VIEWPORT viewport{ 0.0f, 0.0f, float(width), float(height), 0.0f, 1.0f };
-    D3D12_RECT scissor = { 0, 0, LONG(width), LONG(height) };
-    commandList->RSSetViewports(1, &viewport);
-    commandList->RSSetScissorRects(1, &scissor);
-
-    imguiPass->record(commandList);
-
-    barrier = CD3DX12_RESOURCE_BARRIER::Transition(d3d12->getBackBuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-    commandList->ResourceBarrier(1, &barrier);
-
-    if (SUCCEEDED(commandList->Close()))
-    {
-        ID3D12CommandList* commandLists[] = { commandList };
-        d3d12->getDrawCommandQueue()->ExecuteCommandLists(UINT(std::size(commandLists)), commandLists);
-    }    
-
 #if CAPTURE_IBL_GENERATION
     if (takeCapture)
     {
         PIXEndCapture(TRUE);
     }
 #endif 
+
+
+    ID3D12GraphicsCommandList* commandList = d3d12->beginFrameRender();
+
+    if(renderTexture->isValid() && canvasSize.x > 0.0f && canvasSize.y > 0.0f)
+    {
+        renderToTexture(commandList);
+    }
+
+    d3d12->setBackBufferRenderTarget();
+
+    imguiPass->record(commandList);
+
+    d3d12->endFrameRender();
 }
 
 bool Exercise12::createRootSignature()

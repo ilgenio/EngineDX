@@ -37,11 +37,21 @@ public:
     bool isValid() const { return width > 0 || height > 0;  }
     void resize(UINT width, UINT height);
 
+    void beginRender(ID3D12GraphicsCommandList* cmdList)
+    {
+        transitionToRTV(cmdList);
+        setRenderTarget(cmdList);
+    }
+
+    void endRender(ID3D12GraphicsCommandList* cmdList)
+    {
+        transitionToSRV(cmdList);
+    }
+
     void transitionToRTV(ID3D12GraphicsCommandList* cmdList);
     void transitionToSRV(ID3D12GraphicsCommandList* cmdList);
 
     void setRenderTarget(ID3D12GraphicsCommandList* cmdList);
-
     void bindAsShaderResource(ID3D12GraphicsCommandList* cmdList, int slot);
 
     UINT getWidth() const { return width;  }

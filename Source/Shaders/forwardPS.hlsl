@@ -4,20 +4,26 @@
 #include "tonemap.hlsli"
 #include "ibl.hlsli"
 
+
+
 float4 main(float3 worldPos : POSITION, float3 normal : NORMAL, float2 texCoord : TEXCOORD) : SV_TARGET
 {
+    float3 V  = normalize(viewPos - worldPos);
+    float3 N  = normalize(normal);
+    float NdotV = saturate(dot(N, V));
+    
     float3 baseColour;
     float roughness;
     float alphaRoughness;
     float metallic;
     getMetallicRoughness(material, baseColourTex, metallicRoughnessTex, texCoord, baseColour, roughness, alphaRoughness, metallic);
 
-    float3 V  = normalize(viewPos - worldPos);
-    float3 N  = normalize(normal);
-    
+    float diffuseAO, specularAO;
+    getAmbientOcclusion(material, occlusionTex, texCoord, NdotV, alphaRoughness, diffuseAO, specularAO);
+
     // IBL
     // TODO :use alphaRoughness instead of roughness ? 
-    float3 colour = computeLighting(V, N, irradiance, radiance, brdfLUT, numRoughnessLevels, baseColour, roughness, metallic);
+    float3 colour = computeLighting(V, N, irradiance, radiance, brdfLUT, numRoughnessLevels, baseColour, roughness, metallic, diffuseAO, specularAO);
 
 #if 0
     // Direct lights

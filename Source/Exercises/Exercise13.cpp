@@ -182,8 +182,7 @@ void Exercise13::renderToTexture(ID3D12GraphicsCommandList* commandList)
 
     BEGIN_EVENT(commandList, "Exercise13 Render to Texture");
 
-    renderTexture->transitionToRTV(commandList);
-    renderTexture->setRenderTarget(commandList);
+    renderTexture->beginRender(commandList);
 
     float aspect = canvasSize.x / canvasSize.y;
 
@@ -197,7 +196,7 @@ void Exercise13::renderToTexture(ID3D12GraphicsCommandList* commandList)
     debugDrawPass->record(commandList, uint32_t(canvasSize.x), uint32_t(canvasSize.y), 
                           camera->getView(), ModuleCamera::getPerspectiveProj(aspect));
 
-    renderTexture->transitionToSRV(commandList);
+    renderTexture->endRender(commandList);
 
     END_EVENT(commandList);
 
@@ -213,6 +212,8 @@ void Exercise13::render()
     {
         renderToTexture(commandList);
     }
+
+    d3d12->setBackBufferRenderTarget();
 
     imguiPass->record(commandList);
 
@@ -264,8 +265,8 @@ bool Exercise13::createPSO()
                                                {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
                                                {"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0} };
 
-    auto dataVS = DX::ReadData(L"Exercise13VS.cso");
-    auto dataPS = DX::ReadData(L"Exercise13PS.cso");
+    auto dataVS = DX::ReadData(L"Exercise12VS.cso");
+    auto dataPS = DX::ReadData(L"Exercise12PS.cso");
 
     D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
     psoDesc.InputLayout = { inputLayout, sizeof(inputLayout) / sizeof(D3D12_INPUT_ELEMENT_DESC) };  // the structure describing our input layout
@@ -292,7 +293,6 @@ bool Exercise13::loadModel()
     model = std::make_unique<BasicModel>();
 
     model->load("Assets/Models/CompareAmbientOcclusion/CompareAmbientOcclusion.gltf", "Assets/Models/CompareAmbientOcclusion/", BasicMaterial::METALLIC_ROUGHNESS);
-    model->setModelMatrix(Matrix::CreateRotationX(M_HALF_PI) * Matrix::CreateRotationY(M_HALF_PI));
 
     return true;
 }
