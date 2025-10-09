@@ -1,10 +1,15 @@
 struct MetallicRoughnessMat
 {
     float4 baseColour;
-    float  metallicFactor;
-    float  roughnessFactor;
-    bool   hasBaseColourTex;
-    bool   hasMetallicRoughnessTex;
+    float metallicFactor;
+    float roughnessFactor;
+    float occlusionStrength;
+    float normalScale;
+    bool hasBaseColourTex;
+    bool hasMetallicRoughnessTex;
+    bool hasOcclusionTex;
+    bool hasNormalMap;
+    bool hasEmissiveTex;
 };
 
 cbuffer MVP : register(b0)

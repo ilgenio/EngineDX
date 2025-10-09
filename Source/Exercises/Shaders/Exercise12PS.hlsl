@@ -33,22 +33,13 @@ float4 Exercise12PS(float3 positionWS : POSITION, float3 normalWS : NORMAL, floa
 
     float3 diffuse = getDiffuseAmbientLight(N, baseColour, irradiance);
     
-    float3 colour;
-    ;
-    if(useOnlyIrradiance)
-    {
-        colour = diffuse;
-    }
-    else
-    {
-        float3 firstTerm, secondTerm;
-        getSpecularAmbientLightNoFresnel(R, NdotV, roughness, roughnessLevels, radiance, brdfLUT, firstTerm, secondTerm);
+    float3 firstTerm, secondTerm;
+    getSpecularAmbientLightNoFresnel(R, NdotV, roughness, roughnessLevels, radiance, brdfLUT, firstTerm, secondTerm);
     
-        float3 metal_specular = baseColour * firstTerm + secondTerm;
-        float3 dielectric_specular = 0.04 * firstTerm + secondTerm;
+    float3 metal_specular = baseColour * firstTerm + secondTerm;
+    float3 dielectric_specular = 0.04 * firstTerm + secondTerm;
     
-        colour = lerp(diffuse + dielectric_specular, metal_specular, metallic);
-    }
+    float3 colour = lerp(diffuse + dielectric_specular, metal_specular, metallic);
     
 
     float3 ldr = PBRNeutralToneMapping(colour);

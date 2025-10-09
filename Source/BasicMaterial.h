@@ -34,9 +34,12 @@ struct MetallicRoughnessMaterialData
     float    metallicFactor;
     float    roughnessFactor;
     float    occlusionStrength;
+    float    normalScale;
     BOOL     hasBaseColourTex;
     BOOL     hasMetallicRoughnessTex;
     BOOL     hasOcclusionTex;
+    BOOL     hasNormalMap;
+    BOOL     hasEmissive;
 };
 
 class BasicMaterial
@@ -86,6 +89,8 @@ private:
     ComPtr<ID3D12Resource>  baseColourTex;
     ComPtr<ID3D12Resource>  metallicRoughnessTex;
     ComPtr<ID3D12Resource>  occlusionTex;
+    ComPtr<ID3D12Resource>  normalTex;
+    ComPtr<ID3D12Resource>  emissiveTex;
     ShaderTableDesc         textureTableDesc;
     std::string             name;
 };

@@ -20,7 +20,6 @@ class Exercise12 : public Module
     {
         Vector3 camPos;
         float   roughnessLevels;
-        BOOL    useOnlyIrradiance;
     };
 
     struct PerInstance
@@ -48,12 +47,10 @@ class Exercise12 : public Module
     ComPtr<ID3D12Resource>                  environmentBRDF;
     ComPtr<ID3D12Resource>                  skybox;
 
-    std::unique_ptr<BasicModel[]>           models;
-    UINT                                    activeModel = 0;   
+    std::unique_ptr<BasicModel>             model;
 
-    bool showAxis = true;
-    bool showGrid = true;
-    bool useOnlyIrradiance = false;
+    bool showAxis = false;
+    bool showGrid = false;
 
     enum TexSlots
     {

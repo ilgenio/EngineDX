@@ -33,7 +33,7 @@ void BasicMaterial::load(const tinygltf::Model& model, const tinygltf::Material&
                                  float(material.pbrMetallicRoughness.baseColorFactor[2]),
                                  float(material.pbrMetallicRoughness.baseColorFactor[3]));
 
-    BOOL hasColourTexture = FALSE, hasMetallicRoughnessTex = FALSE, hasOcclusionTex = FALSE;
+    BOOL hasColourTexture = FALSE, hasMetallicRoughnessTex = FALSE, hasOcclusionTex = FALSE, hasNormalTex = FALSE, hasEmissiveTex = FALSE;
 
     auto loadTexture = [](int index, const tinygltf::Model& model, const char* basePath, bool defaultSRGB, ComPtr<ID3D12Resource>& outTex) -> BOOL
     {
@@ -53,6 +53,8 @@ void BasicMaterial::load(const tinygltf::Model& model, const tinygltf::Material&
     hasColourTexture = loadTexture(material.pbrMetallicRoughness.baseColorTexture.index, model, basePath, true, baseColourTex);
     hasMetallicRoughnessTex = materialType == METALLIC_ROUGHNESS && loadTexture(material.pbrMetallicRoughness.metallicRoughnessTexture.index, model, basePath, false, metallicRoughnessTex);
     hasOcclusionTex = materialType == METALLIC_ROUGHNESS && loadTexture(material.occlusionTexture.index, model, basePath, false, occlusionTex);
+    hasNormalTex = materialType == METALLIC_ROUGHNESS && loadTexture(material.normalTexture.index, model, basePath, false, normalTex);
+    hasEmissiveTex = materialType == METALLIC_ROUGHNESS && loadTexture(material.emissiveTexture.index, model, basePath, true, emissiveTex);
 
     if (materialType == BASIC)
     {
@@ -82,7 +84,10 @@ void BasicMaterial::load(const tinygltf::Model& model, const tinygltf::Material&
         materialData.metallicRoughness.hasBaseColourTex = hasColourTexture;
         materialData.metallicRoughness.hasMetallicRoughnessTex = hasMetallicRoughnessTex;
         materialData.metallicRoughness.occlusionStrength = float(material.occlusionTexture.strength);
+        materialData.metallicRoughness.normalScale = float(material.normalTexture.scale);
         materialData.metallicRoughness.hasOcclusionTex = hasOcclusionTex;
+        materialData.metallicRoughness.hasEmissive = hasEmissiveTex;
+        materialData.metallicRoughness.hasNormalMap = hasNormalTex;
     }
 
     // Descriptors 
@@ -116,6 +121,24 @@ void BasicMaterial::load(const tinygltf::Model& model, const tinygltf::Material&
     {
         textureTableDesc.createNullTexture2DSRV(2);
     }   
+
+    if(hasEmissiveTex)
+    {
+        textureTableDesc.createTextureSRV(emissiveTex.Get(), 3);
+    }
+    else
+    {
+        textureTableDesc.createNullTexture2DSRV(3);
+    }
+
+    if(hasNormalTex)
+    {
+        textureTableDesc.createTextureSRV(normalTex.Get(), 4);
+    }
+    else
+    {
+        textureTableDesc.createNullTexture2DSRV(4);
+    }
 
 }
 

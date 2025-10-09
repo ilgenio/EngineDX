@@ -69,6 +69,11 @@ bool Exercise12::init()
         {
             tableDesc.createTextureSRV(hdrSky.Get(), TEX_SLOT_HDR);
         }
+
+        ModuleCamera* camera = app->getCamera();
+        camera->setPanning(Vector3(15.0f, 7.5f, 0.0f));
+        camera->setPolar(XMConvertToRadians(90.0f));
+        camera->setAzimuthal(XMConvertToRadians(-15.0f));
     }
 
     return true;
@@ -118,8 +123,6 @@ void Exercise12::renderToTexture(ID3D12GraphicsCommandList* commandList)
     unsigned width = unsigned(canvasSize.x);
     unsigned height = unsigned(canvasSize.y);
 
-    BasicModel* model = &models[activeModel];
-    
     const Matrix & view = camera->getView();
     Matrix proj = ModuleCamera::getPerspectiveProj(float(width) / float(height));
     Matrix mvp = model->getModelMatrix() * view * proj;
@@ -136,7 +139,6 @@ void Exercise12::renderToTexture(ID3D12GraphicsCommandList* commandList)
     PerFrame perFrameData;
     perFrameData.camPos = camera->getPos();
     perFrameData.roughnessLevels = 8.0f;
-    perFrameData.useOnlyIrradiance = useOnlyIrradiance;
 
     ModuleRingBuffer* ringBuffer = app->getRingBuffer();
 
@@ -183,17 +185,16 @@ void Exercise12::imGuiCommands()
     ImGui::Begin("IBL Viewer Options");
     ImGui::Separator();
     ImGui::Text("FPS: [%d]. Avg. elapsed (Ms): [%g] ", uint32_t(app->getFPS()), app->getAvgElapsedMs());
+
+    ImGui::Separator();
+
+    ModuleCamera* camera = app->getCamera();
+    ImGui::Text("Camera pos: [%.2f, %.2f, %.2f], Camera spherical angles: [%.2f, %.2f]", camera->getPos().x, camera->getPos().y, camera->getPos().z,
+        XMConvertToDegrees(camera->getPolar()), XMConvertToDegrees(camera->getAzimuthal()));
+
     ImGui::Separator();
     ImGui::Checkbox("Show grid", &showGrid);
     ImGui::Checkbox("Show axis", &showAxis);
-
-    ImGui::Separator();
-
-    ImGui::Checkbox("Use only irradiance", &useOnlyIrradiance);
-
-    ImGui::Separator();
-
-    ImGui::Combo("Model", (int*)&activeModel, "MetallicRoughness\0DamagedHelmet\0");
 
     ImGui::Separator();
 
@@ -355,13 +356,10 @@ bool Exercise12::createPSO()
 
 bool Exercise12::loadModel()
 {
-    models = std::make_unique<BasicModel[]>(2);
+    model = std::make_unique<BasicModel>();
 
-    models[0].load("Assets/Models/MetalRoughSpheres/MetalRoughSpheres.gltf", "Assets/Models/MetalRoughSpheres/", BasicMaterial::METALLIC_ROUGHNESS);
-    models[0].setModelMatrix(Matrix::CreateRotationZ(M_HALF_PI) * Matrix::CreateRotationX(-M_HALF_PI) * Matrix::CreateTranslation(Vector3(0.0, 10.0, 0.0)) * Matrix::CreateScale(0.4f));
-
-    models[1].load("Assets/Models/DamagedHelmet/DamagedHelmet.gltf", "Assets/Models/DamagedHelmet/", BasicMaterial::METALLIC_ROUGHNESS);
-    models[1].setModelMatrix(Matrix::CreateRotationX(M_HALF_PI) * Matrix::CreateRotationY(M_HALF_PI));
+    model->load("Assets/Models/MetalRoughSpheres/MetalRoughSpheres.gltf", "Assets/Models/MetalRoughSpheres/", BasicMaterial::METALLIC_ROUGHNESS);
+    model->setModelMatrix(Matrix::CreateRotationZ(M_HALF_PI) * Matrix::CreateRotationX(-M_HALF_PI) * Matrix::CreateTranslation(Vector3(0.0, 10.0, 0.0)) * Matrix::CreateScale(0.4f));
 
     return true;
 }

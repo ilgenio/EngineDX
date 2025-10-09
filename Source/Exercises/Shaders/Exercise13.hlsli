@@ -4,9 +4,12 @@ struct MetallicRoughnessMat
     float  metallicFactor;
     float  roughnessFactor;
     float  occlusionStrength;
+    float  normalScale;
     bool   hasBaseColourTex;
     bool   hasMetallicRoughnessTex;
     bool   hasOcclusionTex;
+    bool   hasNormalMap;
+    bool   hasEmissiveTex;
 };
 
 cbuffer MVP : register(b0)
