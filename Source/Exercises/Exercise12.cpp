@@ -90,10 +90,12 @@ void Exercise12::preRender()
 {
     imguiPass->startFrame();
 
+    ImGuiID dockspace_id = ImGui::GetID("MyDockNodeId");
+    ImGui::DockSpaceOverViewport(dockspace_id);
+
     static bool init = true;
     if (init)
     {
-        ImGuiID dockspace_id = ImGui::GetID("MyDockNodeId");
         ImVec2 mainSize = ImGui::GetMainViewport()->Size;
         ImGui::DockBuilderRemoveNode(dockspace_id);
         ImGui::DockBuilderAddNode(dockspace_id, ImGuiDockNodeFlags_CentralNode);

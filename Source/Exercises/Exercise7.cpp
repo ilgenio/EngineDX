@@ -65,6 +65,8 @@ void Exercise7::preRender()
     ImGuizmo::BeginFrame();
 
     ImGuiID dockspace_id = ImGui::GetID("MyDockNodeId");
+    ImGui::DockSpaceOverViewport(dockspace_id);
+
     static bool init = true;
     ImVec2 mainSize = ImGui::GetMainViewport()->Size;
     if (init)

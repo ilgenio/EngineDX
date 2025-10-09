@@ -91,11 +91,14 @@ void Demo::preRender()
     imguiPass->startFrame();
 
     ImGuiID dockspace_id = ImGui::GetID("MyDockNodeId");
+    ImGui::DockSpaceOverViewport(dockspace_id);
+
     static bool init = true;
-    ImVec2 mainSize = ImGui::GetMainViewport()->Size;
     if (init)
     {
         init = false;
+        ImVec2 mainSize = ImGui::GetMainViewport()->Size;
+
         ImGui::DockBuilderRemoveNode(dockspace_id);
         ImGui::DockBuilderAddNode(dockspace_id, ImGuiDockNodeFlags_CentralNode);
         ImGui::DockBuilderSetNodeSize(dockspace_id, mainSize);
@@ -291,7 +294,7 @@ bool Demo::loadScene()
     }
     
     
-    //model.reset(scene->loadModel("Assets/Models/BistroExterior/BistroExterior.gltf", "Assets/Models/BistroExterior/"));    
+    model.reset(scene->loadModel("Assets/Models/BistroExterior/BistroExterior.gltf", "Assets/Models/BistroExterior/"));    
     //model.reset(scene->loadModel("Assets/Models/CompareAmbientOcclusion/CompareAmbientOcclusion.gltf", "Assets/Models/CompareAmbientOcclusion/"));
 
     skybox = std::make_unique<Skybox>();

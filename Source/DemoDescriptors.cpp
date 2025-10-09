@@ -25,7 +25,7 @@ DemoDescriptors demos[] = {
     { "Exercise4", "Renders a quad texture", []() -> Module* { return new Exercise4(); } },
     { "Exercise5", "Renders a model with a colour texture", []() -> Module* { return new Exercise5(); } },
     { "Exercise6", "Renders a model using Phong", []() -> Module* { return new Exercise6(); } },
-    { "Exercise7", "Render to texture using PBR Phong", []() -> Module* { return new Exercise7(); } },
+    { "Exercise7", "Render a model using PBR Phong (render to texture)", []() -> Module* { return new Exercise7(); } },
     { "Exercise8", "Renders a model lit  with different light sources, tonemapping and gamma correction", []() -> Module* { return new Exercise8(); } },
     { "Exercise9", "Renders a Cubemap skybox", []() -> Module* { return new Exercise9(); } },
     { "Exercise10", "Render a model using Cook Torrance BRDF", []() -> Module* { return new Exercise10(); } },
