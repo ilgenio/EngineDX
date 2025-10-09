@@ -33,7 +33,7 @@ void BasicMaterial::load(const tinygltf::Model& model, const tinygltf::Material&
                                  float(material.pbrMetallicRoughness.baseColorFactor[2]),
                                  float(material.pbrMetallicRoughness.baseColorFactor[3]));
 
-    BOOL hasColourTexture = FALSE, hasMetallicRoughnessTex = FALSE;
+    BOOL hasColourTexture = FALSE, hasMetallicRoughnessTex = FALSE, hasOcclusionTex = FALSE;
 
     auto loadTexture = [](int index, const tinygltf::Model& model, const char* basePath, bool defaultSRGB, ComPtr<ID3D12Resource>& outTex) -> BOOL
     {
@@ -52,6 +52,7 @@ void BasicMaterial::load(const tinygltf::Model& model, const tinygltf::Material&
 
     hasColourTexture = loadTexture(material.pbrMetallicRoughness.baseColorTexture.index, model, basePath, true, baseColourTex);
     hasMetallicRoughnessTex = materialType == METALLIC_ROUGHNESS && loadTexture(material.pbrMetallicRoughness.metallicRoughnessTexture.index, model, basePath, false, metallicRoughnessTex);
+    hasOcclusionTex = materialType == METALLIC_ROUGHNESS && loadTexture(material.occlusionTexture.index, model, basePath, false, occlusionTex);
 
     if (materialType == BASIC)
     {
@@ -80,6 +81,8 @@ void BasicMaterial::load(const tinygltf::Model& model, const tinygltf::Material&
         materialData.metallicRoughness.roughnessFactor = float(material.pbrMetallicRoughness.roughnessFactor);
         materialData.metallicRoughness.hasBaseColourTex = hasColourTexture;
         materialData.metallicRoughness.hasMetallicRoughnessTex = hasMetallicRoughnessTex;
+        materialData.metallicRoughness.occlusionStrength = float(material.occlusionTexture.strength);
+        materialData.metallicRoughness.hasOcclusionTex = hasOcclusionTex;
     }
 
     // Descriptors 
@@ -104,6 +107,15 @@ void BasicMaterial::load(const tinygltf::Model& model, const tinygltf::Material&
     {
         textureTableDesc.createNullTexture2DSRV(1);
     }
+
+    if( hasOcclusionTex)
+    {
+        textureTableDesc.createTextureSRV(occlusionTex.Get(), 2);
+    }
+    else
+    {
+        textureTableDesc.createNullTexture2DSRV(2);
+    }   
 
 }
 

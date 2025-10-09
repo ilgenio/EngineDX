@@ -3,7 +3,7 @@
 
 #define NUM_SAMPLES 1024
 
-float4 EnvironmentBRDFPS(float2 uv : TEXCOORD) : SV_Target
+float4 EnvironmentBRDFPS(in float2 uv : TEXCOORD) : SV_Target
 {
     float NdotV = uv.x;
     float alphaRoughness = uv.y*uv.y;

@@ -1,21 +1,8 @@
-// Fullscreen Triangle Vertex Shader for DirectX 12
-struct VSOutput
-{
-    float2 texcoord : TEXCOORD;
-    float4 position : SV_Position;
-};
+static const float2 positions[3] = { float2(-1.0, 1.0), float2(3.0, 1.0), float2(-1.0, -3.0) };
+static const float2 uvs[3] = { float2(0.0, 0.0), float2(2.0, 0.0), float2(0.0, 2.0) };
 
-VSOutput main(uint vertexID : SV_VertexID)
-{
-    // Compute vertex position in clip space
-    float2 pos = float2((vertexID << 1) & 2, vertexID & 2);
-    float2 clipPos = pos * float2(2, -2) + float2(-1, 1);
-
-    VSOutput output;
-    output.position = float4(clipPos, 0.0, 1.0);
-
-    // Map to [0,1] for texture coordinates
-    output.texcoord = pos;
-    
-    return output;
-}
+void main(uint vertexID : SV_VertexID, out float2 texcoord : TEXCOORD, out float4 position : SV_Position)
+{  
+    texcoord = uvs[vertexID];
+    position = float4(positions[vertexID], 0.0, 1.0);
+}   

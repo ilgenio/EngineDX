@@ -4,8 +4,6 @@
 #include "tonemap.hlsli"
 #include "ibl.hlsli"
 
-
-
 float4 main(float3 worldPos : POSITION, float3 normal : NORMAL, float2 texCoord : TEXCOORD) : SV_TARGET
 {
     float3 V  = normalize(viewPos - worldPos);
@@ -22,10 +20,8 @@ float4 main(float3 worldPos : POSITION, float3 normal : NORMAL, float2 texCoord 
     getAmbientOcclusion(material, occlusionTex, texCoord, NdotV, alphaRoughness, diffuseAO, specularAO);
 
     // IBL
-    // TODO :use alphaRoughness instead of roughness ? 
     float3 colour = computeLighting(V, N, irradiance, radiance, brdfLUT, numRoughnessLevels, baseColour, roughness, metallic, diffuseAO, specularAO);
 
-#if 0
     // Direct lights
     for (uint i = 0; i < numDirLights; i++)
         colour += computeLighting(V, N, dirLights[i], baseColour, alphaRoughness, metallic);
@@ -36,7 +32,6 @@ float4 main(float3 worldPos : POSITION, float3 normal : NORMAL, float2 texCoord 
     for( uint i = 0; i< numSpotLights; i++)
         colour += computeLighting(V, N, spotLights[i], worldPos, baseColour, alphaRoughness, metallic);
 
-#endif
 
     // tonemapping
     float3 ldr = PBRNeutralToneMapping(colour);

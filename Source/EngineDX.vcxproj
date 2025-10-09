@@ -390,6 +390,7 @@
     <None Include="Exercises\Shaders\Exercise10.hlsli" />
     <None Include="Exercises\Shaders\Exercise11.hlsli" />
     <None Include="Exercises\Shaders\Exercise12.hlsli" />
+    <None Include="Exercises\Shaders\Exercise13.hlsli" />
     <None Include="Exercises\Shaders\Exercise6.hlsli" />
     <None Include="Exercises\Shaders\Exercise7.hlsli" />
     <None Include="Exercises\Shaders\Exercise8.hlsli" />
@@ -467,6 +468,28 @@
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">-Qembed_debug %(AdditionalOptions)</AdditionalOptions>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Exercise12VS</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Exercise12VS</EntryPointName>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)/Shaders;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)/Shaders;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </FxCompile>
+    <FxCompile Include="Exercises\Shaders\Exercise13PS.hlsl">
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Exercise13PS</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.0</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Exercise13PS</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.0</ShaderModel>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">-Qembed_debug %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)/Shaders;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)/Shaders;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </FxCompile>
+    <FxCompile Include="Exercises\Shaders\Exercise13VS.hlsl">
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">-Qembed_debug %(AdditionalOptions)</AdditionalOptions>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Exercise13VS</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.0</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Exercise13VS</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.0</ShaderModel>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)/Shaders;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)/Shaders;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </FxCompile>

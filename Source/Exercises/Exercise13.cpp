@@ -46,6 +46,11 @@ bool Exercise13::init()
         renderTexture = std::make_unique<RenderTexture>("Exercise13", DXGI_FORMAT_R8G8B8A8_UNORM, Vector4(0.188f, 0.208f, 0.259f, 1.0f), DXGI_FORMAT_D32_FLOAT, 1.0f);
 
         ok = skybox->loadHDR("Assets/Textures/footprint_court.hdr");
+
+        ModuleCamera* camera = app->getCamera(); 
+        camera->setPanning(Vector3(0.0f, 0.5f, 1.7f));
+        camera->setPolar(0.0f);
+        camera->setAzimuthal(XMConvertToRadians(-10.25f));
     }
 
     return true;
@@ -104,6 +109,11 @@ void Exercise13::imGuiCommands()
     ImGui::Begin("IBL Viewer Options");
     ImGui::Separator();
     ImGui::Text("FPS: [%d]. Avg. elapsed (Ms): [%g] ", uint32_t(app->getFPS()), app->getAvgElapsedMs());
+    ImGui::Separator();
+    ModuleCamera* camera = app->getCamera();
+    ImGui::Text("Camera pos: [%.2f, %.2f, %.2f], Camera spherical angles: [%.2f, %.2f]", camera->getPos().x, camera->getPos().y, camera->getPos().z,
+        XMConvertToDegrees(camera->getPolar()), XMConvertToDegrees(camera->getAzimuthal()));
+    
     ImGui::Separator();
     ImGui::Checkbox("Show grid", &showGrid);
     ImGui::Checkbox("Show axis", &showAxis);
@@ -228,7 +238,7 @@ bool Exercise13::createRootSignature()
     CD3DX12_DESCRIPTOR_RANGE sampRange;
 
     iblTableRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 0);
-    materialTableRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 3);
+    materialTableRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 3);
     sampRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, ModuleSamplers::COUNT, 0);
 
     rootParameters[ROOTPARAM_MVP].InitAsConstants((sizeof(Matrix) / sizeof(UINT32)), 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
@@ -265,8 +275,8 @@ bool Exercise13::createPSO()
                                                {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
                                                {"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0} };
 
-    auto dataVS = DX::ReadData(L"Exercise12VS.cso");
-    auto dataPS = DX::ReadData(L"Exercise12PS.cso");
+    auto dataVS = DX::ReadData(L"Exercise13VS.cso");
+    auto dataPS = DX::ReadData(L"Exercise13PS.cso");
 
     D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
     psoDesc.InputLayout = { inputLayout, sizeof(inputLayout) / sizeof(D3D12_INPUT_ELEMENT_DESC) };  // the structure describing our input layout

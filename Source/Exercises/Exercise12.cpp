@@ -85,12 +85,11 @@ void Exercise12::preRender()
 {
     imguiPass->startFrame();
 
-    ImGuiID dockspace_id = ImGui::GetID("MyDockNodeId");
     static bool init = true;
-    ImVec2 mainSize = ImGui::GetMainViewport()->Size;
     if (init)
     {
-        init = false;
+        ImGuiID dockspace_id = ImGui::GetID("MyDockNodeId");
+        ImVec2 mainSize = ImGui::GetMainViewport()->Size;
         ImGui::DockBuilderRemoveNode(dockspace_id);
         ImGui::DockBuilderAddNode(dockspace_id, ImGuiDockNodeFlags_CentralNode);
         ImGui::DockBuilderSetNodeSize(dockspace_id, mainSize);
@@ -101,6 +100,7 @@ void Exercise12::preRender()
         ImGui::DockBuilderDockWindow("Scene", dock_id_left);
 
         ImGui::DockBuilderFinish(dockspace_id);
+        init = false;
     }
 
     if(canvasSize.x > 0.0f && canvasSize.y > 0.0f)

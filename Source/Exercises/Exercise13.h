@@ -36,8 +36,8 @@ class Exercise13 : public Module
 
     std::unique_ptr<BasicModel>             model;
 
-    bool showAxis = true;
-    bool showGrid = true;
+    bool showAxis = false;
+    bool showGrid = false;
 
     enum TexSlots
     {

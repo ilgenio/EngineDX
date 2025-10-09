@@ -33,8 +33,10 @@ struct MetallicRoughnessMaterialData
     XMFLOAT4 baseColour;
     float    metallicFactor;
     float    roughnessFactor;
+    float    occlusionStrength;
     BOOL     hasBaseColourTex;
     BOOL     hasMetallicRoughnessTex;
+    BOOL     hasOcclusionTex;
 };
 
 class BasicMaterial
@@ -83,6 +85,7 @@ private:
 
     ComPtr<ID3D12Resource>  baseColourTex;
     ComPtr<ID3D12Resource>  metallicRoughnessTex;
+    ComPtr<ID3D12Resource>  occlusionTex;
     ShaderTableDesc         textureTableDesc;
     std::string             name;
 };
