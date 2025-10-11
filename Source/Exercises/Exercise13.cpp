@@ -40,12 +40,12 @@ bool Exercise13::init()
         ModuleD3D12* d3d12 = app->getD3D12();
 
         debugDesc     = descriptors->allocTable();        
-        debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue(), debugDesc.getCPUHandle(TEX_SLOT_DEBUGDRAW), debugDesc.getGPUHandle(TEX_SLOT_DEBUGDRAW) );
+        debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue(), false, debugDesc.getCPUHandle(TEX_SLOT_DEBUGDRAW), debugDesc.getGPUHandle(TEX_SLOT_DEBUGDRAW) );
         imguiPass     = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd(), debugDesc.getCPUHandle(TEX_SLOT_IMGUI), debugDesc.getGPUHandle(TEX_SLOT_IMGUI));
         skybox        = std::make_unique<Skybox>();
         renderTexture = std::make_unique<RenderTexture>("Exercise13", DXGI_FORMAT_R8G8B8A8_UNORM, Vector4(0.188f, 0.208f, 0.259f, 1.0f), DXGI_FORMAT_D32_FLOAT, 1.0f);
 
-        ok = skybox->loadHDR("Assets/Textures/footprint_court.hdr");
+        ok = skybox->init("Assets/Textures/footprint_court.hdr", false);
 
         ModuleCamera* camera = app->getCamera(); 
         camera->setPanning(Vector3(0.0f, 0.5f, 1.7f));

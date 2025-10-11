@@ -53,7 +53,7 @@ float3 computeLighting(in float3 V, in float3 N, in TextureCube irradiance, in T
     float3 metal_specular = (baseColour*firstTerm + secondTerm) * specularAO;
     float3 dielectric_specular = (0.04*firstTerm + secondTerm) * specularAO;
 
-    return lerp(diffuse+dielectric_specular, metal_specular, metallic);
+    return lerp(diffuse + dielectric_specular, metal_specular, metallic);
 }
     
 #endif /* ibl_hlsli */

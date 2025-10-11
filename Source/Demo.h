@@ -29,7 +29,6 @@ class Demo : public Module
     std::unique_ptr<DebugDrawPass>    debugDrawPass;
     std::unique_ptr<ImGuiPass>        imguiPass;
     std::unique_ptr<RenderMeshPass>   renderMeshPass;
-    std::unique_ptr<SkyboxRenderPass> skyboxPass;
 
     std::unique_ptr<Scene>            scene;
     std::unique_ptr<Model>            model;
@@ -60,13 +59,9 @@ public:
 
 private:
     void renderToTexture(ID3D12GraphicsCommandList* commandList);
-    void setRenderTarget(ID3D12GraphicsCommandList* commandList);
-    void renderDebugDraw(ID3D12GraphicsCommandList* commandList, UINT width, UINT height, const Matrix& view, const Matrix& projection );
-    void renderImGui(ID3D12GraphicsCommandList* commandList);
     void renderMeshes(ID3D12GraphicsCommandList* commandList, const Matrix& view, const Matrix& projection);
-    void renderSkybox(ID3D12GraphicsCommandList* commandList, const Quaternion& cameraRot, const Matrix& projection);
 
-    bool loadScene();
+    bool loadScene(bool useMSAA);
     void debugDrawCommands();
     void imGuiDrawCommands();
 };

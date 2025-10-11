@@ -47,8 +47,8 @@ public:
     ComPtr<ID3D12Resource> createTextureFromMemory(const void* data, size_t size, const char* name);
     ComPtr<ID3D12Resource> createTextureFromFile(const std::filesystem::path& path, bool defaultSRGB = false);
 
-    ComPtr<ID3D12Resource> createRenderTarget(DXGI_FORMAT format, size_t width, size_t height, const Vector4& clearColour, const char* name);
-    ComPtr<ID3D12Resource> createDepthStencil(DXGI_FORMAT format, size_t width, size_t height, float clearDepth, uint8_t clearStencil, const char* name);
+    ComPtr<ID3D12Resource> createRenderTarget(DXGI_FORMAT format, size_t width, size_t height, UINT sampleCount, const Vector4& clearColour, const char* name);
+    ComPtr<ID3D12Resource> createDepthStencil(DXGI_FORMAT format, size_t width, size_t height, UINT sampleCount, float clearDepth, uint8_t clearStencil, const char* name);
 
     ComPtr<ID3D12Resource> createCubemapRenderTarget(DXGI_FORMAT format, size_t size, const Vector4& clearColour, const char* name);
     ComPtr<ID3D12Resource> createCubemapRenderTarget(DXGI_FORMAT format, size_t size, size_t mipLevels, const Vector4& clearColour, const char* name);
@@ -58,21 +58,21 @@ public:
 private:
 
     ComPtr<ID3D12Resource> createTextureFromImage(const ScratchImage& image, const char* name);
-    ComPtr<ID3D12Resource> createRenderTarget(DXGI_FORMAT format, size_t width, size_t height, size_t arraySize, size_t mipLevels, const Vector4& clearColour, const char* name);
+    ComPtr<ID3D12Resource> createRenderTarget(DXGI_FORMAT format, size_t width, size_t height, size_t arraySize, size_t mipLevels, UINT sampleCount, const Vector4& clearColour, const char* name);
     ComPtr<ID3D12Resource> getUploadHeap(size_t size);
 };
 
-inline ComPtr<ID3D12Resource> ModuleResources::createRenderTarget(DXGI_FORMAT format, size_t width, size_t height, const Vector4& clearColour, const char* name)
+inline ComPtr<ID3D12Resource> ModuleResources::createRenderTarget(DXGI_FORMAT format, size_t width, size_t height, UINT sampleCount, const Vector4& clearColour, const char* name)
 {
-    return createRenderTarget(format, width, height, 1, 1, clearColour, name);
+    return createRenderTarget(format, width, height, 1, 1, sampleCount, clearColour, name);
 }
 
 inline ComPtr<ID3D12Resource> ModuleResources::createCubemapRenderTarget(DXGI_FORMAT format, size_t size, const Vector4& clearColour, const char *name)
 {
-    return createRenderTarget(format, size, size, 6, 1, clearColour, name);
+    return createRenderTarget(format, size, size, 6, 1, 1, clearColour, name);
 }
 
 inline ComPtr<ID3D12Resource> ModuleResources::createCubemapRenderTarget(DXGI_FORMAT format, size_t size, size_t mipLevels, const Vector4 &clearColour, const char *name)
 {
-    return createRenderTarget(format, size, size, 6, mipLevels, clearColour, name);
+    return createRenderTarget(format, size, size, 6, mipLevels, 1, clearColour, name);
 }

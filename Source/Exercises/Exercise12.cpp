@@ -52,7 +52,7 @@ bool Exercise12::init()
         ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
         ModuleD3D12* d3d12 = app->getD3D12();
 
-        debugDrawPass       = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue());
+        debugDrawPass       = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue(), false);
         irradianceMapPass   = std::make_unique<IrradianceMapPass>();
         prefilterEnvMapPass = std::make_unique<PrefilterEnvMapPass>();
         environmentBRDFPass = std::make_unique<EnvironmentBRDFPass>();
@@ -69,6 +69,8 @@ bool Exercise12::init()
         {
             tableDesc.createTextureSRV(hdrSky.Get(), TEX_SLOT_HDR);
         }
+
+        ok = ok && skyboxRenderPass->init(false);
 
         ModuleCamera* camera = app->getCamera();
         camera->setPanning(Vector3(15.0f, 7.5f, 0.0f));

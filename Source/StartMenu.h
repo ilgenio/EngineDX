@@ -21,5 +21,4 @@ public:
 
 private:
     void imGuiDrawCommands();
-    void setRenderTarget(ID3D12GraphicsCommandList *commandList);
 };

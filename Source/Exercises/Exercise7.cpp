@@ -41,7 +41,7 @@ bool Exercise7::init()
         ModuleD3D12* d3d12 = app->getD3D12();
         ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
 
-        debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue());
+        debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue(), false);
 
         descTable = descriptors->allocTable();
         imguiPass = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd(), descTable.getCPUHandle(), descTable.getGPUHandle());
@@ -257,8 +257,7 @@ void Exercise7::renderToTexture(ID3D12GraphicsCommandList* commandList)
 
     perFrame.L.Normalize();
 
-    renderTexture->transitionToRTV(commandList);
-    renderTexture->setRenderTarget(commandList);
+    renderTexture->beginRender(commandList);
 
     commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &mvp, 0);
     commandList->SetGraphicsRootConstantBufferView(1, ringBuffer->allocBuffer(&perFrame));
@@ -288,7 +287,7 @@ void Exercise7::renderToTexture(ID3D12GraphicsCommandList* commandList)
 
     debugDrawPass->record(commandList, width, height, view, proj);
 
-    renderTexture->transitionToSRV(commandList);
+    renderTexture->endRender(commandList);
 }
 
 void Exercise7::render()

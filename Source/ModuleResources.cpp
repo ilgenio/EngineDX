@@ -265,14 +265,14 @@ ComPtr<ID3D12Resource> ModuleResources::createTextureFromImage(const ScratchImag
 }
 
 ComPtr<ID3D12Resource> ModuleResources::createRenderTarget(DXGI_FORMAT format, size_t width, size_t height, size_t arraySize, size_t mipLevels, 
-                                                          const Vector4& clearColour, const char *name)
+                                                          UINT sampleCount, const Vector4& clearColour, const char *name)
 {
     ComPtr<ID3D12Resource> texture;
 
     const auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 
     const D3D12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Tex2D(format, (UINT64)(width), (UINT)(height),
-        UINT16(arraySize), UINT16(mipLevels), 1, 0, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
+        UINT16(arraySize), UINT16(mipLevels), sampleCount, 0, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
 
     D3D12_CLEAR_VALUE clearValue = { format , { clearColour.x, clearColour.y, clearColour.z, clearColour.w } };
 
@@ -284,14 +284,14 @@ ComPtr<ID3D12Resource> ModuleResources::createRenderTarget(DXGI_FORMAT format, s
     return texture;
 }
 
-ComPtr<ID3D12Resource> ModuleResources::createDepthStencil(DXGI_FORMAT format, size_t width, size_t height, float clearDepth, uint8_t clearStencil, const char* name)
+ComPtr<ID3D12Resource> ModuleResources::createDepthStencil(DXGI_FORMAT format, size_t width, size_t height, UINT sampleCount, float clearDepth, uint8_t clearStencil, const char* name)
 {
     ComPtr<ID3D12Resource> texture;
 
     const auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 
     const D3D12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Tex2D(format, (UINT64)(width), (UINT)(height),
-        1, 1, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
+        1, 1, sampleCount, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
 
     D3D12_CLEAR_VALUE clear;
     clear.Format = format;

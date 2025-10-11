@@ -38,7 +38,7 @@ ComPtr<ID3D12Resource> EnvironmentBRDFPass::generate(size_t size)
     ModuleSamplers* samplers = app->getSamplers();
     ModuleResources* resources = app->getResources();
 
-    ComPtr<ID3D12Resource> environmentMap = resources->createRenderTarget(DXGI_FORMAT_R16G16_FLOAT, size, size, Vector4(0.0f, 0.0f, 0.0f, 1.0f), "EnvironmentBRDF Map");
+    ComPtr<ID3D12Resource> environmentMap = resources->createRenderTarget(DXGI_FORMAT_R16G16_FLOAT, size, size, 1, Vector4(0.0f, 0.0f, 0.0f, 1.0f), "EnvironmentBRDF Map");
 
     BEGIN_EVENT(commandList.Get(), "EnvironmentBRDF Map");
 

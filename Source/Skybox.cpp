@@ -25,11 +25,6 @@
 
 Skybox::Skybox()
 {
-    irradianceMapPass   = std::make_unique<IrradianceMapPass>();
-    prefilterEnvMapPass = std::make_unique<PrefilterEnvMapPass>();
-    environmentBRDFPass = std::make_unique<EnvironmentBRDFPass>();  
-    hdrToCubemapPass    = std::make_unique<HDRToCubemapPass>();
-    skyboxRenderPass    = std::make_unique<SkyboxRenderPass>();
 }
 
 Skybox::~Skybox()
@@ -37,8 +32,16 @@ Skybox::~Skybox()
 
 }
 
-bool Skybox::loadHDR(const char* hdrFile)
+bool Skybox::init(const char* hdrFile, bool useMSAA)
 {
+    irradianceMapPass = std::make_unique<IrradianceMapPass>();
+    prefilterEnvMapPass = std::make_unique<PrefilterEnvMapPass>();
+    environmentBRDFPass = std::make_unique<EnvironmentBRDFPass>();
+    hdrToCubemapPass = std::make_unique<HDRToCubemapPass>();
+
+    skyboxRenderPass = std::make_unique<SkyboxRenderPass>();
+    skyboxRenderPass->init(useMSAA);
+
     ModuleResources* resources = app->getResources();
 
     ComPtr<ID3D12Resource> hdr = resources->createTextureFromFile(hdrFile);

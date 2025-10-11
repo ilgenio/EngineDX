@@ -33,7 +33,7 @@ bool Exercise3::init()
     {
         ModuleD3D12* d3d12 = app->getD3D12();
 
-        debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue());
+        debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue(), false);
     }
 
     return true;

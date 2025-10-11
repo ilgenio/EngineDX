@@ -52,13 +52,15 @@ bool Exercise11::init()
         ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
         ModuleD3D12* d3d12 = app->getD3D12();
 
-        debugDrawPass       = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue());
+        debugDrawPass       = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue(), false);
         irradianceMapPass   = std::make_unique<IrradianceMapPass>();
         skyboxRenderPass    = std::make_unique<SkyboxRenderPass>();
 
         tableDesc = descriptors->allocTable();        
         imguiPass = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd(), tableDesc.getCPUHandle(TEX_SLOT_IMGUI), tableDesc.getGPUHandle(TEX_SLOT_IMGUI));
         renderTexture = std::make_unique<RenderTexture>("Exercise11", DXGI_FORMAT_R8G8B8A8_UNORM, Vector4(0.188f, 0.208f, 0.259f, 1.0f), DXGI_FORMAT_D32_FLOAT, 1.0f);
+
+        ok = skyboxRenderPass->init(false);
     }
 
     return true;
@@ -118,8 +120,7 @@ void Exercise11::renderToTexture(ID3D12GraphicsCommandList* commandList)
 
     BEGIN_EVENT(commandList, "Exercise11 Render to Texture");
 
-    renderTexture->transitionToRTV(commandList);
-    renderTexture->setRenderTarget(commandList);    
+    renderTexture->beginRender(commandList);
 
     skyboxRenderPass->record(commandList, tableDesc.getGPUHandle(TEX_SLOT_CUBEMAP), camera->getRot(), proj);
 
@@ -161,7 +162,7 @@ void Exercise11::renderToTexture(ID3D12GraphicsCommandList* commandList)
 
     debugDrawPass->record(commandList, width, height, camera->getView(), proj);
 
-    renderTexture->transitionToSRV(commandList);
+    renderTexture->endRender(commandList);
 
     END_EVENT(commandList);
 

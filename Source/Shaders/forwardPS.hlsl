@@ -4,6 +4,16 @@
 #include "tonemap.hlsli"
 #include "ibl.hlsli"
 
+float adjustRoughnessForCurvature(float roughness, float3 N)
+{
+    float3 normalDx = ddx(N);
+    float3 normalDy = ddy(N);
+
+    float geometricRoughness = pow( saturate(max(dot(normalDx, normalDx), dot(normalDy, normalDy))), 0.333 );
+
+    return max(roughness, geometricRoughness);
+}
+
 float4 main(float3 worldPos : POSITION, float3 normal : NORMAL, float2 texCoord : TEXCOORD) : SV_TARGET
 {
     float3 V  = normalize(viewPos - worldPos);
@@ -15,6 +25,9 @@ float4 main(float3 worldPos : POSITION, float3 normal : NORMAL, float2 texCoord 
     float alphaRoughness;
     float metallic;
     getMetallicRoughness(material, baseColourTex, metallicRoughnessTex, texCoord, baseColour, roughness, alphaRoughness, metallic);
+
+    roughness = adjustRoughnessForCurvature(roughness, N);
+    alphaRoughness = roughness * roughness;
 
     float diffuseAO, specularAO;
     getAmbientOcclusion(material, occlusionTex, texCoord, NdotV, alphaRoughness, diffuseAO, specularAO);

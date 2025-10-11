@@ -11,6 +11,7 @@
 class RenderTexture
 {
     ComPtr<ID3D12Resource> texture;
+    ComPtr<ID3D12Resource> resolved;
     ComPtr<ID3D12Resource> depthTexture;
 
     UINT width = 0;
@@ -21,6 +22,8 @@ class RenderTexture
     const char* name;
     Vector4 clearColour;
     FLOAT clearDepth;
+    bool autoResolveMSAA = false;
+    bool msaa = false;
 
     ShaderTableDesc srvDesc;
     RenderTargetDesc rtvDesc;
@@ -28,8 +31,10 @@ class RenderTexture
 
 public:
 
-    RenderTexture(const char* name, DXGI_FORMAT format, const Vector4 clearColour, DXGI_FORMAT depthFormat = DXGI_FORMAT_UNKNOWN, float clearDepth = 1.0f)
-    : format(format), depthFormat(depthFormat), name(name), clearColour(clearColour), clearDepth(clearDepth) 
+    RenderTexture(const char* name, DXGI_FORMAT format, const Vector4 clearColour, DXGI_FORMAT depthFormat = DXGI_FORMAT_UNKNOWN, 
+                  float clearDepth = 1.0f, bool msaa = false, bool autoResolve = false)
+    : format(format), depthFormat(depthFormat), name(name), clearColour(clearColour), clearDepth(clearDepth), msaa(msaa), 
+      autoResolveMSAA(autoResolve)
     { };
 
     ~RenderTexture();
@@ -39,20 +44,25 @@ public:
 
     void beginRender(ID3D12GraphicsCommandList* cmdList)
     {
-        transitionToRTV(cmdList);
+        //if (!msaa || !autoResolveMSAA)
+        {
+            transitionToRTV(cmdList);
+        }
+
         setRenderTarget(cmdList);
     }
 
     void endRender(ID3D12GraphicsCommandList* cmdList)
     {
-        transitionToSRV(cmdList);
+        if (msaa && autoResolveMSAA)
+        {
+            resolveMSAA(cmdList);
+        }
+        else
+        {
+            transitionToSRV(cmdList);
+        }
     }
-
-    void transitionToRTV(ID3D12GraphicsCommandList* cmdList);
-    void transitionToSRV(ID3D12GraphicsCommandList* cmdList);
-
-    void setRenderTarget(ID3D12GraphicsCommandList* cmdList);
-    void bindAsShaderResource(ID3D12GraphicsCommandList* cmdList, int slot);
 
     UINT getWidth() const { return width;  }
     UINT getHeight() const { return height;  }
@@ -60,5 +70,16 @@ public:
     const ShaderTableDesc& getSrvTableDesc() const { return srvDesc;  }
     const RenderTargetDesc& getRtvDesc() const { return rtvDesc; }
     const DepthStencilDesc& getDsvDesc() const { return dsvDesc; }
+
+private:
+    void resolveMSAA(ID3D12GraphicsCommandList* cmdList);
+
+    void transitionToRTV(ID3D12GraphicsCommandList* cmdList);
+    void transitionToSRV(ID3D12GraphicsCommandList* cmdList);
+
+    void setRenderTarget(ID3D12GraphicsCommandList* cmdList);
+    void bindAsShaderResource(ID3D12GraphicsCommandList* cmdList, int slot);
+
+
 };
 

@@ -32,20 +32,21 @@ Demo::~Demo()
 
 bool Demo::init() 
 {
-    bool ok = loadScene();
+    const bool useMSAA = true;
+
+    bool ok = loadScene(useMSAA);
     if (ok)
     {
         ModuleD3D12* d3d12 = app->getD3D12();
 
         debugDesc = app->getShaderDescriptors()->allocTable();
 
-        debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue(), debugDesc.getCPUHandle(0), debugDesc.getGPUHandle(0));
+        debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue(), useMSAA, debugDesc.getCPUHandle(0), debugDesc.getGPUHandle(0));
         imguiPass = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd(), debugDesc.getCPUHandle(1), debugDesc.getGPUHandle(1));
-        skyboxPass = std::make_unique<SkyboxRenderPass>();
-        renderTexture = std::make_unique<RenderTexture>("Exercise12", DXGI_FORMAT_R8G8B8A8_UNORM, Vector4(0.188f, 0.208f, 0.259f, 1.0f), DXGI_FORMAT_D32_FLOAT, 1.0f);
+        renderTexture = std::make_unique<RenderTexture>("Exercise12", DXGI_FORMAT_R8G8B8A8_UNORM, Vector4(0.188f, 0.208f, 0.259f, 1.0f), DXGI_FORMAT_D32_FLOAT, 1.0f, useMSAA, useMSAA);
         renderMeshPass = std::make_unique<RenderMeshPass>();
 
-        ok = ok && renderMeshPass->init();
+        ok = ok && renderMeshPass->init(useMSAA);
     }
 
     if (ok)
@@ -167,38 +168,6 @@ void Demo::imGuiDrawCommands()
     app->getCamera()->setEnable(viewerFocused);
 }
 
-void Demo::setRenderTarget(ID3D12GraphicsCommandList *commandList)
-{
-    ModuleD3D12* d3d12 = app->getD3D12();
-
-    unsigned width = d3d12->getWindowWidth();
-    unsigned height = d3d12->getWindowHeight();
-
-    D3D12_CPU_DESCRIPTOR_HANDLE rtv = d3d12->getRenderTargetDescriptor();
-    D3D12_CPU_DESCRIPTOR_HANDLE dsv = d3d12->getDepthStencilDescriptor();
-
-    commandList->OMSetRenderTargets(1, &rtv, false, &dsv);
-
-    float clearColor[] = { 0.188f, 0.208f, 0.259f, 1.0f };
-    commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
-    commandList->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
-
-    D3D12_VIEWPORT viewport{ 0.0f, 0.0f, float(width), float(height), 0.0f, 1.0f };
-    D3D12_RECT scissor = { 0, 0, LONG(width), LONG(height) };
-    commandList->RSSetViewports(1, &viewport);
-    commandList->RSSetScissorRects(1, &scissor);
-}
-
-void Demo::renderDebugDraw(ID3D12GraphicsCommandList *commandList, UINT width, UINT height, const Matrix& view, const Matrix& projection )
-{
-    debugDrawPass->record(commandList, width, height, view, projection);
-}
-
-void Demo::renderImGui(ID3D12GraphicsCommandList *commandList)
-{
-    imguiPass->record(commandList);
-}
-
 void Demo::renderMeshes(ID3D12GraphicsCommandList *commandList, const Matrix& view, const Matrix& projection)
 {
     ModuleRingBuffer* ringBuffer = app->getRingBuffer();
@@ -215,68 +184,48 @@ void Demo::renderMeshes(ID3D12GraphicsCommandList *commandList, const Matrix& vi
     renderMeshPass->render(commandList, renderList, ringBuffer->allocBuffer(&perFrameData), skybox->getIBLTable(), view*projection);
 }
 
-void Demo::renderSkybox(ID3D12GraphicsCommandList *commandList, const Quaternion& cameraRot, const Matrix& projection)
-{
-    ModuleCamera* camera = app->getCamera();
-
-    skyboxPass->record(commandList, skybox->getCubemapSRV(), cameraRot, projection);
-}
-
 void Demo::renderToTexture(ID3D12GraphicsCommandList* commandList)
 {
     ModuleCamera* camera = app->getCamera();
 
+    float aspect = float(renderTexture->getWidth()) / float(renderTexture->getHeight());
     const Matrix& view = camera->getView();
-    Matrix proj = ModuleCamera::getPerspectiveProj(float(renderTexture->getWidth()) / float(renderTexture->getHeight()));
+    Matrix proj = ModuleCamera::getPerspectiveProj(aspect);
 
     BEGIN_EVENT(commandList, "Demo Render Scene to Texture");
 
-    renderTexture->transitionToRTV(commandList);
+    renderTexture->beginRender(commandList);
 
-    renderTexture->setRenderTarget(commandList);
+    skybox->render(commandList, aspect);
 
-    renderSkybox(commandList, camera->getRot(), proj);
     renderMeshes(commandList, view, proj);
-    renderDebugDraw(commandList, renderTexture->getWidth(), renderTexture->getHeight(), view, proj);
 
-    renderTexture->transitionToSRV(commandList);
+    debugDrawPass->record(commandList, renderTexture->getWidth(), renderTexture->getHeight(), view, proj);
+
+    renderTexture->endRender(commandList);
 
     END_EVENT(commandList);
-
 }
 
 void Demo::render()
 {
     ModuleD3D12* d3d12 = app->getD3D12();
 
-    ID3D12GraphicsCommandList* commandList = d3d12->getCommandList();
-    commandList->Reset(d3d12->getCommandAllocator(), nullptr);
-
-    ID3D12DescriptorHeap* descriptorHeaps[] = { app->getShaderDescriptors()->getHeap(), app->getSamplers()->getHeap() };
-    commandList->SetDescriptorHeaps(2, descriptorHeaps);
+    ID3D12GraphicsCommandList* commandList = d3d12->beginFrameRender();
 
     if (renderTexture->isValid() && canvasSize.x > 0.0f && canvasSize.y > 0.0f)
     {
         renderToTexture(commandList);
     }
 
-    CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(d3d12->getBackBuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-    commandList->ResourceBarrier(1, &barrier);
+    d3d12->setBackBufferRenderTarget(); 
 
-    setRenderTarget(commandList);
-    renderImGui(commandList);
+    imguiPass->record(commandList);
 
-    barrier = CD3DX12_RESOURCE_BARRIER::Transition(d3d12->getBackBuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-    commandList->ResourceBarrier(1, &barrier);
-
-    if (SUCCEEDED(commandList->Close()))
-    {
-        ID3D12CommandList* commandLists[] = { commandList };
-        d3d12->getDrawCommandQueue()->ExecuteCommandLists(UINT(std::size(commandLists)), commandLists);
-    }
+    d3d12->endFrameRender();
 }
 
-bool Demo::loadScene()
+bool Demo::loadScene(bool useMSAA)
 {
     scene = std::make_unique<Scene>();
 
@@ -299,8 +248,8 @@ bool Demo::loadScene()
 
     skybox = std::make_unique<Skybox>();
     
-    //ok = ok && skybox->loadHDR("Assets/Textures/footprint_court.hdr");
-    ok = ok && skybox->loadHDR("Assets/Textures/san_giuseppe_bridge_4k.hdr");    
+    ok = ok && skybox->init("Assets/Textures/footprint_court.hdr", useMSAA);
+    //ok = ok && skybox->loadHDR("Assets/Textures/san_giuseppe_bridge_4k.hdr");    
 
     _ASSERT_EXPR(ok, L"Error loading scene");
 

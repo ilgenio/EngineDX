@@ -94,7 +94,7 @@ class DDRenderInterfaceCoreD3D12 final : public dd::RenderInterface
 public:
     friend class DebugDrawPass;
 
-    DDRenderInterfaceCoreD3D12(ID3D12Device4* _device, ID3D12CommandQueue* _uploadQueue, D3D12_CPU_DESCRIPTOR_HANDLE cpuText, D3D12_GPU_DESCRIPTOR_HANDLE gpuText)
+    DDRenderInterfaceCoreD3D12(ID3D12Device4* _device, ID3D12CommandQueue* _uploadQueue, bool useMSAA, D3D12_CPU_DESCRIPTOR_HANDLE cpuText, D3D12_GPU_DESCRIPTOR_HANDLE gpuText)
     {
         device = _device;
         uploadQueue = _uploadQueue;
@@ -103,8 +103,8 @@ public:
 
         setupLinePointVertexBuffers();
         setupUploadCommandBuffer();
-        setupLinePointPipeline();
-        setupTextPipeline();
+        setupLinePointPipeline(useMSAA);
+        setupTextPipeline(useMSAA);
         setupTextVertexBuffers();
     }
 
@@ -122,7 +122,7 @@ public:
         uploadEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
     }
 
-    void setupTextPipeline()
+    void setupTextPipeline(bool useMSAA)
     {
         ComPtr<ID3DBlob> errorBuff;
 
@@ -164,7 +164,7 @@ public:
         textPSODesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
         textPSODesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
         textPSODesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
-        textPSODesc.SampleDesc = { 1, 0 };
+        textPSODesc.SampleDesc = { useMSAA ? UINT(4) : UINT(1) , 0 };
         textPSODesc.SampleMask = 0xffffffff;
         textPSODesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
         textPSODesc.NumRenderTargets = 1;
@@ -185,7 +185,7 @@ public:
         device->CreateGraphicsPipelineState(&textPSODesc, IID_PPV_ARGS(&textPSO));
     }
 
-    void setupLinePointPipeline()
+    void setupLinePointPipeline(bool useMSAA)
     {
         ComPtr<ID3DBlob> errorBuff;
 
@@ -221,7 +221,7 @@ public:
         pointPSODesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
         pointPSODesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
         pointPSODesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
-        pointPSODesc.SampleDesc = { 1, 0 };
+        pointPSODesc.SampleDesc = { useMSAA ? UINT(4) : UINT(1), 0 };
         pointPSODesc.SampleMask = 0xffffffff;
         pointPSODesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
         pointPSODesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
@@ -462,9 +462,9 @@ private:
 DDRenderInterfaceCoreD3D12* DebugDrawPass::implementation = 0;
 
 DebugDrawPass::DebugDrawPass(ID3D12Device4* device, ID3D12CommandQueue* uploadQueue, 
-                             D3D12_CPU_DESCRIPTOR_HANDLE cpuText, D3D12_GPU_DESCRIPTOR_HANDLE gpuText)
+                             bool useMSAA, D3D12_CPU_DESCRIPTOR_HANDLE cpuText, D3D12_GPU_DESCRIPTOR_HANDLE gpuText)
 {    
-    implementation = new DDRenderInterfaceCoreD3D12(device, uploadQueue, cpuText, gpuText);
+    implementation = new DDRenderInterfaceCoreD3D12(device, uploadQueue, useMSAA, cpuText, gpuText);
     dd::initialize(implementation);
 }
 

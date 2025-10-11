@@ -41,7 +41,7 @@ bool Exercise10::init()
         ModuleD3D12* d3d12 = app->getD3D12();
         ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
 
-        debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue());
+        debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue() , false);
 
         debugTableDesc = descriptors->allocTable();
         imguiPass = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd(), debugTableDesc.getCPUHandle(0), debugTableDesc.getGPUHandle(0));
@@ -403,8 +403,7 @@ void Exercise10::renderToTexture(ID3D12GraphicsCommandList* commandList)
     Matrix mvp = model->getModelMatrix() * view * proj;
     mvp = mvp.Transpose();
 
-    renderTexture->transitionToRTV(commandList);
-    renderTexture->setRenderTarget(commandList);
+    renderTexture->beginRender(commandList);
     
     PerFrame perFrame;
     perFrame.ambient  = ambient;
@@ -451,7 +450,7 @@ void Exercise10::renderToTexture(ID3D12GraphicsCommandList* commandList)
 
     debugDrawPass->record(commandList, width, height, view, proj);
 
-    renderTexture->transitionToSRV(commandList);
+    renderTexture->endRender(commandList);
 }
 
 void Exercise10::render()

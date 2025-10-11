@@ -31,8 +31,10 @@ bool Exercise9::init()
     ModuleD3D12* d3d12 = app->getD3D12();
 
     tableDesc = descriptors->allocTable();
-    debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue(), tableDesc.getCPUHandle(0), tableDesc.getGPUHandle(0));
+    debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue(), false, tableDesc.getCPUHandle(0), tableDesc.getGPUHandle(0));
     skyboxRenderPass = std::make_unique<SkyboxRenderPass>();
+
+    skyboxRenderPass->init(false);
 
     cubemap = resources->createTextureFromFile(std::wstring(L"Assets/Textures/cubemap.dds"));
 

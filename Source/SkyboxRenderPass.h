@@ -16,6 +16,7 @@ public:
     SkyboxRenderPass();
     ~SkyboxRenderPass();
 
+    bool init(bool useMSAA);
     void record(ID3D12GraphicsCommandList* commandList, D3D12_GPU_DESCRIPTOR_HANDLE cubemapSRV, const Quaternion& cameraRot, const Matrix& projection);
 
 private:
@@ -28,5 +29,5 @@ private:
     };
 
     bool createRootSignature();
-    bool createPSO();
+    bool createPSO(bool useMSAA);
 };

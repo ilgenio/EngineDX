@@ -12,15 +12,21 @@
 
 SkyboxRenderPass::SkyboxRenderPass()
 {
-    cubemapMesh = std::make_unique<CubemapMesh>();
-    bool ok = createRootSignature(); 
-    ok  = ok && createPSO();
-
-    _ASSERT_EXPR(ok, "Error creating SkyboxRenderPass");
 }
 
 SkyboxRenderPass::~SkyboxRenderPass()
 {
+}
+
+bool SkyboxRenderPass::init(bool useMSAA)
+{
+    cubemapMesh = std::make_unique<CubemapMesh>();
+    bool ok = createRootSignature();
+    ok = ok && createPSO(useMSAA);
+
+    _ASSERT_EXPR(ok, "Error creating SkyboxRenderPass");
+
+    return ok;
 }
 
 void SkyboxRenderPass::record(ID3D12GraphicsCommandList* commandList, D3D12_GPU_DESCRIPTOR_HANDLE cubemapSRV, const Quaternion& cameraRot, const Matrix& projection)
@@ -82,7 +88,7 @@ bool SkyboxRenderPass::createRootSignature()
     return true;
 }
 
-bool SkyboxRenderPass::createPSO()
+bool SkyboxRenderPass::createPSO(bool useMSAA)
 {
     auto dataVS = DX::ReadData(L"skyboxVS.cso");
     auto dataPS = DX::ReadData(L"skyboxPS.cso");
@@ -95,7 +101,7 @@ bool SkyboxRenderPass::createPSO()
     psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;                         // type of topology we are drawing
     psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;                                             // format of the render target
     psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
-    psoDesc.SampleDesc = {1, 0};                                                                    // must be the same sample description as the swapchain and depth/stencil buffer
+    psoDesc.SampleDesc = {4, 0};                                                                    // must be the same sample description as the swapchain and depth/stencil buffer
     psoDesc.SampleMask = 0xffffffff;                                                                // sample mask has to do with multi-sampling. 0xffffffff means point sampling is done
     psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);                               // a default rasterizer state.
     psoDesc.RasterizerState.FrontCounterClockwise = TRUE;                                           // our models are counter clock wise
@@ -108,5 +114,4 @@ bool SkyboxRenderPass::createPSO()
 
     // create the pso
     return SUCCEEDED(app->getD3D12()->getDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pso)));
-
 }
