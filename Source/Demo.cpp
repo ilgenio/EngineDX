@@ -52,9 +52,9 @@ bool Demo::init()
     if (ok)
     {
         ModuleCamera* camera = app->getCamera();
-        camera->setPolar(0.0f);
-        camera->setAzimuthal(-0.25f);
-        camera->setPanning(Vector3(0.15f, 0.95f, 4.25f));
+        camera->setPolar(XMConvertToRadians(-117.0f));
+        camera->setAzimuthal(XMConvertToRadians(-1.22f));
+        camera->setPanning(Vector3(-24.0f, 2.95f, -6.95f));
 
         /*
         camera->setPolar(-0.85f);
@@ -140,6 +140,13 @@ void Demo::imGuiDrawCommands()
     ImGui::Separator();
     ImGui::Checkbox("Show grid", &showGrid);
     ImGui::Checkbox("Show axis", &showAxis);
+
+    ImGui::Separator();
+    ModuleCamera* camera = app->getCamera();
+    ImGui::Text("Camera pos: [%.2f, %.2f, %.2f], Camera spherical angles: [%.2f, %.2f]", camera->getPos().x, camera->getPos().y, camera->getPos().z,
+        XMConvertToDegrees(camera->getPolar()), XMConvertToDegrees(camera->getAzimuthal()));
+
+    ImGui::Separator();
 
     ImGui::End();
 

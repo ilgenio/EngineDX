@@ -73,8 +73,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             TranslateMessage(&msg);
             DispatchMessage(&msg);
         }
-
-        app->update();
     }
 
     delete app;
@@ -214,6 +212,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
     case WM_PAINT:
         {
+            app->update();
         }
         break;
     case WM_DESTROY:

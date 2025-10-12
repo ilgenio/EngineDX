@@ -47,10 +47,10 @@ void ModuleCamera::update()
         GamePad::State padState = pad.GetState(0);
        
         float elapsedSec = app->getElapsedMilis()*0.001f;
-
+        
         Vector3 translate = Vector3::Zero;
         Vector2 rotate = Vector2::Zero;
-
+        
         // Check game pad
         if (padState.IsConnected())
         {
