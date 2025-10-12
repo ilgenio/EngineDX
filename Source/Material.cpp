@@ -63,6 +63,7 @@ void Material::load(const tinygltf::Model& model, const tinygltf::Material &mate
     // Normals Texture
     if (material.normalTexture.index >= 0 && loadTexture(model, base, material.normalTexture.index, false, normalTex))
     {
+        data.flags |= FLAG_HAS_NORMAL_TEX;
         textureTableDesc.createTextureSRV(normalTex.Get(), TEX_SLOT_NORMAL);
     }
     else
@@ -87,6 +88,16 @@ void Material::load(const tinygltf::Model& model, const tinygltf::Material &mate
 
     data.occlusionStrength = float(material.occlusionTexture.strength);
 
+    if(material.emissiveTexture.index >= 0 && loadTexture(model, base, material.emissiveTexture.index, true, emissiveTex))
+    {
+        data.flags |= FLAG_HAS_EMISSIVE_TEX;
+        textureTableDesc.createTextureSRV(emissiveTex.Get(), TEX_SLOT_EMISSIVE);
+    }
+    else
+    {
+        textureTableDesc.createNullTexture2DSRV(TEX_SLOT_EMISSIVE);
+    }
+
     if (material.alphaMode == "BLEND")
     {
         alphaMode = ALPHA_MODE_BLEND;
@@ -100,8 +111,6 @@ void Material::load(const tinygltf::Model& model, const tinygltf::Material &mate
             data.alphaCutoff = material.alphaMode == "MASK" ? float(material.alphaCutoff) : 0.0f;
         }
     }
-
-    // Material Buffer
 }
 
 

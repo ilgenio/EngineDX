@@ -4,21 +4,10 @@
 #include "tonemap.hlsli"
 #include "ibl.hlsli"
 
-float adjustRoughnessForCurvature(float roughness, float3 N)
-{
-    float3 normalDx = ddx(N);
-    float3 normalDy = ddy(N);
-
-    float geometricRoughness = pow( saturate(max(dot(normalDx, normalDx), dot(normalDy, normalDy))), 0.333 );
-
-    return max(roughness, geometricRoughness);
-}
-
-float4 main(float3 worldPos : POSITION, float3 normal : NORMAL, float2 texCoord : TEXCOORD) : SV_TARGET
+float4 main(float3 worldPos : POSITION, float2 texCoord : TEXCOORD, float3 normal : NORMAL, float4 tangent : TANGENT) : SV_TARGET
 {
     float3 V  = normalize(viewPos - worldPos);
     float3 N  = normalize(normal);
-    float NdotV = saturate(dot(N, V));
     
     float3 baseColour;
     float roughness;
@@ -26,12 +15,14 @@ float4 main(float3 worldPos : POSITION, float3 normal : NORMAL, float2 texCoord 
     float metallic;
     getMetallicRoughness(material, baseColourTex, metallicRoughnessTex, texCoord, baseColour, roughness, alphaRoughness, metallic);
 
-    roughness = adjustRoughnessForCurvature(roughness, N);
-    alphaRoughness = roughness * roughness;
+    //float3 T = normalize(tangent.xyz);
+    //float3 B = tangent.w*normalize(cross(N, T));    
+    //N = getNormal(material, normalTex, texCoord, N, T, B);
 
+    float NdotV = saturate(dot(N, V));
     float diffuseAO, specularAO;
     getAmbientOcclusion(material, occlusionTex, texCoord, NdotV, alphaRoughness, diffuseAO, specularAO);
-
+        
     // IBL
     float3 colour = computeLighting(V, N, irradiance, radiance, brdfLUT, numRoughnessLevels, baseColour, roughness, metallic, diffuseAO, specularAO);
 
@@ -45,6 +36,7 @@ float4 main(float3 worldPos : POSITION, float3 normal : NORMAL, float2 texCoord 
     for( uint i = 0; i< numSpotLights; i++)
         colour += computeLighting(V, N, spotLights[i], worldPos, baseColour, alphaRoughness, metallic);
 
+    colour += getEmissive(material, emissiveTex, texCoord);
 
     // tonemapping
     float3 ldr = PBRNeutralToneMapping(colour);

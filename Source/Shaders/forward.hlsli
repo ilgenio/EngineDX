@@ -40,6 +40,8 @@ Texture2D  brdfLUT : register(t5);
 
 Texture2D baseColourTex : register(t6);
 Texture2D metallicRoughnessTex : register(t7);
+Texture2D normalTex : register(t8);
 Texture2D occlusionTex : register(t9);
+Texture2D emissiveTex : register(t10);
 
 #endif // _FORWARD_HLSLI_

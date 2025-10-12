@@ -3,12 +3,13 @@
 struct VS_OUTPUT
 {
     float3 worldPos : POSITION;
-    float3 normal   : NORMAL;
     float2 texCoord : TEXCOORD;
+    float3 normal   : NORMAL;
+    float4 tangent  : TANGENT;
     float4 position : SV_POSITION;
 };
 
-VS_OUTPUT main(float3 position : POSITION, float2 texCoord : TEXCOORD, float3 normal : NORMAL)
+VS_OUTPUT main(float3 position : POSITION, float2 texCoord : TEXCOORD, float3 normal : NORMAL, float4 tangent : TANGENT)
 {
     VS_OUTPUT output;
 
@@ -17,6 +18,7 @@ VS_OUTPUT main(float3 position : POSITION, float2 texCoord : TEXCOORD, float3 no
     output.worldPos = worldPos.xyz;
 
     output.normal = normalize(mul(float4(normal, 0.0), normalMat)).xyz;
+    output.tangent = float4(normalize(mul(float4(tangent.xyz, 0.0), normalMat)).xyz, tangent.w);
     output.texCoord = texCoord;
 
     return output;

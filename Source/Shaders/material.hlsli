@@ -8,7 +8,11 @@
 // Bitfield flag: indicates presence of a metallic-roughness texture
 #define HAS_METALLICROUGHNESS_TEX 0x2  // 0x2 : hasMetallicRoughnessTex
 
-#define HAS_OCCLUSION_TEX       0x4  // 0x4 : hasOcclusionTex
+#define HAS_NORMAL_TEX          0x4  // 0x4 : hasNormalTex
+
+#define HAS_OCCLUSION_TEX       0x8  // 0x8 : hasOcclusionTex
+
+#define HAS_EMISSIVE_TEX        0x10 // 0x10 : hasEmissiveTex
 
 // Material structure for PBR shading.
 // Contains base colour, metallic/roughness factors, normal/occlusion/alpha parameters, and bitfield flags.
@@ -41,6 +45,38 @@ void getAmbientOcclusion(in Material material, in Texture2D occlusionTex, in flo
     {
         diffuseAO = 1.0;
         specularAO = 1.0;
+    }
+}
+
+
+float3 getNormal(in Material material, in Texture2D normalTex, in float2 coord, in float3 normal, in float3 tangent, in float3 bitangent)
+{
+    if (material.flags & HAS_NORMAL_TEX)
+    {
+        float3 normalMap = normalTex.Sample(bilinearWrap, coord).xyz * 2.0 - 1.0;
+        normalMap.xy *= material.normalScale;
+        normalMap = normalize(normalMap);
+        
+        // Transform normal from tangent space to world space
+        float3x3 TBN = float3x3(tangent, bitangent, normal);
+        return normalize(mul(normalMap, TBN));
+    }
+    else
+    {
+        return normal;
+    }
+}
+
+
+float3 getEmissive(in Material material, in Texture2D emissiveTex, in float2 coord)
+{
+    if (material.flags & HAS_EMISSIVE_TEX)
+    {
+        return emissiveTex.Sample(bilinearClamp, coord).rgb;
+    }
+    else
+    {
+        return float3(0.0, 0.0, 0.0);
     }
 }
 

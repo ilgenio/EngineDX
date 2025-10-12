@@ -19,7 +19,9 @@ public:
     {
         FLAG_HAS_BASECOLOUR_TEX        = 0x1,
         FLAG_HAS_METALLICROUGHNESS_TEX = 0x2,
-        FLAG_HAS_OCCLUSION_TEX         = 0x4,
+        FLAG_HAS_NORMAL_TEX            = 0x4,
+        FLAG_HAS_OCCLUSION_TEX         = 0x8,
+        FLAG_HAS_EMISSIVE_TEX          = 0x10,
     };
 
     struct Data
@@ -59,7 +61,8 @@ private:
         TEX_SLOT_METALLIC_ROUGHNESS = 1,
         TEX_SLOT_NORMAL = 2,
         TEX_SLOT_OCCLUSION = 3,
-        TEX_SLOT_COUNT = 4
+        TEX_SLOT_EMISSIVE = 4,
+        TEX_SLOT_COUNT
     };
 
     std::string             name;
@@ -68,6 +71,7 @@ private:
     ComPtr<ID3D12Resource>  metRougTex;
     ComPtr<ID3D12Resource>  normalTex;
     ComPtr<ID3D12Resource>  occlusionTex;
+    ComPtr<ID3D12Resource>  emissiveTex;
     ALPHAMODE               alphaMode = ALPHA_MODE_OPAQUE;
     ShaderTableDesc         textureTableDesc;
 };
