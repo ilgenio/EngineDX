@@ -6588,40 +6588,40 @@
 	"images": [
 		{
 			"name": "",
-			"uri": "/leg_albedo.jpg"
+			"uri": "/leg_albedo.dds"
 		},
 		{
-			"uri": "/leg_metalgloss_converted_metalRoughness.jpg"
+			"uri": "/leg_metalgloss_converted_metalRoughness.dds"
 		},
 		{
-			"uri": "/leg_normal1024.jpg"
+			"uri": "/leg_normal1024.dds"
 		},
 		{
-			"uri": "/leg_AO.jpg"
+			"uri": "/leg_AO.dds"
 		},
 		{
-			"uri": "/body_albedo2048.png"
+			"uri": "/body_albedo2048.dds"
 		},
 		{
-			"uri": "/body_metalgloss2048_converted_metalRoughness.jpg"
+			"uri": "/body_metalgloss2048_converted_metalRoughness.dds"
 		},
 		{
-			"uri": "/body_normal.jpg"
+			"uri": "/body_normal.dds"
 		},
 		{
-			"uri": "/body_emissive.jpg"
+			"uri": "/body_emissive.dds"
 		},
 		{
-			"uri": "/body_AO.jpg"
+			"uri": "/body_AO.dds"
 		},
 		{
-			"uri": "/concrete_diffuseOpacity.png"
+			"uri": "/concrete_diffuseOpacity.dds"
 		},
 		{
-			"uri": "/concrete_044_metalGloss_converted_metalRoughness.jpg"
+			"uri": "/concrete_044_metalGloss_converted_metalRoughness.dds"
 		},
 		{
-			"uri": "/concrete_044_normal1024.jpg"
+			"uri": "/concrete_044_normal1024.dds"
 		}
 	],
 	"materials": [

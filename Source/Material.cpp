@@ -21,9 +21,9 @@ void Material::load(const tinygltf::Model& model, const tinygltf::Material &mate
 {
     ModuleResources* resources = app->getResources();
     name                 = material.name;
-    data.baseColor       = Vector4(pow(float(material.pbrMetallicRoughness.baseColorFactor[0]), 2.2), 
-                                   pow(float(material.pbrMetallicRoughness.baseColorFactor[1]), 2.2), 
-                                   pow(float(material.pbrMetallicRoughness.baseColorFactor[2]), 2.2), 
+    data.baseColor       = Vector4(pow(float(material.pbrMetallicRoughness.baseColorFactor[0]), 2.2f), 
+                                   pow(float(material.pbrMetallicRoughness.baseColorFactor[1]), 2.2f), 
+                                   pow(float(material.pbrMetallicRoughness.baseColorFactor[2]), 2.2f), 
                                        float(material.pbrMetallicRoughness.baseColorFactor[3]));
     data.metallicFactor  = float(material.pbrMetallicRoughness.metallicFactor);
     data.roughnessFactor = float(material.pbrMetallicRoughness.roughnessFactor);
@@ -33,7 +33,7 @@ void Material::load(const tinygltf::Model& model, const tinygltf::Material &mate
 
     // Descriptors
     textureTableDesc = app->getShaderDescriptors()->allocTable();
-
+     
     // Base Color Texture
     if (material.pbrMetallicRoughness.baseColorTexture.index >= 0 && loadTexture(model, base, material.pbrMetallicRoughness.baseColorTexture.index, true, baseColorTex))
     {
@@ -127,7 +127,7 @@ bool Material::loadTexture(const tinygltf::Model& model, const std::string& base
     {
         output = app->getResources()->createTextureFromFile(basePath + image.uri, defaultSRGB);
 
-        _ASSERT_EXPR(output, "Can't load texture");
+        _ASSERT_EXPR(output, L"Can't load texture");
 
         return true;
     }

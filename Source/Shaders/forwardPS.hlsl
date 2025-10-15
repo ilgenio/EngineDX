@@ -46,9 +46,9 @@ float4 main(float3 worldPos : POSITION, float2 texCoord : TEXCOORD, float3 norma
     roughness = getGeometricSpecularAA(N, roughness);
     alphaRoughness = roughness * roughness;
 
-    /*float3 T = normalize(tangent.xyz);
+    float3 T = normalize(tangent.xyz);
     float3 B = tangent.w*normalize(cross(N, T));    
-    N = getNormal(material, normalTex, texCoord, N, T, B);*/
+    N = getNormal(material, normalTex, texCoord, N, T, B);
 
     float NdotV = saturate(dot(N, V));
     float diffuseAO, specularAO;
