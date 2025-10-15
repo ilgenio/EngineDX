@@ -4,10 +4,38 @@
 #include "tonemap.hlsli"
 #include "ibl.hlsli"
 
-float4 main(float3 worldPos : POSITION, float2 texCoord : TEXCOORD, float3 normal : NORMAL, float4 tangent : TANGENT) : SV_TARGET
+#define VARIANCE 0.3
+#define THRESHOLD 0.2
+
+float getGeometricSpecularAA(float3 N, float roughness)
+{
+    float3 ndx = ddx(N);
+    float3 ndy = ddy(N);
+
+    float curvature = max(dot(ndx, ndx), dot(ndy, ndy));
+
+    float geomRoughnessOffset = pow(curvature, 0.333) * VARIANCE;
+     
+    geomRoughnessOffset = min(geomRoughnessOffset, THRESHOLD);
+
+    return saturate( roughness + geomRoughnessOffset);
+}
+
+
+float4 main(float3 worldPos : POSITION, float2 texCoord : TEXCOORD, float3 normal : NORMAL0, float3 centroidNormal : NORMAL1, float4 tangent : TANGENT) : SV_TARGET
 {
     float3 V  = normalize(viewPos - worldPos);
-    float3 N  = normalize(normal);
+    
+    float3 N;
+    if(dot(normal, normal) >= 1.01)
+    {
+        N = normalize(centroidNormal);
+    }
+    else
+    {
+        N = normalize(normal);
+
+    }
     
     float3 baseColour;
     float roughness;
@@ -15,9 +43,12 @@ float4 main(float3 worldPos : POSITION, float2 texCoord : TEXCOORD, float3 norma
     float metallic;
     getMetallicRoughness(material, baseColourTex, metallicRoughnessTex, texCoord, baseColour, roughness, alphaRoughness, metallic);
 
-    //float3 T = normalize(tangent.xyz);
-    //float3 B = tangent.w*normalize(cross(N, T));    
-    //N = getNormal(material, normalTex, texCoord, N, T, B);
+    roughness = getGeometricSpecularAA(N, roughness);
+    alphaRoughness = roughness * roughness;
+
+    /*float3 T = normalize(tangent.xyz);
+    float3 B = tangent.w*normalize(cross(N, T));    
+    N = getNormal(material, normalTex, texCoord, N, T, B);*/
 
     float NdotV = saturate(dot(N, V));
     float diffuseAO, specularAO;

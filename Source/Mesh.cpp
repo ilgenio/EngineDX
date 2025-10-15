@@ -16,6 +16,7 @@ const D3D12_INPUT_ELEMENT_DESC Mesh::inputLayout[numVertexAttribs] = { {"POSITIO
 
 const D3D12_INPUT_LAYOUT_DESC Mesh::inputLayoutDesc = { &inputLayout[0], UINT(std::size(inputLayout)) };
 
+
 Mesh::Mesh()
 {
 }
@@ -45,13 +46,7 @@ void Mesh::load(const tinygltf::Model& model, const tinygltf::Mesh& mesh, const 
         loadAccessorData(vertexData + offsetof(Vertex, position), sizeof(Vector3), sizeof(Vertex), numVertices, model, itPos->second);
         loadAccessorData(vertexData + offsetof(Vertex, texCoord0), sizeof(Vector2), sizeof(Vertex), numVertices, model, primitive.attributes, "TEXCOORD_0");
         loadAccessorData(vertexData + offsetof(Vertex, normal), sizeof(Vector3), sizeof(Vertex), numVertices, model, primitive.attributes, "NORMAL");
-        loadAccessorData(vertexData + offsetof(Vertex, tangent), sizeof(Vector4), sizeof(Vertex), numVertices, model, primitive.attributes, "TANGENT");
-
-        vertexBuffer = resources->createDefaultBuffer(vertices.get(), numVertices * sizeof(Vertex), name.c_str());
-
-        vertexBufferView.BufferLocation = vertexBuffer->GetGPUVirtualAddress();
-        vertexBufferView.StrideInBytes  = sizeof(Vertex);
-        vertexBufferView.SizeInBytes    = numVertices * sizeof(Mesh::Vertex);
+        bool hasTangents = loadAccessorData(vertexData + offsetof(Vertex, tangent), sizeof(Vector4), sizeof(Vertex), numVertices, model, primitive.attributes, "TANGENT");
 
         // Skinning attributes
 
@@ -106,28 +101,44 @@ void Mesh::load(const tinygltf::Model& model, const tinygltf::Mesh& mesh, const 
         {
             const tinygltf::Accessor& indAcc = model.accessors[primitive.indices];
 
-            _ASSERT_EXPR(indAcc.componentType == TINYGLTF_PARAMETER_TYPE_UNSIGNED_INT || 
-                         indAcc.componentType == TINYGLTF_PARAMETER_TYPE_UNSIGNED_SHORT || 
-                         indAcc.componentType == TINYGLTF_PARAMETER_TYPE_UNSIGNED_BYTE, "Unsupported index format");
+            _ASSERT_EXPR(indAcc.componentType == TINYGLTF_PARAMETER_TYPE_UNSIGNED_INT ||
+                indAcc.componentType == TINYGLTF_PARAMETER_TYPE_UNSIGNED_SHORT ||
+                indAcc.componentType == TINYGLTF_PARAMETER_TYPE_UNSIGNED_BYTE, "Unsupported index format");
 
-            if(indAcc.componentType == TINYGLTF_PARAMETER_TYPE_UNSIGNED_INT ||
-               indAcc.componentType == TINYGLTF_PARAMETER_TYPE_UNSIGNED_SHORT ||
-               indAcc.componentType == TINYGLTF_PARAMETER_TYPE_UNSIGNED_BYTE)
+            if (indAcc.componentType == TINYGLTF_PARAMETER_TYPE_UNSIGNED_INT ||
+                indAcc.componentType == TINYGLTF_PARAMETER_TYPE_UNSIGNED_SHORT ||
+                indAcc.componentType == TINYGLTF_PARAMETER_TYPE_UNSIGNED_BYTE)
             {
-                static const DXGI_FORMAT formats[3] = { DXGI_FORMAT_R8_UINT, DXGI_FORMAT_R16_UINT, DXGI_FORMAT_R32_UINT };
-
                 indexElementSize = tinygltf::GetComponentSizeInBytes(indAcc.componentType);
                 numIndices = uint32_t(indAcc.count);
 
-                indices = std::make_unique<uint8_t[]>(numIndices*indexElementSize);
+                indices = std::make_unique<uint8_t[]>(numIndices * indexElementSize);
                 loadAccessorData(indices.get(), indexElementSize, indexElementSize, numIndices, model, primitive.indices);
-                indexBuffer = resources->createDefaultBuffer(indices.get(), numIndices * indexElementSize, name.c_str());
-
-                indexBufferView.BufferLocation = indexBuffer->GetGPUVirtualAddress();
-                indexBufferView.Format = formats[indexElementSize >> 1];
-                indexBufferView.SizeInBytes = numIndices*indexElementSize;
             }
         }
+
+        if (!hasTangents)
+        {
+            computeTSpace();
+        }
+
+        vertexBuffer = resources->createDefaultBuffer(vertices.get(), numVertices * sizeof(Vertex), name.c_str());
+
+        vertexBufferView.BufferLocation = vertexBuffer->GetGPUVirtualAddress();
+        vertexBufferView.StrideInBytes = sizeof(Vertex);
+        vertexBufferView.SizeInBytes = numVertices * sizeof(Mesh::Vertex);
+
+        if(numIndices > 0)
+        {
+            static const DXGI_FORMAT formats[3] = { DXGI_FORMAT_R8_UINT, DXGI_FORMAT_R16_UINT, DXGI_FORMAT_R32_UINT };
+
+            indexBuffer = resources->createDefaultBuffer(indices.get(), numIndices * indexElementSize, name.c_str());
+
+            indexBufferView.BufferLocation = indexBuffer->GetGPUVirtualAddress();
+            indexBufferView.Format = formats[indexElementSize >> 1];
+            indexBufferView.SizeInBytes = numIndices * indexElementSize;
+        }
+
     }
 }
 
@@ -194,7 +205,7 @@ void Mesh::computeTSpace()
             tangent.x = fvTangent[0];
             tangent.y = fvTangent[1];
             tangent.z = fvTangent[2];
-            tangent.w = fvTangent[3];
+            tangent.w = fSign;
         }
     };
 
@@ -203,8 +214,21 @@ void Mesh::computeTSpace()
     userData.vertices = std::make_unique<Vertex[]>(numIndices);
     userData.count = numIndices;
 
-    // unweld
-    for (uint32_t i = 0; i < numIndices; ++i) userData.vertices[i] = vertices[indices[i]];
+    auto unweld = [](auto* indices, UINT count, Vertex* outVertices, Vertex* inVertices)
+        {
+            for (UINT i = 0; i < count; ++i)
+            {
+                outVertices[i] = inVertices[indices[i]];
+                indices[i] = i;
+            }
+        };
+
+    switch (indexElementSize)
+    {
+    case 1: unweld(indices.get(), numIndices, userData.vertices.get(), vertices.get()); break;
+    case 2: unweld(reinterpret_cast<uint16_t*>(indices.get()), numIndices, userData.vertices.get(), vertices.get()); break;
+    case 4: unweld(reinterpret_cast<uint32_t*>(indices.get()), numIndices, userData.vertices.get(), vertices.get()); break;
+    }
 
     SMikkTSpaceInterface iface;
     iface.m_getNumFaces = &TIFace::getNumFaces;
@@ -222,14 +246,17 @@ void Mesh::computeTSpace()
     genTangSpaceDefault(&context);
     
     // Weld 
-    vertices = std::make_unique<Vertex[]>(numIndices);
-    std::unique_ptr<int[]> remap = std::make_unique<int[]>(numIndices);
+    std::unique_ptr<Vertex[]> weldVertices = std::make_unique<Vertex[]>(numIndices);
 
-    numVertices = uint32_t(WeldMesh(remap.get(), reinterpret_cast<float*>(vertices.get()), reinterpret_cast<const float*>(userData.vertices.get()), numIndices, sizeof(Vertex)/sizeof(float)));
-    for (uint32_t i = 0; i < numIndices; ++i)
-    {
-        indices[i] = uint32_t(remap[i]);
-    }
+    indexElementSize = 4;
+    indices = std::make_unique<uint8_t[]>(numIndices* indexElementSize);
+
+    int* data = reinterpret_cast<int*>(&indices[0]);
+
+    numVertices = uint32_t(WeldMesh(data, reinterpret_cast<float*>(weldVertices.get()), reinterpret_cast<const float*>(userData.vertices.get()), numIndices, sizeof(Vertex)/sizeof(float)));
+
+    vertices = std::make_unique<Vertex[]>(numVertices);
+    memcpy(vertices.get(), weldVertices.get(), sizeof(Vertex)* numVertices);
 }
 
 void Mesh::weld()

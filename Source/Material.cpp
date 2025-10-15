@@ -21,10 +21,10 @@ void Material::load(const tinygltf::Model& model, const tinygltf::Material &mate
 {
     ModuleResources* resources = app->getResources();
     name                 = material.name;
-    data.baseColor       = Vector4(float(material.pbrMetallicRoughness.baseColorFactor[0]), 
-                                  float(material.pbrMetallicRoughness.baseColorFactor[1]), 
-                                  float(material.pbrMetallicRoughness.baseColorFactor[2]), 
-                                  float(material.pbrMetallicRoughness.baseColorFactor[3]));
+    data.baseColor       = Vector4(pow(float(material.pbrMetallicRoughness.baseColorFactor[0]), 2.2), 
+                                   pow(float(material.pbrMetallicRoughness.baseColorFactor[1]), 2.2), 
+                                   pow(float(material.pbrMetallicRoughness.baseColorFactor[2]), 2.2), 
+                                       float(material.pbrMetallicRoughness.baseColorFactor[3]));
     data.metallicFactor  = float(material.pbrMetallicRoughness.metallicFactor);
     data.roughnessFactor = float(material.pbrMetallicRoughness.roughnessFactor);
     data.flags           = 0;
@@ -64,6 +64,10 @@ void Material::load(const tinygltf::Model& model, const tinygltf::Material &mate
     if (material.normalTexture.index >= 0 && loadTexture(model, base, material.normalTexture.index, false, normalTex))
     {
         data.flags |= FLAG_HAS_NORMAL_TEX;
+
+        DXGI_FORMAT format = normalTex->GetDesc().Format;
+        data.flags |= (format == DXGI_FORMAT_BC5_TYPELESS || format == DXGI_FORMAT_BC5_UNORM || format == DXGI_FORMAT_BC5_SNORM) ? FLAG_HAS_COMPRESSED_NORMAL : 0;
+
         textureTableDesc.createTextureSRV(normalTex.Get(), TEX_SLOT_NORMAL);
     }
     else

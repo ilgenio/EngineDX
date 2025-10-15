@@ -2,6 +2,7 @@
 #define _MATERIAL_HLSLI_
 
 #include "samplers.hlsli"
+#include "tonemap.hlsli"
 
 // Bitfield flag: indicates presence of a base colour texture
 #define HAS_BASECOLOUR_TEX        0x1  // 0x1 : hasBaseColourTex
@@ -10,9 +11,11 @@
 
 #define HAS_NORMAL_TEX          0x4  // 0x4 : hasNormalTex
 
-#define HAS_OCCLUSION_TEX       0x8  // 0x8 : hasOcclusionTex
+#define HAS_COMPRESSED_NORMALS  0x8  // 0x8 : hasCompressedNormals
 
-#define HAS_EMISSIVE_TEX        0x10 // 0x10 : hasEmissiveTex
+#define HAS_OCCLUSION_TEX       0x10 // 0x10 : hasOcclusionTex
+
+#define HAS_EMISSIVE_TEX        0x20 // 0x20 : hasEmissiveTex
 
 // Material structure for PBR shading.
 // Contains base colour, metallic/roughness factors, normal/occlusion/alpha parameters, and bitfield flags.
@@ -54,12 +57,20 @@ float3 getNormal(in Material material, in Texture2D normalTex, in float2 coord, 
     if (material.flags & HAS_NORMAL_TEX)
     {
         float3 normalMap = normalTex.Sample(bilinearWrap, coord).xyz * 2.0 - 1.0;
+
+        if(material.flags & HAS_COMPRESSED_NORMALS) // Reconstruct Z component for compressed normal maps
+        {
+            normalMap.z = sqrt(1.0 - saturate(dot(normalMap.xy, normalMap.xy)));
+        }
+
+        // Apply normal scale
         normalMap.xy *= material.normalScale;
         normalMap = normalize(normalMap);
         
         // Transform normal from tangent space to world space
         float3x3 TBN = float3x3(tangent, bitangent, normal);
-        return normalize(mul(normalMap, TBN));
+        return mul(normalMap, TBN);
+
     }
     else
     {

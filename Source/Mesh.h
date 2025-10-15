@@ -12,7 +12,7 @@ public:
         Vector3 position;
         Vector2 texCoord0;
         Vector3 normal;
-        Vector4 tangent;
+        Vector4 tangent = Vector4::UnitX;
     };
 
 public:

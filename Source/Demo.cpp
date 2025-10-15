@@ -52,15 +52,15 @@ bool Demo::init()
     if (ok)
     {
         ModuleCamera* camera = app->getCamera();
-        camera->setPolar(XMConvertToRadians(-117.0f));
-        camera->setAzimuthal(XMConvertToRadians(-1.22f));
-        camera->setPanning(Vector3(-24.0f, 2.95f, -6.95f));
 
         /*
-        camera->setPolar(-0.85f);
-        camera->setAzimuthal(-0.063f);
-        camera->setPanning(Vector3(-6.7f, 1.94f, 14.44f));
-        */
+        camera->setPolar(XMConvertToRadians(-117.0f));
+        camera->setAzimuthal(XMConvertToRadians(-1.22f));
+        camera->setPanning(Vector3(-24.0f, 2.95f, -6.95f)); */
+
+        camera->setPolar(XMConvertToRadians(1.30f));
+        camera->setAzimuthal(XMConvertToRadians(-11.61));
+        camera->setPanning(Vector3(0.0f, 1.24f, 4.65f));
     }
 
     _ASSERT_EXPR(ok, "Error creating Demo");
@@ -250,13 +250,13 @@ bool Demo::loadScene(bool useMSAA)
     }
     
     
-    model.reset(scene->loadModel("Assets/Models/BistroExterior/BistroExterior.gltf", "Assets/Models/BistroExterior/"));    
+    //model.reset(scene->loadModel("Assets/Models/BistroExterior/BistroExterior.gltf", "Assets/Models/BistroExterior/"));    
     //model.reset(scene->loadModel("Assets/Models/CompareAmbientOcclusion/CompareAmbientOcclusion.gltf", "Assets/Models/CompareAmbientOcclusion/"));
 
     skybox = std::make_unique<Skybox>();
     
-    ok = ok && skybox->init("Assets/Textures/footprint_court.hdr", useMSAA);
-    //ok = ok && skybox->loadHDR("Assets/Textures/san_giuseppe_bridge_4k.hdr");    
+    //ok = ok && skybox->init("Assets/Textures/qwantani_moon_noon_puresky_4k.hdr", useMSAA);
+    ok = ok && skybox->init("Assets/Textures/san_giuseppe_bridge_4k.hdr", useMSAA);
 
     _ASSERT_EXPR(ok, L"Error loading scene");
 

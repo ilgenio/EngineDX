@@ -20,8 +20,9 @@ public:
         FLAG_HAS_BASECOLOUR_TEX        = 0x1,
         FLAG_HAS_METALLICROUGHNESS_TEX = 0x2,
         FLAG_HAS_NORMAL_TEX            = 0x4,
-        FLAG_HAS_OCCLUSION_TEX         = 0x8,
-        FLAG_HAS_EMISSIVE_TEX          = 0x10,
+        FLAG_HAS_COMPRESSED_NORMAL     = 0x8,
+        FLAG_HAS_OCCLUSION_TEX         = 0x10,
+        FLAG_HAS_EMISSIVE_TEX          = 0x20,
     };
 
     struct Data

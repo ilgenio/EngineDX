@@ -62,7 +62,7 @@ bool Skybox::init(const char* hdrFile, bool useMSAA)
     skybox            = hdrToCubemapPass->generate(tableDesc.getGPUHandle(TEX_SLOT_HDR), DXGI_FORMAT_R16G16B16A16_FLOAT, DEFAULT_SKYBOX_SIZE);
     tableDesc.createCubeTextureSRV(skybox.Get(), TEX_SLOT_SKYBOX);
 
-    irradianceMap     = irradianceMapPass->generate(tableDesc.getGPUHandle(TEX_SLOT_SKYBOX), DEFAULT_SKYBOX_SIZE, DEFAULT_SKYBOX_SIZE);
+    irradianceMap     = irradianceMapPass->generate(tableDesc.getGPUHandle(TEX_SLOT_SKYBOX), DEFAULT_SKYBOX_SIZE, 256);
 
     iblMipLevels      = DEFAULT_MIP_LEVELS;
     prefilteredEnvMap = prefilterEnvMapPass->generate(tableDesc.getGPUHandle(TEX_SLOT_SKYBOX), DEFAULT_SKYBOX_SIZE, DEFAULT_SKYBOX_SIZE, iblMipLevels);
