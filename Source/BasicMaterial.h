@@ -35,6 +35,7 @@ struct MetallicRoughnessMaterialData
     float    roughnessFactor;
     float    occlusionStrength;
     float    normalScale;
+    XMFLOAT3 emissiveFactor;
     BOOL     hasBaseColourTex;
     BOOL     hasMetallicRoughnessTex;
     BOOL     hasOcclusionTex;

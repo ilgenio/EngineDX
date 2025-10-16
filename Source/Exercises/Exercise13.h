@@ -34,7 +34,8 @@ class Exercise13 : public Module
     std::unique_ptr<Skybox>                 skybox;
 
 
-    std::unique_ptr<BasicModel>             model;
+    std::unique_ptr<BasicModel[]>           models;
+    UINT                                   currentModel = 0;
 
     bool showAxis = false;
     bool showGrid = false;

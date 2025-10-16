@@ -42,7 +42,7 @@ bool Exercise3::init()
 void Exercise3::render()
 {
     ModuleD3D12* d3d12 = app->getD3D12();
-    ID3D12GraphicsCommandList *commandList = d3d12->getCommandList();
+    ID3D12GraphicsCommandList *commandList = d3d12->getCommandList(); 
 
     commandList->Reset(d3d12->getCommandAllocator(), pso.Get());
     

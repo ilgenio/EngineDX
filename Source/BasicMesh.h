@@ -9,10 +9,10 @@ class BasicMesh
 public:
     struct Vertex
     {
-        Vector3 position;
-        Vector2 texCoord0;
-        Vector3 normal;
-        Vector4 tangent;
+        Vector3 position = Vector3::Zero;
+        Vector2 texCoord0 = Vector2::Zero;
+        Vector3 normal = Vector3::UnitZ;
+        Vector3 tangent = Vector3::UnitX;
     };
 
 public:
@@ -40,8 +40,6 @@ private:
     BasicMesh& operator=(const BasicMesh&) = delete;
 
     void clean();
-    void computeTSpace();
-    void weld();
 
 private:
 

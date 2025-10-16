@@ -46,7 +46,26 @@ void Mesh::load(const tinygltf::Model& model, const tinygltf::Mesh& mesh, const 
         loadAccessorData(vertexData + offsetof(Vertex, position), sizeof(Vector3), sizeof(Vertex), numVertices, model, itPos->second);
         loadAccessorData(vertexData + offsetof(Vertex, texCoord0), sizeof(Vector2), sizeof(Vertex), numVertices, model, primitive.attributes, "TEXCOORD_0");
         loadAccessorData(vertexData + offsetof(Vertex, normal), sizeof(Vector3), sizeof(Vertex), numVertices, model, primitive.attributes, "NORMAL");
-        bool hasTangents = loadAccessorData(vertexData + offsetof(Vertex, tangent), sizeof(Vector4), sizeof(Vertex), numVertices, model, primitive.attributes, "TANGENT");
+
+        bool hasTangents = loadAccessorData(vertexData + offsetof(Vertex, tangent), sizeof(Vector3), sizeof(Vertex), numVertices, model, primitive.attributes, "TANGENT");
+        if (!hasTangents)
+        {
+            std::vector<Vector4> tangents;
+            tangents.resize(numVertices);
+
+            hasTangents = loadAccessorData(reinterpret_cast<uint8_t*>(tangents.data()), sizeof(Vector4), sizeof(Vector4), numVertices, model, primitive.attributes, "TANGENT");
+            if (hasTangents)
+            {
+                for (UINT i = 0; i < numVertices; ++i)
+                {
+                    Vector3& dst = vertices[i].tangent;
+                    const Vector4& src = tangents[i];
+                    dst.x = src.x;
+                    dst.y = src.y;
+                    dst.z = src.z*src.w;  
+                }
+            }
+        }
 
         // Skinning attributes
 
@@ -64,38 +83,6 @@ void Mesh::load(const tinygltf::Model& model, const tinygltf::Mesh& mesh, const 
 
         _ASSERTE(numJoints == 0 || numJoints == numVertices);
         _ASSERTE(numWeights == 0 || numWeights == numVertices);
-
-        if(numJoints == numVertices && numWeights == numVertices)
-        {
-            struct SkinVertex
-            {
-                UINT boneIndices[4];
-                Vector4 boneWeights;
-                Vector3 position;
-                Vector3 normal;
-                Vector4 tangent;
-            };
-
-            std::unique_ptr<SkinVertex[]> skinnedVertices = std::make_unique<SkinVertex[]>(numVertices);
-
-            // Copy skinning attributes
-            for (UINT i = 0; i < numVertices; ++i)
-            {
-                for(UINT j = 0; j < 4; ++j)
-                {
-                    skinnedVertices[i].boneIndices[j] = boneIndices[i].indices[j];
-                }
-
-                skinnedVertices[i].boneWeights = boneWeights[i];
-                skinnedVertices[i].boneWeights.Normalize();
-
-                skinnedVertices[i].position = vertices[i].position;
-                skinnedVertices[i].normal = vertices[i].normal;
-                skinnedVertices[i].tangent = vertices[i].tangent;
-            }
-
-            skinningBuffer = resources->createDefaultBuffer(skinnedVertices.get(), numVertices * sizeof(SkinVertex), name.c_str());
-        }
 
         if (primitive.indices >= 0)
         {
@@ -139,6 +126,10 @@ void Mesh::load(const tinygltf::Model& model, const tinygltf::Mesh& mesh, const 
             indexBufferView.SizeInBytes = numIndices * indexElementSize;
         }
 
+        if (numJoints == numVertices && numWeights == numVertices)
+        {
+            // TODO: Create FRAMES_IN_FLIGHT Buffers 
+        }
     }
 }
 
@@ -201,11 +192,10 @@ void Mesh::computeTSpace()
         }
         static void setTSpaceBasic(const SMikkTSpaceContext* pContext, const float fvTangent[], const float fSign, const int iFace, const int iVert)
         {
-            Vector4& tangent = reinterpret_cast<const UserData*>(pContext->m_pUserData)->vertices[iFace * 3 + iVert].tangent;
+            Vector3& tangent = reinterpret_cast<const UserData*>(pContext->m_pUserData)->vertices[iFace * 3 + iVert].tangent;
             tangent.x = fvTangent[0];
             tangent.y = fvTangent[1];
-            tangent.z = fvTangent[2];
-            tangent.w = fSign;
+            tangent.z = fSign*fvTangent[2];
         }
     };
 

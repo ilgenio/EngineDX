@@ -21,21 +21,10 @@ float getGeometricSpecularAA(float3 N, float roughness)
     return saturate( roughness + geomRoughnessOffset);
 }
 
-
-float4 main(float3 worldPos : POSITION, float2 texCoord : TEXCOORD, float3 normal : NORMAL0, float3 centroidNormal : NORMAL1, float4 tangent : TANGENT) : SV_TARGET
+float4 main(float3 worldPos : POSITION, float2 texCoord : TEXCOORD, float3 normal : NORMAL0, float3 tangent : TANGENT) : SV_TARGET
 {
-    float3 V  = normalize(viewPos - worldPos);
-    
-    float3 N;
-    if(dot(normal, normal) >= 1.01)
-    {
-        N = normalize(centroidNormal);
-    }
-    else
-    {
-        N = normalize(normal);
-
-    }
+    float3 V  = normalize(viewPos - worldPos);   
+    float3 N = normalize(normal);
     
     float3 baseColour;
     float roughness;
@@ -46,13 +35,16 @@ float4 main(float3 worldPos : POSITION, float2 texCoord : TEXCOORD, float3 norma
     roughness = getGeometricSpecularAA(N, roughness);
     alphaRoughness = roughness * roughness;
 
-    float3 T = normalize(tangent.xyz);
-    float3 B = tangent.w*normalize(cross(N, T));    
+    float3 T = normalize(tangent);
+    float3 B = normalize(cross(N, T));    
     N = getNormal(material, normalTex, texCoord, N, T, B);
 
     float NdotV = saturate(dot(N, V));
+    float3 R = reflect(-V, N);
+    float NdotR = saturate(dot(N, R));
+    
     float diffuseAO, specularAO;
-    getAmbientOcclusion(material, occlusionTex, texCoord, NdotV, alphaRoughness, diffuseAO, specularAO);
+    getAmbientOcclusion(material, occlusionTex, texCoord, NdotV, NdotR, alphaRoughness, diffuseAO, specularAO);
         
     // IBL
     float3 colour = computeLighting(V, N, irradiance, radiance, brdfLUT, numRoughnessLevels, baseColour, roughness, metallic, diffuseAO, specularAO);

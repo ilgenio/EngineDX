@@ -13,7 +13,7 @@
 #include "HDRToCubemapPass.h"
 #include "SkyboxRenderPass.h"
 
-#define DEFAULT_SKYBOX_SIZE 1024
+#define DEFAULT_SKYBOX_SIZE 2048
 #define DEFAULT_ENV_BRDF_SIZE 128
 #define DEFAULT_MIP_LEVELS 8
 

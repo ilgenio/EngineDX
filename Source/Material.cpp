@@ -26,7 +26,7 @@ void Material::load(const tinygltf::Model& model, const tinygltf::Material &mate
                                    pow(float(material.pbrMetallicRoughness.baseColorFactor[2]), 2.2f), 
                                        float(material.pbrMetallicRoughness.baseColorFactor[3]));
     data.metallicFactor  = float(material.pbrMetallicRoughness.metallicFactor);
-    data.roughnessFactor = float(material.pbrMetallicRoughness.roughnessFactor);
+    data.roughnessFactor = float(material.pbrMetallicRoughness.roughnessFactor)+0.25;
     data.flags           = 0;
 
     std::string base = basePath;

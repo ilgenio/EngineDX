@@ -5,6 +5,7 @@ struct MetallicRoughnessMat
     float  roughnessFactor;
     float  occlusionStrength;
     float  normalScale;
+    float3 emissiveFactor;
     bool   hasBaseColourTex;
     bool   hasMetallicRoughnessTex;
     bool   hasOcclusionTex;

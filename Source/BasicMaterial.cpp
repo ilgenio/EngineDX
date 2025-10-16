@@ -78,12 +78,17 @@ void BasicMaterial::load(const tinygltf::Model& model, const tinygltf::Material&
     }
     else if(materialType == METALLIC_ROUGHNESS)
     {
+        Vector3 emissiveFactor = material.emissiveFactor.size() >=3 ? Vector3(float(material.emissiveFactor[0]),
+            float(material.emissiveFactor[1]),
+            float(material.emissiveFactor[2])) : Vector3::Zero;
+
         materialData.metallicRoughness.baseColour = baseColour;
         materialData.metallicRoughness.metallicFactor = float(material.pbrMetallicRoughness.metallicFactor);
         materialData.metallicRoughness.roughnessFactor = float(material.pbrMetallicRoughness.roughnessFactor);
         materialData.metallicRoughness.hasBaseColourTex = hasColourTexture;
         materialData.metallicRoughness.hasMetallicRoughnessTex = hasMetallicRoughnessTex;
         materialData.metallicRoughness.occlusionStrength = float(material.occlusionTexture.strength);
+        materialData.metallicRoughness.emissiveFactor = emissiveFactor;
         materialData.metallicRoughness.normalScale = float(material.normalTexture.scale);
         materialData.metallicRoughness.hasOcclusionTex = hasOcclusionTex;
         materialData.metallicRoughness.hasEmissive = hasEmissiveTex;

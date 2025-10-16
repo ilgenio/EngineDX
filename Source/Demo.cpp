@@ -59,7 +59,7 @@ bool Demo::init()
         camera->setPanning(Vector3(-24.0f, 2.95f, -6.95f)); */
 
         camera->setPolar(XMConvertToRadians(1.30f));
-        camera->setAzimuthal(XMConvertToRadians(-11.61));
+        camera->setAzimuthal(XMConvertToRadians(-11.61f));
         camera->setPanning(Vector3(0.0f, 1.24f, 4.65f));
     }
 
@@ -251,11 +251,12 @@ bool Demo::loadScene(bool useMSAA)
     
     
     //model.reset(scene->loadModel("Assets/Models/BistroExterior/BistroExterior.gltf", "Assets/Models/BistroExterior/"));    
-    //model.reset(scene->loadModel("Assets/Models/CompareAmbientOcclusion/CompareAmbientOcclusion.gltf", "Assets/Models/CompareAmbientOcclusion/"));
+    //model.reset(scene->loadModel("Assets/Models/BistroExterior/Bistro_Godot.glb", "Assets/Models/BistroExterior/"));
+    
 
     skybox = std::make_unique<Skybox>();
     
-    //ok = ok && skybox->init("Assets/Textures/qwantani_moon_noon_puresky_4k.hdr", useMSAA);
+    //ok = ok && skybox->init("Assets/Textures/kloppenheim_02_puresky_8k.hdr", useMSAA);
     ok = ok && skybox->init("Assets/Textures/san_giuseppe_bridge_4k.hdr", useMSAA);
 
     _ASSERT_EXPR(ok, L"Error loading scene");

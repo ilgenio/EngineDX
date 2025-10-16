@@ -10,9 +10,9 @@
 #include "weldmesh.h"
 
 const D3D12_INPUT_ELEMENT_DESC BasicMesh::inputLayout[numVertexAttribs] = { {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-                                                                       {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, offsetof(Vertex, texCoord0), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-                                                                       {"NORMAL",   0, DXGI_FORMAT_R32G32_FLOAT,    0, offsetof(Vertex, normal),    D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-                                                                       {"TANGENT",  0, DXGI_FORMAT_R32G32_FLOAT,    0, offsetof(Vertex, tangent),   D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0} };
+                                                                            {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, offsetof(Vertex, texCoord0), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+                                                                            {"NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(Vertex, normal),    D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+                                                                            {"TANGENT",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(Vertex, tangent),   D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0} };
 
 const D3D12_INPUT_LAYOUT_DESC BasicMesh::inputLayoutDesc = { &inputLayout[0], UINT(std::size(inputLayout)) };
 
@@ -45,7 +45,24 @@ void BasicMesh::load(const tinygltf::Model& model, const tinygltf::Mesh& mesh, c
         loadAccessorData(vertexData + offsetof(Vertex, position), sizeof(Vector3), sizeof(Vertex), numVertices, model, itPos->second);
         loadAccessorData(vertexData + offsetof(Vertex, texCoord0), sizeof(Vector2), sizeof(Vertex), numVertices, model, primitive.attributes, "TEXCOORD_0");
         loadAccessorData(vertexData + offsetof(Vertex, normal), sizeof(Vector3), sizeof(Vertex), numVertices, model, primitive.attributes, "NORMAL");
-        loadAccessorData(vertexData + offsetof(Vertex, tangent), sizeof(Vector4), sizeof(Vertex), numVertices, model, primitive.attributes, "TANGENT");
+
+        if(!loadAccessorData(vertexData + offsetof(Vertex, tangent), sizeof(Vector3), sizeof(Vertex), numVertices, model, primitive.attributes, "TANGENT"))
+        {
+            std::vector<Vector4> tangents;
+            tangents.resize(numVertices);
+
+            if (loadAccessorData(reinterpret_cast<uint8_t*>(tangents.data()), sizeof(Vector4), sizeof(Vector4), numVertices, model, primitive.attributes, "TANGENT"))
+            {
+                for (UINT i = 0; i < numVertices; ++i)
+                {
+                    Vector3& dst = vertices[i].tangent;
+                    const Vector4& src = tangents[i];
+                    dst.x = src.x;
+                    dst.y = src.y;
+                    dst.z = src.z*src.w;  
+                }
+            }
+        }
    
         vertexBuffer = resources->createDefaultBuffer(vertices.get(), numVertices * sizeof(Vertex), name.c_str());
 
@@ -97,106 +114,6 @@ void BasicMesh::draw(ID3D12GraphicsCommandList* commandList) const
     {
         commandList->DrawInstanced(numVertices, 1, 0, 0);
     }
-}
-
-void BasicMesh::computeTSpace()
-{
-    struct UserData
-    {
-        VertexArray vertices;
-        uint32_t count;
-    };
-
-    struct TIFace
-    {
-        static int getNumFaces(const SMikkTSpaceContext* pContext)
-        {
-            return reinterpret_cast<UserData*>(pContext->m_pUserData)->count / 3;
-        }
-
-        static int getNumVerticesOfFace(const SMikkTSpaceContext*, const int )
-        {
-            return 3;
-        }
-
-        static void getPosition(const SMikkTSpaceContext* pContext, float fvPosOut[], const int iFace, const int iVert)
-        {
-            const Vector3& v = reinterpret_cast<const UserData*>(pContext->m_pUserData)->vertices[iFace * 3 + iVert].position;
-            fvPosOut[0] = v.x;
-            fvPosOut[1] = v.y;
-            fvPosOut[2] = v.z;
-        }
-
-        static void getNormal(const SMikkTSpaceContext* pContext, float fvPosOut[], const int iFace, const int iVert)
-        {
-            const Vector3& v = reinterpret_cast<const UserData*>(pContext->m_pUserData)->vertices[iFace * 3 + iVert].normal;
-            fvPosOut[0] = v.x;
-            fvPosOut[1] = v.y;
-            fvPosOut[2] = v.z;
-        }
-
-        static void getTexCooord(const SMikkTSpaceContext* pContext, float fvPosOut[], const int iFace, const int iVert)
-        {
-            const Vector2& v = reinterpret_cast<const UserData*>(pContext->m_pUserData)->vertices[iFace * 3 + iVert].texCoord0;
-            fvPosOut[0] = v.x;
-            fvPosOut[1] = v.y;
-        }
-        static void setTSpaceBasic(const SMikkTSpaceContext* pContext, const float fvTangent[], const float fSign, const int iFace, const int iVert)
-        {
-            Vector4& tangent = reinterpret_cast<const UserData*>(pContext->m_pUserData)->vertices[iFace * 3 + iVert].tangent;
-            tangent.x = fvTangent[0];
-            tangent.y = fvTangent[1];
-            tangent.z = fvTangent[2];
-            tangent.w = fvTangent[3];
-        }
-    };
-
-    UserData userData;
-
-    userData.vertices = std::make_unique<Vertex[]>(numIndices);
-    userData.count = numIndices;
-
-    // unweld
-    for (uint32_t i = 0; i < numIndices; ++i) userData.vertices[i] = vertices[indices[i]];
-
-    SMikkTSpaceInterface iface;
-    iface.m_getNumFaces = &TIFace::getNumFaces;
-    iface.m_getNumVerticesOfFace = &TIFace::getNumVerticesOfFace;
-    iface.m_getPosition = &TIFace::getPosition;
-    iface.m_getNormal = &TIFace::getNormal;
-    iface.m_getTexCoord = &TIFace::getTexCooord;
-    iface.m_setTSpace = nullptr;
-    iface.m_setTSpaceBasic= &TIFace::setTSpaceBasic;
-
-    SMikkTSpaceContext context;
-    context.m_pInterface = &iface;
-    context.m_pUserData = reinterpret_cast<void*>(&userData);
-
-    genTangSpaceDefault(&context);
-    
-    // Weld 
-    vertices = std::make_unique<Vertex[]>(numIndices);
-    std::unique_ptr<int[]> remap = std::make_unique<int[]>(numIndices);
-
-    numVertices = uint32_t(WeldMesh(remap.get(), reinterpret_cast<float*>(vertices.get()), reinterpret_cast<const float*>(userData.vertices.get()), numIndices, sizeof(Vertex)/sizeof(float)));
-    for (uint32_t i = 0; i < numIndices; ++i)
-    {
-        indices[i] = uint32_t(remap[i]);
-    }
-}
-
-void BasicMesh::weld()
-{
-    std::unique_ptr<Vertex[]> new_vertices = std::make_unique<Vertex[]>(numVertices);
-    std::unique_ptr<int[]> remap = std::make_unique<int[]>(numVertices);
-
-    numVertices = uint32_t(WeldMesh(remap.get(), reinterpret_cast<float*>(new_vertices.get()), reinterpret_cast<const float*>(vertices.get()), numVertices, sizeof(Vertex) / sizeof(float)));
-    for (uint32_t i = 0; i < numIndices; ++i)
-    {
-        indices[i] = uint32_t(remap[indices[i]]);
-    }
-
-    std::swap(vertices, new_vertices);
 }
 
 void BasicMesh::clean()

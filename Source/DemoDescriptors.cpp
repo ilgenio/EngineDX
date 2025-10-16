@@ -31,7 +31,7 @@ DemoDescriptors demos[] = {
     { "Exercise10", "Render a model using Cook Torrance BRDF", []() -> Module* { return new Exercise10(); } },
     { "Exercise11", "Renders a sphere using Image Based Lighting irradiance", []() -> Module* { return new Exercise11(); } },
     { "Exercise12", "Renders a model to test Image Based Lighting irradiance and radiance", []() -> Module* { return new Exercise12(); } },
-    { "Exercise13", "Renders a model to test ambient occlusion", []() -> Module* { return new Exercise13(); } },
+    { "Exercise13", "Renders 3 models to test normal maps, ambient occlusion and emissive", []() -> Module* { return new Exercise13(); } },
 };
 
 std::span<DemoDescriptors> getDemoDescriptors()

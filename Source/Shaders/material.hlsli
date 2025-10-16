@@ -27,8 +27,9 @@ struct Material
     float  normalScale;        // Scale for normal map intensity
     float  alphaCutoff;        // Alpha cutoff threshold for alpha masking
     float  occlusionStrength;  // Occlusion map strength
+    float  emissiveFactor;     // Emissive colour factor
     uint   flags;              // Bitfield flags indicating which textures are present
-    uint   padding[2];         // Padding to align struct to 16 bytes
+    uint   padding;            // Padding to align struct to 16 bytes
 };
 
 float computeSpecularAO(float NdotV, float ao, float roughness) 
@@ -36,8 +37,8 @@ float computeSpecularAO(float NdotV, float ao, float roughness)
     return clamp(pow(NdotV + ao, exp2(-16.0 * roughness - 1.0)) - 1.0 + ao, 0.0, 1.0);
 }
 
-void getAmbientOcclusion(in Material material, in Texture2D occlusionTex, in float2 coord, in float NdotV, in float roughness, 
-                         out float diffuseAO, out float specularAO)
+void getAmbientOcclusion(in Material material, in Texture2D occlusionTex, in float2 coord, in float NdotV, in float NdotR, 
+                         in float roughness, out float diffuseAO, out float specularAO)
 {
     if (material.flags & HAS_OCCLUSION_TEX)
     {
@@ -49,6 +50,9 @@ void getAmbientOcclusion(in Material material, in Texture2D occlusionTex, in flo
         diffuseAO = 1.0;
         specularAO = 1.0;
     }
+    
+    // Horizon fade for specular AO
+    specularAO *= max(1.0 + NdotR, 1.0);
 }
 
 

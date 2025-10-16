@@ -48,7 +48,7 @@ bool Exercise13::init()
         ok = skybox->init("Assets/Textures/footprint_court.hdr", false);
 
         ModuleCamera* camera = app->getCamera(); 
-        camera->setPanning(Vector3(0.0f, 0.5f, 1.7f));
+        camera->setPanning(Vector3(0.0f, 1.0f, 4.4f));
         camera->setPolar(0.0f);
         camera->setAzimuthal(XMConvertToRadians(-10.25f));
     }
@@ -117,6 +117,8 @@ void Exercise13::imGuiCommands()
         XMConvertToDegrees(camera->getPolar()), XMConvertToDegrees(camera->getAzimuthal()));
     
     ImGui::Separator();
+    ImGui::Combo("Model", (int*)&currentModel, "Compare Normals\0Compare Ambient Occlusion\0 Damaged Helmet\0");
+    ImGui::Separator();
     ImGui::Checkbox("Show grid", &showGrid);
     ImGui::Checkbox("Show axis", &showAxis);
 
@@ -160,6 +162,8 @@ void Exercise13::renderModel(ID3D12GraphicsCommandList* commandList)
 
     commandList->SetGraphicsRootSignature(rootSignature.Get());
     commandList->SetPipelineState(pso.Get());
+
+    BasicModel* model = &models[currentModel];
 
     Matrix mvp = model->getModelMatrix() * camera->getView() * ModuleCamera::getPerspectiveProj(float(canvasSize.x) / float(canvasSize.y));
     mvp = mvp.Transpose();
@@ -240,7 +244,7 @@ bool Exercise13::createRootSignature()
     CD3DX12_DESCRIPTOR_RANGE sampRange;
 
     iblTableRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 0);
-    materialTableRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 3);
+    materialTableRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 5, 3);
     sampRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, ModuleSamplers::COUNT, 0);
 
     rootParameters[ROOTPARAM_MVP].InitAsConstants((sizeof(Matrix) / sizeof(UINT32)), 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
@@ -275,7 +279,8 @@ bool Exercise13::createPSO()
 {
     D3D12_INPUT_ELEMENT_DESC inputLayout[] = { {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
                                                {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-                                               {"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0} };
+                                               {"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}, 
+                                               {"TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT,   D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 } };
 
     auto dataVS = DX::ReadData(L"Exercise13VS.cso");
     auto dataPS = DX::ReadData(L"Exercise13PS.cso");
@@ -302,9 +307,12 @@ bool Exercise13::createPSO()
 
 bool Exercise13::loadModel()
 {
-    model = std::make_unique<BasicModel>();
+    models = std::make_unique<BasicModel[]>(3);
 
-    model->load("Assets/Models/CompareAmbientOcclusion/CompareAmbientOcclusion.gltf", "Assets/Models/CompareAmbientOcclusion/", BasicMaterial::METALLIC_ROUGHNESS);
+    models[0].load("Assets/Models/CompareNormal/CompareNormal.gltf", "Assets/Models/CompareNormal/", BasicMaterial::METALLIC_ROUGHNESS);
+    models[1].load("Assets/Models/CompareAmbientOcclusion/CompareAmbientOcclusion.gltf", "Assets/Models/CompareAmbientOcclusion/", BasicMaterial::METALLIC_ROUGHNESS);
+    models[2].load("Assets/Models/DamagedHelmet/DamagedHelmet.gltf", "Assets/Models/DamagedHelmet/", BasicMaterial::METALLIC_ROUGHNESS);
+    models[2].setModelMatrix(Matrix::CreateRotationX(M_HALF_PI));
 
     return true;
 }
