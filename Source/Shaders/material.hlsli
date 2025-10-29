@@ -25,9 +25,9 @@ struct Material
     float  metallicFactor;     // Scalar metallic factor (0 = dielectric, 1 = metal)
     float  roughnessFactor;    // Scalar roughness factor (0 = smooth, 1 = rough)
     float  normalScale;        // Scale for normal map intensity
-    float  alphaCutoff;        // Alpha cutoff threshold for alpha masking
     float  occlusionStrength;  // Occlusion map strength
-    float  emissiveFactor;     // Emissive colour factor
+    float3 emissiveFactor;     // Emissive factor
+    float  alphaCutoff;        // Alpha cutoff threshold for alpha masking
     uint   flags;              // Bitfield flags indicating which textures are present
     uint   padding;            // Padding to align struct to 16 bytes
 };
@@ -82,16 +82,15 @@ float3 getNormal(in Material material, in Texture2D normalTex, in float2 coord, 
     }
 }
 
-
 float3 getEmissive(in Material material, in Texture2D emissiveTex, in float2 coord)
 {
     if (material.flags & HAS_EMISSIVE_TEX)
     {
-        return emissiveTex.Sample(bilinearClamp, coord).rgb;
+        return emissiveTex.Sample(bilinearClamp, coord).rgb * material.emissiveFactor;
     }
     else
     {
-        return float3(0.0, 0.0, 0.0);
+        return material.emissiveFactor;
     }
 }
 

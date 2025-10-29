@@ -31,8 +31,9 @@ public:
         float       metallicFactor = 1.0f;
         float       roughnessFactor = 1.0f;
         float       normalScale = 1.0f;
-        float       alphaCutoff = 0.5f;
         float       occlusionStrength = 1.0f;
+        Vector3     emissiveFactor = Vector3::Zero;
+        float       alphaCutoff = 0.5f;
         UINT        flags = 0;                   
         UINT        padding[2] = { 0, 0 };
    };
