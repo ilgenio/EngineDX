@@ -1,0 +1,623 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="EngineDX.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Application.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="GamePad.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Keyboard.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="ModuleCamera.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="ModuleD3D12.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="ModuleInput.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="Mouse.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="SimpleMath.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Globals.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Material.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Mesh.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Scene.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Skybox.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="ModuleResources.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="CubemapMesh.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="3rdParty\mikktspace\mikktspace.c">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="3rdParty\mikktspace\weldmesh.c">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="ModuleSamplers.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="BasicMaterial.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="3rdParty\ImGuizmo\ImGuizmo.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="ModuleRingBuffer.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="ModuleShaderDescriptors.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="ModuleRTDescriptors.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="ModuleDSDescriptors.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="SphereMesh.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderTexture.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="DebugDrawPass.cpp">
+      <Filter>Passes\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="ImGuiPass.cpp">
+      <Filter>Passes\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="EnvironmentBRDFPass.cpp">
+      <Filter>Passes\IBL</Filter>
+    </ClCompile>
+    <ClCompile Include="HDRToCubemapPass.cpp">
+      <Filter>Passes\IBL</Filter>
+    </ClCompile>
+    <ClCompile Include="IrradianceMapPass.cpp">
+      <Filter>Passes\IBL</Filter>
+    </ClCompile>
+    <ClCompile Include="PrefilterEnvMapPass.cpp">
+      <Filter>Passes\IBL</Filter>
+    </ClCompile>
+    <ClCompile Include="SkyboxRenderPass.cpp">
+      <Filter>Passes</Filter>
+    </ClCompile>
+    <ClCompile Include="ShaderTableDesc.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="DepthStencilDesc.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderTargetDesc.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="BasicMesh.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="BasicModel.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderMeshPass.cpp">
+      <Filter>Passes</Filter>
+    </ClCompile>
+    <ClCompile Include="Model.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="AnimationClip.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="3rdParty\imgui-docking\imgui.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="3rdParty\imgui-docking\imgui_demo.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="3rdParty\imgui-docking\imgui_draw.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="3rdParty\imgui-docking\imgui_tables.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="3rdParty\imgui-docking\imgui_widgets.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="3rdParty\imgui-docking\backends\imgui_impl_dx12.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="3rdParty\imgui-docking\backends\imgui_impl_win32.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="StartMenu.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="DemoDescriptors.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="Exercises\Exercise1.cpp">
+      <Filter>Exercises</Filter>
+    </ClCompile>
+    <ClCompile Include="Exercises\Exercise2.cpp">
+      <Filter>Exercises</Filter>
+    </ClCompile>
+    <ClCompile Include="Exercises\Exercise3.cpp">
+      <Filter>Exercises</Filter>
+    </ClCompile>
+    <ClCompile Include="Exercises\Exercise4.cpp">
+      <Filter>Exercises</Filter>
+    </ClCompile>
+    <ClCompile Include="Exercises\Exercise5.cpp">
+      <Filter>Exercises</Filter>
+    </ClCompile>
+    <ClCompile Include="Exercises\Exercise6.cpp">
+      <Filter>Exercises</Filter>
+    </ClCompile>
+    <ClCompile Include="Exercises\Exercise7.cpp">
+      <Filter>Exercises</Filter>
+    </ClCompile>
+    <ClCompile Include="Exercises\Exercise8.cpp">
+      <Filter>Exercises</Filter>
+    </ClCompile>
+    <ClCompile Include="Exercises\Exercise9.cpp">
+      <Filter>Exercises</Filter>
+    </ClCompile>
+    <ClCompile Include="Exercises\Exercise10.cpp">
+      <Filter>Exercises</Filter>
+    </ClCompile>
+    <ClCompile Include="Exercises\Exercise11.cpp">
+      <Filter>Exercises</Filter>
+    </ClCompile>
+    <ClCompile Include="Exercises\Exercise12.cpp">
+      <Filter>Exercises</Filter>
+    </ClCompile>
+    <ClCompile Include="MathUtils.cpp.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Demo.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="Exercises\Exercise13.cpp">
+      <Filter>Exercises</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="EngineDX.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Application.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="debug_draw.hpp">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="framework.h">
+      <Filter>Win</Filter>
+    </ClInclude>
+    <ClInclude Include="GamePad.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Globals.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Keyboard.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Module.h">
+      <Filter>Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="ModuleCamera.h">
+      <Filter>Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="ModuleD3D12.h">
+      <Filter>Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="ModuleInput.h">
+      <Filter>Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="Mouse.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="PlatformHelpers.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>Win</Filter>
+    </ClInclude>
+    <ClInclude Include="SimpleMath.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>Win</Filter>
+    </ClInclude>
+    <ClInclude Include="Material.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Mesh.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Skybox.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="3rdParty\mikktspace\mikktspace.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="3rdParty\mikktspace\weldmesh.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="ModuleResources.h">
+      <Filter>Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="CubemapMesh.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="3rdParty\imgui-1.89.8\backends\imgui_impl_win32.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="ReadData.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="ModuleSamplers.h">
+      <Filter>Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="gltf_utils.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="BasicMaterial.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="3rdParty\ImGuizmo\ImGuizmo.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="ModuleRingBuffer.h">
+      <Filter>Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="ModuleShaderDescriptors.h">
+      <Filter>Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="ModuleRTDescriptors.h">
+      <Filter>Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="ModuleDSDescriptors.h">
+      <Filter>Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="HandleManager.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="SphereMesh.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderTexture.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="DebugDrawPass.h">
+      <Filter>Passes\Debug</Filter>
+    </ClInclude>
+    <ClInclude Include="ImGuiPass.h">
+      <Filter>Passes\Debug</Filter>
+    </ClInclude>
+    <ClInclude Include="EnvironmentBRDFPass.h">
+      <Filter>Passes\IBL</Filter>
+    </ClInclude>
+    <ClInclude Include="HDRToCubemapPass.h">
+      <Filter>Passes\IBL</Filter>
+    </ClInclude>
+    <ClInclude Include="IrradianceMapPass.h">
+      <Filter>Passes\IBL</Filter>
+    </ClInclude>
+    <ClInclude Include="PrefilterEnvMapPass.h">
+      <Filter>Passes\IBL</Filter>
+    </ClInclude>
+    <ClInclude Include="SkyboxRenderPass.h">
+      <Filter>Passes</Filter>
+    </ClInclude>
+    <ClInclude Include="ShaderTableDesc.h">
+      <Filter>Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="DepthStencilDesc.h">
+      <Filter>Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderTargetDesc.h">
+      <Filter>Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="BasicMesh.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="BasicModel.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderMeshPass.h">
+      <Filter>Passes</Filter>
+    </ClInclude>
+    <ClInclude Include="Model.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="AnimationClip.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="3rdParty\imgui-docking\backends\imgui_impl_dx12.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="3rdParty\imgui-docking\backends\imgui_impl_win32.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="StartMenu.h">
+      <Filter>Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="DemoDescriptors.h">
+      <Filter>Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="Exercises\Exercise1.h">
+      <Filter>Exercises</Filter>
+    </ClInclude>
+    <ClInclude Include="Exercises\Exercise2.h">
+      <Filter>Exercises</Filter>
+    </ClInclude>
+    <ClInclude Include="Exercises\Exercise3.h">
+      <Filter>Exercises</Filter>
+    </ClInclude>
+    <ClInclude Include="Exercises\Exercise4.h">
+      <Filter>Exercises</Filter>
+    </ClInclude>
+    <ClInclude Include="Exercises\Exercise5.h">
+      <Filter>Exercises</Filter>
+    </ClInclude>
+    <ClInclude Include="Exercises\Exercise6.h">
+      <Filter>Exercises</Filter>
+    </ClInclude>
+    <ClInclude Include="Exercises\Exercise7.h">
+      <Filter>Exercises</Filter>
+    </ClInclude>
+    <ClInclude Include="Exercises\Exercise8.h">
+      <Filter>Exercises</Filter>
+    </ClInclude>
+    <ClInclude Include="Exercises\Exercise9.h">
+      <Filter>Exercises</Filter>
+    </ClInclude>
+    <ClInclude Include="Exercises\Exercise10.h">
+      <Filter>Exercises</Filter>
+    </ClInclude>
+    <ClInclude Include="Exercises\Exercise11.h">
+      <Filter>Exercises</Filter>
+    </ClInclude>
+    <ClInclude Include="Exercises\Exercise12.h">
+      <Filter>Exercises</Filter>
+    </ClInclude>
+    <ClInclude Include="MathUtils.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Demo.h">
+      <Filter>Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="3rdParty\imgui-docking\imgui.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="3rdParty\imgui-docking\imgui_internal.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="Exercises\Exercise13.h">
+      <Filter>Exercises</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="EngineDX.ico">
+      <Filter>Win</Filter>
+    </Image>
+    <Image Include="small.ico">
+      <Filter>Win</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Core">
+      <UniqueIdentifier>{0500fa9f-6a44-425e-bd2c-e2df31bf6709}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Win">
+      <UniqueIdentifier>{c488d9ce-58b7-4215-b854-4578f67d9888}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Exercises">
+      <UniqueIdentifier>{edbbc82e-1836-4001-bf0f-5a07b4ea07fe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Modules">
+      <UniqueIdentifier>{1431aa79-67d7-481e-99d8-65d04f27f554}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Passes">
+      <UniqueIdentifier>{35702044-ca9e-4bdd-9370-f5015d8e0b65}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scene">
+      <UniqueIdentifier>{f2fccf36-ab7e-4a4c-a867-61cc3573c379}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{03dd5f68-5267-48e5-80d0-f0e44a44d4e8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="imgui">
+      <UniqueIdentifier>{d31bd066-260e-4cf0-bb22-161b53a5d311}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Passes\Debug">
+      <UniqueIdentifier>{8d13949e-340d-438e-a609-59db7277d9e1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Passes\IBL">
+      <UniqueIdentifier>{b26ab670-d00b-4b7f-a12e-171dd384d139}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders\IBL">
+      <UniqueIdentifier>{50049cd1-38cc-4f4c-a2aa-bb7a5c3c9428}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Exercises\Shaders">
+      <UniqueIdentifier>{7ee33d6d-57e6-4cd8-9a16-dc78fb9dc68a}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="EngineDX.rc">
+      <Filter>Win</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="SimpleMath.inl">
+      <Filter>Core</Filter>
+    </None>
+    <None Include="Shaders\common.hlsli">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\sampling.hlsli">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\ggx_brdf.hlsli">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\tonemap.hlsli">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\ibl.hlsli">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\forward.hlsli">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\lighting.hlsli">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\material.hlsli">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Exercises\Shaders\Exercise6.hlsli">
+      <Filter>Exercises\Shaders</Filter>
+    </None>
+    <None Include="Exercises\Shaders\Exercise7.hlsli">
+      <Filter>Exercises\Shaders</Filter>
+    </None>
+    <None Include="Exercises\Shaders\Exercise8.hlsli">
+      <Filter>Exercises\Shaders</Filter>
+    </None>
+    <None Include="Exercises\Shaders\Exercise10.hlsli">
+      <Filter>Exercises\Shaders</Filter>
+    </None>
+    <None Include="Exercises\Shaders\Exercise11.hlsli">
+      <Filter>Exercises\Shaders</Filter>
+    </None>
+    <None Include="Exercises\Shaders\Exercise12.hlsli">
+      <Filter>Exercises\Shaders</Filter>
+    </None>
+    <None Include="Exercises\Shaders\Exercise13.hlsli">
+      <Filter>Exercises\Shaders</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="Shaders\skyboxVS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\fullscreenVS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\IrradianceMapPS.hlsl">
+      <Filter>Shaders\IBL</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\HDRToCubemapPS.hlsl">
+      <Filter>Shaders\IBL</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\EnvironmentBRDFPS.hlsl">
+      <Filter>Shaders\IBL</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\PrefilterEnvMapPS.hlsl">
+      <Filter>Shaders\IBL</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\skyboxPS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\MipChainPS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\forwardPS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\forwardVS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Exercises\Shaders\Exercise2PS.hlsl">
+      <Filter>Exercises\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Exercises\Shaders\Exercise2VS.hlsl">
+      <Filter>Exercises\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Exercises\Shaders\Exercise3PS.hlsl">
+      <Filter>Exercises\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Exercises\Shaders\Exercise3VS.hlsl">
+      <Filter>Exercises\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Exercises\Shaders\Exercise4PS.hlsl">
+      <Filter>Exercises\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Exercises\Shaders\Exercise4VS.hlsl">
+      <Filter>Exercises\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Exercises\Shaders\Exercise5PS.hlsl">
+      <Filter>Exercises\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Exercises\Shaders\Exercise5VS.hlsl">
+      <Filter>Exercises\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Exercises\Shaders\Exercise6PS.hlsl">
+      <Filter>Exercises\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Exercises\Shaders\Exercise6VS.hlsl">
+      <Filter>Exercises\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Exercises\Shaders\Exercise7PS.hlsl">
+      <Filter>Exercises\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Exercises\Shaders\Exercise7VS.hlsl">
+      <Filter>Exercises\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Exercises\Shaders\Exercise8PS.hlsl">
+      <Filter>Exercises\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Exercises\Shaders\Exercise8VS.hlsl">
+      <Filter>Exercises\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Exercises\Shaders\Exercise10PS.hlsl">
+      <Filter>Exercises\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Exercises\Shaders\Exercise10VS.hlsl">
+      <Filter>Exercises\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Exercises\Shaders\Exercise11PS.hlsl">
+      <Filter>Exercises\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Exercises\Shaders\Exercise11VS.hlsl">
+      <Filter>Exercises\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Exercises\Shaders\Exercise12PS.hlsl">
+      <Filter>Exercises\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Exercises\Shaders\Exercise12VS.hlsl">
+      <Filter>Exercises\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Exercises\Shaders\Exercise13PS.hlsl">
+      <Filter>Exercises\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Exercises\Shaders\Exercise13VS.hlsl">
+      <Filter>Exercises\Shaders</Filter>
+    </FxCompile>
+  </ItemGroup>
+</Project>
