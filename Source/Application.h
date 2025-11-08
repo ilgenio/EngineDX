@@ -74,6 +74,7 @@ private:
     uint64_t  tickSum = 0;
     uint64_t  elapsedMilis = 0;
     bool      paused = false;
+    bool      updating = false;
 };
 
 extern Application* app;

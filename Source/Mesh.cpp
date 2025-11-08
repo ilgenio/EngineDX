@@ -67,6 +67,8 @@ void Mesh::load(const tinygltf::Model& model, const tinygltf::Mesh& mesh, const 
             }
         }
 
+        if (numVertices > 0) BoundingOrientedBox::CreateFromPoints(bbox, numVertices, &vertices[0].position, sizeof(Vertex));
+
         // Skinning attributes
 
         struct BoneIndices
@@ -130,6 +132,7 @@ void Mesh::load(const tinygltf::Model& model, const tinygltf::Mesh& mesh, const 
         {
             // TODO: Create FRAMES_IN_FLIGHT Buffers 
         }
+
     }
 }
 

@@ -38,6 +38,7 @@ void log(const char file[], int line, const char* format, ...);
 
 #include "debug_draw.hpp"
 inline const ddVec3& ddConvert(const Vector3& v) { return reinterpret_cast<const ddVec3&>(v); }
+inline const ddVec3* ddConvert(const Vector3* v) { return reinterpret_cast<const ddVec3*>(v); }
 inline const ddMat4x4& ddConvert(const Matrix& m) { return reinterpret_cast<const ddMat4x4&>(m); }
 
 inline size_t alignUp(size_t value, size_t alignment)

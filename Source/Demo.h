@@ -39,12 +39,16 @@ class Demo : public Module
 
     bool showAxis = false;
     bool showGrid = false;
+    bool showQuadTree = false;
+    bool trackFrustum = true;
 
     ShaderTableDesc debugDesc;
 
     std::unique_ptr<RenderTexture> renderTexture;
     ImVec2 canvasSize;
     ImVec2 canvasPos;
+    Vector4 frustumPlanes[6];
+
 
 public:
 

@@ -190,14 +190,17 @@
     <ClCompile Include="Exercises\Exercise12.cpp">
       <Filter>Exercises</Filter>
     </ClCompile>
-    <ClCompile Include="MathUtils.cpp.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
     <ClCompile Include="Demo.cpp">
       <Filter>Modules</Filter>
     </ClCompile>
     <ClCompile Include="Exercises\Exercise13.cpp">
       <Filter>Exercises</Filter>
+    </ClCompile>
+    <ClCompile Include="QuadTree.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="MathUtils.cpp">
+      <Filter>Core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -419,6 +422,9 @@
     </ClInclude>
     <ClInclude Include="Exercises\Exercise13.h">
       <Filter>Exercises</Filter>
+    </ClInclude>
+    <ClInclude Include="QuadTree.h">
+      <Filter>Scene</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

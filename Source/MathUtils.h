@@ -10,3 +10,8 @@ constexpr const float M_PI = std::numbers::pi_v<float>;
 
 void euclideanToSpherical(const Vector3 & dir, float& azimuth, float& elevation);
 void sphericalToEuclidean(float azimuth, float elevation, Vector3& dir);
+
+
+void getFrustumPlanes(Vector4 planes[6], const Matrix& viewProjection, bool normalize = false);
+DirectX::ContainmentType insideFrustum(const Vector4 planes[6], const BoundingBox& box);
+bool insideFrustum(const Vector4 planes[6], const BoundingOrientedBox& box);

@@ -15,7 +15,7 @@ class ModuleCamera : public Module
     {
         float  polar;
         float  azimuthal;
-        Vector3 panning;
+        Vector3 translation;
     };
 
     Params    params = { 0.0f, 0.0f , {0.0f , 2.0f , 10.0f }};
@@ -37,15 +37,17 @@ public:
 
     float getPolar() const { return params.polar; }
     float getAzimuthal() const { return params.azimuthal;  }
-    const Vector3& getPanning() const { return params.panning; }
+    const Vector3& getTranslation() const { return params.translation; }
 
     void setPolar(float polar) { params.polar = polar;  }
     void setAzimuthal(float azimuthal) { params.azimuthal = azimuthal;  }
-    void setPanning(const Vector3& panning) { params.panning = panning;  }
+    void setTranslation(const Vector3& translation) { params.translation = translation;  }
 
     const Matrix&     getView() const {return view;}
     const Quaternion& getRot() const { return rotation; }
     const Vector3&    getPos() const { return position; }
+
+    void getFrustumPlanes(Vector4 planes[6], float aspect, bool normalize) const;
 
     static Matrix getPerspectiveProj(float aspect); 
 

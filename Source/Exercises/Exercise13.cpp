@@ -48,7 +48,7 @@ bool Exercise13::init()
         ok = skybox->init("Assets/Textures/footprint_court.hdr", false);
 
         ModuleCamera* camera = app->getCamera(); 
-        camera->setPanning(Vector3(0.0f, 1.0f, 4.4f));
+        camera->setTranslation(Vector3(0.0f, 1.0f, 4.4f));
         camera->setPolar(0.0f);
         camera->setAzimuthal(XMConvertToRadians(-10.25f));
     }

@@ -33,6 +33,7 @@ bool StartMenu::init()
 
 bool StartMenu::cleanUp()
 {
+    app->getD3D12()->flush();
     imguiPass.reset();
     return true;
 }

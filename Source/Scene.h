@@ -6,6 +6,7 @@
 class Model;
 class Mesh;
 class Material;
+class QuadTree;
 
 namespace tinygltf { class Model;  class Node; }
 
@@ -23,6 +24,7 @@ private:
     friend class Model;
 
     std::vector<Model*> models;
+    std::unique_ptr<QuadTree> quadTree;
 
 public:
     Scene();
@@ -32,7 +34,9 @@ public:
 
     void updateAnimations(float deltaTime);
     void updateWorldTransforms();
-    void getRenderList(std::vector<RenderMesh>& renderList) const;
+    void frustumCulling(Vector4 planes[6], std::vector<RenderMesh>& renderList);
+
+    void debugDrawQuadTree(const Vector4 frustumPlanes[6]) const;
 
 private:
     void onRemoveModel(Model* model);

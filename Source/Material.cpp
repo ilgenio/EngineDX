@@ -26,7 +26,7 @@ void Material::load(const tinygltf::Model& model, const tinygltf::Material &mate
                                    pow(float(material.pbrMetallicRoughness.baseColorFactor[2]), 2.2f), 
                                        float(material.pbrMetallicRoughness.baseColorFactor[3]));
     data.metallicFactor  = float(material.pbrMetallicRoughness.metallicFactor);
-    data.roughnessFactor = float(material.pbrMetallicRoughness.roughnessFactor)+0.25;
+    data.roughnessFactor = float(material.pbrMetallicRoughness.roughnessFactor);
     data.emissiveFactor = material.emissiveFactor.size() >= 3 ? Vector3(float(material.emissiveFactor[0]),
                                                                         float(material.emissiveFactor[1]),
                                                                         float(material.emissiveFactor[2])) : Vector3::Zero;

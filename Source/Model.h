@@ -7,6 +7,7 @@ class Scene;
 class Mesh;
 class Material;
 struct RenderMesh;
+class QuadTree;
 
 namespace tinygltf { class Model;  class Node; }
 
@@ -20,6 +21,7 @@ class Model
         Matrix localTransform;
         Matrix worldTransform;
         bool dirtyWorld = true;
+        bool lastFrameDirty = true;
         INT parent = -1;
         UINT numChilds = 0;
     };
@@ -30,6 +32,7 @@ class Model
         UINT materialIndex = 0;
         INT  skinIndex = 0;
         UINT nodeIndex = 0;
+        UINT quadTreeCell = UINT(-1);
     };
 
     struct AnimInstance
@@ -74,7 +77,9 @@ private:
     bool load(const tinygltf::Model& srcModel, const char* basePath);
     void updateAnim(float deltaTime);
     void updateWorldTransforms();
-    void getRenderList(std::vector<RenderMesh>& renderList) const;
+    void updateQuadTree(QuadTree* quadTree);
+    void frustumCulling(const Vector4 frustumPlanes[6], const std::vector<ContainmentType>& containment, std::vector<RenderMesh>& renderList) const;
+
     UINT generateNodes(const tinygltf::Model& model, UINT nodeIndex, INT parentIndex, 
                        const std::vector<std::pair<UINT, UINT> >& meshMapping, 
                        const std::vector<int>& materialMapping);

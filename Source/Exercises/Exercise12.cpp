@@ -73,7 +73,7 @@ bool Exercise12::init()
         ok = ok && skyboxRenderPass->init(false);
 
         ModuleCamera* camera = app->getCamera();
-        camera->setPanning(Vector3(15.0f, 7.5f, 0.0f));
+        camera->setTranslation(Vector3(15.0f, 7.5f, 0.0f));
         camera->setPolar(XMConvertToRadians(90.0f));
         camera->setAzimuthal(XMConvertToRadians(-15.0f));
     }

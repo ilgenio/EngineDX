@@ -2,6 +2,7 @@
 
 #include "Scene.h"
 #include "Model.h"
+#include "QuadTree.h"
 
 #define TINYGLTF_NO_STB_IMAGE_WRITE
 #define TINYGLTF_NO_STB_IMAGE
@@ -16,6 +17,8 @@
 
 Scene::Scene()
 {
+    quadTree = std::make_unique<QuadTree>();
+    quadTree->init(3, 64.0f);
 }
 
 Scene::~Scene()
@@ -62,23 +65,28 @@ void Scene::updateWorldTransforms()
     for(Model* model : models)
     {
         model->updateWorldTransforms();
+        model->updateQuadTree(quadTree.get());
     }
 }
 
-void Scene::getRenderList(std::vector<RenderMesh>& renderList) const
+void Scene::frustumCulling(Vector4 planes[6], std::vector<RenderMesh>& renderList)
 {
-    UINT totalInstances = 0;
+
+    // First cull quad tree
+    std::vector<ContainmentType> containment;
+    quadTree->frustumCulling(planes, containment);
+
+    // Then cull models
     for(Model* model : models)
     {
-        totalInstances += model->getNumInstances();
+        model->frustumCulling(planes, containment, renderList);
     }
+}
 
-    renderList.clear();
-    renderList.reserve(totalInstances);
-
-    for(Model* model : models)
-    {
-        model->getRenderList(renderList);
-    }
+void Scene::debugDrawQuadTree(const Vector4 frustumPlanes[6]) const
+{
+    std::vector<ContainmentType> containment;
+    quadTree->frustumCulling(frustumPlanes, containment);
+    quadTree->debugDraw(containment);
 }
 

@@ -56,11 +56,11 @@ bool Demo::init()
         /*
         camera->setPolar(XMConvertToRadians(-117.0f));
         camera->setAzimuthal(XMConvertToRadians(-1.22f));
-        camera->setPanning(Vector3(-24.0f, 2.95f, -6.95f)); */
+        camera->setTranslation(Vector3(-24.0f, 2.95f, -6.95f)); */
 
         camera->setPolar(XMConvertToRadians(1.30f));
         camera->setAzimuthal(XMConvertToRadians(-11.61f));
-        camera->setPanning(Vector3(0.0f, 1.24f, 4.65f));
+        camera->setTranslation(Vector3(0.0f, 1.24f, 4.65f));
     }
 
     _ASSERT_EXPR(ok, "Error creating Demo");
@@ -82,9 +82,22 @@ bool Demo::cleanUp()
 
 void Demo::update() 
 {
-    // TODO: update animations
+    // Update scene
     scene->updateAnimations(float(app->getElapsedMilis()) * 0.001f);
     scene->updateWorldTransforms();
+
+    // Frustum culling
+
+    if (renderTexture->isValid())
+    {
+        float aspect = float(renderTexture->getWidth()) / float(renderTexture->getHeight());
+        Vector4 planes[6];
+
+        app->getCamera()->getFrustumPlanes(planes, aspect, false);
+        renderList.clear();
+
+        scene->frustumCulling(planes, renderList);
+    }
 }
 
 void Demo::preRender()
@@ -128,6 +141,20 @@ void Demo::debugDrawCommands()
     sprintf_s(lTmp, 1023, "FPS: [%d]. Avg. elapsed (Ms): [%g] ", uint32_t(app->getFPS()), app->getAvgElapsedMs());
     dd::screenText(lTmp, ddConvert(Vector3(10.0f, 10.0f, 0.0f)), dd::colors::White, 0.6f);
 
+    if (trackFrustum && renderTexture->isValid())
+    {
+        float aspect = float(renderTexture->getWidth()) / float(renderTexture->getHeight());
+        app->getCamera()->getFrustumPlanes(frustumPlanes, aspect, false);
+    }
+
+    if (showQuadTree)
+    {
+        scene->debugDrawQuadTree(frustumPlanes);
+
+        //Vector3 points[8];
+        //frustum.GetCorners(points);
+        //dd::box(ddConvert(points), dd::colors::White);
+    }
 }
 
 void Demo::imGuiDrawCommands()
@@ -140,6 +167,8 @@ void Demo::imGuiDrawCommands()
     ImGui::Separator();
     ImGui::Checkbox("Show grid", &showGrid);
     ImGui::Checkbox("Show axis", &showAxis);
+    ImGui::Checkbox("Show quadtree", &showQuadTree);
+    ImGui::Checkbox("Track frustum", &trackFrustum);
 
     ImGui::Separator();
     ModuleCamera* camera = app->getCamera();
@@ -185,8 +214,6 @@ void Demo::renderMeshes(ID3D12GraphicsCommandList *commandList, const Matrix& vi
     perFrameData.numSpotLights = 0;
     perFrameData.numRoughnessLevels = skybox->getNumIBLMipLevels()  ;
     perFrameData.cameraPosition = app->getCamera()->getPos();
-
-    scene->getRenderList(renderList);
 
     renderMeshPass->render(commandList, renderList, ringBuffer->allocBuffer(&perFrameData), skybox->getIBLTable(), view*projection);
 }

@@ -8,7 +8,7 @@
 #include "Keyboard.h"
 #include "GamePad.h"
 
-#define FAR_PLANE 20000.0f
+#define FAR_PLANE 200.0f
 #define NEAR_PLANE 0.1f
 
 namespace
@@ -85,7 +85,7 @@ void ModuleCamera::update()
 
 
         Vector3 localDir = Vector3::Transform(translate, rotation);
-        params.panning += localDir * getTranslationSpeed();
+        params.translation += localDir * getTranslationSpeed();
         params.polar += XMConvertToRadians(getRotationSpeed() * rotate.x);
         params.azimuthal += XMConvertToRadians(getRotationSpeed() * rotate.y);
 
@@ -95,7 +95,7 @@ void ModuleCamera::update()
         Quaternion rotation_polar = Quaternion::CreateFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), params.polar);
         Quaternion rotation_azimuthal = Quaternion::CreateFromAxisAngle(Vector3(1.0f, 0.0f, 0.0f), params.azimuthal);
         rotation = rotation_azimuthal * rotation_polar;
-        position = params.panning; // Vector3::Transform(params.panning, rotation);
+        position = params.translation; 
 
         Quaternion invRot;
         rotation.Inverse(invRot);
@@ -112,5 +112,12 @@ void ModuleCamera::update()
 Matrix ModuleCamera::getPerspectiveProj(float aspect) 
 {
     return Matrix::CreatePerspectiveFieldOfView(XM_PIDIV4, aspect, NEAR_PLANE, FAR_PLANE);
+}
+
+void ModuleCamera::getFrustumPlanes(Vector4 planes[6], float aspect, bool normalize) const
+{
+    Matrix proj = getPerspectiveProj(aspect);
+    Matrix viewProjection = view * proj;
+    ::getFrustumPlanes(planes, viewProjection, normalize);
 }
 

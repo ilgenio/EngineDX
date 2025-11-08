@@ -5,6 +5,7 @@
 #include "Material.h"
 #include "Scene.h"
 #include "AnimationClip.h"
+#include "QuadTree.h"
 
 #define TINYGLTF_NO_STB_IMAGE_WRITE
 #define TINYGLTF_NO_STB_IMAGE
@@ -49,7 +50,7 @@ bool Model::load(const tinygltf::Model &srcModel, const char *basePath)
 
             meshes.push_back(mesh);
 
-            materialMappings.push_back(primitive.material);
+            materialMappings.push_back(primitive.material);            
         }
     }
 
@@ -188,11 +189,32 @@ void Model::updateWorldTransforms()
 
             node->dirtyWorld = false;
         }
+
+        node->lastFrameDirty = dirty;
     }
 
 }
 
-void Model::getRenderList(std::vector<RenderMesh> &renderList) const
+void Model::updateQuadTree(QuadTree* quadTree) 
+{
+    for (MeshInstance* instance : instances)
+    {
+        Node* node = nodes[instance->nodeIndex];
+
+        if (node->lastFrameDirty)
+        {
+            _ASSERTE(instance->meshIndex < meshes.size());
+
+            const Mesh* mesh = meshes[instance->meshIndex];
+            BoundingOrientedBox worldBox = mesh->getBoundingBox();
+            worldBox.Transform(worldBox, node->worldTransform);
+
+            instance->quadTreeCell = quadTree->computeCellIndex(worldBox);
+        }
+    }
+}
+
+void Model::frustumCulling(const Vector4 frustumPlanes[6], const std::vector<ContainmentType>& containment, std::vector<RenderMesh>& renderList) const
 {
     for (const MeshInstance* instance : instances)
     {
@@ -200,22 +222,46 @@ void Model::getRenderList(std::vector<RenderMesh> &renderList) const
         _ASSERTE(instance->materialIndex < materials.size());
         _ASSERTE(instance->nodeIndex < nodes.size());
 
-        RenderMesh renderMesh;
-        renderMesh.mesh     = meshes[instance->meshIndex];
-        renderMesh.material = materials[instance->materialIndex];
+        bool addInstance = false;
 
-        _ASSERTE(nodes[instance->nodeIndex]->dirtyWorld == false);
+        if (instance->quadTreeCell < containment.size())
+        {
+            _ASSERTE(instance->quadTreeCell < containment.size());
 
-        renderMesh.transform = nodes[instance->nodeIndex]->worldTransform;
+            if (containment[instance->quadTreeCell] == ContainmentType::CONTAINS)
+            {
+                addInstance = true;
+            }
+            else if(containment[instance->quadTreeCell] == ContainmentType::INTERSECTS)
+            {
+                // Need to do per mesh culling
+                const Mesh* mesh = meshes[instance->meshIndex];
+                BoundingOrientedBox worldBox = mesh->getBoundingBox();
+                worldBox.Transform(worldBox, nodes[instance->nodeIndex]->worldTransform);
 
-        renderMesh.normalMatrix = renderMesh.transform;
-        renderMesh.normalMatrix.Translation(Vector3::Zero);
-        renderMesh.normalMatrix.Invert();
-        renderMesh.normalMatrix.Transpose();
+                addInstance = worldBox.ContainedBy(frustumPlanes[0], frustumPlanes[1], frustumPlanes[2],
+                                                   frustumPlanes[3], frustumPlanes[4], frustumPlanes[5]) != ContainmentType::DISJOINT;
+            }
+        }
 
-        renderList.push_back(renderMesh);
+        if (addInstance)
+        {
+            RenderMesh renderMesh;
+            renderMesh.mesh = meshes[instance->meshIndex];
+            renderMesh.material = materials[instance->materialIndex];
+
+            _ASSERTE(nodes[instance->nodeIndex]->dirtyWorld == false);
+
+            renderMesh.transform = nodes[instance->nodeIndex]->worldTransform;
+
+            renderMesh.normalMatrix = renderMesh.transform;
+            renderMesh.normalMatrix.Translation(Vector3::Zero);
+            renderMesh.normalMatrix.Invert();
+            renderMesh.normalMatrix.Transpose();
+
+            renderList.push_back(renderMesh);
+        }
     }
-
 }
 
 void Model::PlayAnim(std::shared_ptr<AnimationClip> clip, float fadeIn /*= 0.0f*/)
