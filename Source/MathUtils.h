@@ -12,6 +12,9 @@ void euclideanToSpherical(const Vector3 & dir, float& azimuth, float& elevation)
 void sphericalToEuclidean(float azimuth, float elevation, Vector3& dir);
 
 
-void getFrustumPlanes(Vector4 planes[6], const Matrix& viewProjection, bool normalize = false);
-DirectX::ContainmentType insideFrustum(const Vector4 planes[6], const BoundingBox& box);
-bool insideFrustum(const Vector4 planes[6], const BoundingOrientedBox& box);
+void getPlanes(Vector4 planes[6], const Matrix& viewProjection, bool normalize = false);
+void getPlanes(const BoundingOrientedBox& obb, Vector4 planes[6], Vector3 absPlanes[6]);
+void getPoints(const BoundingOrientedBox& obb, Vector3 points[8]);
+
+DirectX::ContainmentType insidePlanes(const Vector4 planes[6], const Vector3 absPlanes[6], const BoundingBox& box);
+DirectX::ContainmentType insideAABB(const BoundingBox& aabb, const Vector3 points[8]);

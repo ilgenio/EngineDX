@@ -48,7 +48,8 @@ public:
     const Vector3&    getPos() const { return position; }
 
     void getFrustumPlanes(Vector4 planes[6], float aspect, bool normalize) const;
+    BoundingFrustum getFrustum(float aspect) const;
 
-    static Matrix getPerspectiveProj(float aspect); 
+    static Matrix getPerspectiveProj(float aspect, float fov = XM_PIDIV4);
 
 };

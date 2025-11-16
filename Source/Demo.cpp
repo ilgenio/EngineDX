@@ -103,6 +103,7 @@ void Demo::update()
 void Demo::preRender()
 {
     imguiPass->startFrame();
+    ImGuizmo::BeginFrame();
 
     ImGuiID dockspace_id = ImGui::GetID("MyDockNodeId");
     ImGui::DockSpaceOverViewport(dockspace_id);
@@ -125,11 +126,22 @@ void Demo::preRender()
         ImGui::DockBuilderFinish(dockspace_id);
     }
 
-    imGuiDrawCommands();    
+    if (canvasSize.x > 0.0f && canvasSize.y > 0.0f)
+    {
+        renderTexture->resize(unsigned(canvasSize.x), unsigned(canvasSize.y));
+
+    }
+
+    ModuleD3D12* d3d12 = app->getD3D12();
+    unsigned width = d3d12->getWindowWidth();
+    unsigned height = d3d12->getWindowHeight();
+
+    // Set the viewport size (adjust based on your application)
+    ImGuizmo::SetRect(0, 0, float(width), float(height));
+
+    imGuiDrawCommands();
     debugDrawCommands();
 
-    if (canvasSize.x > 0.0f && canvasSize.y > 0.0f)
-        renderTexture->resize(unsigned(canvasSize.x), unsigned(canvasSize.y));
 }
 
 void Demo::debugDrawCommands()
@@ -144,16 +156,17 @@ void Demo::debugDrawCommands()
     if (trackFrustum && renderTexture->isValid())
     {
         float aspect = float(renderTexture->getWidth()) / float(renderTexture->getHeight());
-        app->getCamera()->getFrustumPlanes(frustumPlanes, aspect, false);
+        app->getCamera()->getFrustumPlanes(frustumPlanes, aspect, true);
+        trackedFrustum = app->getCamera()->getFrustum(aspect);
     }
 
     if (showQuadTree)
     {
         scene->debugDrawQuadTree(frustumPlanes);
-
-        //Vector3 points[8];
-        //frustum.GetCorners(points);
-        //dd::box(ddConvert(points), dd::colors::White);
+        
+        Vector3 points[8];
+        trackedFrustum.GetCorners(points);
+        dd::box(ddConvert(points), dd::colors::White);
     }
 }
 
@@ -169,6 +182,8 @@ void Demo::imGuiDrawCommands()
     ImGui::Checkbox("Show axis", &showAxis);
     ImGui::Checkbox("Show quadtree", &showQuadTree);
     ImGui::Checkbox("Track frustum", &trackFrustum);
+
+    ImGui::Checkbox("Show guizmo", &showGuizmo);
 
     ImGui::Separator();
     ModuleCamera* camera = app->getCamera();
@@ -201,7 +216,16 @@ void Demo::imGuiDrawCommands()
     ImGui::EndChildFrame();
     ImGui::End();
 
-    app->getCamera()->setEnable(viewerFocused);
+    if (showGuizmo)
+    {
+        const Matrix& viewMatrix = camera->getView();
+        Matrix projMatrix = ModuleCamera::getPerspectiveProj(canvasSize.x / canvasSize.y);
+
+        // Manipulate the object
+        ImGuizmo::Manipulate((const float*)&viewMatrix, (const float*)&projMatrix, gizmoOperation, ImGuizmo::LOCAL, (float*)&objectMatrix);
+    }
+
+    app->getCamera()->setEnable(viewerFocused && !ImGuizmo::IsUsing());
 }
 
 void Demo::renderMeshes(ID3D12GraphicsCommandList *commandList, const Matrix& view, const Matrix& projection)

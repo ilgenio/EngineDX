@@ -22,9 +22,10 @@ void sphericalToEuclidean(float azimuth, float elevation, Vector3& dir)
 };
 
 // From https://www8.cs.umu.se/kurser/5DV051/HT12/lab/plane_extraction.pdf
-void getFrustumPlanes(Vector4 planes[6], const Matrix& viewProjection, bool normalize /*= false*/)
+void getPlanes(Vector4 planes[6], const Matrix& viewProjection, bool normalize /*= false*/)
 {
-    Matrix vp = viewProjection.Transpose();
+    Matrix vp = viewProjection;
+    vp.Transpose();
 
     // Left clipping plane
     planes[0].x = vp._14 + vp._11;
@@ -46,8 +47,8 @@ void getFrustumPlanes(Vector4 planes[6], const Matrix& viewProjection, bool norm
 
     // Bottom clipping plane
     planes[3].x = vp._14 + vp._12;
-    planes[3].y = vp._34 + vp._32;
-    planes[3].z = vp._43 + vp._23;
+    planes[3].y = vp._24 + vp._22;
+    planes[3].z = vp._34 + vp._32;
     planes[3].w = vp._44 + vp._42;
 
     // Near clipping plane
@@ -65,7 +66,7 @@ void getFrustumPlanes(Vector4 planes[6], const Matrix& viewProjection, bool norm
     if (normalize) // for frustum culling is not needed
     {
         for (int i = 0; i < 6; ++i)
-        {
+        {            
             float len = Vector3(&planes[i].x).Length();
             _ASSERTE(len > 0.0f);
             planes[i] /= len;
@@ -74,40 +75,85 @@ void getFrustumPlanes(Vector4 planes[6], const Matrix& viewProjection, bool norm
 
 }
 
-DirectX::ContainmentType insideFrustum(const Vector4 planes[6], const BoundingBox& box)
+void getPlanes(const BoundingOrientedBox& obb, Vector4 planes[6], Vector3 absPlanes[6])
 {
-    Vector4 center(box.Center.x, box.Center.y, box.Center.z, -1.0f);
+    Vector3::Transform(Vector3::UnitX, *reinterpret_cast<const Quaternion*>(&obb.Orientation), absPlanes[0]);
+    Vector3::Transform(-Vector3::UnitX, *reinterpret_cast<const Quaternion*>(&obb.Orientation), absPlanes[1]);
+
+    Vector3::Transform(Vector3::UnitY, *reinterpret_cast<const Quaternion*>(&obb.Orientation), absPlanes[2]);
+    Vector3::Transform(-Vector3::UnitY, *reinterpret_cast<const Quaternion*>(&obb.Orientation), absPlanes[3]);
+
+    Vector3::Transform(Vector3::UnitZ, *reinterpret_cast<const Quaternion*>(&obb.Orientation), absPlanes[4]);
+    Vector3::Transform(-Vector3::UnitZ, *reinterpret_cast<const Quaternion*>(&obb.Orientation), absPlanes[5]);
+
+
+    for (int i = 0; i < 6; ++i)
+    {
+        Vector3 P = obb.Center + absPlanes[0] * obb.Extents.x;
+        planes[i] = Vector4(absPlanes[i].x, absPlanes[i].y, absPlanes[i].z, -absPlanes[0].Dot(P));
+
+        absPlanes[i].x = fabsf(absPlanes[i].x);
+        absPlanes[i].y = fabsf(absPlanes[i].y);
+        absPlanes[i].z = fabsf(absPlanes[i].z);
+    }
+}
+
+void getPoints(const BoundingOrientedBox& obb, Vector3 points[8])
+{
+    Vector3 axis[3];
+    Vector3::Transform(Vector3::UnitX, *reinterpret_cast<const Quaternion*>(&obb.Orientation), axis[0]);
+    Vector3::Transform(Vector3::UnitY, *reinterpret_cast<const Quaternion*>(&obb.Orientation), axis[1]);
+    Vector3::Transform(Vector3::UnitZ, *reinterpret_cast<const Quaternion*>(&obb.Orientation), axis[2]);
+
+    
+    points[0] = obb.Center + axis[0] * obb.Extents.x + axis[1] * obb.Extents.y + axis[2] * obb.Extents.z;
+    points[1] = obb.Center - axis[0] * obb.Extents.x + axis[1] * obb.Extents.y + axis[2] * obb.Extents.z;
+    points[2] = obb.Center + axis[0] * obb.Extents.x - axis[1] * obb.Extents.y + axis[2] * obb.Extents.z;
+    points[3] = obb.Center + axis[0] * obb.Extents.x + axis[1] * obb.Extents.y - axis[2] * obb.Extents.z;
+    points[4] = obb.Center - axis[0] * obb.Extents.x - axis[1] * obb.Extents.y + axis[2] * obb.Extents.z;
+    points[5] = obb.Center + axis[0] * obb.Extents.x - axis[1] * obb.Extents.y - axis[2] * obb.Extents.z;
+    points[6] = obb.Center - axis[0] * obb.Extents.x + axis[1] * obb.Extents.y - axis[2] * obb.Extents.z;
+    points[7] = obb.Center - axis[0] * obb.Extents.x - axis[1] * obb.Extents.y - axis[2] * obb.Extents.z;
+}
+
+DirectX::ContainmentType insidePlanes(const Vector4 planes[6], const Vector3 absPlanes[6], const BoundingBox& box)
+{
+    Vector4 center(box.Center.x, box.Center.y, box.Center.z, 1.0f);
     const Vector3& extents = *reinterpret_cast<const Vector3*>(&box.Extents);
 
     bool allInside = true;
 
     for (int i = 0; i < 6; ++i)
     {
-        float dist = fabsf(center.Dot(planes[i]));
-        float radius = extents.Dot(Vector3(fabsf(planes[i].x), fabsf(planes[i].y), fabsf(planes[i].z)));
+        float dist = center.Dot(planes[i]);
+        float radius = extents.Dot(absPlanes[i]);
 
-         if(dist > radius) return DirectX::ContainmentType::DISJOINT;
+        if (dist + radius < 0.0f)  return DirectX::ContainmentType::DISJOINT;
 
-        allInside &= dist < -radius;
+        allInside &= dist-radius >= 0.0f;
     }
 
      return allInside ? DirectX::ContainmentType::CONTAINS : DirectX::ContainmentType::INTERSECTS;
 }
 
-bool insideFrustum(const Vector4 planes[6], const BoundingOrientedBox& box)
+DirectX::ContainmentType insideAABB(const BoundingBox& aabb, const Vector3 points[8])
 {
-    int out;
-    for (int i = 0; i < 6; ++i)
-    {
-        out = 0;
-        for (int k = 0; k < 8; ++k)
-            //out += planes[i].IsOnPositiveSide(points[k]);
+    Vector3 min = aabb.Center - aabb.Extents;
+    Vector3 max = aabb.Center + aabb.Extents;
 
-            if (out == 8)
-                return false;
+    bool allInside = true;
+    bool anyInside = false;
+
+    for (int i = 0; (allInside || !anyInside) && i < 8; ++i)
+    {
+        bool inside = points[i].x >= min.x && points[i].x <= max.x &&
+            points[i].y >= min.y && points[i].y <= max.y &&
+            points[i].z >= min.z && points[i].z <= max.z;
+
+        allInside &= inside;
+        anyInside |= inside;
     }
 
-    return true;
+    return allInside ? ContainmentType::CONTAINS : (anyInside ? ContainmentType::INTERSECTS : ContainmentType::DISJOINT);
 }
-
 

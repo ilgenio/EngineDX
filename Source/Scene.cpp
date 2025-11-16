@@ -18,7 +18,7 @@
 Scene::Scene()
 {
     quadTree = std::make_unique<QuadTree>();
-    quadTree->init(3, 64.0f);
+    quadTree->init(5, 128.0f);
 }
 
 Scene::~Scene()

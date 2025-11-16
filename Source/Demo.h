@@ -3,6 +3,7 @@
 #include "Module.h"
 
 #include "ShaderTableDesc.h"
+#include "ImGuizmo.h"
 
 struct RenderMesh;
 class Scene;
@@ -41,6 +42,9 @@ class Demo : public Module
     bool showGrid = false;
     bool showQuadTree = false;
     bool trackFrustum = true;
+    bool showGuizmo = false;
+    ImGuizmo::OPERATION gizmoOperation = ImGuizmo::TRANSLATE;
+    Matrix objectMatrix = Matrix::Identity;
 
     ShaderTableDesc debugDesc;
 
@@ -48,6 +52,7 @@ class Demo : public Module
     ImVec2 canvasSize;
     ImVec2 canvasPos;
     Vector4 frustumPlanes[6];
+    BoundingFrustum trackedFrustum;
 
 
 public:

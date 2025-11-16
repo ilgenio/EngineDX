@@ -3,7 +3,7 @@
 
 #include "DebugDrawPass.h"
 
-#define QUADTREE_HEIGHT 1.0f
+#define QUADTREE_HEIGHT 10.0f
 
 static UINT compact1by1(UINT x) {
     x &= 0x55555555;                   // Keep bits in odd positions
@@ -89,8 +89,12 @@ UINT QuadTree::computeCellIndex(const BoundingOrientedBox& box) const
     UINT childStartIndex = 0;
     UINT parentIndex = UINT(cells.size());
 
+    Vector3 points[8];
+    getPoints(box, points);
+
     // Root node
-    ContainmentType contains =  cells[0].Contains(box); 
+    ContainmentType contains = insideAABB(cells[0], points); 
+
     if (contains == ContainmentType::INTERSECTS)
     {
         return 0;
@@ -115,8 +119,7 @@ UINT QuadTree::computeCellIndex(const BoundingOrientedBox& box) const
         {
             UINT nodeIndex = childStartIndex + i;
 
-            const BoundingBox& cell  = cells[nodeIndex];
-            ContainmentType contains = cell.Contains(box);
+            ContainmentType contains = insideAABB(cells[nodeIndex], points);
 
             if(contains == ContainmentType::CONTAINS) 
             {
@@ -161,6 +164,13 @@ void QuadTree::frustumCulling(const Vector4 frustumPlanes[6], std::vector<Contai
 {
     containment.resize(cells.size(), ContainmentType::DISJOINT);
 
+    Vector3 absFrustumPlanes[6];
+    for(int i=0; i<6; ++i)
+    {
+        // Precompute absolute plane normals for faster box-frustum tests
+        absFrustumPlanes[i] = Vector3(std::abs(frustumPlanes[i].x), std::abs(frustumPlanes[i].y), std::abs(frustumPlanes[i].z));
+    }
+
     UINT levelIndex = 0;
     UINT levelStartIndex = 0;
     UINT parentLevelStartIndex = 0;
@@ -177,7 +187,7 @@ void QuadTree::frustumCulling(const Vector4 frustumPlanes[6], std::vector<Contai
             if(levelIndex == 0)
             {
                 // Root node
-                containment[nodeIndex] = insideFrustum(frustumPlanes, cell);
+                containment[nodeIndex] = insidePlanes(frustumPlanes, absFrustumPlanes, cell);
             }
             else
             {
@@ -191,8 +201,7 @@ void QuadTree::frustumCulling(const Vector4 frustumPlanes[6], std::vector<Contai
                 }
                 else if(parentContainment == ContainmentType::INTERSECTS) // INTERSECTS
                 {
-                    containment[nodeIndex] = cell.ContainedBy(frustumPlanes[0], frustumPlanes[1], frustumPlanes[2], 
-                                                              frustumPlanes[3], frustumPlanes[4], frustumPlanes[5]); 
+                    containment[nodeIndex] = insidePlanes(frustumPlanes, absFrustumPlanes, cell);
                 }
             }
         }
@@ -224,13 +233,13 @@ void QuadTree::debugDraw(const std::vector<ContainmentType> &containment) const
         switch (containment[levelStartIndex + i])
         {
         case ContainmentType::CONTAINS:
-            dd::box(ddConvert(cell.Center), dd::colors::Green, cell.Extents.x * 2.0f, 10.0f, cell.Extents.z * 2.0f, 0, false);
+            dd::box(ddConvert(cell.Center), dd::colors::Green, cell.Extents.x * 2.0f, cell.Extents.y * 2.0f, cell.Extents.z * 2.0f, 0, false);
             break;
         case ContainmentType::INTERSECTS:
-            dd::box(ddConvert(cell.Center), dd::colors::Yellow, cell.Extents.x * 2.0f, 10.0f, cell.Extents.z * 2.0f, 0, false);
+            dd::box(ddConvert(cell.Center), dd::colors::Yellow, cell.Extents.x * 2.0f, cell.Extents.y * 2.0f, cell.Extents.z * 2.0f, 0, false);
             break;
         case ContainmentType::DISJOINT:
-            dd::box(ddConvert(cell.Center), dd::colors::Red, cell.Extents.x * 2.0f, 10.0f, cell.Extents.z * 2.0f, 0, false);
+            dd::box(ddConvert(cell.Center), dd::colors::Red, cell.Extents.x * 2.0f, cell.Extents.y * 2.0f, cell.Extents.z * 2.0f, 0, false);
             break;
         }
     }

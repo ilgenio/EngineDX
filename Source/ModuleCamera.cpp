@@ -109,15 +109,29 @@ void ModuleCamera::update()
     dragPosY = mouseState.y;
 }
 
-Matrix ModuleCamera::getPerspectiveProj(float aspect) 
+Matrix ModuleCamera::getPerspectiveProj(float aspect, float fov) 
 {
-    return Matrix::CreatePerspectiveFieldOfView(XM_PIDIV4, aspect, NEAR_PLANE, FAR_PLANE);
+    return Matrix::CreatePerspectiveFieldOfView(fov, aspect, NEAR_PLANE, FAR_PLANE);
 }
 
 void ModuleCamera::getFrustumPlanes(Vector4 planes[6], float aspect, bool normalize) const
 {
     Matrix proj = getPerspectiveProj(aspect);
     Matrix viewProjection = view * proj;
-    ::getFrustumPlanes(planes, viewProjection, normalize);
+
+    getPlanes(planes, viewProjection, normalize);
+}
+
+BoundingFrustum ModuleCamera::getFrustum(float aspect) const
+{
+    Matrix proj  = getPerspectiveProj(aspect);
+
+    BoundingFrustum frustum;
+    BoundingFrustum::CreateFromMatrix(frustum, proj, true);
+
+    frustum.Origin = position;
+    frustum.Orientation = rotation;
+
+    return frustum;
 }
 

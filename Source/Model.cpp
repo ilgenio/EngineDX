@@ -234,6 +234,9 @@ void Model::frustumCulling(const Vector4 frustumPlanes[6], const std::vector<Con
             }
             else if(containment[instance->quadTreeCell] == ContainmentType::INTERSECTS)
             {
+                addInstance = true;
+
+#if 0
                 // Need to do per mesh culling
                 const Mesh* mesh = meshes[instance->meshIndex];
                 BoundingOrientedBox worldBox = mesh->getBoundingBox();
@@ -241,6 +244,7 @@ void Model::frustumCulling(const Vector4 frustumPlanes[6], const std::vector<Con
 
                 addInstance = worldBox.ContainedBy(frustumPlanes[0], frustumPlanes[1], frustumPlanes[2],
                                                    frustumPlanes[3], frustumPlanes[4], frustumPlanes[5]) != ContainmentType::DISJOINT;
+#endif 
             }
         }
 
