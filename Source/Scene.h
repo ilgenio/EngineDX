@@ -36,7 +36,7 @@ public:
     void updateWorldTransforms();
     void frustumCulling(Vector4 planes[6], std::vector<RenderMesh>& renderList);
 
-    void debugDrawQuadTree(const Vector4 frustumPlanes[6]) const;
+    void debugDrawQuadTree(const Vector4 planes[6]) const;
 
 private:
     void onRemoveModel(Model* model);

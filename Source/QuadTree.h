@@ -17,7 +17,7 @@ public:
     bool init(UINT depthLevels, float worldSize);
 
     UINT computeCellIndex(const BoundingOrientedBox& box) const;
-    void frustumCulling(const Vector4 planes[6], std::vector<ContainmentType>& containment) const;
+    void frustumCulling(const Vector4 planes[6], const Vector3 absPlanes[6], std::vector<ContainmentType>& containment) const;
     void debugDraw(const std::vector<ContainmentType>& containment) const;
 
     UINT getCellCount() const { return static_cast<UINT>(cells.size()); }

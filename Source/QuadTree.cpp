@@ -160,16 +160,9 @@ UINT QuadTree::computeCellIndex(const BoundingOrientedBox& box) const
     return UINT(cells.size());
 }
 
-void QuadTree::frustumCulling(const Vector4 frustumPlanes[6], std::vector<ContainmentType>& containment) const
+void QuadTree::frustumCulling(const Vector4 frustumPlanes[6], const Vector3 absFrustumPlanes[6], std::vector<ContainmentType>& containment) const
 {
     containment.resize(cells.size(), ContainmentType::DISJOINT);
-
-    Vector3 absFrustumPlanes[6];
-    for(int i=0; i<6; ++i)
-    {
-        // Precompute absolute plane normals for faster box-frustum tests
-        absFrustumPlanes[i] = Vector3(std::abs(frustumPlanes[i].x), std::abs(frustumPlanes[i].y), std::abs(frustumPlanes[i].z));
-    }
 
     UINT levelIndex = 0;
     UINT levelStartIndex = 0;

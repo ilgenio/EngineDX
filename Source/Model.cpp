@@ -214,7 +214,9 @@ void Model::updateQuadTree(QuadTree* quadTree)
     }
 }
 
-void Model::frustumCulling(const Vector4 frustumPlanes[6], const std::vector<ContainmentType>& containment, std::vector<RenderMesh>& renderList) const
+void Model::frustumCulling(const Vector4 frustumPlanes[6], const Vector3 absFrustumPlanes[6], 
+                           const std::vector<ContainmentType>& containment, 
+                           std::vector<RenderMesh>& renderList) const
 {
     for (const MeshInstance* instance : instances)
     {
@@ -234,17 +236,10 @@ void Model::frustumCulling(const Vector4 frustumPlanes[6], const std::vector<Con
             }
             else if(containment[instance->quadTreeCell] == ContainmentType::INTERSECTS)
             {
-                addInstance = true;
-
-#if 0
-                // Need to do per mesh culling
-                const Mesh* mesh = meshes[instance->meshIndex];
-                BoundingOrientedBox worldBox = mesh->getBoundingBox();
+                BoundingOrientedBox worldBox = meshes[instance->meshIndex]->getBoundingBox();
                 worldBox.Transform(worldBox, nodes[instance->nodeIndex]->worldTransform);
 
-                addInstance = worldBox.ContainedBy(frustumPlanes[0], frustumPlanes[1], frustumPlanes[2],
-                                                   frustumPlanes[3], frustumPlanes[4], frustumPlanes[5]) != ContainmentType::DISJOINT;
-#endif 
+                addInstance = insidePlanes(frustumPlanes, absFrustumPlanes, worldBox) != ContainmentType::DISJOINT;
             }
         }
 

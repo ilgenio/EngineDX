@@ -78,7 +78,9 @@ private:
     void updateAnim(float deltaTime);
     void updateWorldTransforms();
     void updateQuadTree(QuadTree* quadTree);
-    void frustumCulling(const Vector4 frustumPlanes[6], const std::vector<ContainmentType>& containment, std::vector<RenderMesh>& renderList) const;
+    void frustumCulling(const Vector4 frustumPlanes[6], const Vector3 absFrustumPlanes[6], 
+                        const std::vector<ContainmentType>& containment, 
+                        std::vector<RenderMesh>& renderList) const;
 
     UINT generateNodes(const tinygltf::Model& model, UINT nodeIndex, INT parentIndex, 
                        const std::vector<std::pair<UINT, UINT> >& meshMapping, 

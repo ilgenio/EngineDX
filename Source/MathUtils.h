@@ -17,4 +17,5 @@ void getPlanes(const BoundingOrientedBox& obb, Vector4 planes[6], Vector3 absPla
 void getPoints(const BoundingOrientedBox& obb, Vector3 points[8]);
 
 DirectX::ContainmentType insidePlanes(const Vector4 planes[6], const Vector3 absPlanes[6], const BoundingBox& box);
+DirectX::ContainmentType insidePlanes(const Vector4 planes[6], const Vector3 absPlanes[6], const BoundingOrientedBox& box);
 DirectX::ContainmentType insideAABB(const BoundingBox& aabb, const Vector3 points[8]);

@@ -130,10 +130,42 @@ DirectX::ContainmentType insidePlanes(const Vector4 planes[6], const Vector3 abs
 
         if (dist + radius < 0.0f)  return DirectX::ContainmentType::DISJOINT;
 
+        allInside &= dist - radius >= 0.0f;
+    }
+
+    return allInside ? DirectX::ContainmentType::CONTAINS : DirectX::ContainmentType::INTERSECTS;
+
+}
+
+DirectX::ContainmentType insidePlanes(const Vector4 planes[6], const Vector3 absPlanes[6], const BoundingOrientedBox& box)
+{
+    Vector4 center(box.Center.x, box.Center.y, box.Center.z, 1.0f);
+    const Vector3& extents = *reinterpret_cast<const Vector3*>(&box.Extents);
+    
+    Vector3 axis[3];
+    Vector3::Transform(Vector3::UnitX, *reinterpret_cast<const Quaternion*>(&box.Orientation), axis[0]);
+    Vector3::Transform(Vector3::UnitY, *reinterpret_cast<const Quaternion*>(&box.Orientation), axis[1]);
+    Vector3::Transform(Vector3::UnitZ, *reinterpret_cast<const Quaternion*>(&box.Orientation), axis[2]);
+
+    const Vector3 orientedExtents(
+        fabsf(axis[0].x) * extents.x + fabsf(axis[1].x) * extents.y + fabsf(axis[2].x) * extents.z,
+        fabsf(axis[0].y) * extents.x + fabsf(axis[1].y) * extents.y + fabsf(axis[2].y) * extents.z,
+        fabsf(axis[0].z) * extents.x + fabsf(axis[1].z) * extents.y + fabsf(axis[2].z) * extents.z
+    );
+
+    bool allInside = true;
+
+    for (int i = 0; i < 6; ++i)
+    {
+        float dist = center.Dot(planes[i]);
+        float radius = orientedExtents.Dot(absPlanes[i]);
+
+        if (dist + radius < 0.0f)  return DirectX::ContainmentType::DISJOINT;
+
         allInside &= dist-radius >= 0.0f;
     }
 
-     return allInside ? DirectX::ContainmentType::CONTAINS : DirectX::ContainmentType::INTERSECTS;
+    return allInside ? DirectX::ContainmentType::CONTAINS : DirectX::ContainmentType::INTERSECTS;
 }
 
 DirectX::ContainmentType insideAABB(const BoundingBox& aabb, const Vector3 points[8])
