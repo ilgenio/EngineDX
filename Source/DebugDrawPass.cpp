@@ -1,4 +1,6 @@
 #define DEBUG_DRAW_IMPLEMENTATION
+#define DEBUG_DRAW_VERTEX_BUFFER_SIZE 32768
+#define DEBUG_DRAW_MAX_LINES 65536
 
 #include "Globals.h"
 #include "DebugDrawPass.h"
