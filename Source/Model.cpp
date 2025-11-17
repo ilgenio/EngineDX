@@ -208,14 +208,21 @@ void Model::updateQuadTree(QuadTree* quadTree)
             const Mesh* mesh = meshes[instance->meshIndex];
             BoundingOrientedBox worldBox = mesh->getBoundingBox();
             worldBox.Transform(worldBox, node->worldTransform);
+            
+            UINT cellIndex = quadTree->computeCellIndex(worldBox);
+            if (cellIndex != instance->quadTreeCell)
+            {
+                if (instance->quadTreeCell < quadTree->getCellCount()) quadTree->removeObject(instance->quadTreeCell);
+                if (cellIndex != quadTree->getCellCount()) quadTree->addObject(cellIndex);
 
-            instance->quadTreeCell = quadTree->computeCellIndex(worldBox);
+                instance->quadTreeCell = cellIndex;
+            }
         }
     }
 }
 
 void Model::frustumCulling(const Vector4 frustumPlanes[6], const Vector3 absFrustumPlanes[6], 
-                           const std::vector<ContainmentType>& containment, 
+                           const std::vector<IntersectionType>& containment, 
                            std::vector<RenderMesh>& renderList) const
 {
     for (const MeshInstance* instance : instances)
@@ -230,16 +237,16 @@ void Model::frustumCulling(const Vector4 frustumPlanes[6], const Vector3 absFrus
         {
             _ASSERTE(instance->quadTreeCell < containment.size());
 
-            if (containment[instance->quadTreeCell] == ContainmentType::CONTAINS)
+            if (containment[instance->quadTreeCell] == INSIDE)
             {
                 addInstance = true;
             }
-            else if(containment[instance->quadTreeCell] == ContainmentType::INTERSECTS)
+            else if(containment[instance->quadTreeCell] == INTERSECTION)
             {
                 BoundingOrientedBox worldBox = meshes[instance->meshIndex]->getBoundingBox();
                 worldBox.Transform(worldBox, nodes[instance->nodeIndex]->worldTransform);
 
-                addInstance = insidePlanes(frustumPlanes, absFrustumPlanes, worldBox) != ContainmentType::DISJOINT;
+                addInstance = insidePlanes(frustumPlanes, absFrustumPlanes, worldBox) != OUTSIDE;
             }
         }
 

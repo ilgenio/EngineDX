@@ -79,7 +79,7 @@ private:
     void updateWorldTransforms();
     void updateQuadTree(QuadTree* quadTree);
     void frustumCulling(const Vector4 frustumPlanes[6], const Vector3 absFrustumPlanes[6], 
-                        const std::vector<ContainmentType>& containment, 
+                        const std::vector<IntersectionType>& containment, 
                         std::vector<RenderMesh>& renderList) const;
 
     UINT generateNodes(const tinygltf::Model& model, UINT nodeIndex, INT parentIndex, 

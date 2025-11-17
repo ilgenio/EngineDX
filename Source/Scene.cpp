@@ -79,7 +79,7 @@ void Scene::frustumCulling(Vector4 planes[6], std::vector<RenderMesh>& renderLis
     }
 
     // First cull quad tree
-    std::vector<ContainmentType> containment;
+    std::vector<IntersectionType> containment;
     quadTree->frustumCulling(planes, absPlanes, containment);
 
     // Then cull models
@@ -98,7 +98,7 @@ void Scene::debugDrawQuadTree(const Vector4 planes[6], UINT level) const
         absPlanes[i] = Vector3(std::abs(planes[i].x), std::abs(planes[i].y), std::abs(planes[i].z));
     }
 
-    std::vector<ContainmentType> containment;
+    std::vector<IntersectionType> containment;
     quadTree->frustumCulling(planes, absPlanes, containment);
     quadTree->debugDraw(containment, level);
 }

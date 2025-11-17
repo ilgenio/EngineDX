@@ -5,7 +5,8 @@
 
 #define QUADTREE_HEIGHT 10.0f
 
-static UINT compact1by1(UINT x) {
+static UINT compact1by1(UINT x) 
+{
     x &= 0x55555555;                   // Keep bits in odd positions
     x = (x ^ (x >> 1)) & 0x33333333;
     x = (x ^ (x >> 2)) & 0x0F0F0F0F;
@@ -15,7 +16,8 @@ static UINT compact1by1(UINT x) {
 }
 
 // Decode Morton index into (x, y)
-void mortonDecode(UINT morton, UINT& x, UINT& y) {
+static void mortonDecode(UINT morton, UINT& x, UINT& y) 
+{
     x = compact1by1(morton);
     y = compact1by1(morton >> 1);
 }
@@ -34,24 +36,31 @@ bool QuadTree::init(UINT depthLevels, float worldSize)
 {
     _ASSERT_EXPR(depthLevels > 0, "Depth levels must be greater than zero.");
 
-    this->depthLevels = depthLevels;
-    this->worldHalfSize   = worldSize*0.5f;
+    this->depthLevels       = depthLevels;
+    this->worldHalfSize     = worldSize*0.5f;
+    this->treeLengths.resize(depthLevels);
 
-    UINT nodeCount = getTreeLength(depthLevels);
+    UINT nodeCount = 0;
+    
+    for(UINT depth=0; depth< depthLevels; ++depth)
+    {
+        nodeCount += getNodesAtLevel(depth);
+        treeLengths[depth] = nodeCount;
+    }
+
     cells.resize(nodeCount);
-
-    UINT levelStartIndex = 0;
 
     for(UINT depth=0; depth< depthLevels; ++depth)
     {
         // 4^depth
         UINT nodesAtLevel = 1 << (2 * depth); 
+        UINT levelStartIndex = getLevelStartIndex(depth);
 
         for(UINT i=0; i< nodesAtLevel; ++i)
         {
             UINT nodeIndex = levelStartIndex + i;
-            BoundingBox& cell = cells[nodeIndex];
-
+            Cell& cell = cells[nodeIndex];
+            
             // Calculate boundaries for the node
             float size = worldSize / float(1 << depth);
 
@@ -59,80 +68,49 @@ bool QuadTree::init(UINT depthLevels, float worldSize)
 
             mortonDecode(i, row, col);
 
-            cell.Center  = Vector3(-worldHalfSize + (col + 0.5f) * size, 0.0f, -worldHalfSize + (row + 0.5f) * size);
-            cell.Extents = Vector3(size *0.5f, QUADTREE_HEIGHT, size *0.5f);
+            cell.numObjects   = 0;
+            cell.depthLevel   = depth;
+            cell.bbox.Center  = Vector3(-worldHalfSize + (col + 0.5f) * size, 0.0f, -worldHalfSize + (row + 0.5f) * size);
+            cell.bbox.Extents = Vector3(size *0.5f, QUADTREE_HEIGHT, size *0.5f);
         }
-
-        levelStartIndex += nodesAtLevel;
-        
     }
 
     return nodeCount > 0;
 
 }
 
-UINT QuadTree::getTreeLength(UINT levels) const
-{
-    UINT length = 0;
-    for (UINT i = 0; i < levels; ++i)
-    {
-        // 4^depth
-        length += (1 << (2 * i));
-    }
-    return length;
-}
-
 UINT QuadTree::computeCellIndex(const BoundingOrientedBox& box) const
 {
-    UINT levelIndex = 0;
-    UINT levelStartIndex = 0; 
-    UINT childStartIndex = 0;
-    UINT parentIndex = UINT(cells.size());
-
     Vector3 points[8];
     getPoints(box, points);
 
     // Root node
-    ContainmentType contains = insideAABB(cells[0], points); 
+    IntersectionType contains = insideAABB(cells[0].bbox, points); 
+    if (contains == INTERSECTION) return 0;
+    else if (contains == OUTSIDE) return UINT(cells.size());
 
-    if (contains == ContainmentType::INTERSECTS)
-    {
-        return 0;
-    }
-    else if (contains == ContainmentType::DISJOINT)
-    {
-        // The box is not fully contained in the root node
-        return UINT(cells.size());
-    }
-    else
-    {
-        levelIndex++;
-        childStartIndex = 1;
-        levelStartIndex = 1;
-        parentIndex = 0;
-    }
+    UINT childStartIndex = 1;
 
-    while(levelIndex < depthLevels)
+    for (UINT levelIndex = 1; levelIndex < depthLevels; ++levelIndex)
     {
         UINT i = 0;
         for (; i < 4; ++i)
         {
             UINT nodeIndex = childStartIndex + i;
 
-            ContainmentType contains = insideAABB(cells[nodeIndex], points);
+            IntersectionType contains = insideAABB(cells[nodeIndex].bbox, points);
 
-            if(contains == ContainmentType::CONTAINS) 
+            if(contains == INSIDE) 
             {
-                levelIndex++;
-
                 if(levelIndex+1 < depthLevels)
                 {
                     // Go deeper
-                    UINT nodesAtLevel = 1 << (2 * (levelIndex-1));
+                    UINT levelStart     = getLevelStartIndex(levelIndex);
+                    UINT nextLevelStart = getLevelStartIndex(levelIndex+1);
+                    childStartIndex     = nextLevelStart + (nodeIndex - levelStart) * 4;
 
-                    parentIndex      = nodeIndex;
-                    childStartIndex  = levelStartIndex + nodesAtLevel + (nodeIndex - levelStartIndex) * 4;
-                    levelStartIndex += nodesAtLevel;
+                    levelIndex++;
+
                     break;
                 }
                 else
@@ -141,100 +119,137 @@ UINT QuadTree::computeCellIndex(const BoundingOrientedBox& box) const
                     return nodeIndex;
                 }
             }
-            else if (contains == ContainmentType::INTERSECTS)
+            else if (contains == INTERSECTION)
             {
-                // Return always the deepest fully containing the box
+                UINT levelStart     = getLevelStartIndex(levelIndex);
+                UINT prevLevelStart = getLevelStartIndex(levelIndex-1);
+                UINT parentIndex    = prevLevelStart + (nodeIndex - levelStart) / 4;
+
                 return parentIndex;
             }
         }
 
-        if(i == 4)
-        {
-            _ASSERT_EXPR(levelIndex == 0, L"Only the root node can not contain or intersect the box.");
-
-            // No child contains the box
-            break;
-        }
+        _ASSERTE(i < 4); // Should have found a child that contains the box
     }
 
     return UINT(cells.size());
 }
 
-void QuadTree::frustumCulling(const Vector4 frustumPlanes[6], const Vector3 absFrustumPlanes[6], std::vector<ContainmentType>& containment) const
+void QuadTree::frustumCulling(const Vector4 frustumPlanes[6], const Vector3 absFrustumPlanes[6], std::vector<IntersectionType>& containment) const
 {
-    containment.resize(cells.size(), ContainmentType::DISJOINT);
+    containment.resize(cells.size(), OUTSIDE);
 
     UINT levelIndex = 0;
-    UINT levelStartIndex = 0;
-    UINT parentLevelStartIndex = 0;
 
-    while(levelIndex < depthLevels)
+    for(UINT levelIndex = 0; levelIndex < depthLevels; ++levelIndex)
     {
-        UINT nodesAtLevel = 1 << (2 * levelIndex);
+        UINT nodesAtLevel = getNodesAtLevel(levelIndex);
+        UINT levelStartIndex = getLevelStartIndex(levelIndex);
 
         for (UINT i = 0; i < nodesAtLevel; ++i)
         {
             UINT nodeIndex = levelStartIndex + i;
-            const BoundingBox& cell = cells[nodeIndex];
+            const Cell& cell = cells[nodeIndex];
 
-            if(levelIndex == 0)
+            // empty cell then OUTSIDE
+            if (cell.numObjects > 0)
             {
                 // Root node
-                containment[nodeIndex] = insidePlanes(frustumPlanes, absFrustumPlanes, cell);
-            }
-            else
-            {
-                // Child nodes
-                UINT parentIndex = parentLevelStartIndex + (i >> 2);
-                ContainmentType parentContainment = containment[parentIndex];
-
-                if (parentContainment == ContainmentType::CONTAINS) // CONTAINS
+                if (levelIndex == 0)
                 {
-                    containment[nodeIndex] = ContainmentType::CONTAINS;
+                    containment[nodeIndex] = insidePlanes(frustumPlanes, absFrustumPlanes, cell.bbox);
                 }
-                else if(parentContainment == ContainmentType::INTERSECTS) // INTERSECTS
+                else
                 {
-                    containment[nodeIndex] = insidePlanes(frustumPlanes, absFrustumPlanes, cell);
+                    UINT parentLevelStartIndex = getLevelStartIndex(levelIndex-1);
+                    UINT parentIndex = parentLevelStartIndex + (i >> 2);
+
+                    IntersectionType parentContainment = containment[parentIndex];
+
+                    if (parentContainment == INSIDE) 
+                    {
+                        containment[nodeIndex] = INSIDE;
+                    }
+                    else if (parentContainment == INTERSECTION)
+                    {
+                        containment[nodeIndex] = insidePlanes(frustumPlanes, absFrustumPlanes, cell.bbox);
+                    }
                 }
             }
         }
-
-        parentLevelStartIndex = levelStartIndex;
-        levelStartIndex += nodesAtLevel;
-        ++levelIndex;
     }
 }
 
-void QuadTree::debugDraw(const std::vector<ContainmentType> &containment, UINT level) const
+void QuadTree::debugDraw(const std::vector<IntersectionType> &containment, UINT level) const
 {
-    UINT levelIndex = 0;
-    UINT levelStartIndex = 0;
-    UINT nodesAtLevel = 1 << (2 * levelIndex);
-    level = std::min(level, depthLevels-1);
-
-    while(levelIndex < level)
-    {
-        levelStartIndex += nodesAtLevel;
-        ++levelIndex;
-        nodesAtLevel = 1 << (2 * levelIndex);
-    }
-
-    // Draw only the last level
+    level = std::min(level, depthLevels - 1);
+    UINT levelStartIndex = getLevelStartIndex(level);
+    UINT nodesAtLevel    = getNodesAtLevel(level);
 
     for (UINT i = 0; i < nodesAtLevel; ++i)
     {
-        const BoundingBox& cell = cells[levelStartIndex + i];
+        const BoundingBox& cell = cells[levelStartIndex + i].bbox;
         switch (containment[levelStartIndex + i])
         {
-        case ContainmentType::CONTAINS:
+        case INSIDE:
             dd::box(ddConvert(cell.Center), dd::colors::Green, cell.Extents.x * 2.0f, cell.Extents.y * 2.0f, cell.Extents.z * 2.0f, 0, false);
             break;
-        case ContainmentType::INTERSECTS:
+        case INTERSECTION:
             dd::box(ddConvert(cell.Center), dd::colors::Yellow, cell.Extents.x * 2.0f, cell.Extents.y * 2.0f, cell.Extents.z * 2.0f, 0, false);
             break;
-        case ContainmentType::DISJOINT:
+        case OUTSIDE:
             dd::box(ddConvert(cell.Center), dd::colors::Red, cell.Extents.x * 2.0f, cell.Extents.y * 2.0f, cell.Extents.z * 2.0f, 0, false);
             break;
         }
     }
 }
+
+void QuadTree::addObject(UINT index) 
+{ 
+    UINT level = cells[index].depthLevel;
+    while (level >= 0)
+    {
+        ++cells[index].numObjects;
+
+        if (level > 0)
+        {
+            UINT startIndex = getLevelStartIndex(level);
+            UINT prevLevelStartIndex = getLevelStartIndex(level - 1);
+
+            // Move to parent
+            index = prevLevelStartIndex + (index - startIndex) / 4;
+            --level;
+        }
+        else
+        {
+            break;
+        }
+
+    }
+}
+
+void QuadTree::removeObject(UINT index) 
+{
+    UINT level = cells[index].depthLevel;
+
+    while (level >= 0)
+    {
+        _ASSERTE(cells[index].numObjects > 0);
+        --cells[index].numObjects;
+
+        if (level > 0)
+        {
+            UINT startIndex = getLevelStartIndex(level);
+            UINT prevLevelStartIndex = getLevelStartIndex(level - 1);
+
+            // Move to parent
+            index = prevLevelStartIndex + (index - startIndex) / 4;
+            --level;
+        }
+        else
+        {
+            break;
+        }
+    }
+}
+

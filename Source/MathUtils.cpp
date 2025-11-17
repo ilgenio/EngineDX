@@ -116,7 +116,7 @@ void getPoints(const BoundingOrientedBox& obb, Vector3 points[8])
     points[7] = obb.Center - axis[0] * obb.Extents.x - axis[1] * obb.Extents.y - axis[2] * obb.Extents.z;
 }
 
-DirectX::ContainmentType insidePlanes(const Vector4 planes[6], const Vector3 absPlanes[6], const BoundingBox& box)
+IntersectionType insidePlanes(const Vector4 planes[6], const Vector3 absPlanes[6], const BoundingBox& box)
 {
     Vector4 center(box.Center.x, box.Center.y, box.Center.z, 1.0f);
     const Vector3& extents = *reinterpret_cast<const Vector3*>(&box.Extents);
@@ -128,16 +128,16 @@ DirectX::ContainmentType insidePlanes(const Vector4 planes[6], const Vector3 abs
         float dist = center.Dot(planes[i]);
         float radius = extents.Dot(absPlanes[i]);
 
-        if (dist + radius < 0.0f)  return DirectX::ContainmentType::DISJOINT;
+        if (dist + radius < 0.0f)  return OUTSIDE;
 
         allInside &= dist - radius >= 0.0f;
     }
 
-    return allInside ? DirectX::ContainmentType::CONTAINS : DirectX::ContainmentType::INTERSECTS;
+    return allInside ? INSIDE : INTERSECTION;
 
 }
 
-DirectX::ContainmentType insidePlanes(const Vector4 planes[6], const Vector3 absPlanes[6], const BoundingOrientedBox& box)
+IntersectionType insidePlanes(const Vector4 planes[6], const Vector3 absPlanes[6], const BoundingOrientedBox& box)
 {
     Vector4 center(box.Center.x, box.Center.y, box.Center.z, 1.0f);
     const Vector3& extents = *reinterpret_cast<const Vector3*>(&box.Extents);
@@ -160,15 +160,15 @@ DirectX::ContainmentType insidePlanes(const Vector4 planes[6], const Vector3 abs
         float dist = center.Dot(planes[i]);
         float radius = orientedExtents.Dot(absPlanes[i]);
 
-        if (dist + radius < 0.0f)  return DirectX::ContainmentType::DISJOINT;
+        if (dist + radius < 0.0f)  return OUTSIDE;
 
         allInside &= dist-radius >= 0.0f;
     }
 
-    return allInside ? DirectX::ContainmentType::CONTAINS : DirectX::ContainmentType::INTERSECTS;
+    return allInside ? INSIDE : INTERSECTION;
 }
 
-DirectX::ContainmentType insideAABB(const BoundingBox& aabb, const Vector3 points[8])
+IntersectionType insideAABB(const BoundingBox& aabb, const Vector3 points[8])
 {
     Vector3 min = aabb.Center - aabb.Extents;
     Vector3 max = aabb.Center + aabb.Extents;
@@ -186,6 +186,6 @@ DirectX::ContainmentType insideAABB(const BoundingBox& aabb, const Vector3 point
         anyInside |= inside;
     }
 
-    return allInside ? ContainmentType::CONTAINS : (anyInside ? ContainmentType::INTERSECTS : ContainmentType::DISJOINT);
+    return allInside ? INSIDE : (anyInside ? INTERSECTION : OUTSIDE);
 }
 
