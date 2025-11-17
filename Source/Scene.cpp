@@ -89,7 +89,7 @@ void Scene::frustumCulling(Vector4 planes[6], std::vector<RenderMesh>& renderLis
     }
 }
 
-void Scene::debugDrawQuadTree(const Vector4 planes[6]) const
+void Scene::debugDrawQuadTree(const Vector4 planes[6], UINT level) const
 {
     Vector3 absPlanes[6];
     for (int i = 0; i < 6; ++i)
@@ -100,6 +100,6 @@ void Scene::debugDrawQuadTree(const Vector4 planes[6]) const
 
     std::vector<ContainmentType> containment;
     quadTree->frustumCulling(planes, absPlanes, containment);
-    quadTree->debugDraw(containment);
+    quadTree->debugDraw(containment, level);
 }
 

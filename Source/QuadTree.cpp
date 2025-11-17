@@ -205,10 +205,19 @@ void QuadTree::frustumCulling(const Vector4 frustumPlanes[6], const Vector3 absF
     }
 }
 
-void QuadTree::debugDraw(const std::vector<ContainmentType> &containment) const
+void QuadTree::debugDraw(const std::vector<ContainmentType> &containment, UINT level) const
 {
-    UINT nodesAtLevel = 1 << (2 * (depthLevels - 1));
-    UINT levelStartIndex = cells.size() - nodesAtLevel;
+    UINT levelIndex = 0;
+    UINT levelStartIndex = 0;
+    UINT nodesAtLevel = 1 << (2 * levelIndex);
+    level = std::min(level, depthLevels-1);
+
+    while(levelIndex < level)
+    {
+        levelStartIndex += nodesAtLevel;
+        ++levelIndex;
+        nodesAtLevel = 1 << (2 * levelIndex);
+    }
 
     // Draw only the last level
 

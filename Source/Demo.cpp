@@ -92,7 +92,6 @@ void Demo::update()
     {
         float aspect = float(renderTexture->getWidth()) / float(renderTexture->getHeight());
         Vector4 planes[6];
-
         app->getCamera()->getFrustumPlanes(planes, aspect, false);
         renderList.clear();
 
@@ -162,7 +161,7 @@ void Demo::debugDrawCommands()
 
     if (showQuadTree)
     {
-        scene->debugDrawQuadTree(frustumPlanes);
+        scene->debugDrawQuadTree(frustumPlanes, quadTreeLevel);
         
         Vector3 points[8];
         trackedFrustum.GetCorners(points);
@@ -181,6 +180,10 @@ void Demo::imGuiDrawCommands()
     ImGui::Checkbox("Show grid", &showGrid);
     ImGui::Checkbox("Show axis", &showAxis);
     ImGui::Checkbox("Show quadtree", &showQuadTree);
+    if (showQuadTree)
+    {
+        ImGui::SliderInt("QuadTree level", (int*)&quadTreeLevel, 0, 10);
+    }
     ImGui::Checkbox("Track frustum", &trackFrustum);
 
     ImGui::Checkbox("Show guizmo", &showGuizmo);

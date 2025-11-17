@@ -18,9 +18,10 @@ public:
 
     UINT computeCellIndex(const BoundingOrientedBox& box) const;
     void frustumCulling(const Vector4 planes[6], const Vector3 absPlanes[6], std::vector<ContainmentType>& containment) const;
-    void debugDraw(const std::vector<ContainmentType>& containment) const;
+    void debugDraw(const std::vector<ContainmentType>& containment, UINT level) const;
 
     UINT getCellCount() const { return static_cast<UINT>(cells.size()); }
+    UINT getDepthLevels() const { return depthLevels; }
 
 private:
 

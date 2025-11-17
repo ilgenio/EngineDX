@@ -43,6 +43,7 @@ class Demo : public Module
     bool showQuadTree = false;
     bool trackFrustum = true;
     bool showGuizmo = false;
+    UINT quadTreeLevel = 0;
     ImGuizmo::OPERATION gizmoOperation = ImGuizmo::TRANSLATE;
     Matrix objectMatrix = Matrix::Identity;
 
