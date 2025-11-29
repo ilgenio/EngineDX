@@ -77,7 +77,7 @@ private:
     bool load(const tinygltf::Model& srcModel, const char* basePath);
     void updateAnim(float deltaTime);
     void updateWorldTransforms();
-    void updateQuadTree(QuadTree* quadTree);
+    void updateQuadTree(QuadTree* quadTree, bool force);
     void frustumCulling(const Vector4 frustumPlanes[6], const Vector3 absFrustumPlanes[6], 
                         const std::vector<IntersectionType>& containment, 
                         std::vector<RenderMesh>& renderList) const;

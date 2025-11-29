@@ -195,6 +195,10 @@ void Demo::imGuiDrawCommands()
 
     ImGui::Separator();
 
+    ImGui::Text("Renedering %d meshes", renderList.size());
+
+    ImGui::Separator();
+
     ImGui::End();
 
     bool viewerFocused = false;
@@ -304,7 +308,7 @@ bool Demo::loadScene(bool useMSAA)
     }
     
     
-    //model.reset(scene->loadModel("Assets/Models/BistroExterior/BistroExterior.gltf", "Assets/Models/BistroExterior/"));    
+    model.reset(scene->loadModel("Assets/Models/BistroExterior/BistroExterior.gltf", "Assets/Models/BistroExterior/"));    
     //model.reset(scene->loadModel("Assets/Models/BistroExterior/Bistro_Godot.glb", "Assets/Models/BistroExterior/"));
     
 

@@ -26,7 +26,7 @@ public:
 
     UINT getNumVertices() const {return numVertices; }
     UINT getNumIndices() const {return numIndices; }
-    const BoundingOrientedBox& getBoundingBox() const { return bbox; }
+    const BoundingBox& getBoundingBox() const { return bbox; }
 
     void draw(ID3D12GraphicsCommandList* commandList) const;
 
@@ -66,7 +66,7 @@ private:
     D3D12_INDEX_BUFFER_VIEW indexBufferView;
 
     ComPtr<ID3D12Resource> skinningBuffer;
-    BoundingOrientedBox bbox;
+    BoundingBox bbox;
 
     static const uint32_t numVertexAttribs = 4;
     static const D3D12_INPUT_ELEMENT_DESC inputLayout[numVertexAttribs]; 

@@ -67,7 +67,10 @@ void Mesh::load(const tinygltf::Model& model, const tinygltf::Mesh& mesh, const 
             }
         }
 
-        if (numVertices > 0) BoundingOrientedBox::CreateFromPoints(bbox, numVertices, &vertices[0].position, sizeof(Vertex));
+        if (numVertices > 0)
+        {
+            BoundingBox::CreateFromPoints(bbox, numVertices, &vertices[0].position, sizeof(Vertex));
+        }
 
         // Skinning attributes
 

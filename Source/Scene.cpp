@@ -18,7 +18,7 @@
 Scene::Scene()
 {
     quadTree = std::make_unique<QuadTree>();
-    quadTree->init(6, 128.0f);
+    quadTree->init(8, 1024.0f, 96.0f);
 }
 
 Scene::~Scene()
@@ -65,7 +65,7 @@ void Scene::updateWorldTransforms()
     for(Model* model : models)
     {
         model->updateWorldTransforms();
-        model->updateQuadTree(quadTree.get());
+        model->updateQuadTree(quadTree.get(), false);
     }
 }
 

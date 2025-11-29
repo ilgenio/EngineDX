@@ -22,7 +22,7 @@ public:
     QuadTree();
     ~QuadTree();
 
-    bool init(UINT depthLevels, float worldSize);
+    bool init(UINT depthLevels, float worldSize, float height);
 
     UINT computeCellIndex(const BoundingOrientedBox& box) const;
     void frustumCulling(const Vector4 planes[6], const Vector3 absPlanes[6], std::vector<IntersectionType>& containment) const;

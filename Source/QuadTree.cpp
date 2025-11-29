@@ -3,8 +3,6 @@
 
 #include "DebugDrawPass.h"
 
-#define QUADTREE_HEIGHT 10.0f
-
 static UINT compact1by1(UINT x) 
 {
     x &= 0x55555555;                   // Keep bits in odd positions
@@ -32,7 +30,7 @@ QuadTree::~QuadTree()
 
 }
 
-bool QuadTree::init(UINT depthLevels, float worldSize)
+bool QuadTree::init(UINT depthLevels, float worldSize, float height)
 {
     _ASSERT_EXPR(depthLevels > 0, "Depth levels must be greater than zero.");
 
@@ -71,7 +69,7 @@ bool QuadTree::init(UINT depthLevels, float worldSize)
             cell.numObjects   = 0;
             cell.depthLevel   = depth;
             cell.bbox.Center  = Vector3(-worldHalfSize + (col + 0.5f) * size, 0.0f, -worldHalfSize + (row + 0.5f) * size);
-            cell.bbox.Extents = Vector3(size *0.5f, QUADTREE_HEIGHT, size *0.5f);
+            cell.bbox.Extents = Vector3(size *0.5f, height * 0.5f, size *0.5f);
         }
     }
 
@@ -108,8 +106,6 @@ UINT QuadTree::computeCellIndex(const BoundingOrientedBox& box) const
                     UINT levelStart     = getLevelStartIndex(levelIndex);
                     UINT nextLevelStart = getLevelStartIndex(levelIndex+1);
                     childStartIndex     = nextLevelStart + (nodeIndex - levelStart) * 4;
-
-                    levelIndex++;
 
                     break;
                 }

@@ -195,25 +195,28 @@ void Model::updateWorldTransforms()
 
 }
 
-void Model::updateQuadTree(QuadTree* quadTree) 
+void Model::updateQuadTree(QuadTree* quadTree, bool force) 
 {
     for (MeshInstance* instance : instances)
     {
         Node* node = nodes[instance->nodeIndex];
 
-        if (node->lastFrameDirty)
+        if (force || node->lastFrameDirty)
         {
             _ASSERTE(instance->meshIndex < meshes.size());
 
             const Mesh* mesh = meshes[instance->meshIndex];
-            BoundingOrientedBox worldBox = mesh->getBoundingBox();
+            BoundingOrientedBox worldBox;
+            BoundingOrientedBox::CreateFromBoundingBox(worldBox, mesh->getBoundingBox());
             worldBox.Transform(worldBox, node->worldTransform);
             
             UINT cellIndex = quadTree->computeCellIndex(worldBox);
+            _ASSERTE(cellIndex <= quadTree->getCellCount());
+
             if (cellIndex != instance->quadTreeCell)
             {
                 if (instance->quadTreeCell < quadTree->getCellCount()) quadTree->removeObject(instance->quadTreeCell);
-                if (cellIndex != quadTree->getCellCount()) quadTree->addObject(cellIndex);
+                if (cellIndex < quadTree->getCellCount()) quadTree->addObject(cellIndex);
 
                 instance->quadTreeCell = cellIndex;
             }
@@ -243,7 +246,8 @@ void Model::frustumCulling(const Vector4 frustumPlanes[6], const Vector3 absFrus
             }
             else if(containment[instance->quadTreeCell] == INTERSECTION)
             {
-                BoundingOrientedBox worldBox = meshes[instance->meshIndex]->getBoundingBox();
+                BoundingOrientedBox worldBox;
+                BoundingOrientedBox::CreateFromBoundingBox(worldBox, meshes[instance->meshIndex]->getBoundingBox());
                 worldBox.Transform(worldBox, nodes[instance->nodeIndex]->worldTransform);
 
                 addInstance = insidePlanes(frustumPlanes, absFrustumPlanes, worldBox) != OUTSIDE;
