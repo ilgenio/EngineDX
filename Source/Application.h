@@ -15,9 +15,10 @@ class ModuleResources;
 class ModuleShaderDescriptors;
 class ModuleRTDescriptors;
 class ModuleDSDescriptors;
-class ModuleLevel;
 class ModuleSamplers;
 class ModuleRingBuffer;
+class ModuleStaticBuffer;
+class ModuleTextureManager;
 
 class Application
 {
@@ -39,6 +40,9 @@ public:
     ModuleRTDescriptors*        getRTDescriptors() { return rtDescriptors;  }
     ModuleDSDescriptors*        getDSDescriptors() { return dsDescriptors; }
     ModuleSamplers*             getSamplers() { return samplers;  }
+    ModuleStaticBuffer*         getStaticBuffer() { return staticBuffer;  }
+    ModuleTextureManager*       getTextureManager() { return textureManager; }
+
     void                        swapModule(Module* from, Module* to) { swapModules.push_back(std::make_pair(from, to)); }
 
     ModuleRingBuffer*           getRingBuffer() { return ringBuffer; }
@@ -61,12 +65,13 @@ private:
     ModuleCamera* camera = nullptr;
     ModuleRender* render = nullptr;
     ModuleResources* resources = nullptr;
+    ModuleStaticBuffer* staticBuffer = nullptr;
     ModuleShaderDescriptors* shaderDescriptors = nullptr;
     ModuleRTDescriptors* rtDescriptors = nullptr;
     ModuleDSDescriptors* dsDescriptors = nullptr;
     ModuleSamplers* samplers = nullptr;
     ModuleRingBuffer* ringBuffer = nullptr;
-    ModuleLevel* level = nullptr;
+    ModuleTextureManager* textureManager = nullptr;
 
     uint64_t  lastMilis = 0;
     TickList  tickList;

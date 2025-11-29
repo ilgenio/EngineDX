@@ -38,7 +38,6 @@ private:
     Mesh(const Mesh&) = delete;
     Mesh& operator=(const Mesh&) = delete;
 
-    void clean();
     void computeTSpace();
     void weld();
 
@@ -60,9 +59,7 @@ private:
     IndexArray indices;
 
     // Buffers
-    ComPtr<ID3D12Resource> vertexBuffer;
     D3D12_VERTEX_BUFFER_VIEW vertexBufferView;
-    ComPtr<ID3D12Resource> indexBuffer;
     D3D12_INDEX_BUFFER_VIEW indexBufferView;
 
     ComPtr<ID3D12Resource> skinningBuffer;

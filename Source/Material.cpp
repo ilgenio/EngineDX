@@ -2,12 +2,11 @@
 #include "Material.h"
 
 #include "Application.h"
-#include "ModuleResources.h"
+#include "ModuleTextureManager.h"
 #include "ModuleShaderDescriptors.h"
 #include "ModuleD3D12.h"
 
 #include "tiny_gltf.h"
-
 
 Material::Material()
 {
@@ -38,12 +37,10 @@ void Material::load(const tinygltf::Model& model, const tinygltf::Material &mate
     textureTableDesc = app->getShaderDescriptors()->allocTable();
      
     // Base Color Texture
-    if (material.pbrMetallicRoughness.baseColorTexture.index >= 0 && loadTexture(model, base, material.pbrMetallicRoughness.baseColorTexture.index, true, baseColorTex))
+    if (material.pbrMetallicRoughness.baseColorTexture.index >= 0 && loadTexture(model, base, material.pbrMetallicRoughness.baseColorTexture.index, true, textures[TEX_SLOT_BASECOLOUR]))
     {
-        _ASSERT_EXPR(baseColorTex, "Can't load base color texture");
-
         data.flags |= FLAG_HAS_BASECOLOUR_TEX;
-        textureTableDesc.createTextureSRV(baseColorTex.Get(), TEX_SLOT_BASECOLOUR);
+        textureTableDesc.createTextureSRV(textures[TEX_SLOT_BASECOLOUR].texture.Get(), TEX_SLOT_BASECOLOUR);
     }
     else
     {
@@ -51,12 +48,10 @@ void Material::load(const tinygltf::Model& model, const tinygltf::Material &mate
     }
 
     // Metallic Roughness Texture
-    if (material.pbrMetallicRoughness.metallicRoughnessTexture.index >= 0 && loadTexture(model, base, material.pbrMetallicRoughness.metallicRoughnessTexture.index, false, metRougTex))
+    if (material.pbrMetallicRoughness.metallicRoughnessTexture.index >= 0 && loadTexture(model, base, material.pbrMetallicRoughness.metallicRoughnessTexture.index, false, textures[TEX_SLOT_METALLIC_ROUGHNESS]))
     {
-        _ASSERT_EXPR(metRougTex, "Can't load metallic roughness texture");
-
         data.flags |= FLAG_HAS_METALLICROUGHNESS_TEX;
-        textureTableDesc.createTextureSRV(metRougTex.Get(), TEX_SLOT_METALLIC_ROUGHNESS);
+        textureTableDesc.createTextureSRV(textures[TEX_SLOT_METALLIC_ROUGHNESS].texture.Get(), TEX_SLOT_METALLIC_ROUGHNESS);
     }
     else
     {
@@ -64,14 +59,14 @@ void Material::load(const tinygltf::Model& model, const tinygltf::Material &mate
     }
 
     // Normals Texture
-    if (material.normalTexture.index >= 0 && loadTexture(model, base, material.normalTexture.index, false, normalTex))
+    if (material.normalTexture.index >= 0 && loadTexture(model, base, material.normalTexture.index, false, textures[TEX_SLOT_NORMAL]))
     {
         data.flags |= FLAG_HAS_NORMAL_TEX;
 
-        DXGI_FORMAT format = normalTex->GetDesc().Format;
+        DXGI_FORMAT format = textures[TEX_SLOT_NORMAL].texture->GetDesc().Format;
         data.flags |= (format == DXGI_FORMAT_BC5_TYPELESS || format == DXGI_FORMAT_BC5_UNORM || format == DXGI_FORMAT_BC5_SNORM) ? FLAG_HAS_COMPRESSED_NORMAL : 0;
 
-        textureTableDesc.createTextureSRV(normalTex.Get(), TEX_SLOT_NORMAL);
+        textureTableDesc.createTextureSRV(textures[TEX_SLOT_NORMAL].texture.Get(), TEX_SLOT_NORMAL);
     }
     else
     {
@@ -81,12 +76,10 @@ void Material::load(const tinygltf::Model& model, const tinygltf::Material &mate
     data.normalScale = float(material.normalTexture.scale);
 
     // Occlusion Texture
-    if (material.occlusionTexture.index >= 0 && loadTexture(model, base, material.occlusionTexture.index, false, occlusionTex))
+    if (material.occlusionTexture.index >= 0 && loadTexture(model, base, material.occlusionTexture.index, false, textures[TEX_SLOT_OCCLUSION]))
     {
-        _ASSERT_EXPR(occlusionTex, "Can't load occlusion texture");
-
         data.flags |= FLAG_HAS_OCCLUSION_TEX;
-        textureTableDesc.createTextureSRV(occlusionTex.Get(), TEX_SLOT_OCCLUSION);
+        textureTableDesc.createTextureSRV(textures[TEX_SLOT_OCCLUSION].texture.Get(), TEX_SLOT_OCCLUSION);
     }
     else
     {
@@ -95,10 +88,10 @@ void Material::load(const tinygltf::Model& model, const tinygltf::Material &mate
 
     data.occlusionStrength = float(material.occlusionTexture.strength);
 
-    if(material.emissiveTexture.index >= 0 && loadTexture(model, base, material.emissiveTexture.index, true, emissiveTex))
+    if(material.emissiveTexture.index >= 0 && loadTexture(model, base, material.emissiveTexture.index, true, textures[TEX_SLOT_EMISSIVE]))
     {
         data.flags |= FLAG_HAS_EMISSIVE_TEX;
-        textureTableDesc.createTextureSRV(emissiveTex.Get(), TEX_SLOT_EMISSIVE);
+        textureTableDesc.createTextureSRV(textures[TEX_SLOT_EMISSIVE].texture.Get(), TEX_SLOT_EMISSIVE);
     }
     else
     {
@@ -121,18 +114,21 @@ void Material::load(const tinygltf::Model& model, const tinygltf::Material &mate
 }
 
 
-bool Material::loadTexture(const tinygltf::Model& model, const std::string& basePath, int index, bool defaultSRGB, ComPtr<ID3D12Resource>& output)
+bool Material::loadTexture(const tinygltf::Model& model, const std::string& basePath, int index, bool defaultSRGB, TextureInfo& output)
 {
     const tinygltf::Texture& texture = model.textures[index];
     const tinygltf::Image& image = model.images[texture.source];
 
     if (image.mimeType.empty())
     {
-        output = app->getResources()->createTextureFromFile(basePath + image.uri, defaultSRGB);
+        ModuleTextureManager* textureManager = app->getTextureManager();
+        
+        output.path = textureManager->getNormalizedPath(basePath + image.uri);
+        output.texture = textureManager->createTexture(output.path, defaultSRGB);
 
-        _ASSERT_EXPR(output, L"Can't load texture");
+        _ASSERT_EXPR(output.texture, L"Can't load texture %s", output.path.string().c_str());
 
-        return true;
+        return output.texture;
     }
 
     return false;

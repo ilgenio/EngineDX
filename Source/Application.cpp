@@ -9,6 +9,8 @@
 #include "ModuleDSDescriptors.h"
 #include "ModuleSamplers.h"
 #include "ModuleRingBuffer.h"
+#include "ModuleStaticBuffer.h"
+#include "ModuleTextureManager.h"
 #include "DemoDescriptors.h"
 
 #include "StartMenu.h"  
@@ -24,6 +26,8 @@ Application::Application(int argc, wchar_t** argv, void* hWnd)
     modules.push_back(dsDescriptors = new ModuleDSDescriptors());
     modules.push_back(samplers = new ModuleSamplers());
     modules.push_back(ringBuffer = new ModuleRingBuffer());
+    modules.push_back(staticBuffer = new ModuleStaticBuffer());
+    modules.push_back(textureManager = new ModuleTextureManager());
 
     if (argc > 1)
     {

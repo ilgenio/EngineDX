@@ -2,7 +2,7 @@
 #include "Mesh.h"
 
 #include "Application.h"
-#include "ModuleResources.h"
+#include "ModuleStaticBuffer.h"
 
 #include "gltf_utils.h"
 
@@ -23,7 +23,6 @@ Mesh::Mesh()
 
 Mesh::~Mesh()
 {
-    clean();
 }
 
 void Mesh::load(const tinygltf::Model& model, const tinygltf::Mesh& mesh, const tinygltf::Primitive& primitive)
@@ -34,7 +33,7 @@ void Mesh::load(const tinygltf::Model& model, const tinygltf::Mesh& mesh, const 
 
     if (itPos != primitive.attributes.end())
     {
-        ModuleResources* resources = app->getResources();
+        ModuleStaticBuffer* staticBuffer = app->getStaticBuffer();
 
         const tinygltf::Accessor& posAcc = model.accessors[itPos->second];
 
@@ -114,21 +113,11 @@ void Mesh::load(const tinygltf::Model& model, const tinygltf::Mesh& mesh, const 
             computeTSpace();
         }
 
-        vertexBuffer = resources->createDefaultBuffer(vertices.get(), numVertices * sizeof(Vertex), name.c_str());
-
-        vertexBufferView.BufferLocation = vertexBuffer->GetGPUVirtualAddress();
-        vertexBufferView.StrideInBytes = sizeof(Vertex);
-        vertexBufferView.SizeInBytes = numVertices * sizeof(Mesh::Vertex);
+        staticBuffer->allocVertexBuffer(numVertices, sizeof(Vertex), vertices.get(), vertexBufferView); 
 
         if(numIndices > 0)
         {
-            static const DXGI_FORMAT formats[3] = { DXGI_FORMAT_R8_UINT, DXGI_FORMAT_R16_UINT, DXGI_FORMAT_R32_UINT };
-
-            indexBuffer = resources->createDefaultBuffer(indices.get(), numIndices * indexElementSize, name.c_str());
-
-            indexBufferView.BufferLocation = indexBuffer->GetGPUVirtualAddress();
-            indexBufferView.Format = formats[indexElementSize >> 1];
-            indexBufferView.SizeInBytes = numIndices * indexElementSize;
+            staticBuffer->allocIndexBuffer(numIndices, indexElementSize, indices.get(), indexBufferView);
         }
 
         if (numJoints == numVertices && numWeights == numVertices)
@@ -143,7 +132,7 @@ void Mesh::draw(ID3D12GraphicsCommandList* commandList) const
 {
     commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);  
     commandList->IASetVertexBuffers(0, 1, &vertexBufferView);
-    if (indexBuffer)
+    if (numIndices > 0)
     {
         commandList->IASetIndexBuffer(&indexBufferView);
         commandList->DrawIndexedInstanced(numIndices, 1, 0, 0, 0);
@@ -267,10 +256,4 @@ void Mesh::weld()
     }
 
     std::swap(vertices, new_vertices);
-}
-
-void Mesh::clean()
-{
-    vertexBuffer.Reset();
-    indexBuffer.Reset();
 }

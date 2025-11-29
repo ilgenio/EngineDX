@@ -38,6 +38,29 @@ public:
         UINT        padding[2] = { 0, 0 };
    };
 
+private:
+
+    enum     {
+        TEX_SLOT_BASECOLOUR = 0,
+        TEX_SLOT_METALLIC_ROUGHNESS = 1,
+        TEX_SLOT_NORMAL = 2,
+        TEX_SLOT_OCCLUSION = 3,
+        TEX_SLOT_EMISSIVE = 4,
+        TEX_SLOT_COUNT
+    };
+
+    struct TextureInfo
+    {
+        std::filesystem::path path;
+        ComPtr<ID3D12Resource> texture;
+    };
+
+    std::string             name;
+    Data                    data;
+    TextureInfo             texutures[TEX_SLOT_COUNT];
+    ALPHAMODE               alphaMode = ALPHA_MODE_OPAQUE;
+    ShaderTableDesc         textureTableDesc;
+
 public:
 
     Material();
@@ -54,26 +77,6 @@ public:
 
 private:
 
-    bool loadTexture(const tinygltf::Model& model, const std::string& basePath, int index, bool defaultSRGB, ComPtr<ID3D12Resource>& output);
+    bool loadTexture(const tinygltf::Model& model, const std::string& basePath, int index, bool defaultSRGB, TextureInfo& output);
 
-private:
-
-    enum     {
-        TEX_SLOT_BASECOLOUR = 0,
-        TEX_SLOT_METALLIC_ROUGHNESS = 1,
-        TEX_SLOT_NORMAL = 2,
-        TEX_SLOT_OCCLUSION = 3,
-        TEX_SLOT_EMISSIVE = 4,
-        TEX_SLOT_COUNT
-    };
-
-    std::string             name;
-    Data                    data;
-    ComPtr<ID3D12Resource>  baseColorTex;
-    ComPtr<ID3D12Resource>  metRougTex;
-    ComPtr<ID3D12Resource>  normalTex;
-    ComPtr<ID3D12Resource>  occlusionTex;
-    ComPtr<ID3D12Resource>  emissiveTex;
-    ALPHAMODE               alphaMode = ALPHA_MODE_OPAQUE;
-    ShaderTableDesc         textureTableDesc;
 };

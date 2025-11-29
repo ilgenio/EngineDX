@@ -53,11 +53,6 @@ bool Demo::init()
     {
         ModuleCamera* camera = app->getCamera();
 
-        /*
-        camera->setPolar(XMConvertToRadians(-117.0f));
-        camera->setAzimuthal(XMConvertToRadians(-1.22f));
-        camera->setTranslation(Vector3(-24.0f, 2.95f, -6.95f)); */
-
         camera->setPolar(XMConvertToRadians(1.30f));
         camera->setAzimuthal(XMConvertToRadians(-11.61f));
         camera->setTranslation(Vector3(0.0f, 1.24f, 4.65f));
@@ -308,7 +303,7 @@ bool Demo::loadScene(bool useMSAA)
     }
     
     
-    model.reset(scene->loadModel("Assets/Models/BistroExterior/BistroExterior.gltf", "Assets/Models/BistroExterior/"));    
+    //model.reset(scene->loadModel("Assets/Models/BistroExterior/BistroExterior.gltf", "Assets/Models/BistroExterior/"));    
     //model.reset(scene->loadModel("Assets/Models/BistroExterior/Bistro_Godot.glb", "Assets/Models/BistroExterior/"));
     
 

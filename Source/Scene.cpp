@@ -3,6 +3,8 @@
 #include "Scene.h"
 #include "Model.h"
 #include "QuadTree.h"
+#include "Application.h"
+#include "ModuleStaticBuffer.h"
 
 #define TINYGLTF_NO_STB_IMAGE_WRITE
 #define TINYGLTF_NO_STB_IMAGE
@@ -36,10 +38,19 @@ Model* Scene::loadModel(const char* fileName, const char* basePath)
     if (loadOk)
     {
         Model* newModel = new Model(this, fileName);
-        newModel->load(model, basePath);
-        models.push_back(newModel);
+        if(newModel->load(model, basePath))
+        {
+            models.push_back(newModel);
 
-        return newModel;
+            app->getStaticBuffer()->uploadData();
+
+            return newModel;
+        }
+        else
+        {
+            delete newModel;
+            LOG("Failed to load model data.");
+        }
     }
 
     LOG("Error loading %s: %s", fileName, error.c_str());
