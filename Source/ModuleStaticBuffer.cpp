@@ -88,9 +88,9 @@ bool ModuleStaticBuffer::allocConstantBuffer(UINT size, const void* initData, D3
 
 bool ModuleStaticBuffer::allocBuffer(UINT size, const void *initData, D3D12_GPU_VIRTUAL_ADDRESS& bufferLocation, UINT& outSize)
 {
-    size = alignUp(size, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
+    outSize = alignUp(size, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
 
-    if (offset + size > totalSize)
+    if (offset + outSize > totalSize)
         return false;
 
     if (initData)
@@ -99,8 +99,7 @@ bool ModuleStaticBuffer::allocBuffer(UINT size, const void *initData, D3D12_GPU_
     }
 
     bufferLocation = vidMemBuffer->GetGPUVirtualAddress() + offset;
-    outSize = size;
-    offset += size;
+    offset += outSize;
 
     return true;
 }

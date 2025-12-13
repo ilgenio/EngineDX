@@ -290,7 +290,7 @@ bool Demo::loadScene(bool useMSAA)
     scene = std::make_unique<Scene>();
 
 
-    model.reset(scene->loadModel("Assets/Models/busterDrone/busterDrone.gltf", "Assets/Models/busterDrone"));
+    //model.reset(scene->loadModel("Assets/Models/busterDrone/busterDrone.gltf", "Assets/Models/busterDrone"));
 
     bool ok = model.get();
 
@@ -303,7 +303,8 @@ bool Demo::loadScene(bool useMSAA)
     }
     
     
-    //model.reset(scene->loadModel("Assets/Models/BistroExterior/BistroExterior.gltf", "Assets/Models/BistroExterior/"));    
+    model.reset(scene->loadModel("Assets/Models/BistroExterior/BistroExterior.gltf", "Assets/Models/BistroExterior/"));    
+    ok = model.get();
     //model.reset(scene->loadModel("Assets/Models/BistroExterior/Bistro_Godot.glb", "Assets/Models/BistroExterior/"));
     
 
