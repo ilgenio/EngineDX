@@ -202,6 +202,12 @@
     <ClCompile Include="MathUtils.cpp">
       <Filter>Core</Filter>
     </ClCompile>
+    <ClCompile Include="ModuleStaticBuffer.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="ModuleTextureManager.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EngineDX.h">
@@ -425,6 +431,12 @@
     </ClInclude>
     <ClInclude Include="QuadTree.h">
       <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="ModuleStaticBuffer.h">
+      <Filter>Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="ModuleTextureManager.h">
+      <Filter>Modules</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

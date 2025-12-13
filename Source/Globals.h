@@ -13,6 +13,7 @@
 
 #include <windows.h>
 #include <memory>
+#include <filesystem>
 #include <wrl.h>
 #include <d3d12.h>
 #include "d3dx12.h"
@@ -42,6 +43,11 @@ inline const ddVec3* ddConvert(const Vector3* v) { return reinterpret_cast<const
 inline const ddMat4x4& ddConvert(const Matrix& m) { return reinterpret_cast<const ddMat4x4&>(m); }
 
 inline size_t alignUp(size_t value, size_t alignment)
+{
+    return (value + alignment - 1) & ~(alignment - 1);
+}
+
+inline UINT alignUp(UINT value, UINT alignment)
 {
     return (value + alignment - 1) & ~(alignment - 1);
 }

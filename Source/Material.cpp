@@ -126,7 +126,7 @@ bool Material::loadTexture(const tinygltf::Model& model, const std::string& base
         output.path = textureManager->getNormalizedPath(basePath + image.uri);
         output.texture = textureManager->createTexture(output.path, defaultSRGB);
 
-        _ASSERT_EXPR(output.texture, L"Can't load texture %s", output.path.string().c_str());
+        _ASSERT_EXPR(output.texture, L"Can't load texture");
 
         return output.texture;
     }

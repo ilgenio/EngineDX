@@ -57,7 +57,7 @@ private:
 
     std::string             name;
     Data                    data;
-    TextureInfo             texutures[TEX_SLOT_COUNT];
+    TextureInfo             textures[TEX_SLOT_COUNT];
     ALPHAMODE               alphaMode = ALPHA_MODE_OPAQUE;
     ShaderTableDesc         textureTableDesc;
 

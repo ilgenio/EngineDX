@@ -2,7 +2,6 @@
 
 #include "Module.h"
 #include <unordered_map>
-#include <filesystem>
 
 class ModuleTextureManager : public Module
 {
@@ -12,6 +11,7 @@ public:
 
     ComPtr<ID3D12Resource> createTexture(const std::filesystem::path& path, bool defaultSRGB = false);
     void removeTexture(const std::filesystem::path& path);
+    static std::filesystem::path getNormalizedPath(const std::filesystem::path& path) { return std::filesystem::proximate(std::filesystem::weakly_canonical(path)).make_preferred(); }
 
 private:
 

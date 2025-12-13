@@ -6,7 +6,7 @@
 #include "ModuleD3D12.h"
 
  // 10 Mb
-#define MEMORY_TOTAL_SIZE 10 * (1 << 20)
+#define MEMORY_TOTAL_SIZE UINT(10 * (1 << 20))
 
 ModuleRingBuffer::ModuleRingBuffer()
 {

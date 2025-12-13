@@ -220,6 +220,8 @@
     <ClInclude Include="ModuleRTDescriptors.h" />
     <ClInclude Include="ModuleSamplers.h" />
     <ClInclude Include="ModuleShaderDescriptors.h" />
+    <ClInclude Include="ModuleStaticBuffer.h" />
+    <ClInclude Include="ModuleTextureManager.h" />
     <ClInclude Include="Mouse.h" />
     <ClInclude Include="PlatformHelpers.h" />
     <ClInclude Include="PrefilterEnvMapPass.h" />
@@ -364,6 +366,8 @@
     <ClCompile Include="ModuleRTDescriptors.cpp" />
     <ClCompile Include="ModuleSamplers.cpp" />
     <ClCompile Include="ModuleShaderDescriptors.cpp" />
+    <ClCompile Include="ModuleStaticBuffer.cpp" />
+    <ClCompile Include="ModuleTextureManager.cpp" />
     <ClCompile Include="Mouse.cpp" />
     <ClCompile Include="PrefilterEnvMapPass.cpp" />
     <ClCompile Include="QuadTree.cpp" />

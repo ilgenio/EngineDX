@@ -18,24 +18,28 @@ bool ModuleStaticBuffer::init()
 
     totalSize = 512 << 20; // 512 MB - 1/2 GB
 
+    CD3DX12_HEAP_PROPERTIES defaultHeap(D3D12_HEAP_TYPE_DEFAULT);
+    CD3DX12_HEAP_PROPERTIES uploadHeap(D3D12_HEAP_TYPE_UPLOAD);
+    CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(totalSize);
+
     bool ok = SUCCEEDED(d3d12->getDevice()->CreateCommittedResource(
-                    &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+                    &defaultHeap,
                     D3D12_HEAP_FLAG_NONE,
-                    &CD3DX12_RESOURCE_DESC::Buffer(totalSize, D3D12_RESOURCE_FLAG_NONE),
+                    &bufferDesc,
                     D3D12_RESOURCE_STATE_COMMON,
                     nullptr,
                     IID_PPV_ARGS(&vidMemBuffer)));
 
     ok = ok && SUCCEEDED(d3d12->getDevice()->CreateCommittedResource(
-                    &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+                    &uploadHeap,
                     D3D12_HEAP_FLAG_NONE,
-                    &CD3DX12_RESOURCE_DESC::Buffer(totalSize),
+                    &bufferDesc,
                     D3D12_RESOURCE_STATE_GENERIC_READ,
                     nullptr,
                     IID_PPV_ARGS(&uploadHeapBuffer)));
 
     ok = ok && SUCCEEDED(d3d12->getDevice()->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator)));
-    ok = ok && SUCCEEDED(d3d12->getDevice()->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_LIST_FLAG_NONE	, nullptr, IID_PPV_ARGS(&commandList)));
+    ok = ok && SUCCEEDED(d3d12->getDevice()->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_LIST_FLAG_NONE	, IID_PPV_ARGS(&commandList)));
 
     if(ok)
     {
@@ -107,9 +111,12 @@ void ModuleStaticBuffer::uploadData()
     ID3D12CommandQueue* queue = d3d12->getDrawCommandQueue();
 
     commandList->Reset(commandAllocator.Get(), nullptr);
-    commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(vidMemBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST));
+    CD3DX12_RESOURCE_BARRIER toCopyDest = CD3DX12_RESOURCE_BARRIER::Transition(vidMemBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
+    commandList->ResourceBarrier(1, &toCopyDest);
     commandList->CopyBufferRegion(vidMemBuffer.Get(), vidInit, uploadHeapBuffer.Get(), vidInit, offset - vidInit);
-    commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(vidMemBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER | D3D12_RESOURCE_STATE_INDEX_BUFFER));
+
+    CD3DX12_RESOURCE_BARRIER toVB = CD3DX12_RESOURCE_BARRIER::Transition(vidMemBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER | D3D12_RESOURCE_STATE_INDEX_BUFFER);
+    commandList->ResourceBarrier(1, &toVB);
     commandList->Close();
 
     ID3D12CommandList *commandLists[] = {commandList.Get()};
