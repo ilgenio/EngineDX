@@ -16,6 +16,8 @@
 #include "tiny_gltf.h"
 #pragma warning(pop)
 
+#include "gltf_utils.h"
+
 
 Model::Model(Scene* parentScene, const char* name) : scene(parentScene), name(name)
 {
@@ -27,6 +29,7 @@ Model::~Model()
     for (Material* material : materials) delete material;
     for (Node* node : nodes) delete node;
     for (MeshInstance* instance : instances) delete instance;
+    for (Skin* skin : skins) delete skin;
 
     scene->onRemoveModel(this);   
 }
@@ -59,7 +62,7 @@ bool Model::load(const tinygltf::Model &srcModel, const char *basePath)
 
     for(const auto& srcMaterial : srcModel.materials)
     {
-        Material* material = new Material;
+        Material* material = new Material(this, srcMaterial.name.c_str());
 
         material->load(srcModel, srcMaterial, basePath);
 
@@ -67,15 +70,51 @@ bool Model::load(const tinygltf::Model &srcModel, const char *basePath)
     }
 
 
+    for(const tinygltf::Skin& srcSkin : srcModel.skins)
+    {   
+        Skin* skin = new Skin;
+
+        skin->numJoints = UINT(srcSkin.joints.size());
+        skin->jointNodeIndices = std::make_unique<UINT[]>(skin->numJoints);
+        skin->inverseBindMatrices = std::make_unique<Matrix[]>(skin->numJoints);
+
+        for (UINT i = 0; i < skin->numJoints; ++i)
+        {
+            skin->jointNodeIndices[i] = srcSkin.joints[i];
+        }
+
+        if (srcSkin.inverseBindMatrices >= 0)
+        {
+            UINT numMatrices = 0;
+            bool ok = loadAccessorTyped(skin->inverseBindMatrices, numMatrices, srcModel, srcSkin.inverseBindMatrices);
+            _ASSERTE(ok && numMatrices == skin->numJoints);
+        }
+
+        skins.push_back(skin);
+    }
+
+    std::vector<UINT> nodeMapping;
+    nodeMapping.resize(srcModel.nodes.size(), UINT(-1));
+
     for(const tinygltf::Scene& scene : srcModel.scenes)
     {
         for (int nodeIndex : scene.nodes)
         {
-            generateNodes(srcModel, nodeIndex, -1, meshMappings, materialMappings);
+            generateNodes(srcModel, nodeIndex, -1, meshMappings, materialMappings, nodeMapping);
         }
     }
 
-    // TODO: Skins
+    // Remap skin joint node indices
+    for (Skin* skin : skins)
+    {
+        for (UINT i = 0; i < skin->numJoints; ++i)
+        {
+            UINT originalNodeIndex = skin->jointNodeIndices[i];
+            _ASSERTE(nodeMapping[originalNodeIndex] != UINT(-1));
+
+            skin->jointNodeIndices[i] = nodeMapping[originalNodeIndex];
+        }
+    }
 
     return true;
 
@@ -83,7 +122,8 @@ bool Model::load(const tinygltf::Model &srcModel, const char *basePath)
 
 UINT Model::generateNodes(const tinygltf::Model &model, UINT nodeIndex, INT parentIndex,
                    const std::vector<std::pair<UINT, UINT>> &meshMapping,
-                   const std::vector<int> &materialMapping)
+                   const std::vector<int> &materialMapping,
+                   std::vector<UINT>& nodeMapping)
 {
     const tinygltf::Node& node = model.nodes[nodeIndex];
 
@@ -120,6 +160,8 @@ UINT Model::generateNodes(const tinygltf::Model &model, UINT nodeIndex, INT pare
 
     UINT realIndex = UINT(nodes.size());
 
+    nodeMapping[nodeIndex] = realIndex;
+
     if (node.mesh >= 0)
     {
         // as we have one mesh per primitive one gltf mesh generates more than one of our meshes
@@ -132,6 +174,13 @@ UINT Model::generateNodes(const tinygltf::Model &model, UINT nodeIndex, INT pare
             instance->nodeIndex     = realIndex;
             instance->skinIndex     = node.skin;
 
+            if(instance->skinIndex >= 0)
+            {
+                _ASSERTE(instance->skinIndex < skins.size());
+
+                instance->palette = std::make_unique<Matrix[]>(skins[instance->skinIndex]->numJoints);
+            }
+            
             _ASSERTE(instance->meshIndex < meshes.size());
             _ASSERTE(instance->materialIndex < materials.size());
 
@@ -143,7 +192,7 @@ UINT Model::generateNodes(const tinygltf::Model &model, UINT nodeIndex, INT pare
 
     for (int childIndex : node.children)
     {
-        dst->numChilds += generateNodes(model, childIndex, realIndex, meshMapping, materialMapping);
+        dst->numChilds += generateNodes(model, childIndex, realIndex, meshMapping, materialMapping, nodeMapping);
     }
 
     return dst->numChilds;
@@ -269,6 +318,14 @@ void Model::frustumCulling(const Vector4 frustumPlanes[6], const Vector3 absFrus
             renderMesh.normalMatrix.Invert();
             renderMesh.normalMatrix.Transpose();
 
+            if(instance->skinIndex >= 0)
+            {
+                updateSkinningMatrices(instance);
+
+                renderMesh.palette   = instance->palette.get();
+                renderMesh.numJoints = skins[instance->skinIndex]->numJoints;
+            }
+
             renderList.push_back(renderMesh);
         }
     }
@@ -362,4 +419,47 @@ void Model::updateAnim(float deltaTime)
             node->dirtyWorld = true;
         }
     }
+
+    for (MeshInstance* instance : instances)
+    {
+        instance->dirtyPalette = instance->skinIndex >= 0;
+
+        if(instance->skinIndex >= 0)
+        {
+            _ASSERTE(instance->skinIndex < skins.size());
+
+            const Skin* skin = skins[instance->skinIndex];
+
+            for (UINT j = 0; j < skin->numJoints; ++j)
+            {
+                INT jointNodeIndex = skin->jointNodeIndices[j];
+                _ASSERTE(jointNodeIndex >= 0 && UINT(jointNodeIndex) < nodes.size());
+
+                const Node* jointNode = nodes[jointNodeIndex];
+
+                instance->palette[j] =  jointNode->worldTransform * skin->inverseBindMatrices[j];
+            }
+        }
+    }
+}
+
+void Model::updateSkinningMatrices(const MeshInstance* instance) const
+{
+    if(instance->skinIndex < 0 || !instance->dirtyPalette) return;
+
+    _ASSERTE(instance->skinIndex < skins.size());
+
+    const Skin* skin = skins[instance->skinIndex];
+
+    for (UINT j = 0; j < skin->numJoints; ++j)
+    {
+        INT jointNodeIndex = skin->jointNodeIndices[j];
+        _ASSERTE(jointNodeIndex >= 0 && UINT(jointNodeIndex) < nodes.size());
+
+        const Node* jointNode = nodes[jointNodeIndex];
+
+        instance->palette[j] = jointNode->worldTransform * skin->inverseBindMatrices[j];
+    }
+
+    instance->dirtyPalette = false;
 }

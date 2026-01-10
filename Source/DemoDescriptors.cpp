@@ -2,7 +2,7 @@
 
 #include "DemoDescriptors.h"
 
-#include "Demo.h"
+#include "DemoAnimation.h"
 #include "Exercises/Exercise1.h"
 #include "Exercises/Exercise2.h"
 #include "Exercises/Exercise3.h"
@@ -18,7 +18,7 @@
 #include "Exercises/Exercise13.h"
 
 DemoDescriptors demos[] = {
-    { "Demo", "Shows Rendering features", []() -> Module* { return new Demo(); } },
+    { "DemoAnimation", "Shows Animation Demo", []() -> Module* { return new DemoAnimation(); } },
     { "Exercise1", "Clears the screen with a solid color", []() -> Module* { return new Exercise1(); } },
     { "Exercise2", "Renders a 2D triangle", []() -> Module* { return new Exercise2(); } },
     { "Exercise3", "Renders a 3D triangle", []() -> Module* { return new Exercise3(); } },

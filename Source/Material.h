@@ -5,6 +5,8 @@
 
 namespace tinygltf { struct Material; class Model; }
 
+class Model;
+
 class Material
 {
 public:
@@ -60,10 +62,11 @@ private:
     TextureInfo             textures[TEX_SLOT_COUNT];
     ALPHAMODE               alphaMode = ALPHA_MODE_OPAQUE;
     ShaderTableDesc         textureTableDesc;
+    Model*                  parent = nullptr;
 
 public:
 
-    Material();
+    Material(Model* parentModel, const char* name);
     ~Material();
 
     void load(const tinygltf::Model& model, const tinygltf::Material& material, const char* basePath);
@@ -79,4 +82,8 @@ private:
 
     bool loadTexture(const tinygltf::Model& model, const std::string& basePath, int index, bool defaultSRGB, TextureInfo& output);
 
+    std::filesystem::path normalizePath(const std::filesystem::path& path) 
+    {
+        return std::filesystem::proximate(std::filesystem::weakly_canonical(path)).make_preferred();
+    }
 };

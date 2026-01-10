@@ -5,6 +5,7 @@
 #include "QuadTree.h"
 #include "Application.h"
 #include "ModuleStaticBuffer.h"
+#include "ModuleResources.h"
 
 #define TINYGLTF_NO_STB_IMAGE_WRITE
 #define TINYGLTF_NO_STB_IMAGE
@@ -114,3 +115,32 @@ void Scene::debugDrawQuadTree(const Vector4 planes[6], UINT level) const
     quadTree->debugDraw(containment, level);
 }
 
+ComPtr<ID3D12Resource> Scene::loadTexture(const std::filesystem::path& path, bool defaultSRGB)
+{
+    auto it = textures.find(path);
+    if (it != textures.end())
+    {
+        SharedTexture& shared = it->second;
+        shared.count++;
+        return shared.texture;
+    }
+
+    SharedTexture& shared = textures[path];
+    shared.count = 1;
+    shared.texture = app->getResources()->createTextureFromFile(path, defaultSRGB);
+
+    return shared.texture;
+}
+
+void Scene::unloadTexture(const std::filesystem::path& path)
+{
+    auto it = textures.find(path);
+    if (it != textures.end())
+    {
+        SharedTexture& shared = it->second;
+        if (--shared.count == 0)
+        {
+            textures.erase(it);
+        }
+    } 
+}

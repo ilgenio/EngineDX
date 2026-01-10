@@ -233,7 +233,6 @@ void Exercise7::renderToTexture(ID3D12GraphicsCommandList* commandList)
     ModuleD3D12* d3d12 = app->getD3D12();
     ModuleCamera* camera = app->getCamera();
     ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
-    ModuleRTDescriptors* rtDescriptors = app->getRTDescriptors();
     ModuleDSDescriptors* dsDescriptors = app->getDSDescriptors();
     ModuleSamplers* samplers = app->getSamplers();
     ModuleRingBuffer* ringBuffer = app->getRingBuffer();
@@ -260,7 +259,7 @@ void Exercise7::renderToTexture(ID3D12GraphicsCommandList* commandList)
     renderTexture->beginRender(commandList);
 
     commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &mvp, 0);
-    commandList->SetGraphicsRootConstantBufferView(1, ringBuffer->allocBuffer(&perFrame));
+    commandList->SetGraphicsRootConstantBufferView(1, ringBuffer->allocUploadBuffer(&perFrame));
     commandList->SetGraphicsRootDescriptorTable(4, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
 
     BEGIN_EVENT(commandList, "Model Render Pass");
@@ -273,7 +272,7 @@ void Exercise7::renderToTexture(ID3D12GraphicsCommandList* commandList)
 
             PerInstance perInstance = { model->getModelMatrix().Transpose(), model->getNormalMatrix().Transpose(), material.getPBRPhongMaterial()};
 
-            commandList->SetGraphicsRootConstantBufferView(2, ringBuffer->allocBuffer(&perInstance));
+            commandList->SetGraphicsRootConstantBufferView(2, ringBuffer->allocUploadBuffer(&perInstance));
             commandList->SetGraphicsRootDescriptorTable(3, material.getTexturesTableDesc().getGPUHandle());
 
             mesh.draw(commandList);

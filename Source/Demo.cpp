@@ -32,33 +32,18 @@ Demo::~Demo()
 
 bool Demo::init() 
 {
-    const bool useMSAA = true;
+    const bool useMSAA = false;
 
-    bool ok = loadScene(useMSAA);
-    if (ok)
-    {
-        ModuleD3D12* d3d12 = app->getD3D12();
+    ModuleD3D12* d3d12 = app->getD3D12();
 
-        debugDesc = app->getShaderDescriptors()->allocTable();
+    debugDesc = app->getShaderDescriptors()->allocTable();
 
-        debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue(), useMSAA, debugDesc.getCPUHandle(0), debugDesc.getGPUHandle(0));
-        imguiPass = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd(), debugDesc.getCPUHandle(1), debugDesc.getGPUHandle(1));
-        renderTexture = std::make_unique<RenderTexture>("Exercise12", DXGI_FORMAT_R8G8B8A8_UNORM, Vector4(0.188f, 0.208f, 0.259f, 1.0f), DXGI_FORMAT_D32_FLOAT, 1.0f, useMSAA, useMSAA);
-        renderMeshPass = std::make_unique<RenderMeshPass>();
+    debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue(), useMSAA, debugDesc.getCPUHandle(0), debugDesc.getGPUHandle(0));
+    imguiPass = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd(), debugDesc.getCPUHandle(1), debugDesc.getGPUHandle(1));
+    renderTexture = std::make_unique<RenderTexture>("Exercise12", DXGI_FORMAT_R8G8B8A8_UNORM, Vector4(0.188f, 0.208f, 0.259f, 1.0f), DXGI_FORMAT_D32_FLOAT, 1.0f, useMSAA, useMSAA);
+    renderMeshPass = std::make_unique<RenderMeshPass>();
 
-        ok = ok && renderMeshPass->init(useMSAA);
-    }
-
-    if (ok)
-    {
-        ModuleCamera* camera = app->getCamera();
-
-        camera->setPolar(XMConvertToRadians(1.30f));
-        camera->setAzimuthal(XMConvertToRadians(-11.61f));
-        camera->setTranslation(Vector3(0.0f, 1.24f, 4.65f));
-    }
-
-    _ASSERT_EXPR(ok, "Error creating Demo");
+    bool ok = renderMeshPass->init(useMSAA);
 
     return ok;
 }
@@ -241,7 +226,7 @@ void Demo::renderMeshes(ID3D12GraphicsCommandList *commandList, const Matrix& vi
     perFrameData.numRoughnessLevels = skybox->getNumIBLMipLevels()  ;
     perFrameData.cameraPosition = app->getCamera()->getPos();
 
-    renderMeshPass->render(commandList, renderList, ringBuffer->allocBuffer(&perFrameData), skybox->getIBLTable(), view*projection);
+    renderMeshPass->render(commandList, renderList, ringBuffer->allocUploadBuffer(&perFrameData), skybox->getIBLTable(), view*projection);
 }
 
 void Demo::renderToTexture(ID3D12GraphicsCommandList* commandList)
@@ -283,37 +268,4 @@ void Demo::render()
     imguiPass->record(commandList);
 
     d3d12->endFrameRender();
-}
-
-bool Demo::loadScene(bool useMSAA)
-{
-    scene = std::make_unique<Scene>();
-
-
-    //model.reset(scene->loadModel("Assets/Models/busterDrone/busterDrone.gltf", "Assets/Models/busterDrone"));
-
-    bool ok = model.get();
-
-    if (ok)
-    {
-        animation = std::make_shared<AnimationClip>();
-        animation->load("Assets/Models/busterDrone/busterDrone.gltf", 0);
-
-        model->PlayAnim(animation);
-    }
-    
-    
-    model.reset(scene->loadModel("Assets/Models/BistroExterior/BistroExterior.gltf", "Assets/Models/BistroExterior/"));    
-    ok = model.get();
-    //model.reset(scene->loadModel("Assets/Models/BistroExterior/Bistro_Godot.glb", "Assets/Models/BistroExterior/"));
-    
-
-    skybox = std::make_unique<Skybox>();
-    
-    //ok = ok && skybox->init("Assets/Textures/kloppenheim_02_puresky_8k.hdr", useMSAA);
-    ok = ok && skybox->init("Assets/Textures/san_giuseppe_bridge_4k.hdr", useMSAA);
-
-    _ASSERT_EXPR(ok, L"Error loading scene");
-
-    return scene != nullptr;
 }

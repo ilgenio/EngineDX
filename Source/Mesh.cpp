@@ -39,7 +39,8 @@ void Mesh::load(const tinygltf::Model& model, const tinygltf::Mesh& mesh, const 
 
         numVertices = uint32_t(posAcc.count);
 
-        vertices = std::make_unique<Vertex[]>(numVertices);
+        std::unique_ptr<uint8_t[]> indices;
+        std::unique_ptr<Vertex[]> vertices = std::make_unique<Vertex[]>(numVertices);
         uint8_t* vertexData = reinterpret_cast<uint8_t*>(vertices.get());
 
         loadAccessorData(vertexData + offsetof(Vertex, position), sizeof(Vector3), sizeof(Vertex), numVertices, model, itPos->second);
@@ -79,11 +80,11 @@ void Mesh::load(const tinygltf::Model& model, const tinygltf::Mesh& mesh, const 
         };
 
         UINT numJoints, numWeights;
-        std::unique_ptr<BoneIndices []> boneIndices;
-        std::unique_ptr<Vector4 []> boneWeights;
+        std::unique_ptr<BoneIndices []> boneIndexArray;
+        std::unique_ptr<Vector4 []> boneWeightArray;
 
-        loadAccessorTyped(boneIndices, numJoints, model, primitive.attributes, "JOINTS_0");
-        loadAccessorTyped(boneWeights, numWeights, model, primitive.attributes, "WEIGHTS_0");
+        loadAccessorTyped(boneIndexArray, numJoints, model, primitive.attributes, "JOINTS_0");
+        loadAccessorTyped(boneWeightArray, numWeights, model, primitive.attributes, "WEIGHTS_0");
 
         _ASSERTE(numJoints == 0 || numJoints == numVertices);
         _ASSERTE(numWeights == 0 || numWeights == numVertices);
@@ -110,21 +111,21 @@ void Mesh::load(const tinygltf::Model& model, const tinygltf::Mesh& mesh, const 
 
         if (!hasTangents)
         {
-            computeTSpace();
+            computeTSpace(vertices, indices);
         }
-
-        staticBuffer->allocVertexBuffer(numVertices, sizeof(Vertex), vertices.get(), vertexBufferView); 
 
         if(numIndices > 0)
         {
             staticBuffer->allocIndexBuffer(numIndices, indexElementSize, indices.get(), indexBufferView);
         }
 
+        staticBuffer->allocVertexBuffer(numVertices, sizeof(Vertex), vertices.get(), vertexBufferView);
+
         if (numJoints == numVertices && numWeights == numVertices)
         {
-            // TODO: Create FRAMES_IN_FLIGHT Buffers 
+            staticBuffer->allocBuffer(numJoints * sizeof(BoneIndices), &boneIndexArray[0], boneIndices);
+            staticBuffer->allocBuffer(numWeights * sizeof(Vector4), &boneWeightArray[0], boneWeights);
         }
-
     }
 }
 
@@ -143,11 +144,11 @@ void Mesh::draw(ID3D12GraphicsCommandList* commandList) const
     }
 }
 
-void Mesh::computeTSpace()
+void Mesh::computeTSpace(std::unique_ptr<Vertex[]>& vertices, std::unique_ptr<uint8_t[]>& indices)
 {
     struct UserData
     {
-        VertexArray vertices;
+        std::unique_ptr<Vertex[]> vertices;
         uint32_t count;
     };
 
@@ -242,9 +243,11 @@ void Mesh::computeTSpace()
 
     vertices = std::make_unique<Vertex[]>(numVertices);
     memcpy(vertices.get(), weldVertices.get(), sizeof(Vertex)* numVertices);
+
+    weld(vertices, indices);
 }
 
-void Mesh::weld()
+void Mesh::weld(std::unique_ptr<Vertex[]>& vertices, std::unique_ptr<uint8_t[]> &indices)
 {
     std::unique_ptr<Vertex[]> new_vertices = std::make_unique<Vertex[]>(numVertices);
     std::unique_ptr<int[]> remap = std::make_unique<int[]>(numVertices);

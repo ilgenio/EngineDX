@@ -26,6 +26,13 @@ class Model
         UINT numChilds = 0;
     };
 
+    struct Skin
+    {
+        std::unique_ptr<Matrix[]> inverseBindMatrices;
+        std::unique_ptr<UINT[]>   jointNodeIndices;
+        UINT                      numJoints = 0;
+    };
+
     struct MeshInstance
     {
         UINT meshIndex = 0;
@@ -33,6 +40,8 @@ class Model
         INT  skinIndex = 0;
         UINT nodeIndex = 0;
         UINT quadTreeCell = UINT(-1);
+        mutable std::unique_ptr<Matrix[]> palette;
+        mutable bool dirtyPalette = true;
     };
 
     struct AnimInstance
@@ -48,11 +57,13 @@ class Model
     typedef std::vector<Material*> MaterialList;
     typedef std::vector<Node*> NodeList;
     typedef std::vector<MeshInstance*> InstanceList;
+    typedef std::vector<Skin*> SkinList;
 
     MeshList meshes;
     MaterialList materials;
     NodeList nodes;
     InstanceList instances;
+    SkinList skins;
     std::unique_ptr<AnimInstance> currentAnim;
     Scene* scene = nullptr;
     std::string name;
@@ -70,20 +81,24 @@ public:
     UINT getNumNodes() const { return UINT(nodes.size()); }
     UINT getNumInstances() const { return UINT(instances.size()); }
 
+    Scene* getScene() const { return scene; }
+
 private:
 
-    explicit Model(Scene* parentScene, const char* name);
+    Model(Scene* parentScene, const char* name);
 
     bool load(const tinygltf::Model& srcModel, const char* basePath);
     void updateAnim(float deltaTime);
     void updateWorldTransforms();
-    void updateQuadTree(QuadTree* quadTree, bool force);
+    void updateSkinningMatrices(const MeshInstance *instance) const;
+    void updateQuadTree(QuadTree *quadTree, bool force);
     void frustumCulling(const Vector4 frustumPlanes[6], const Vector3 absFrustumPlanes[6], 
                         const std::vector<IntersectionType>& containment, 
                         std::vector<RenderMesh>& renderList) const;
 
     UINT generateNodes(const tinygltf::Model& model, UINT nodeIndex, INT parentIndex, 
                        const std::vector<std::pair<UINT, UINT> >& meshMapping, 
-                       const std::vector<int>& materialMapping);
+                       const std::vector<int>& materialMapping,
+                       std::vector<UINT>& nodeMapping);
 
 };

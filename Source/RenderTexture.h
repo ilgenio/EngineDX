@@ -44,10 +44,7 @@ public:
 
     void beginRender(ID3D12GraphicsCommandList* cmdList)
     {
-        //if (!msaa || !autoResolveMSAA)
-        {
-            transitionToRTV(cmdList);
-        }
+        transitionToRTV(cmdList);
 
         setRenderTarget(cmdList);
     }

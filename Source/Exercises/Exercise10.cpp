@@ -417,10 +417,10 @@ void Exercise10::renderToTexture(ID3D12GraphicsCommandList* commandList)
 
 
     commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &mvp, 0);
-    commandList->SetGraphicsRootConstantBufferView(1, ringBuffer->allocBuffer(&perFrame));
-    commandList->SetGraphicsRootShaderResourceView(3, ringBuffer->allocBuffer(&dirLight, std::size(dirLight)));
-    commandList->SetGraphicsRootShaderResourceView(4, ringBuffer->allocBuffer(&pointLight));
-    commandList->SetGraphicsRootShaderResourceView(5, ringBuffer->allocBuffer(&spotLight));
+    commandList->SetGraphicsRootConstantBufferView(1, ringBuffer->allocUploadBuffer(&perFrame));
+    commandList->SetGraphicsRootShaderResourceView(3, ringBuffer->allocUploadBuffer(&dirLight, std::size(dirLight)));
+    commandList->SetGraphicsRootShaderResourceView(4, ringBuffer->allocUploadBuffer(&pointLight));
+    commandList->SetGraphicsRootShaderResourceView(5, ringBuffer->allocUploadBuffer(&spotLight));
 
     commandList->SetGraphicsRootDescriptorTable(7, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
 
@@ -436,7 +436,7 @@ void Exercise10::renderToTexture(ID3D12GraphicsCommandList* commandList)
 
             PerInstance perInstance = { model->getModelMatrix().Transpose(), model->getNormalMatrix().Transpose(), material.getMetallicRoughnessMaterial()};
 
-            commandList->SetGraphicsRootConstantBufferView(2, ringBuffer->allocBuffer(&perInstance));
+            commandList->SetGraphicsRootConstantBufferView(2, ringBuffer->allocUploadBuffer(&perInstance));
             commandList->SetGraphicsRootDescriptorTable(6, textureDesc.getGPUHandle());
 
             mesh.draw(commandList);

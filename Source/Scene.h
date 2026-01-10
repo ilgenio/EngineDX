@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <span>
+#include <filesystem>
 
 class Model;
 class Mesh;
@@ -14,6 +15,9 @@ struct RenderMesh
 {
     const Mesh *mesh = nullptr;
     const Material *material = nullptr;
+    const Matrix* palette = nullptr;
+    UINT numJoints = 0;
+
     Matrix transform;
     Matrix normalMatrix;
 };
@@ -22,8 +26,17 @@ class Scene
 {
 private:
     friend class Model;
+    friend class Material;
+
+    struct SharedTexture
+    {
+        UINT count = 0;
+        ComPtr<ID3D12Resource> texture;
+    };
 
     std::vector<Model*> models;
+    std::unordered_map<std::filesystem::path, SharedTexture> textures;
+
     std::unique_ptr<QuadTree> quadTree;
 
 public:
@@ -40,6 +53,8 @@ public:
 
 private:
     void onRemoveModel(Model* model);
-
     
+    ComPtr<ID3D12Resource> loadTexture(const std::filesystem::path& path, bool defaultSRGB = false);
+    void unloadTexture(const std::filesystem::path& path);
+
 };

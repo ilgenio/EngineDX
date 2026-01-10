@@ -62,7 +62,7 @@ void RenderMeshPass::render(ID3D12GraphicsCommandList* commandList, std::span<co
             perInstance.normalMat = mesh.normalMatrix.Transpose();
             perInstance.material = mesh.material->getData();
 
-            commandList->SetGraphicsRootConstantBufferView(SLOT_PER_INSTANCE_CB, ringBuffer->allocBuffer(&perInstance));
+            commandList->SetGraphicsRootConstantBufferView(SLOT_PER_INSTANCE_CB, ringBuffer->allocUploadBuffer(&perInstance));
             commandList->SetGraphicsRootDescriptorTable(SLOT_TEXTURES_TABLE, mesh.material->getTextureTable());
             mesh.mesh->draw(commandList);
         }

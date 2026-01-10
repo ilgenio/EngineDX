@@ -251,7 +251,7 @@ void Exercise6::render()
     ID3D12DescriptorHeap* descriptorHeaps[] = { descriptors->getHeap(), samplers->getHeap() };
     commandList->SetDescriptorHeaps(2, descriptorHeaps);
     commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &mvp, 0);
-    commandList->SetGraphicsRootConstantBufferView(1, ringBuffer->allocBuffer(&perFrame));
+    commandList->SetGraphicsRootConstantBufferView(1, ringBuffer->allocUploadBuffer(&perFrame));
     commandList->SetGraphicsRootDescriptorTable(4, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
 
     BEGIN_EVENT(commandList, "Model Render Pass");
@@ -264,7 +264,7 @@ void Exercise6::render()
 
             PerInstance perInstance = { model->getModelMatrix().Transpose(), model->getNormalMatrix().Transpose(), material.getPhongMaterial()};
 
-            commandList->SetGraphicsRootConstantBufferView(2, ringBuffer->allocBuffer(&perInstance));
+            commandList->SetGraphicsRootConstantBufferView(2, ringBuffer->allocUploadBuffer(&perInstance));
             commandList->SetGraphicsRootDescriptorTable(3, material.getTexturesTableDesc().getGPUHandle());
 
             mesh.draw(commandList);

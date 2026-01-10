@@ -14,6 +14,11 @@ public:
     bool allocVertexBuffer(UINT numVertices, UINT strideInBytes, const void* initData, D3D12_VERTEX_BUFFER_VIEW& view);
     bool allocIndexBuffer(UINT numIndices, UINT strideInBytes, const void* initData, D3D12_INDEX_BUFFER_VIEW& view);
     bool allocConstantBuffer(UINT size, const void* initData, D3D12_CONSTANT_BUFFER_VIEW_DESC& viewDesc);
+    bool allocBuffer(UINT size, const void* initData, D3D12_GPU_VIRTUAL_ADDRESS& bufferLocation)
+    {
+        UINT outSize;
+        return allocBuffer(size, initData, bufferLocation, outSize);
+    }
 
     void uploadData();
 
@@ -23,7 +28,9 @@ private:
 
     bool allocBuffer(UINT size, const void* initData, D3D12_GPU_VIRTUAL_ADDRESS& bufferLocation, UINT& outSize);
 
+
 private:
+
     BYTE* data = nullptr;
     UINT totalSize = 0;
     UINT offset = 0;

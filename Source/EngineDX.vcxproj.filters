@@ -208,6 +208,12 @@
     <ClCompile Include="ModuleTextureManager.cpp">
       <Filter>Modules</Filter>
     </ClCompile>
+    <ClCompile Include="Ring.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="DemoAnimation.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EngineDX.h">
@@ -436,6 +442,12 @@
       <Filter>Modules</Filter>
     </ClInclude>
     <ClInclude Include="ModuleTextureManager.h">
+      <Filter>Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="Ring.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="DemoAnimation.h">
       <Filter>Modules</Filter>
     </ClInclude>
   </ItemGroup>

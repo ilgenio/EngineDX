@@ -180,6 +180,7 @@
     <ClInclude Include="DebugDrawPass.h" />
     <ClInclude Include="debug_draw.hpp" />
     <ClInclude Include="Demo.h" />
+    <ClInclude Include="DemoAnimation.h" />
     <ClInclude Include="DemoDescriptors.h" />
     <ClInclude Include="DepthStencilDesc.h" />
     <ClInclude Include="EngineDX.h" />
@@ -231,6 +232,7 @@
     <ClInclude Include="RenderTargetDesc.h" />
     <ClInclude Include="RenderTexture.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="Ring.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="ShaderTableDesc.h" />
     <ClInclude Include="SimpleMath.h" />
@@ -320,6 +322,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Demo.cpp" />
+    <ClCompile Include="DemoAnimation.cpp" />
     <ClCompile Include="DemoDescriptors.cpp" />
     <ClCompile Include="DepthStencilDesc.cpp" />
     <ClCompile Include="EngineDX.cpp" />
@@ -374,6 +377,7 @@
     <ClCompile Include="RenderMeshPass.cpp" />
     <ClCompile Include="RenderTargetDesc.cpp" />
     <ClCompile Include="RenderTexture.cpp" />
+    <ClCompile Include="Ring.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="ShaderTableDesc.cpp" />
     <ClCompile Include="SimpleMath.cpp">

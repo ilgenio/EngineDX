@@ -26,6 +26,13 @@ public:
 
     UINT getNumVertices() const {return numVertices; }
     UINT getNumIndices() const {return numIndices; }
+    bool needsSkinning() const { return (boneIndices != 0) && (boneWeights != 0); } 
+
+    D3D12_GPU_VIRTUAL_ADDRESS getBoneIndices() const { return boneIndices; }
+    D3D12_GPU_VIRTUAL_ADDRESS getBoneWeights() const { return boneWeights; }
+    D3D12_GPU_VIRTUAL_ADDRESS getVertexBuffer() const { return vertexBufferView.BufferLocation; }
+    D3D12_GPU_VIRTUAL_ADDRESS getIndexBuffer() const { return indexBufferView.BufferLocation; }
+
     const BoundingBox& getBoundingBox() const { return bbox; }
 
     void draw(ID3D12GraphicsCommandList* commandList) const;
@@ -38,14 +45,11 @@ private:
     Mesh(const Mesh&) = delete;
     Mesh& operator=(const Mesh&) = delete;
 
-    void computeTSpace();
-    void weld();
+    void computeTSpace(std::unique_ptr<Vertex[]>& vertices, std::unique_ptr<uint8_t[]> &indices);
+    void weld(std::unique_ptr<Vertex[]>& vertices, std::unique_ptr<uint8_t[]> &indices);
 
 private:
 
-
-    typedef std::unique_ptr<Vertex[]> VertexArray;
-    typedef std::unique_ptr<uint8_t[]> IndexArray;
 
     // Name
     std::string name;
@@ -55,14 +59,13 @@ private:
     UINT numIndices = 0;
     UINT indexElementSize = 0;
 
-    VertexArray vertices;
-    IndexArray indices;
-
     // Buffers
     D3D12_VERTEX_BUFFER_VIEW vertexBufferView;
     D3D12_INDEX_BUFFER_VIEW indexBufferView;
+    D3D12_GPU_VIRTUAL_ADDRESS boneIndices = 0;
+    D3D12_GPU_VIRTUAL_ADDRESS boneWeights = 0;
 
-    ComPtr<ID3D12Resource> skinningBuffer;
+    // bounding box
     BoundingBox bbox;
 
     static const uint32_t numVertexAttribs = 4;

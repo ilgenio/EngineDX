@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Module.h"
+#include "Demo.h"
 
 #include "ShaderTableDesc.h"
 #include "ImGuizmo.h"
@@ -16,9 +16,8 @@ class RenderMeshPass;
 class SkyboxRenderPass;
 class AnimationClip;
 
-class Demo : public Module
+class DemoSkinning : public Module
 {
-protected:
     struct PerFrame
     {
         UINT numDirectionalLights = 0;
@@ -59,8 +58,8 @@ protected:
 
 public:
 
-    Demo();
-    ~Demo();
+    DemoSkinning();
+    ~DemoSkinning();
 
     virtual bool init() override;
     virtual bool cleanUp() override;
@@ -72,6 +71,7 @@ private:
     void renderToTexture(ID3D12GraphicsCommandList* commandList);
     void renderMeshes(ID3D12GraphicsCommandList* commandList, const Matrix& view, const Matrix& projection);
 
+    bool loadScene(bool useMSAA);
     void debugDrawCommands();
     void imGuiDrawCommands();
 };

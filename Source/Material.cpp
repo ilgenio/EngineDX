@@ -1,5 +1,7 @@
 #include "Globals.h"
 #include "Material.h"
+#include "Model.h"
+#include "Scene.h"
 
 #include "Application.h"
 #include "ModuleTextureManager.h"
@@ -8,12 +10,25 @@
 
 #include "tiny_gltf.h"
 
-Material::Material()
+Material::Material(Model* parentModel, const char* name)
 {
+    parent = parentModel;
+    this->name = name;
 }
 
 Material::~Material()
 {
+    if(parent && parent->getScene())
+    {
+        Scene* scene = parent->getScene();
+        for(UINT i = 0; i < TEX_SLOT_COUNT; ++i)
+        {
+            if(!textures[i].path.empty())
+            {
+                scene->unloadTexture(textures[i].path);
+            }
+        }   
+    }
 }
 
 void Material::load(const tinygltf::Model& model, const tinygltf::Material &material, const char* basePath)
@@ -26,9 +41,9 @@ void Material::load(const tinygltf::Model& model, const tinygltf::Material &mate
                                        float(material.pbrMetallicRoughness.baseColorFactor[3]));
     data.metallicFactor  = float(material.pbrMetallicRoughness.metallicFactor);
     data.roughnessFactor = float(material.pbrMetallicRoughness.roughnessFactor);
-    data.emissiveFactor = material.emissiveFactor.size() >= 3 ? Vector3(float(material.emissiveFactor[0]),
-                                                                        float(material.emissiveFactor[1]),
-                                                                        float(material.emissiveFactor[2])) : Vector3::Zero;
+    data.emissiveFactor  = material.emissiveFactor.size() >= 3 ? Vector3(float(material.emissiveFactor[0]),
+                                                                         float(material.emissiveFactor[1]),
+                                                                         float(material.emissiveFactor[2])) : Vector3::Zero;
     data.flags           = 0;
 
     std::string base = basePath;
@@ -119,12 +134,12 @@ bool Material::loadTexture(const tinygltf::Model& model, const std::string& base
     const tinygltf::Texture& texture = model.textures[index];
     const tinygltf::Image& image = model.images[texture.source];
 
-    if (image.mimeType.empty())
+    if (image.mimeType.empty() && parent && parent->getScene())
     {
-        ModuleTextureManager* textureManager = app->getTextureManager();
+        Scene* scene = parent->getScene();
         
-        output.path = textureManager->getNormalizedPath(basePath + image.uri);
-        output.texture = textureManager->createTexture(output.path, defaultSRGB);
+        output.path = normalizePath(basePath + image.uri);
+        output.texture = scene->loadTexture(output.path, defaultSRGB);
 
         _ASSERT_EXPR(output.texture, L"Can't load texture");
 
