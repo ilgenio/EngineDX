@@ -6,8 +6,7 @@
 #include "ModuleD3D12.h"
 #include "ModuleResources.h"
 #include "ModuleShaderDescriptors.h"
-#include "ModuleRTDescriptors.h"
-#include "ModuleDSDescriptors.h"
+#include "ModuleTargetDescriptors.h"
 #include "ModuleCamera.h"
 #include "ModuleRingBuffer.h"
 
@@ -104,8 +103,7 @@ void Exercise11::preRender()
 void Exercise11::renderToTexture(ID3D12GraphicsCommandList* commandList)
 {
     ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
-    ModuleRTDescriptors* rtDescriptors = app->getRTDescriptors();
-    ModuleDSDescriptors* dsDescriptors = app->getDSDescriptors();
+    ModuleTargetDescriptors* rtDescriptors = app->getTargetDescriptors();
     ModuleSamplers* samplers = app->getSamplers();
     ModuleCamera* camera = app->getCamera();
 

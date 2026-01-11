@@ -5,7 +5,7 @@
 #include "Application.h"
 #include "ModuleD3D12.h"
 #include "ModuleResources.h"
-#include "ModuleRTDescriptors.h"
+#include "ModuleTargetDescriptors.h"
 #include "ModuleShaderDescriptors.h"
 #include "ModuleSamplers.h"
 
@@ -33,7 +33,7 @@ EnvironmentBRDFPass::~EnvironmentBRDFPass()
 ComPtr<ID3D12Resource> EnvironmentBRDFPass::generate(size_t size)
 {
     ModuleD3D12* d3d12 = app->getD3D12();
-    ModuleRTDescriptors* rtDescriptors = app->getRTDescriptors();
+    ModuleTargetDescriptors* targetDescriptors = app->getTargetDescriptors();
     ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
     ModuleSamplers* samplers = app->getSamplers();
     ModuleResources* resources = app->getResources();
@@ -53,7 +53,7 @@ ComPtr<ID3D12Resource> EnvironmentBRDFPass::generate(size_t size)
     commandList->RSSetViewports(1, &viewport);
     commandList->RSSetScissorRects(1, &scissor);
 
-    RenderTargetDesc rtvDesc = rtDescriptors->create(environmentMap.Get());
+    RenderTargetDesc rtvDesc = targetDescriptors->createRT(environmentMap.Get());
     D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = rtvDesc.getCPUHandle();
     commandList->OMSetRenderTargets(1, &cpuHandle, FALSE, nullptr);
 

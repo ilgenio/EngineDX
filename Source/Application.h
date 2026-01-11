@@ -13,8 +13,7 @@ class ModuleCamera;
 class ModuleRender;
 class ModuleResources;
 class ModuleShaderDescriptors;
-class ModuleRTDescriptors;
-class ModuleDSDescriptors;
+class ModuleTargetDescriptors;
 class ModuleSamplers;
 class ModuleRingBuffer;
 class ModuleStaticBuffer;
@@ -36,8 +35,7 @@ public:
     ModuleRender*               getRender() { return render;  }
     ModuleResources*            getResources() { return resources;  }
     ModuleShaderDescriptors*    getShaderDescriptors() { return shaderDescriptors;  }
-    ModuleRTDescriptors*        getRTDescriptors() { return rtDescriptors;  }
-    ModuleDSDescriptors*        getDSDescriptors() { return dsDescriptors; }
+    ModuleTargetDescriptors*    getTargetDescriptors() { return targetDescriptors;  }
     ModuleSamplers*             getSamplers() { return samplers;  }
     ModuleStaticBuffer*         getStaticBuffer() { return staticBuffer;  }
 
@@ -65,8 +63,7 @@ private:
     ModuleResources* resources = nullptr;
     ModuleStaticBuffer* staticBuffer = nullptr;
     ModuleShaderDescriptors* shaderDescriptors = nullptr;
-    ModuleRTDescriptors* rtDescriptors = nullptr;
-    ModuleDSDescriptors* dsDescriptors = nullptr;
+    ModuleTargetDescriptors* targetDescriptors = nullptr;
     ModuleSamplers* samplers = nullptr;
     ModuleRingBuffer* ringBuffer = nullptr;
 

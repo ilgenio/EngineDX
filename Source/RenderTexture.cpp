@@ -3,8 +3,7 @@
 
 #include "Application.h"
 #include "ModuleResources.h"
-#include "ModuleRTDescriptors.h"
-#include "ModuleDSDescriptors.h"
+#include "ModuleTargetDescriptors.h"
 #include "ModuleShaderDescriptors.h"
 #include "ModuleD3D12.h"
 
@@ -21,7 +20,7 @@ void RenderTexture::resize(UINT width, UINT height)
     this->height = height;
 
     ModuleResources* resources = app->getResources();
-    ModuleRTDescriptors* rtDescriptors = app->getRTDescriptors();
+    ModuleTargetDescriptors* targetDescriptors = app->getTargetDescriptors();
     ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
 
     // Create Render Target 
@@ -34,7 +33,7 @@ void RenderTexture::resize(UINT width, UINT height)
     }
 
     // Create RTV.
-    rtvDesc = rtDescriptors->create(texture.Get());
+    rtvDesc = targetDescriptors->createRT(texture.Get());
 
     // Create SRV.
     srvDesc = descriptors->allocTable();
@@ -42,14 +41,12 @@ void RenderTexture::resize(UINT width, UINT height)
 
     if(depthFormat != DXGI_FORMAT_UNKNOWN)
     {
-        ModuleDSDescriptors *dsDescriptors = app->getDSDescriptors();
-
         // Create Depth Texture
         resources->deferRelease(depthTexture);
         depthTexture = resources->createDepthStencil(depthFormat, size_t(width), size_t(height), msaa ? 4 : 1, clearDepth, 0, name);
 
         // Create DSV
-        dsvDesc = dsDescriptors->create(depthTexture.Get());
+        dsvDesc = targetDescriptors->createDS(depthTexture.Get());
     }
 }
 

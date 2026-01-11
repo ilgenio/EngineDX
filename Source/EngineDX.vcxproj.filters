@@ -70,12 +70,6 @@
     <ClCompile Include="ModuleShaderDescriptors.cpp">
       <Filter>Modules</Filter>
     </ClCompile>
-    <ClCompile Include="ModuleRTDescriptors.cpp">
-      <Filter>Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="ModuleDSDescriptors.cpp">
-      <Filter>Modules</Filter>
-    </ClCompile>
     <ClCompile Include="SphereMesh.cpp">
       <Filter>Scene</Filter>
     </ClCompile>
@@ -199,9 +193,6 @@
     <ClCompile Include="ModuleStaticBuffer.cpp">
       <Filter>Modules</Filter>
     </ClCompile>
-    <ClCompile Include="ModuleTextureManager.cpp">
-      <Filter>Modules</Filter>
-    </ClCompile>
     <ClCompile Include="Ring.cpp">
       <Filter>Core</Filter>
     </ClCompile>
@@ -216,6 +207,9 @@
     </ClCompile>
     <ClCompile Include="DemoSkinning.cpp">
       <Filter>Demos</Filter>
+    </ClCompile>
+    <ClCompile Include="ModuleTargetDescriptors.cpp">
+      <Filter>Modules</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -313,12 +307,6 @@
       <Filter>Modules</Filter>
     </ClInclude>
     <ClInclude Include="ModuleShaderDescriptors.h">
-      <Filter>Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="ModuleRTDescriptors.h">
-      <Filter>Modules</Filter>
-    </ClInclude>
-    <ClInclude Include="ModuleDSDescriptors.h">
       <Filter>Modules</Filter>
     </ClInclude>
     <ClInclude Include="HandleManager.h">
@@ -438,9 +426,6 @@
     <ClInclude Include="ModuleStaticBuffer.h">
       <Filter>Modules</Filter>
     </ClInclude>
-    <ClInclude Include="ModuleTextureManager.h">
-      <Filter>Modules</Filter>
-    </ClInclude>
     <ClInclude Include="Ring.h">
       <Filter>Core</Filter>
     </ClInclude>
@@ -455,6 +440,9 @@
     </ClInclude>
     <ClInclude Include="DemoSkinning.h">
       <Filter>Demos</Filter>
+    </ClInclude>
+    <ClInclude Include="ModuleTargetDescriptors.h">
+      <Filter>Modules</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

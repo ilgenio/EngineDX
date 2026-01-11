@@ -3,8 +3,7 @@
 #include "DepthStencilDesc.h"
 
 #include "Application.h"
-#include "ModuleDSDescriptors.h"
-
+#include "ModuleTargetDescriptors.h"
 
 DepthStencilDesc& DepthStencilDesc::operator=(const DepthStencilDesc& other)
 {
@@ -35,14 +34,14 @@ DepthStencilDesc& DepthStencilDesc::operator=(DepthStencilDesc&& other)
 
 DepthStencilDesc::operator bool() const
 {
-    return app->getDSDescriptors()->isValid(handle);
+    return app->getTargetDescriptors()->isValidDS(handle);
 }
 
 void DepthStencilDesc::release()
 {
     if (refCount && --(*refCount) == 0)
     {
-        app->getDSDescriptors()->release(handle);
+        app->getTargetDescriptors()->releaseDS(handle);
 
         handle = 0;
         refCount = nullptr;
@@ -57,5 +56,5 @@ void DepthStencilDesc::addRef()
 
 D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilDesc::getCPUHandle() const
 {
-    return app->getDSDescriptors()->getCPUHandle(handle);
+    return app->getTargetDescriptors()->getDSCPUHandle(handle);
 }

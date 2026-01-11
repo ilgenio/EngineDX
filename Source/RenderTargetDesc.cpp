@@ -3,7 +3,7 @@
 #include "RenderTargetDesc.h"
 
 #include "Application.h"
-#include "ModuleRTDescriptors.h"
+#include "ModuleTargetDescriptors.h"
 
 RenderTargetDesc& RenderTargetDesc::operator=(const RenderTargetDesc& other)
 {
@@ -34,14 +34,14 @@ RenderTargetDesc& RenderTargetDesc::operator=(RenderTargetDesc&& other)
 
 RenderTargetDesc::operator bool() const
 {
-    return app->getRTDescriptors()->isValid(handle);
+    return app->getTargetDescriptors()->isValidRT(handle);
 }
 
 void RenderTargetDesc::release()
 {
     if (refCount && --(*refCount) == 0)
     {
-        app->getRTDescriptors()->release(handle);
+        app->getTargetDescriptors()->releaseRT(handle);
 
         handle = 0;
         refCount = nullptr;
@@ -55,5 +55,5 @@ void RenderTargetDesc::addRef()
 
 D3D12_CPU_DESCRIPTOR_HANDLE RenderTargetDesc::getCPUHandle() const
 {
-    return app->getRTDescriptors()->getCPUHandle(handle);
+    return app->getTargetDescriptors()->getRTCPUHandle(handle);
 }

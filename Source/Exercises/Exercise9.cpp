@@ -6,8 +6,7 @@
 #include "ModuleD3D12.h"
 #include "ModuleResources.h"
 #include "ModuleShaderDescriptors.h"
-#include "ModuleRTDescriptors.h"
-#include "ModuleDSDescriptors.h"
+#include "ModuleTargetDescriptors.h"
 #include "ModuleCamera.h"
 #include "DebugDrawPass.h"
 

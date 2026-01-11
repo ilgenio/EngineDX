@@ -4,7 +4,6 @@
 #include "Scene.h"
 
 #include "Application.h"
-#include "ModuleTextureManager.h"
 #include "ModuleShaderDescriptors.h"
 #include "ModuleD3D12.h"
 

@@ -7,7 +7,7 @@
 #include "ModuleSamplers.h"
 #include "ModuleResources.h"
 #include "ModuleShaderDescriptors.h"
-#include "ModuleRTDescriptors.h"
+#include "ModuleTargetDescriptors.h"
 
 #include "CubemapMesh.h"
 #include "ReadData.h"
@@ -63,7 +63,7 @@ ComPtr<ID3D12Resource> HDRToCubemapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE hd
     commandList->SetGraphicsRootDescriptorTable(2, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
 
 
-    ModuleRTDescriptors* rtDescriptors = app->getRTDescriptors();
+    ModuleTargetDescriptors* rtDescriptors = app->getTargetDescriptors();
     Matrix projMatrix = Matrix::CreatePerspectiveFieldOfView(M_HALF_PI, 1.0f, 0.1f, 100.0f);
 
     // Convert HDR equirectangular to cubemap 
@@ -84,7 +84,7 @@ ComPtr<ID3D12Resource> HDRToCubemapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE hd
         CD3DX12_RESOURCE_BARRIER toRT = CD3DX12_RESOURCE_BARRIER::Transition(cubemap.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET, subResource);
         commandList->ResourceBarrier(1, &toRT);
 
-        RenderTargetDesc rtvDesc = rtDescriptors->create(cubemap.Get(), i, 0, DXGI_FORMAT_R16G16B16A16_FLOAT);
+        RenderTargetDesc rtvDesc = rtDescriptors->createRT(cubemap.Get(), i, 0, DXGI_FORMAT_R16G16B16A16_FLOAT);
         D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = rtvDesc.getCPUHandle();
         commandList->OMSetRenderTargets(1, &cpuHandle, FALSE, nullptr);
 
@@ -114,7 +114,7 @@ ComPtr<ID3D12Resource> HDRToCubemapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE hd
             CD3DX12_RESOURCE_BARRIER toRT = CD3DX12_RESOURCE_BARRIER::Transition(cubemap.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET, subResource);
             commandList->ResourceBarrier(1, &toRT);
 
-            RenderTargetDesc rtvDesc = rtDescriptors->create(cubemap.Get(), j, i, DXGI_FORMAT_R16G16B16A16_FLOAT);
+            RenderTargetDesc rtvDesc = rtDescriptors->createRT(cubemap.Get(), j, i, DXGI_FORMAT_R16G16B16A16_FLOAT);
             D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = rtvDesc.getCPUHandle();
             commandList->OMSetRenderTargets(1, &cpuHandle, FALSE, nullptr);
 
