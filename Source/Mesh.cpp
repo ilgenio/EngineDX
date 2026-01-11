@@ -74,20 +74,11 @@ void Mesh::load(const tinygltf::Model& model, const tinygltf::Mesh& mesh, const 
 
         // Skinning attributes
 
-        struct BoneIndices
-        {
-            UINT indices[4];
-        };
+        std::unique_ptr<SkinBoneData[]> bones = std::make_unique<SkinBoneData[]>(numVertices);
+        uint8_t* boneDataPtr = reinterpret_cast<uint8_t*>(bones.get());
 
-        UINT numJoints, numWeights;
-        std::unique_ptr<BoneIndices []> boneIndexArray;
-        std::unique_ptr<Vector4 []> boneWeightArray;
-
-        loadAccessorTyped(boneIndexArray, numJoints, model, primitive.attributes, "JOINTS_0");
-        loadAccessorTyped(boneWeightArray, numWeights, model, primitive.attributes, "WEIGHTS_0");
-
-        _ASSERTE(numJoints == 0 || numJoints == numVertices);
-        _ASSERTE(numWeights == 0 || numWeights == numVertices);
+        bool hasJoints = loadAccessorData(boneDataPtr + offsetof(SkinBoneData, indices), sizeof(UINT) * 4, sizeof(SkinBoneData), numVertices, model, primitive.attributes, "JOINTS_0");
+        bool hasWeights = loadAccessorData(boneDataPtr + offsetof(SkinBoneData, weights), sizeof(Vector4), sizeof(SkinBoneData), numVertices, model, primitive.attributes, "WEIGHTS_0");
 
         if (primitive.indices >= 0)
         {
@@ -111,7 +102,7 @@ void Mesh::load(const tinygltf::Model& model, const tinygltf::Mesh& mesh, const 
 
         if (!hasTangents)
         {
-            computeTSpace(vertices, indices);
+            computeTSpace(vertices, indices, bones);
         }
 
         if(numIndices > 0)
@@ -121,10 +112,9 @@ void Mesh::load(const tinygltf::Model& model, const tinygltf::Mesh& mesh, const 
 
         staticBuffer->allocVertexBuffer(numVertices, sizeof(Vertex), vertices.get(), vertexBufferView);
 
-        if (numJoints == numVertices && numWeights == numVertices)
+        if (hasJoints && hasWeights)
         {
-            staticBuffer->allocBuffer(numJoints * sizeof(BoneIndices), &boneIndexArray[0], boneIndices);
-            staticBuffer->allocBuffer(numWeights * sizeof(Vector4), &boneWeightArray[0], boneWeights);
+            staticBuffer->allocBuffer(numVertices * sizeof(SkinBoneData), &bones[0], boneData);
         }
     }
 }
@@ -144,11 +134,13 @@ void Mesh::draw(ID3D12GraphicsCommandList* commandList) const
     }
 }
 
-void Mesh::computeTSpace(std::unique_ptr<Vertex[]>& vertices, std::unique_ptr<uint8_t[]>& indices)
+void Mesh::computeTSpace(std::unique_ptr<Vertex[]>& vertices, std::unique_ptr<uint8_t[]>& indices, std::unique_ptr<SkinBoneData[]>& bones)
+    
 {
     struct UserData
     {
         std::unique_ptr<Vertex[]> vertices;
+        std::unique_ptr<SkinBoneData[]> bones;
         uint32_t count;
     };
 
@@ -198,22 +190,24 @@ void Mesh::computeTSpace(std::unique_ptr<Vertex[]>& vertices, std::unique_ptr<ui
     UserData userData;
 
     userData.vertices = std::make_unique<Vertex[]>(numIndices);
+    userData.bones = std::make_unique<SkinBoneData[]>(numIndices);
     userData.count = numIndices;
 
-    auto unweld = [](auto* indices, UINT count, Vertex* outVertices, Vertex* inVertices)
+    auto unweld = [](auto* indices, UINT count, Vertex* outVertices, SkinBoneData* outBones, Vertex* inVertices, SkinBoneData* inBones)
         {
             for (UINT i = 0; i < count; ++i)
             {
                 outVertices[i] = inVertices[indices[i]];
+                outBones[i] = inBones[indices[i]];
                 indices[i] = i;
             }
         };
 
     switch (indexElementSize)
     {
-    case 1: unweld(indices.get(), numIndices, userData.vertices.get(), vertices.get()); break;
-    case 2: unweld(reinterpret_cast<uint16_t*>(indices.get()), numIndices, userData.vertices.get(), vertices.get()); break;
-    case 4: unweld(reinterpret_cast<uint32_t*>(indices.get()), numIndices, userData.vertices.get(), vertices.get()); break;
+    case 1: unweld(indices.get(), numIndices, userData.vertices.get(), userData.bones.get(), vertices.get(), bones.get()); break;
+    case 2: unweld(reinterpret_cast<uint16_t*>(indices.get()), numIndices, userData.vertices.get(), userData.bones.get(), vertices.get(), bones.get()); break;
+    case 4: unweld(reinterpret_cast<uint32_t*>(indices.get()), numIndices, userData.vertices.get(), userData.bones.get(), vertices.get(), bones.get()); break;
     }
 
     SMikkTSpaceInterface iface;
@@ -237,26 +231,18 @@ void Mesh::computeTSpace(std::unique_ptr<Vertex[]>& vertices, std::unique_ptr<ui
     indexElementSize = 4;
     indices = std::make_unique<uint8_t[]>(numIndices* indexElementSize);
 
-    int* data = reinterpret_cast<int*>(&indices[0]);
+    int* remap = reinterpret_cast<int*>(&indices[0]);
 
-    numVertices = uint32_t(WeldMesh(data, reinterpret_cast<float*>(weldVertices.get()), reinterpret_cast<const float*>(userData.vertices.get()), numIndices, sizeof(Vertex)/sizeof(float)));
+    numVertices = uint32_t(WeldMesh(remap, reinterpret_cast<float*>(weldVertices.get()), reinterpret_cast<const float*>(userData.vertices.get()), numIndices, sizeof(Vertex) / sizeof(float)));
 
     vertices = std::make_unique<Vertex[]>(numVertices);
     memcpy(vertices.get(), weldVertices.get(), sizeof(Vertex)* numVertices);
 
-    weld(vertices, indices);
-}
+    bones = std::make_unique<SkinBoneData[]>(numVertices);
 
-void Mesh::weld(std::unique_ptr<Vertex[]>& vertices, std::unique_ptr<uint8_t[]> &indices)
-{
-    std::unique_ptr<Vertex[]> new_vertices = std::make_unique<Vertex[]>(numVertices);
-    std::unique_ptr<int[]> remap = std::make_unique<int[]>(numVertices);
-
-    numVertices = uint32_t(WeldMesh(remap.get(), reinterpret_cast<float*>(new_vertices.get()), reinterpret_cast<const float*>(vertices.get()), numVertices, sizeof(Vertex) / sizeof(float)));
     for (uint32_t i = 0; i < numIndices; ++i)
     {
-        indices[i] = uint32_t(remap[indices[i]]);
+        bones[remap[i]] = userData.bones[i];
     }
-
-    std::swap(vertices, new_vertices);
 }
+

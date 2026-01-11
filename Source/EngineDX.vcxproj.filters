@@ -151,9 +151,6 @@
     <ClCompile Include="StartMenu.cpp">
       <Filter>Modules</Filter>
     </ClCompile>
-    <ClCompile Include="DemoDescriptors.cpp">
-      <Filter>Modules</Filter>
-    </ClCompile>
     <ClCompile Include="Exercises\Exercise1.cpp">
       <Filter>Exercises</Filter>
     </ClCompile>
@@ -190,9 +187,6 @@
     <ClCompile Include="Exercises\Exercise12.cpp">
       <Filter>Exercises</Filter>
     </ClCompile>
-    <ClCompile Include="Demo.cpp">
-      <Filter>Modules</Filter>
-    </ClCompile>
     <ClCompile Include="Exercises\Exercise13.cpp">
       <Filter>Exercises</Filter>
     </ClCompile>
@@ -211,8 +205,17 @@
     <ClCompile Include="Ring.cpp">
       <Filter>Core</Filter>
     </ClCompile>
+    <ClCompile Include="Demo.cpp">
+      <Filter>Demos</Filter>
+    </ClCompile>
     <ClCompile Include="DemoAnimation.cpp">
-      <Filter>Modules</Filter>
+      <Filter>Demos</Filter>
+    </ClCompile>
+    <ClCompile Include="DemoDescriptors.cpp">
+      <Filter>Demos</Filter>
+    </ClCompile>
+    <ClCompile Include="DemoSkinning.cpp">
+      <Filter>Demos</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -381,9 +384,6 @@
     <ClInclude Include="StartMenu.h">
       <Filter>Modules</Filter>
     </ClInclude>
-    <ClInclude Include="DemoDescriptors.h">
-      <Filter>Modules</Filter>
-    </ClInclude>
     <ClInclude Include="Exercises\Exercise1.h">
       <Filter>Exercises</Filter>
     </ClInclude>
@@ -423,9 +423,6 @@
     <ClInclude Include="MathUtils.h">
       <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Demo.h">
-      <Filter>Modules</Filter>
-    </ClInclude>
     <ClInclude Include="3rdParty\imgui-docking\imgui.h">
       <Filter>imgui</Filter>
     </ClInclude>
@@ -447,8 +444,17 @@
     <ClInclude Include="Ring.h">
       <Filter>Core</Filter>
     </ClInclude>
+    <ClInclude Include="Demo.h">
+      <Filter>Demos</Filter>
+    </ClInclude>
     <ClInclude Include="DemoAnimation.h">
-      <Filter>Modules</Filter>
+      <Filter>Demos</Filter>
+    </ClInclude>
+    <ClInclude Include="DemoDescriptors.h">
+      <Filter>Demos</Filter>
+    </ClInclude>
+    <ClInclude Include="DemoSkinning.h">
+      <Filter>Demos</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -495,6 +501,9 @@
     </Filter>
     <Filter Include="Exercises\Shaders">
       <UniqueIdentifier>{7ee33d6d-57e6-4cd8-9a16-dc78fb9dc68a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Demos">
+      <UniqueIdentifier>{c3cf95a8-659c-4062-8516-2450b733cb68}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

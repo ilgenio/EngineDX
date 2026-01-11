@@ -182,6 +182,7 @@
     <ClInclude Include="Demo.h" />
     <ClInclude Include="DemoAnimation.h" />
     <ClInclude Include="DemoDescriptors.h" />
+    <ClInclude Include="DemoSkinning.h" />
     <ClInclude Include="DepthStencilDesc.h" />
     <ClInclude Include="EngineDX.h" />
     <ClInclude Include="EnvironmentBRDFPass.h" />
@@ -324,6 +325,7 @@
     <ClCompile Include="Demo.cpp" />
     <ClCompile Include="DemoAnimation.cpp" />
     <ClCompile Include="DemoDescriptors.cpp" />
+    <ClCompile Include="DemoSkinning.cpp" />
     <ClCompile Include="DepthStencilDesc.cpp" />
     <ClCompile Include="EngineDX.cpp" />
     <ClCompile Include="EnvironmentBRDFPass.cpp" />

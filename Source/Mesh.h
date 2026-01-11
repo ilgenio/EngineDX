@@ -26,10 +26,9 @@ public:
 
     UINT getNumVertices() const {return numVertices; }
     UINT getNumIndices() const {return numIndices; }
-    bool needsSkinning() const { return (boneIndices != 0) && (boneWeights != 0); } 
+    bool needsSkinning() const { return (boneData != 0) ; } 
 
-    D3D12_GPU_VIRTUAL_ADDRESS getBoneIndices() const { return boneIndices; }
-    D3D12_GPU_VIRTUAL_ADDRESS getBoneWeights() const { return boneWeights; }
+    D3D12_GPU_VIRTUAL_ADDRESS getBoneData() const { return boneData; }
     D3D12_GPU_VIRTUAL_ADDRESS getVertexBuffer() const { return vertexBufferView.BufferLocation; }
     D3D12_GPU_VIRTUAL_ADDRESS getIndexBuffer() const { return indexBufferView.BufferLocation; }
 
@@ -42,14 +41,19 @@ public:
 
 private:
 
+    struct SkinBoneData
+    {
+        UINT indices[4];
+        Vector4 weights;
+    };
+
+
     Mesh(const Mesh&) = delete;
     Mesh& operator=(const Mesh&) = delete;
 
-    void computeTSpace(std::unique_ptr<Vertex[]>& vertices, std::unique_ptr<uint8_t[]> &indices);
-    void weld(std::unique_ptr<Vertex[]>& vertices, std::unique_ptr<uint8_t[]> &indices);
+    void computeTSpace(std::unique_ptr<Vertex[]>& vertices, std::unique_ptr<uint8_t[]> &indices, std::unique_ptr<SkinBoneData[]>& bones);
 
 private:
-
 
     // Name
     std::string name;
@@ -62,8 +66,7 @@ private:
     // Buffers
     D3D12_VERTEX_BUFFER_VIEW vertexBufferView;
     D3D12_INDEX_BUFFER_VIEW indexBufferView;
-    D3D12_GPU_VIRTUAL_ADDRESS boneIndices = 0;
-    D3D12_GPU_VIRTUAL_ADDRESS boneWeights = 0;
+    D3D12_GPU_VIRTUAL_ADDRESS boneData = 0;
 
     // bounding box
     BoundingBox bbox;
