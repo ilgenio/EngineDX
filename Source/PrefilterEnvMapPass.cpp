@@ -26,7 +26,7 @@ PrefilterEnvMapPass::PrefilterEnvMapPass()
     ok = ok && createRootSignature();
     ok = ok && createPSO();
 
-    _ASSERT_EXPR(ok, "PrefilterEnvMapPass can't initialise");
+    _ASSERT_EXPR(ok, L"PrefilterEnvMapPass can't initialise");
 }
 
 PrefilterEnvMapPass::~PrefilterEnvMapPass()

@@ -11,6 +11,7 @@ class ModuleRender;
 class ModuleD3D12;
 class ModuleCamera;
 class ModuleRender;
+class ModuleScene;
 class ModuleResources;
 class ModuleShaderDescriptors;
 class ModuleTargetDescriptors;
@@ -38,6 +39,7 @@ public:
     ModuleTargetDescriptors*    getTargetDescriptors() { return targetDescriptors;  }
     ModuleSamplers*             getSamplers() { return samplers;  }
     ModuleStaticBuffer*         getStaticBuffer() { return staticBuffer;  }
+    ModuleScene*                getScene() { return scene; }
 
     void                        swapModule(Module* from, Module* to) { swapModules.push_back(std::make_pair(from, to)); }
 
@@ -66,6 +68,7 @@ private:
     ModuleTargetDescriptors* targetDescriptors = nullptr;
     ModuleSamplers* samplers = nullptr;
     ModuleRingBuffer* ringBuffer = nullptr;
+    ModuleScene*  scene = nullptr;
 
     uint64_t  lastMilis = 0;
     TickList  tickList;

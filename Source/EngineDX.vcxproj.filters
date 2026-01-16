@@ -196,9 +196,6 @@
     <ClCompile Include="Ring.cpp">
       <Filter>Core</Filter>
     </ClCompile>
-    <ClCompile Include="Demo.cpp">
-      <Filter>Demos</Filter>
-    </ClCompile>
     <ClCompile Include="DemoAnimation.cpp">
       <Filter>Demos</Filter>
     </ClCompile>
@@ -209,6 +206,12 @@
       <Filter>Demos</Filter>
     </ClCompile>
     <ClCompile Include="ModuleTargetDescriptors.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="ModuleScene.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="ModuleRender.cpp">
       <Filter>Modules</Filter>
     </ClCompile>
   </ItemGroup>
@@ -429,9 +432,6 @@
     <ClInclude Include="Ring.h">
       <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Demo.h">
-      <Filter>Demos</Filter>
-    </ClInclude>
     <ClInclude Include="DemoAnimation.h">
       <Filter>Demos</Filter>
     </ClInclude>
@@ -442,6 +442,12 @@
       <Filter>Demos</Filter>
     </ClInclude>
     <ClInclude Include="ModuleTargetDescriptors.h">
+      <Filter>Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="ModuleScene.h">
+      <Filter>Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="ModuleRender.h">
       <Filter>Modules</Filter>
     </ClInclude>
   </ItemGroup>

@@ -45,6 +45,7 @@ public:
     bool init(const char* hdrFileName, bool useMSAA);
     void render(ID3D12GraphicsCommandList* cmdList, float aspectRatio);
 
+    bool  isValid() const { return tableDesc; }
     UINT  getNumIBLMipLevels() const {return iblMipLevels; }
     D3D12_GPU_DESCRIPTOR_HANDLE getIBLTable() const { return tableDesc.getGPUHandle(); }
     D3D12_GPU_DESCRIPTOR_HANDLE getCubemapSRV() const { return tableDesc.getGPUHandle(TEX_SLOT_SKYBOX); }

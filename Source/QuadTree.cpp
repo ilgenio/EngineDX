@@ -32,7 +32,7 @@ QuadTree::~QuadTree()
 
 bool QuadTree::init(UINT depthLevels, float worldSize, float height)
 {
-    _ASSERT_EXPR(depthLevels > 0, "Depth levels must be greater than zero.");
+    _ASSERT_EXPR(depthLevels > 0, L"Depth levels must be greater than zero.");
 
     this->depthLevels       = depthLevels;
     this->worldHalfSize     = worldSize*0.5f;

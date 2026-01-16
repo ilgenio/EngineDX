@@ -179,7 +179,6 @@
     <ClInclude Include="CubemapMesh.h" />
     <ClInclude Include="DebugDrawPass.h" />
     <ClInclude Include="debug_draw.hpp" />
-    <ClInclude Include="Demo.h" />
     <ClInclude Include="DemoAnimation.h" />
     <ClInclude Include="DemoDescriptors.h" />
     <ClInclude Include="DemoSkinning.h" />
@@ -216,9 +215,11 @@
     <ClInclude Include="ModuleCamera.h" />
     <ClInclude Include="ModuleD3D12.h" />
     <ClInclude Include="ModuleInput.h" />
+    <ClInclude Include="ModuleRender.h" />
     <ClInclude Include="ModuleResources.h" />
     <ClInclude Include="ModuleRingBuffer.h" />
     <ClInclude Include="ModuleSamplers.h" />
+    <ClInclude Include="ModuleScene.h" />
     <ClInclude Include="ModuleShaderDescriptors.h" />
     <ClInclude Include="ModuleStaticBuffer.h" />
     <ClInclude Include="ModuleTargetDescriptors.h" />
@@ -320,7 +321,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="Demo.cpp" />
     <ClCompile Include="DemoAnimation.cpp" />
     <ClCompile Include="DemoDescriptors.cpp" />
     <ClCompile Include="DemoSkinning.cpp" />
@@ -363,9 +363,11 @@
     <ClCompile Include="ModuleCamera.cpp" />
     <ClCompile Include="ModuleD3D12.cpp" />
     <ClCompile Include="ModuleInput.cpp" />
+    <ClCompile Include="ModuleRender.cpp" />
     <ClCompile Include="ModuleResources.cpp" />
     <ClCompile Include="ModuleRingBuffer.cpp" />
     <ClCompile Include="ModuleSamplers.cpp" />
+    <ClCompile Include="ModuleScene.cpp" />
     <ClCompile Include="ModuleShaderDescriptors.cpp" />
     <ClCompile Include="ModuleStaticBuffer.cpp" />
     <ClCompile Include="ModuleTargetDescriptors.cpp" />

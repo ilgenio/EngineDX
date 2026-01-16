@@ -1,17 +1,11 @@
 #pragma once
 
-#include "Demo.h"
-#include "ShaderTableDesc.h"
-#include "ImGuizmo.h"
+#include "Module.h"
 
-class DemoAnimation : public Demo
+class DemoAnimation : public Module
 {
 public:
 
-    DemoAnimation();
-    ~DemoAnimation();
+    bool init() override;
 
-    virtual bool init() override;
-
-private:
 };

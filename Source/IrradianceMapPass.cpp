@@ -25,7 +25,7 @@ IrradianceMapPass::IrradianceMapPass()
     ok = ok && createRootSignature();
     ok = ok && createPSO();
 
-    _ASSERT_EXPR(ok, "IrradianceMapPass can't initialise");
+    _ASSERT_EXPR(ok, L"IrradianceMapPass can't initialise");
 }
 
 IrradianceMapPass::~IrradianceMapPass()

@@ -1,88 +1,75 @@
 #include "Globals.h"
 
-#include "Demo.h"
+#include "ModuleRender.h"
 
 #include "Application.h"
 #include "ModuleD3D12.h"
-#include "ModuleShaderDescriptors.h"
-#include "ModuleSamplers.h"
-#include "ModuleRingBuffer.h"
+#include "ModuleScene.h"
 #include "ModuleCamera.h"
+#include "ModuleShaderDescriptors.h"
+#include "ModuleRingBuffer.h"
+
+#include "Scene.h"
+#include "Skybox.h"
 
 #include "DebugDrawPass.h"
 #include "ImGuiPass.h"
 #include "RenderMeshPass.h"
-#include "SkyboxRenderPass.h"
-
-#include "Scene.h"
-#include "Model.h"
-#include "Skybox.h"
-#include "AnimationClip.h"
 #include "RenderTexture.h"
 
-Demo::Demo()
+
+ModuleRender::ModuleRender()
 {
 
 }
 
-Demo::~Demo()
+ModuleRender::~ModuleRender()
 {
 
 }
 
-bool Demo::init() 
+bool ModuleRender::init()
 {
-    const bool useMSAA = false;
-
     ModuleD3D12* d3d12 = app->getD3D12();
 
-    debugDesc = app->getShaderDescriptors()->allocTable();
+    debugDesc       = app->getShaderDescriptors()->allocTable();
 
-    debugDrawPass = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue(), useMSAA, debugDesc.getCPUHandle(0), debugDesc.getGPUHandle(0));
-    imguiPass = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd(), debugDesc.getCPUHandle(1), debugDesc.getGPUHandle(1));
-    renderTexture = std::make_unique<RenderTexture>("Exercise12", DXGI_FORMAT_R8G8B8A8_UNORM, Vector4(0.188f, 0.208f, 0.259f, 1.0f), DXGI_FORMAT_D32_FLOAT, 1.0f, useMSAA, useMSAA);
-    renderMeshPass = std::make_unique<RenderMeshPass>();
+    debugDrawPass   = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue(), false, debugDesc.getCPUHandle(0), debugDesc.getGPUHandle(0));
+    imguiPass       = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd(), debugDesc.getCPUHandle(1), debugDesc.getGPUHandle(1));
+    renderTexture   = std::make_unique<RenderTexture>("ModuleRender", DXGI_FORMAT_R8G8B8A8_UNORM, Vector4(0.188f, 0.208f, 0.259f, 1.0f), DXGI_FORMAT_D32_FLOAT, 1.0f, false, false);
+    renderMeshPass  = std::make_unique<RenderMeshPass>();
 
-    bool ok = renderMeshPass->init(useMSAA);
+    bool ok = renderMeshPass->init(false);
 
     return ok;
+
 }
 
-bool Demo::cleanUp() 
+bool ModuleRender::cleanUp()
 {
     imguiPass.reset();
     debugDrawPass.reset();
 
-    skybox.reset();
-    model.reset();
-    scene.reset();
-
     return true;
 }
 
-void Demo::update() 
+void ModuleRender::preRender()
 {
-    // Update scene
-    scene->updateAnimations(float(app->getElapsedMilis()) * 0.001f);
-    scene->updateWorldTransforms();
-
     // Frustum culling
-
     if (renderTexture->isValid())
     {
         float aspect = float(renderTexture->getWidth()) / float(renderTexture->getHeight());
+
         Vector4 planes[6];
         app->getCamera()->getFrustumPlanes(planes, aspect, false);
+
         renderList.clear();
-
-        scene->frustumCulling(planes, renderList);
+        app->getScene()->getScene()->frustumCulling(planes, renderList);
     }
-}
 
-void Demo::preRender()
-{
+    // ImGui and DebugDraw commands
+
     imguiPass->startFrame();
-    ImGuizmo::BeginFrame();
 
     ImGuiID dockspace_id = ImGui::GetID("MyDockNodeId");
     ImGui::DockSpaceOverViewport(dockspace_id);
@@ -115,15 +102,16 @@ void Demo::preRender()
     unsigned width = d3d12->getWindowWidth();
     unsigned height = d3d12->getWindowHeight();
 
-    // Set the viewport size (adjust based on your application)
-    ImGuizmo::SetRect(0, 0, float(width), float(height));
+    ModuleScene* scene = app->getScene();
 
-    imGuiDrawCommands();
-    debugDrawCommands();
-
+    if (scene && scene->getModelCount() > 0)
+    {
+        imGuiDrawCommands();
+        debugDrawCommands();
+    }
 }
 
-void Demo::debugDrawCommands()
+void ModuleRender::debugDrawCommands()
 {
     if (showGrid) dd::xzSquareGrid(-10.0f, 10.0f, 0.0f, 1.0f, dd::colors::LightGray);
     if (showAxis) dd::axisTriad(ddConvert(Matrix::Identity), 0.1f, 2.0f);
@@ -141,7 +129,7 @@ void Demo::debugDrawCommands()
 
     if (showQuadTree)
     {
-        scene->debugDrawQuadTree(frustumPlanes, quadTreeLevel);
+        app->getScene()->getScene()->debugDrawQuadTree(frustumPlanes, quadTreeLevel);
         
         Vector3 points[8];
         trackedFrustum.GetCorners(points);
@@ -149,7 +137,7 @@ void Demo::debugDrawCommands()
     }
 }
 
-void Demo::imGuiDrawCommands()
+void ModuleRender::imGuiDrawCommands()
 {
     ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
 
@@ -165,8 +153,6 @@ void Demo::imGuiDrawCommands()
         ImGui::SliderInt("QuadTree level", (int*)&quadTreeLevel, 0, 10);
     }
     ImGui::Checkbox("Track frustum", &trackFrustum);
-
-    ImGui::Checkbox("Show guizmo", &showGuizmo);
 
     ImGui::Separator();
     ModuleCamera* camera = app->getCamera();
@@ -202,34 +188,27 @@ void Demo::imGuiDrawCommands()
 
     ImGui::EndChildFrame();
     ImGui::End();
-
-    if (showGuizmo)
-    {
-        const Matrix& viewMatrix = camera->getView();
-        Matrix projMatrix = ModuleCamera::getPerspectiveProj(canvasSize.x / canvasSize.y);
-
-        // Manipulate the object
-        ImGuizmo::Manipulate((const float*)&viewMatrix, (const float*)&projMatrix, gizmoOperation, ImGuizmo::LOCAL, (float*)&objectMatrix);
-    }
-
-    app->getCamera()->setEnable(viewerFocused && !ImGuizmo::IsUsing());
 }
 
-void Demo::renderMeshes(ID3D12GraphicsCommandList *commandList, const Matrix& view, const Matrix& projection)
+void ModuleRender::renderMeshes(ID3D12GraphicsCommandList *commandList, const Matrix& view, const Matrix& projection)
 {
     ModuleRingBuffer* ringBuffer = app->getRingBuffer();
+    Skybox* skybox = app->getScene()->getSkybox();
 
-    PerFrame perFrameData = {};
-    perFrameData.numDirectionalLights = 0;
-    perFrameData.numPointLights = 0;
-    perFrameData.numSpotLights = 0;
-    perFrameData.numRoughnessLevels = skybox->getNumIBLMipLevels()  ;
-    perFrameData.cameraPosition = app->getCamera()->getPos();
+    if (!renderList.empty() && skybox->isValid())
+    {
+        PerFrame perFrameData = {};
+        perFrameData.numDirectionalLights = 0;
+        perFrameData.numPointLights = 0;
+        perFrameData.numSpotLights = 0;
+        perFrameData.numRoughnessLevels = skybox->getNumIBLMipLevels();
+        perFrameData.cameraPosition = app->getCamera()->getPos();
 
-    renderMeshPass->render(commandList, renderList, ringBuffer->allocUploadBuffer(&perFrameData), skybox->getIBLTable(), view*projection);
+        renderMeshPass->render(commandList, renderList, ringBuffer->allocUploadBuffer(&perFrameData), skybox->getIBLTable(), view * projection);
+    }
 }
 
-void Demo::renderToTexture(ID3D12GraphicsCommandList* commandList)
+void ModuleRender::renderToTexture(ID3D12GraphicsCommandList* commandList)
 {
     ModuleCamera* camera = app->getCamera();
 
@@ -237,11 +216,11 @@ void Demo::renderToTexture(ID3D12GraphicsCommandList* commandList)
     const Matrix& view = camera->getView();
     Matrix proj = ModuleCamera::getPerspectiveProj(aspect);
 
-    BEGIN_EVENT(commandList, "Demo Render Scene to Texture");
+    BEGIN_EVENT(commandList, "Render Scene to Texture");
 
     renderTexture->beginRender(commandList);
 
-    skybox->render(commandList, aspect);
+    app->getScene()->getSkybox()->render(commandList, aspect);
 
     renderMeshes(commandList, view, proj);
 
@@ -252,7 +231,7 @@ void Demo::renderToTexture(ID3D12GraphicsCommandList* commandList)
     END_EVENT(commandList);
 }
 
-void Demo::render()
+void ModuleRender::render()
 {
     ModuleD3D12* d3d12 = app->getD3D12();
 

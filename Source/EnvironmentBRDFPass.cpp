@@ -23,7 +23,7 @@ EnvironmentBRDFPass::EnvironmentBRDFPass()
     ok = ok && createRootSignature();
     ok = ok && createPSO();
 
-    _ASSERT_EXPR(ok, "Error creating EnvironmentBRDFPass");
+    _ASSERT_EXPR(ok, L"Error creating EnvironmentBRDFPass");
 }
 
 EnvironmentBRDFPass::~EnvironmentBRDFPass()

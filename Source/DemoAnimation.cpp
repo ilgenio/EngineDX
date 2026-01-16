@@ -4,58 +4,28 @@
 
 #include "Application.h"
 #include "ModuleCamera.h"
+#include "ModuleScene.h"
 
 #include "Scene.h"
 #include "Model.h"
 #include "Skybox.h"
 #include "AnimationClip.h"
 
-DemoAnimation::DemoAnimation()
-{
-
-}
-
-DemoAnimation::~DemoAnimation()
-{
-
-}
-
 bool DemoAnimation::init() 
 {
-    bool ok = Demo::init();
+    ModuleScene* scene = app->getScene();
 
-    if(ok)
-    {
-        scene = std::make_unique<Scene>();
-        model.reset(scene->loadModel("Assets/Models/busterDrone/busterDrone.gltf", "Assets/Models/busterDrone"));
-        //model.reset(scene->loadModel("Assets/Models/BistroExterior/BistroExterior.gltf", "Assets/Models/BistroExterior/"));    
+    app->getScene()->getSkybox()->init("Assets/Textures/san_giuseppe_bridge_4k.hdr", false);
 
-        bool ok = model.get();
+    UINT modelIdx = scene->addModel("Assets/Models/busterDrone/busterDrone.gltf", "Assets/Models/busterDrone");
+    UINT animIdx = scene->addClip("Assets/Models/busterDrone/busterDrone.gltf", 0);
+    scene->getModel(modelIdx)->PlayAnim(scene->getClip(animIdx));
 
-        if (ok)
-        {
-            animation = std::make_shared<AnimationClip>();
-            animation->load("Assets/Models/busterDrone/busterDrone.gltf", 0);
+    ModuleCamera* camera = app->getCamera();
 
-            model->PlayAnim(animation);
-        }
-        
-        skybox = std::make_unique<Skybox>();
-        
-        ok = ok && skybox->init("Assets/Textures/san_giuseppe_bridge_4k.hdr", false);
+    camera->setPolar(XMConvertToRadians(1.30f));
+    camera->setAzimuthal(XMConvertToRadians(-11.61f));
+    camera->setTranslation(Vector3(0.0f, 1.24f, 4.65f));
 
-        _ASSERT_EXPR(ok, L"Error loading scene");
-
-    }
-
-    if(ok)
-    {
-        ModuleCamera* camera = app->getCamera();
-
-        camera->setPolar(XMConvertToRadians(1.30f));
-        camera->setAzimuthal(XMConvertToRadians(-11.61f));
-        camera->setTranslation(Vector3(0.0f, 1.24f, 4.65f));
-    }
-
-    return ok;
+    return true;
 }

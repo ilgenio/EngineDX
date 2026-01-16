@@ -24,7 +24,7 @@ bool SkyboxRenderPass::init(bool useMSAA)
     bool ok = createRootSignature();
     ok = ok && createPSO(useMSAA);
 
-    _ASSERT_EXPR(ok, "Error creating SkyboxRenderPass");
+    _ASSERT_EXPR(ok, L"Error creating SkyboxRenderPass");
 
     return ok;
 }

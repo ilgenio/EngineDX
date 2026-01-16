@@ -35,7 +35,7 @@ public:
 
     UINT allocHandle()
     {
-        _ASSERT_EXPR(firstFree < size, "Out of memory handles");
+        _ASSERT_EXPR(firstFree < size, L"Out of memory handles");
 
         if (firstFree < size)
         {

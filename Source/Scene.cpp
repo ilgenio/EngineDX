@@ -26,7 +26,7 @@ Scene::Scene()
 
 Scene::~Scene()
 {
-    _ASSERT_EXPR(models.empty(), "There are live models!!");
+    _ASSERT_EXPR(models.empty(), L"There are live models!!");
 }
 
 Model* Scene::loadModel(const char* fileName, const char* basePath)

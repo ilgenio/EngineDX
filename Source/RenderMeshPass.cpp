@@ -31,7 +31,7 @@ bool RenderMeshPass::init(bool useMSAA)
     bool ok = createRootSignature();
     ok  = ok && createPSO(useMSAA);
 
-    _ASSERT_EXPR(ok, "Error creating RenderMeshPass");
+    _ASSERT_EXPR(ok, L"Error creating RenderMeshPass");
 
     return ok;
 }

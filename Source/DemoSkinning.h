@@ -1,18 +1,12 @@
 #pragma once
 
-#include "Demo.h"
-#include "ShaderTableDesc.h"
-#include "ImGuizmo.h"
+#include "Module.h"
 
-class DemoSkinning : public Demo
+class DemoSkinning : public Module
 {
 public:
 
-    DemoSkinning();
-    ~DemoSkinning();
-
     virtual bool init() override;
 
-private:
 };
 

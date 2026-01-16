@@ -9,6 +9,8 @@
 #include "ModuleSamplers.h"
 #include "ModuleRingBuffer.h"
 #include "ModuleStaticBuffer.h"
+#include "ModuleScene.h"
+#include "ModuleRender.h"
 #include "DemoDescriptors.h"
 
 #include "StartMenu.h"  
@@ -24,6 +26,8 @@ Application::Application(int argc, wchar_t** argv, void* hWnd)
     modules.push_back(samplers = new ModuleSamplers());
     modules.push_back(ringBuffer = new ModuleRingBuffer());
     modules.push_back(staticBuffer = new ModuleStaticBuffer());
+    modules.push_back(scene = new ModuleScene());
+    modules.push_back(render = new ModuleRender());
 
     if (argc > 1)
     {

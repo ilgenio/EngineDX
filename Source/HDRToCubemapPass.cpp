@@ -25,7 +25,7 @@ HDRToCubemapPass::HDRToCubemapPass()
     ok = ok && createRootSignatures();
     ok = ok && createPSOs();
 
-    _ASSERT_EXPR(ok, "Error creating HDRToCubemapPass");
+    _ASSERT_EXPR(ok, L"Error creating HDRToCubemapPass");
 }
 
 HDRToCubemapPass::~HDRToCubemapPass()
