@@ -20,6 +20,7 @@ struct RenderMesh
 
     Matrix transform;
     Matrix normalMatrix;
+    D3D12_GPU_VIRTUAL_ADDRESS skinnedResult = 0;
 };
 
 class Scene

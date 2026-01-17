@@ -1,5 +1,7 @@
 #pragma once
 
+#include <span>
+
 struct RenderMesh;
 
 class SkinningPass
@@ -15,6 +17,4 @@ public:
 private:
     bool createRootSignature();
     bool createPSO();
-
-    D3D12_GPU_VIRTUAL_ADDRESS buildMatrixPalette(const RenderMesh& mesh);
 };

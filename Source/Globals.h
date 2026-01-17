@@ -52,6 +52,11 @@ inline UINT alignUp(UINT value, UINT alignment)
     return (value + alignment - 1) & ~(alignment - 1);
 }
 
+inline UINT getDivisedSize(UINT size, UINT divisor)
+{
+    return (size + divisor - 1) / divisor;
+}
+
 #if USE_PIX
 #define BEGIN_EVENT(commandList, text)  PIXBeginEvent(commandList, PIX_COLOR_DEFAULT, text)
 #define END_EVENT(commandList) PIXEndEvent(commandList)

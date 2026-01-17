@@ -16,6 +16,7 @@
 #include "ImGuiPass.h"
 #include "RenderMeshPass.h"
 #include "RenderTexture.h"
+#include "SkinningPass.h"
 
 
 ModuleRender::ModuleRender()
@@ -38,6 +39,7 @@ bool ModuleRender::init()
     imguiPass       = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd(), debugDesc.getCPUHandle(1), debugDesc.getGPUHandle(1));
     renderTexture   = std::make_unique<RenderTexture>("ModuleRender", DXGI_FORMAT_R8G8B8A8_UNORM, Vector4(0.188f, 0.208f, 0.259f, 1.0f), DXGI_FORMAT_D32_FLOAT, 1.0f, false, false);
     renderMeshPass  = std::make_unique<RenderMeshPass>();
+    skinningPass    = std::make_unique<SkinningPass>();
 
     bool ok = renderMeshPass->init(false);
 
@@ -236,6 +238,8 @@ void ModuleRender::render()
     ModuleD3D12* d3d12 = app->getD3D12();
 
     ID3D12GraphicsCommandList* commandList = d3d12->beginFrameRender();
+
+    skinningPass->record(commandList, std::span<RenderMesh>(renderList.data(), renderList.size()));
 
     if (renderTexture->isValid() && canvasSize.x > 0.0f && canvasSize.y > 0.0f)
     {

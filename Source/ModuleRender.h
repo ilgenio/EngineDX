@@ -10,6 +10,7 @@ class DebugDrawPass;
 class ImGuiPass;
 class RenderMeshPass;
 class RenderTexture;
+class SkinningPass;
 struct RenderMesh;
 
 class ModuleRender : public Module
@@ -26,6 +27,7 @@ class ModuleRender : public Module
     std::unique_ptr<DebugDrawPass>    debugDrawPass;
     std::unique_ptr<ImGuiPass>        imguiPass;
     std::unique_ptr<RenderMeshPass>   renderMeshPass;
+    std::unique_ptr<SkinningPass>     skinningPass;
 
     std::vector<RenderMesh>           renderList;
 

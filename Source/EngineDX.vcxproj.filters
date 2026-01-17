@@ -214,6 +214,9 @@
     <ClCompile Include="ModuleRender.cpp">
       <Filter>Modules</Filter>
     </ClCompile>
+    <ClCompile Include="SkinningPass.cpp">
+      <Filter>Passes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EngineDX.h">
@@ -450,6 +453,9 @@
     <ClInclude Include="ModuleRender.h">
       <Filter>Modules</Filter>
     </ClInclude>
+    <ClInclude Include="SkinningPass.h">
+      <Filter>Passes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="EngineDX.ico">
@@ -651,6 +657,9 @@
     </FxCompile>
     <FxCompile Include="Exercises\Shaders\Exercise13VS.hlsl">
       <Filter>Exercises\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\skinningCS.hlsl">
+      <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

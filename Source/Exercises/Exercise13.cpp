@@ -189,7 +189,6 @@ void Exercise13::renderModel(ID3D12GraphicsCommandList* commandList)
     }
 
     END_EVENT(commandList);
-
 }
 
 void Exercise13::renderToTexture(ID3D12GraphicsCommandList* commandList)
