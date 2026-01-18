@@ -19,6 +19,7 @@ public:
     ~SkinningPass();
 
     void record(ID3D12GraphicsCommandList* commandList, std::span<RenderMesh> meshes);
+    D3D12_GPU_VIRTUAL_ADDRESS getOutputAddress(UINT frameIndex) const { return outputs[frameIndex]->GetGPUVirtualAddress(); }
 
 private:
     UINT copyPalettes(ID3D12GraphicsCommandList* commandList, std::span<RenderMesh> meshes);

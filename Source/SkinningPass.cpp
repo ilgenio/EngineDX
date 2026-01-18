@@ -101,6 +101,7 @@ void SkinningPass::record(ID3D12GraphicsCommandList* commandList, std::span<Rend
 
                     commandList->Dispatch(getDivisedSize(mesh.mesh->getNumVertices(), 64), 1, 1);
 
+                    mesh.skinningOffset = outputOffset; 
                     paletteOffset += mesh.numJoints * sizeof(Matrix);
                     outputOffset += mesh.mesh->getNumVertices() * sizeof(Mesh::Vertex);
                 }

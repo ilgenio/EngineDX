@@ -196,6 +196,7 @@ void ModuleRender::renderMeshes(ID3D12GraphicsCommandList *commandList, const Ma
 {
     ModuleRingBuffer* ringBuffer = app->getRingBuffer();
     Skybox* skybox = app->getScene()->getSkybox();
+    UINT backBufferIndex = app->getD3D12()->getCurrentBackBufferIdx();
 
     if (!renderList.empty() && skybox->isValid())
     {
@@ -206,7 +207,7 @@ void ModuleRender::renderMeshes(ID3D12GraphicsCommandList *commandList, const Ma
         perFrameData.numRoughnessLevels = skybox->getNumIBLMipLevels();
         perFrameData.cameraPosition = app->getCamera()->getPos();
 
-        renderMeshPass->render(commandList, renderList, ringBuffer->alloc(&perFrameData), skybox->getIBLTable(), view * projection);
+        renderMeshPass->render(commandList, renderList, skinningPass->getOutputAddress(backBufferIndex), ringBuffer->alloc(&perFrameData), skybox->getIBLTable(), view * projection);
     }
 }
 
@@ -220,14 +221,19 @@ void ModuleRender::renderToTexture(ID3D12GraphicsCommandList* commandList)
 
     BEGIN_EVENT(commandList, "Render Scene to Texture");
 
+    // Transition to RT + set render target
     renderTexture->beginRender(commandList);
 
+    // Render the skybox
     app->getScene()->getSkybox()->render(commandList, aspect);
 
+    // Render meshes
     renderMeshes(commandList, view, proj);
 
+    // Debug Draw
     debugDrawPass->record(commandList, renderTexture->getWidth(), renderTexture->getHeight(), view, proj);
 
+    // Transition to SRV
     renderTexture->endRender(commandList);
 
     END_EVENT(commandList);
@@ -237,18 +243,24 @@ void ModuleRender::render()
 {
     ModuleD3D12* d3d12 = app->getD3D12();
 
+    // gets command list and assigns descritpor heaps
     ID3D12GraphicsCommandList* commandList = d3d12->beginFrameRender();
-
-    skinningPass->record(commandList, std::span<RenderMesh>(renderList.data(), renderList.size()));
 
     if (renderTexture->isValid() && canvasSize.x > 0.0f && canvasSize.y > 0.0f)
     {
+        // Do skinnging
+        skinningPass->record(commandList, std::span<RenderMesh>(renderList.data(), renderList.size()));
+
+        // Do forward mesh rendering
         renderToTexture(commandList);
     }
 
+    // Set backbuffer render target and transition to RT
     d3d12->setBackBufferRenderTarget(); 
 
+    // ImGui rendering
     imguiPass->record(commandList);
 
+    // Transition to Present, command list Close + queue 
     d3d12->endFrameRender();
 }

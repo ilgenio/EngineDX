@@ -36,7 +36,7 @@ bool RenderMeshPass::init(bool useMSAA)
     return ok;
 }
 
-void RenderMeshPass::render(ID3D12GraphicsCommandList* commandList, std::span<const RenderMesh> meshes, D3D12_GPU_VIRTUAL_ADDRESS perFrameData, D3D12_GPU_DESCRIPTOR_HANDLE iblTable, const Matrix& viewProjection)
+void RenderMeshPass::render(ID3D12GraphicsCommandList* commandList, std::span<const RenderMesh> meshes, D3D12_GPU_VIRTUAL_ADDRESS skinningBuffer, D3D12_GPU_VIRTUAL_ADDRESS perFrameData, D3D12_GPU_DESCRIPTOR_HANDLE iblTable, const Matrix& viewProjection)
 {
     BEGIN_EVENT(commandList, "RenderMesh Pass");
 
@@ -49,6 +49,7 @@ void RenderMeshPass::render(ID3D12GraphicsCommandList* commandList, std::span<co
     commandList->SetGraphicsRootConstantBufferView(SLOT_PER_FRAME_CB, perFrameData);
     commandList->SetGraphicsRootDescriptorTable(SLOT_IBL_TABLE, iblTable);
     commandList->SetGraphicsRootDescriptorTable(SLOT_SAMPLERS, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
+    commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
     for (const RenderMesh& mesh : meshes)
     {
@@ -64,7 +65,28 @@ void RenderMeshPass::render(ID3D12GraphicsCommandList* commandList, std::span<co
 
             commandList->SetGraphicsRootConstantBufferView(SLOT_PER_INSTANCE_CB, ringBuffer->alloc(&perInstance));
             commandList->SetGraphicsRootDescriptorTable(SLOT_TEXTURES_TABLE, mesh.material->getTextureTable());
-            mesh.mesh->draw(commandList);
+
+            if (mesh.numJoints > 0) // skinned mesh
+            {
+                D3D12_VERTEX_BUFFER_VIEW vertexBufferView = mesh.mesh->getVertexBufferView();
+                vertexBufferView.BufferLocation = skinningBuffer + mesh.skinningOffset;
+                
+                commandList->IASetVertexBuffers(0, 1, &vertexBufferView);                
+            }
+            else // rigid mesh
+            {
+                commandList->IASetVertexBuffers(0, 1, &mesh.mesh->getVertexBufferView());
+            }
+
+            if (mesh.mesh->getNumIndices() > 0) // indexed draw
+            {
+                commandList->IASetIndexBuffer(&mesh.mesh->getIndexBufferView());
+                commandList->DrawIndexedInstanced(mesh.mesh->getNumIndices(), 1, 0, 0, 0);
+            }
+            else if (mesh.mesh->getNumVertices() > 0) // non-indexed draw
+            {
+                commandList->DrawInstanced(mesh.mesh->getNumVertices(), 1, 0, 0);
+            }
         }
     }
 

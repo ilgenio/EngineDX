@@ -31,10 +31,10 @@ public:
     D3D12_GPU_VIRTUAL_ADDRESS getBoneData() const { return boneData; }
     D3D12_GPU_VIRTUAL_ADDRESS getVertexBuffer() const { return vertexBufferView.BufferLocation; }
     D3D12_GPU_VIRTUAL_ADDRESS getIndexBuffer() const { return indexBufferView.BufferLocation; }
+    const D3D12_INDEX_BUFFER_VIEW& getIndexBufferView() const { return indexBufferView; }
+    const D3D12_VERTEX_BUFFER_VIEW& getVertexBufferView() const { return vertexBufferView; }
 
     const BoundingBox& getBoundingBox() const { return bbox; }
-
-    void draw(ID3D12GraphicsCommandList* commandList) const;
 
     // Input Layout Descriptor
     static const D3D12_INPUT_LAYOUT_DESC& getInputLayoutDesc() { return inputLayoutDesc; }

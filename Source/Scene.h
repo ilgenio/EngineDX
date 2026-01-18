@@ -17,6 +17,7 @@ struct RenderMesh
     const Material *material = nullptr;
     const Matrix* palette = nullptr;
     UINT numJoints = 0;
+    UINT skinningOffset = 0;
 
     Matrix transform;
     Matrix normalMatrix;

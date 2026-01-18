@@ -146,21 +146,6 @@ void Mesh::load(const tinygltf::Model& model, const tinygltf::Mesh& mesh, const 
     }
 }
 
-void Mesh::draw(ID3D12GraphicsCommandList* commandList) const
-{
-    commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);  
-    commandList->IASetVertexBuffers(0, 1, &vertexBufferView);
-    if (numIndices > 0)
-    {
-        commandList->IASetIndexBuffer(&indexBufferView);
-        commandList->DrawIndexedInstanced(numIndices, 1, 0, 0, 0);
-    }
-    else
-    {
-        commandList->DrawInstanced(numVertices, 1, 0, 0);
-    }
-}
-
 void Mesh::computeTSpace(std::unique_ptr<Vertex[]>& vertices, std::unique_ptr<uint8_t[]>& indices, std::unique_ptr<SkinBoneData[]>& bones)
     
 {
