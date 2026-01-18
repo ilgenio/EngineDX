@@ -318,7 +318,7 @@ void Model::frustumCulling(const Vector4 frustumPlanes[6], const Vector3 absFrus
             renderMesh.normalMatrix.Invert();
             renderMesh.normalMatrix.Transpose();
 
-            if(instance->skinIndex >= 0)
+            if(instance->skinIndex >= 0 && renderMesh.mesh->needsSkinning())
             {
                 updateSkinningMatrices(instance);
 

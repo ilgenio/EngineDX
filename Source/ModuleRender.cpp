@@ -206,7 +206,7 @@ void ModuleRender::renderMeshes(ID3D12GraphicsCommandList *commandList, const Ma
         perFrameData.numRoughnessLevels = skybox->getNumIBLMipLevels();
         perFrameData.cameraPosition = app->getCamera()->getPos();
 
-        renderMeshPass->render(commandList, renderList, ringBuffer->allocUploadBuffer(&perFrameData), skybox->getIBLTable(), view * projection);
+        renderMeshPass->render(commandList, renderList, ringBuffer->alloc(&perFrameData), skybox->getIBLTable(), view * projection);
     }
 }
 

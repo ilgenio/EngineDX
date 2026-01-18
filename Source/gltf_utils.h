@@ -6,10 +6,21 @@
 #include "tiny_gltf.h"
 
 
+inline size_t getAccessorElementSize(const tinygltf::Accessor& accessor)
+{
+    return size_t(tinygltf::GetComponentSizeInBytes(accessor.componentType) * tinygltf::GetNumComponentsInType(accessor.type));
+}
+
+
+inline size_t getAccessorElementSize(const tinygltf::Model& model, int index)
+{
+    return getAccessorElementSize(model.accessors[index]);
+}
+
 inline bool loadAccessorData(uint8_t* data, size_t elemSize, size_t stride, size_t count, const tinygltf::Model& model, int index)
 {
     const tinygltf::Accessor& accessor = model.accessors[index];
-    size_t defaultStride = tinygltf::GetComponentSizeInBytes(accessor.componentType) * tinygltf::GetNumComponentsInType(accessor.type);
+    size_t defaultStride = getAccessorElementSize(accessor);
 
     if (count == accessor.count && defaultStride == elemSize)
     {

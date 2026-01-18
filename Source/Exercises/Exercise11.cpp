@@ -134,7 +134,7 @@ void Exercise11::renderToTexture(ID3D12GraphicsCommandList* commandList)
     commandList->SetPipelineState(pso.Get());
 
     commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &mvp, 0);
-    commandList->SetGraphicsRootConstantBufferView(1, ringBuffer->allocUploadBuffer(&perFrameData));
+    commandList->SetGraphicsRootConstantBufferView(1, ringBuffer->alloc(&perFrameData));
     commandList->SetGraphicsRootDescriptorTable(3, tableDesc.getGPUHandle(TEX_SLOT_IBL));
     commandList->SetGraphicsRootDescriptorTable(5, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
 
@@ -146,7 +146,7 @@ void Exercise11::renderToTexture(ID3D12GraphicsCommandList* commandList)
 
             PerInstance perInstance = { model->getModelMatrix().Transpose(), model->getNormalMatrix().Transpose(), material.getMetallicRoughnessMaterial() };
 
-            commandList->SetGraphicsRootConstantBufferView(2, ringBuffer->allocUploadBuffer(&perInstance));
+            commandList->SetGraphicsRootConstantBufferView(2, ringBuffer->alloc(&perInstance));
             commandList->SetGraphicsRootDescriptorTable(4, material.getTexturesTableDesc().getGPUHandle());
 
             mesh.draw(commandList);

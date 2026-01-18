@@ -77,7 +77,34 @@ void Mesh::load(const tinygltf::Model& model, const tinygltf::Mesh& mesh, const 
         std::unique_ptr<SkinBoneData[]> bones = std::make_unique<SkinBoneData[]>(numVertices);
         uint8_t* boneDataPtr = reinterpret_cast<uint8_t*>(bones.get());
 
-        bool hasJoints = loadAccessorData(boneDataPtr + offsetof(SkinBoneData, indices), sizeof(UINT) * 4, sizeof(SkinBoneData), numVertices, model, primitive.attributes, "JOINTS_0");
+        bool hasJoints = false;
+
+        const auto& it = primitive.attributes.find("JOINTS_0");
+        if (it != primitive.attributes.end())
+        {
+            size_t jointSize = getAccessorElementSize(model, it->second); 
+
+            if (jointSize == sizeof(UINT) * 4)
+            {
+                hasJoints = loadAccessorData(boneDataPtr + offsetof(SkinBoneData, indices), sizeof(UINT) * 4, sizeof(SkinBoneData), numVertices, model, it->second);
+            }
+            else if (jointSize == sizeof(SHORT) * 4)
+            {
+                struct ShortIndices { SHORT indices[4]; };
+                std::unique_ptr<ShortIndices[]> shortData;
+                UINT numJointIndices = 0;
+                hasJoints = loadAccessorTyped(shortData, numJointIndices, model, it->second);
+                _ASSERT(numJointIndices == numVertices);
+                for (UINT i=0; i< numJointIndices; ++i)
+                {
+                    for (UINT j = 0; j < 4; ++j)
+                    {
+                        bones[i].indices[j] = UINT(shortData[i].indices[j]);
+                    }
+                }
+            }
+        }
+
         bool hasWeights = loadAccessorData(boneDataPtr + offsetof(SkinBoneData, weights), sizeof(Vector4), sizeof(SkinBoneData), numVertices, model, primitive.attributes, "WEIGHTS_0");
 
         if (primitive.indices >= 0)

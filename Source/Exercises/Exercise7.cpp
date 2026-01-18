@@ -257,7 +257,7 @@ void Exercise7::renderToTexture(ID3D12GraphicsCommandList* commandList)
     renderTexture->beginRender(commandList);
 
     commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &mvp, 0);
-    commandList->SetGraphicsRootConstantBufferView(1, ringBuffer->allocUploadBuffer(&perFrame));
+    commandList->SetGraphicsRootConstantBufferView(1, ringBuffer->alloc(&perFrame));
     commandList->SetGraphicsRootDescriptorTable(4, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
 
     BEGIN_EVENT(commandList, "Model Render Pass");
@@ -270,7 +270,7 @@ void Exercise7::renderToTexture(ID3D12GraphicsCommandList* commandList)
 
             PerInstance perInstance = { model->getModelMatrix().Transpose(), model->getNormalMatrix().Transpose(), material.getPBRPhongMaterial()};
 
-            commandList->SetGraphicsRootConstantBufferView(2, ringBuffer->allocUploadBuffer(&perInstance));
+            commandList->SetGraphicsRootConstantBufferView(2, ringBuffer->alloc(&perInstance));
             commandList->SetGraphicsRootDescriptorTable(3, material.getTexturesTableDesc().getGPUHandle());
 
             mesh.draw(commandList);

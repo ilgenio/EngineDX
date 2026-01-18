@@ -8,11 +8,9 @@
 // The buffer is reset each frame to maximize memory reuse and minimize allocation overhead.
 class ModuleRingBuffer : public Module
 {
-    char*                  uploadData = nullptr;
-    ComPtr<ID3D12Resource> uploadBuffer;
-    ComPtr<ID3D12Resource> defaultBuffer;
-    Ring                   uploadAllocator;
-    Ring                   defaultAllocator;
+    UINT8*                  data = nullptr;
+    ComPtr<ID3D12Resource> buffer;
+    Ring                   allocator;
 public:
 
     ModuleRingBuffer();
@@ -22,25 +20,21 @@ public:
     void preRender() override;
 
     template<typename T>
-    D3D12_GPU_VIRTUAL_ADDRESS allocUploadBuffer(const T* data)
+    D3D12_GPU_VIRTUAL_ADDRESS alloc(const T* data)
     {
-        return allocUploadBufferRaw(data, alignUp(sizeof(T), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT));
+        return allocRaw(data, sizeof(T));
     }
 
     template<typename T>
-    D3D12_GPU_VIRTUAL_ADDRESS allocUploadBuffer(const T* data, size_t count)
+    D3D12_GPU_VIRTUAL_ADDRESS alloc(const T* data, size_t count)
     {
-        return allocUploadBufferRaw(data, alignUp(sizeof(T)*count, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT));
+        return allocRaw(data, sizeof(T)*count);
     }
 
-    D3D12_GPU_VIRTUAL_ADDRESS allocDefaultBuffer(size_t size)
-    {
-        return defaultBuffer->GetGPUVirtualAddress() + defaultAllocator.alloc(size);
-    }
 
 private:
 
-    D3D12_GPU_VIRTUAL_ADDRESS allocUploadBufferRaw(const void* data, size_t size);
+    D3D12_GPU_VIRTUAL_ADDRESS allocRaw(const void* data, size_t size);
 
 };
 

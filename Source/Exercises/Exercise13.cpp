@@ -169,7 +169,7 @@ void Exercise13::renderModel(ID3D12GraphicsCommandList* commandList)
     mvp = mvp.Transpose();
 
     commandList->SetGraphicsRoot32BitConstants(ROOTPARAM_MVP, sizeof(Matrix) / sizeof(UINT32), &mvp, 0);
-    commandList->SetGraphicsRootConstantBufferView(ROOTPARAM_PERFRAME, ringBuffer->allocUploadBuffer(&perFrameData));
+    commandList->SetGraphicsRootConstantBufferView(ROOTPARAM_PERFRAME, ringBuffer->alloc(&perFrameData));
     commandList->SetGraphicsRootDescriptorTable(ROOTPARAM_IBL_TABLE, skybox->getIBLTable());
     commandList->SetGraphicsRootDescriptorTable(ROOTPARAM_SAMPLERS, app->getSamplers()->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
 
@@ -181,7 +181,7 @@ void Exercise13::renderModel(ID3D12GraphicsCommandList* commandList)
 
             PerInstance perInstance = { model->getModelMatrix().Transpose(), model->getNormalMatrix().Transpose(), material.getMetallicRoughnessMaterial() };
 
-            commandList->SetGraphicsRootConstantBufferView(ROOTPARAM_PERINSTANCE, ringBuffer->allocUploadBuffer(&perInstance));
+            commandList->SetGraphicsRootConstantBufferView(ROOTPARAM_PERINSTANCE, ringBuffer->alloc(&perInstance));
             commandList->SetGraphicsRootDescriptorTable(ROOTPARAM_MATERIAL_TABLE, material.getTexturesTableDesc().getGPUHandle());
 
             mesh.draw(commandList);

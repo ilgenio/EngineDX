@@ -3,7 +3,6 @@
 #include "SkinningPass.h"
 
 #include "Application.h"
-#include "ModuleRingBuffer.h"
 #include "ModuleD3D12.h"
 
 #include "Scene.h"
@@ -11,15 +10,61 @@
 
 #include "ReadData.h"
 
+#define MAX_NUM_OBJECTS 128
+#define MAX_NUM_JOINTS  128
+#define MAX_NUM_VERTICES 64 * (1 << 10)
+
 SkinningPass::SkinningPass()
 {
     createRootSignature();
     createPSO();
+    buildBuffers();
 }
 
 SkinningPass::~SkinningPass()
 {
 
+}
+
+UINT SkinningPass::copyPalettes(ID3D12GraphicsCommandList* commandList, std::span<RenderMesh> meshes)
+{
+    _ASSERTE(meshes.empty() == false);
+
+    ModuleD3D12* d3d12             = app->getD3D12();
+    UINT currentBackBufferIndex    = d3d12->getCurrentBackBufferIdx();
+    ComPtr<ID3D12Resource> palette = palettes[currentBackBufferIndex];
+
+    UINT bytesCopied = 0;
+
+    UINT8* mappedData = nullptr;
+    CD3DX12_RANGE readRange(0, 0);
+    upload->Map(0, &readRange, reinterpret_cast<void**>(&mappedData));
+
+    for (auto& mesh : meshes)
+    {
+        if (mesh.numJoints > 0)
+        {
+            // Copy palette data to GPU
+            memcpy(&mappedData[bytesCopied], mesh.palette, mesh.numJoints * sizeof(Matrix));
+            bytesCopied += mesh.numJoints * sizeof(Matrix);
+        }
+    }
+
+    upload->Unmap(0, nullptr);
+
+    if(bytesCopied > 0)
+    {
+        // Copy to default buffer
+        CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(palette.Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
+        commandList->ResourceBarrier(1, &barrier);
+
+        commandList->CopyBufferRegion(palettes[currentBackBufferIndex].Get(), 0, upload.Get(), 0, bytesCopied);
+
+        barrier = CD3DX12_RESOURCE_BARRIER::Transition(palette.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+        commandList->ResourceBarrier(1, &barrier);
+    }
+
+    return bytesCopied;
 }
 
 void SkinningPass::record(ID3D12GraphicsCommandList* commandList, std::span<RenderMesh> meshes)
@@ -28,25 +73,41 @@ void SkinningPass::record(ID3D12GraphicsCommandList* commandList, std::span<Rend
     {
         BEGIN_EVENT(commandList, "Skinning Pass");
 
-        ModuleRingBuffer* ringBuffer = app->getRingBuffer();
-
-        commandList->SetComputeRootSignature(rootSignature.Get());
-        commandList->SetPipelineState(pso.Get());
-
-        for (auto& mesh : meshes)
+        if(copyPalettes(commandList, meshes) > 0)
         {
-            if (mesh.numJoints > 0)
+            ModuleD3D12* d3d12 = app->getD3D12();
+            UINT currentBackBufferIndex = d3d12->getCurrentBackBufferIdx();
+            ComPtr<ID3D12Resource> output = outputs[currentBackBufferIndex];
+            ComPtr<ID3D12Resource> palette = palettes[currentBackBufferIndex];
+
+            commandList->SetComputeRootSignature(rootSignature.Get());
+            commandList->SetPipelineState(pso.Get());
+
+            auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(output.Get(), D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+            commandList->ResourceBarrier(1, &barrier);
+
+            UINT paletteOffset = 0;
+            UINT outputOffset = 0;
+
+            for (auto& mesh : meshes)
             {
-                mesh.skinnedResult = ringBuffer->allocDefaultBuffer(mesh.mesh->getNumVertices() * sizeof(Mesh::Vertex));
+                if (mesh.numJoints > 0)
+                {
+                    commandList->SetComputeRoot32BitConstant(0, mesh.mesh->getNumVertices(), 0);
+                    commandList->SetComputeRootShaderResourceView(1, palette->GetGPUVirtualAddress()+paletteOffset);
+                    commandList->SetComputeRootShaderResourceView(2, mesh.mesh->getVertexBuffer());
+                    commandList->SetComputeRootShaderResourceView(3, mesh.mesh->getBoneData());
+                    commandList->SetComputeRootUnorderedAccessView(4, output->GetGPUVirtualAddress()+outputOffset);
 
-                commandList->SetComputeRoot32BitConstant(0, mesh.mesh->getNumVertices(), 0);
-                commandList->SetComputeRootShaderResourceView(1, app->getRingBuffer()->allocUploadBuffer(mesh.palette, sizeof(Matrix) * mesh.numJoints));
-                commandList->SetComputeRootShaderResourceView(2, mesh.mesh->getVertexBuffer());
-                commandList->SetComputeRootShaderResourceView(3, mesh.mesh->getBoneData());
-                commandList->SetComputeRootUnorderedAccessView(4, mesh.skinnedResult);
+                    commandList->Dispatch(getDivisedSize(mesh.mesh->getNumVertices(), 64), 1, 1);
 
-                commandList->Dispatch(getDivisedSize(mesh.mesh->getNumVertices(), 64), 1, 1);
+                    paletteOffset += mesh.numJoints * sizeof(Matrix);
+                    outputOffset += mesh.mesh->getNumVertices() * sizeof(Mesh::Vertex);
+                }
             }
+
+            barrier = CD3DX12_RESOURCE_BARRIER::Transition(output.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+            commandList->ResourceBarrier(1, &barrier);
         }
 
         END_EVENT(commandList);
@@ -95,3 +156,32 @@ bool SkinningPass::createPSO()
 
     return true;
 }
+
+bool SkinningPass::buildBuffers()
+{
+    auto* device = app->getD3D12()->getDevice();
+
+    CD3DX12_HEAP_PROPERTIES defaultProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+
+    for (UINT i = 0; i < FRAMES_IN_FLIGHT; ++i)
+    {
+        CD3DX12_RESOURCE_DESC outputDesc = CD3DX12_RESOURCE_DESC::Buffer(MAX_NUM_OBJECTS* MAX_NUM_VERTICES * sizeof(Mesh::Vertex), D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+        device->CreateCommittedResource(&defaultProps, D3D12_HEAP_FLAG_NONE, &outputDesc, D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&outputs[i]));
+        outputs[i]->SetName(L"Skinning Output Buffer");
+
+        CD3DX12_RESOURCE_DESC paletteDesc  = CD3DX12_RESOURCE_DESC::Buffer(MAX_NUM_OBJECTS * MAX_NUM_JOINTS * sizeof(Matrix));
+        device->CreateCommittedResource(&defaultProps, D3D12_HEAP_FLAG_NONE, &paletteDesc, D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&palettes[i]));
+        palettes[i]->SetName(L"Skinning Palette Buffer");
+
+    }
+
+
+    CD3DX12_HEAP_PROPERTIES uploadProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+    CD3DX12_RESOURCE_DESC uploadDesc = CD3DX12_RESOURCE_DESC::Buffer(MAX_NUM_OBJECTS * MAX_NUM_JOINTS * sizeof(Matrix));
+    device->CreateCommittedResource(&uploadProps, D3D12_HEAP_FLAG_NONE, &uploadDesc, D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&upload));
+    upload->SetName(L"Skinning Upload Buffer");
+
+
+    return true;
+}
+

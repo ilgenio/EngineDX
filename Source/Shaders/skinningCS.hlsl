@@ -37,13 +37,25 @@ void main(uint3 dispatchThreadID : SV_DispatchThreadID)
         Vertex vertex = inVertex[index];
         
         BoneWeight bw = boneWeights[index];
+
+        float4x4 skinTransform = { 1.0, 0.0, 0.0, 0.0,
+                                   0.0, 1.0, 0.0, 0.0,
+                                   0.0, 0.0, 1.0, 0.0,
+                                   0.0, 0.0, 0.0, 1.0 };
+
+        if(bw.indices[0] < numVertices && bw.indices[1] < numVertices && bw.indices[2] < numVertices && bw.indices[3] < numVertices)
+        {
+            // Calculate skinning transform
+            skinTransform = float4x4(2.0, 0.0, 0.0, 0.0,
+                             0.0, 2.0, 0.0, 0.0,
+                             0.0, 0.0, 2.0, 0.0,
+                             0.0, 0.0, 0.0, 2.0);
+                //palette[bw.indices[0]] * bw.weights[0] +
+                //palette[bw.indices[1]] * bw.weights[1] +
+                //palette[bw.indices[2]] * bw.weights[2] +
+                //palette[bw.indices[3]] * bw.weights[3];
+        }
         
-        // Calculate skinning transform
-        float4x4 skinTransform = 
-            palette[bw.indices[0]] * bw.weights[0] +
-            palette[bw.indices[1]] * bw.weights[1] +
-            palette[bw.indices[2]] * bw.weights[2] +
-            palette[bw.indices[3]] * bw.weights[3];
         
         // Transform position and vectors
         vertex.position = mul(float4(vertex.position, 1.0), skinTransform).xyz;
@@ -51,6 +63,6 @@ void main(uint3 dispatchThreadID : SV_DispatchThreadID)
         vertex.tangent = mul(float4(vertex.tangent, 0.0), skinTransform).xyz;
 
         // Store results
-        outVertex[index] = vertex;
+        outVertex[index]= vertex;
     }
 }
