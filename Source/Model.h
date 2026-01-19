@@ -83,6 +83,8 @@ public:
 
     Scene* getScene() const { return scene; }
 
+    void enumerateNodes(void (*callbackFunc)(const char* name, const Matrix& worldT, const Matrix& parentT, void* userData), void* userData = nullptr) const;
+
 private:
 
     Model(Scene* parentScene, const char* name);

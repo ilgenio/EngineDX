@@ -5,6 +5,7 @@
 
 #include<memory>
 #include<vector>
+#include<set>
 
 class DebugDrawPass;
 class ImGuiPass;
@@ -46,6 +47,9 @@ class ModuleRender : public Module
     BoundingFrustum trackedFrustum;
     UINT quadTreeLevel = 0;
 
+    std::set<UINT> debugDrawModels;
+
+
 public:
     ModuleRender();
     ~ModuleRender();
@@ -55,6 +59,9 @@ public:
 
     virtual void preRender() override;
     virtual void render() override;
+
+    void addDebugDrawModel(UINT index);
+    void removeDebugDrawModel(UINT index);
 
 private:
     void renderToTexture(ID3D12GraphicsCommandList* commandList);

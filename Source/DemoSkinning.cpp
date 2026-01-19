@@ -10,7 +10,7 @@
 #include "Model.h"
 #include "Skybox.h"
 #include "AnimationClip.h"
-
+#include "ModuleRender.h"
 
 bool DemoSkinning::init() 
 {
@@ -19,8 +19,11 @@ bool DemoSkinning::init()
     app->getScene()->getSkybox()->init("Assets/Textures/san_giuseppe_bridge_4k.hdr", false);
 
     UINT modelIdx = scene->addModel("Assets/Models/KyleRobot/KyleRobot.gltf", "Assets/Models/KyleRobot/");
-    //UINT animIdx = scene->addClip("Assets/Models/busterDrone/busterDrone.gltf", 0);
-    //scene->getModel(modelIdx)->PlayAnim(scene->getClip(animIdx));
+    UINT animIdx = scene->addClip("Assets/Models/KyleRobot/Stand_Idle/Stand_idle.gltf", 0);
+    scene->getModel(modelIdx)->PlayAnim(scene->getClip(animIdx));
+
+    ModuleRender* render = app->getRender();
+    render->addDebugDrawModel(modelIdx);
 
     ModuleCamera* camera = app->getCamera();
 

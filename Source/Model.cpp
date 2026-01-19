@@ -199,6 +199,21 @@ UINT Model::generateNodes(const tinygltf::Model &model, UINT nodeIndex, INT pare
 
 }
 
+void Model::enumerateNodes(void (*callbackFunc)(const char* name, const Matrix& worldT, const Matrix& parentT, void* userData), void* userData) const
+{
+    for(const Node* node : nodes)
+    {
+        if (node->parent >= 0)
+        {
+            (*callbackFunc)(node->name.c_str(), node->worldTransform, nodes[node->parent]->worldTransform, userData);
+        }
+        else
+        {
+            (*callbackFunc)(node->name.c_str(), node->worldTransform, Matrix::Identity, userData);
+        }
+    }
+}
+
 void Model::updateWorldTransforms()
 {
     UINT numDirty = 0;
@@ -362,10 +377,7 @@ void Model::updateAnim(float deltaTime)
         anim->time += deltaTime;
 
         // Loop animation
-        while (anim->time > anim->clip->getDuration())
-        {
-            anim->time -= anim->clip->getDuration();
-        }
+        anim->time = fmodf(anim->time, anim->clip->getDuration());
 
         if (anim->time > anim->fadeIn)
         {

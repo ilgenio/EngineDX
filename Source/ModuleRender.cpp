@@ -10,6 +10,7 @@
 #include "ModuleRingBuffer.h"
 
 #include "Scene.h"
+#include "Model.h"
 #include "Skybox.h"
 
 #include "DebugDrawPass.h"
@@ -136,6 +137,23 @@ void ModuleRender::debugDrawCommands()
         Vector3 points[8];
         trackedFrustum.GetCorners(points);
         dd::box(ddConvert(points), dd::colors::White);
+    }
+
+    // Draw Model transforms
+    ModuleScene* sceneModule = app->getScene();
+
+    auto drawNode = [](const char* name, const Matrix& worldT, const Matrix& parentT, void* userData)
+        {
+            dd::line(ddConvert(worldT.Translation()), ddConvert(parentT.Translation()), dd::colors::White);
+        };
+
+    for (UINT modelIdx : debugDrawModels)
+    {
+        if (modelIdx < sceneModule->getModelCount())
+        {
+            std::shared_ptr<const Model> model = sceneModule->getModel(modelIdx);
+            model->enumerateNodes(drawNode);
+        }
     }
 }
 
@@ -264,3 +282,14 @@ void ModuleRender::render()
     // Transition to Present, command list Close + queue 
     d3d12->endFrameRender();
 }
+
+void ModuleRender::addDebugDrawModel(UINT index)
+{
+    debugDrawModels.insert(index);
+}
+
+void ModuleRender::removeDebugDrawModel(UINT index)
+{
+    debugDrawModels.erase(index);
+}
+
