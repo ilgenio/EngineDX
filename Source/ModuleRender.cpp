@@ -118,7 +118,7 @@ void ModuleRender::debugDrawCommands()
 {
     if (showGrid) dd::xzSquareGrid(-10.0f, 10.0f, 0.0f, 1.0f, dd::colors::LightGray);
     if (showAxis) dd::axisTriad(ddConvert(Matrix::Identity), 0.1f, 2.0f);
-
+    
     char lTmp[1024];
     sprintf_s(lTmp, 1023, "FPS: [%d]. Avg. elapsed (Ms): [%g] ", uint32_t(app->getFPS()), app->getAvgElapsedMs());
     dd::screenText(lTmp, ddConvert(Vector3(10.0f, 10.0f, 0.0f)), dd::colors::White, 0.6f);
@@ -139,20 +139,23 @@ void ModuleRender::debugDrawCommands()
         dd::box(ddConvert(points), dd::colors::White);
     }
 
-    // Draw Model transforms
-    ModuleScene* sceneModule = app->getScene();
-
-    auto drawNode = [](const char* name, const Matrix& worldT, const Matrix& parentT, void* userData)
-        {
-            dd::line(ddConvert(worldT.Translation()), ddConvert(parentT.Translation()), dd::colors::White);
-        };
-
-    for (UINT modelIdx : debugDrawModels)
+    if (showSkeleton)
     {
-        if (modelIdx < sceneModule->getModelCount())
+        // Draw Model transforms
+        ModuleScene* sceneModule = app->getScene();
+
+        auto drawNode = [](const char* name, const Matrix& worldT, const Matrix& parentT, void* userData)
+            {
+                dd::line(ddConvert(worldT.Translation()), ddConvert(parentT.Translation()), dd::colors::White, 0, false);
+            };
+
+        for (UINT modelIdx : debugDrawModels)
         {
-            std::shared_ptr<const Model> model = sceneModule->getModel(modelIdx);
-            model->enumerateNodes(drawNode);
+            if (modelIdx < sceneModule->getModelCount())
+            {
+                std::shared_ptr<const Model> model = sceneModule->getModel(modelIdx);
+                model->enumerateNodes(drawNode);
+            }
         }
     }
 }
@@ -167,6 +170,7 @@ void ModuleRender::imGuiDrawCommands()
     ImGui::Separator();
     ImGui::Checkbox("Show grid", &showGrid);
     ImGui::Checkbox("Show axis", &showAxis);
+    ImGui::Checkbox("Show skeleton", &showSkeleton);
     ImGui::Checkbox("Show quadtree", &showQuadTree);
     if (showQuadTree)
     {

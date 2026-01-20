@@ -33,7 +33,8 @@ class ModuleRender : public Module
     std::vector<RenderMesh>           renderList;
 
     bool showAxis = false;
-    bool showGrid = false;
+    bool showGrid = true;
+    bool showSkeleton = false;
     bool showQuadTree = false;
     bool trackFrustum = true;
     bool showGuizmo = false;
