@@ -21,9 +21,10 @@ struct BoneWeight
     float4 weights;
 };
 
-StructuredBuffer<float4x4> palette : register(t0); 
-StructuredBuffer<Vertex> inVertex : register(t1); 
-StructuredBuffer<BoneWeight> boneWeights : register(t2); 
+StructuredBuffer<float4x4> paletteModel : register(t0); 
+StructuredBuffer<float4x4> paletteNormal : register(t1); 
+StructuredBuffer<Vertex> inVertex : register(t2); 
+StructuredBuffer<BoneWeight> boneWeights : register(t3); 
 
 RWStructuredBuffer<Vertex> outVertex : register(u0); 
 
@@ -38,17 +39,24 @@ void main(uint3 dispatchThreadID : SV_DispatchThreadID)
         
         BoneWeight bw = boneWeights[index];
 
-            // Calculate skinning transform
-        float4x4 skinTransform = 
-                palette[bw.indices[0]] * bw.weights[0] +
-                palette[bw.indices[1]] * bw.weights[1] +
-                palette[bw.indices[2]] * bw.weights[2] +
-                palette[bw.indices[3]] * bw.weights[3];
+        // Calculate skinning transform
+        float4x4 skinModel = 
+                paletteModel[bw.indices[0]] * bw.weights[0] +
+                paletteModel[bw.indices[1]] * bw.weights[1] +
+                paletteModel[bw.indices[2]] * bw.weights[2] +
+                paletteModel[bw.indices[3]] * bw.weights[3];
+
+        float4x4 skinNormal = 
+                paletteNormal[bw.indices[0]] * bw.weights[0] +  
+                paletteNormal[bw.indices[1]] * bw.weights[1] +
+                paletteNormal[bw.indices[2]] * bw.weights[2] +
+                paletteNormal[bw.indices[3]] * bw.weights[3];
+
         
         // Transform position and vectors
-        vertex.position = mul(float4(vertex.position, 1.0), skinTransform).xyz;
-        vertex.normal = mul(float4(vertex.normal, 0.0), skinTransform).xyz;
-        vertex.tangent = mul(float4(vertex.tangent, 0.0), skinTransform).xyz;
+        vertex.position = mul(float4(vertex.position, 1.0), skinModel).xyz;
+        vertex.normal   = mul(float4(vertex.normal, 0.0), skinNormal).xyz;
+        vertex.tangent  = mul(float4(vertex.tangent, 0.0), skinNormal).xyz;
 
         // Store results
         outVertex[index]= vertex;

@@ -14,23 +14,23 @@ namespace
     }
 
     template<typename T>
-    bool interpolateProperty(const AnimationClip::Property<T> &property, float time, T &out)
+    void interpolateProperty(const AnimationClip::Property<T> &property, float time, std::optional<T> &out)
     {
         if(property.count == 0)
         {
-            return false;
+            return;
         }
 
         if (time <= property.times[0])
         {
             out = property.values[0];
-            return true;
+            return;
         }
 
         if (time >= property.times[property.count - 1])
         {
             out = property.values[property.count - 1];
-            return true;
+            return;
         }
 
         auto it = std::upper_bound(&property.times[0], &property.times[0] + property.count, time);
@@ -39,9 +39,10 @@ namespace
         UINT index = static_cast<UINT>(it - &property.times[0] - 1);
         float t = (time - property.times[index]) / (property.times[index + 1] - property.times[index]);
 
-        T::Lerp(property.values[index], property.values[index + 1], t, out);
+        T tmpOut;
+        T::Lerp(property.values[index], property.values[index + 1], t, tmpOut);
 
-        return true;
+        out = tmpOut;
     }
 
 }
@@ -108,20 +109,24 @@ void AnimationClip::load(const tinygltf::Model &model, int animationIndex)
                     duration = std::max(duration, channel.rotations.times[channel.rotations.count - 1]);
                 }
             }
+            else if(animChannel.target_path == "scale")
+            {
+                // Not supported yet
+                _ASSERTE(false);
+            }
         }
     }
 }
 
-bool AnimationClip::getPosRot(const std::string &nodeName, float time, Vector3 &pos, Quaternion &rot) const
+void AnimationClip::getPosRot(const std::string &nodeName, float time, std::optional<Vector3>& pos, std::optional<Quaternion>& rot) const
 {
     auto it = channels.find(nodeName);
     if (it != channels.end())
     {
         const Channel &channel = it->second;
 
-        return interpolateProperty(channel.translations, time, pos) &&
-               interpolateProperty(channel.rotations, time, rot);
+        interpolateProperty(channel.translations, time, pos);
+        interpolateProperty(channel.rotations, time, rot);
     }
-
-    return false;
+    
 }

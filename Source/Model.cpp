@@ -394,64 +394,48 @@ void Model::updateAnim(float deltaTime)
 
     for(Node* node : nodes)
     {
-        Vector3 nodePos = Vector3::Zero;
-        Quaternion nodeRot = Quaternion::Identity;
         bool updated = false;
 
+        // TODO: Interpolations with next or blended animations
         for(auto it = anims.rbegin(); it != anims.rend(); ++it)
         {
             AnimInstance* anim = *it;
 
-            Vector3 pos = Vector3::Zero;
-            Quaternion rot = Quaternion::Identity;
+            std::optional<Vector3> pos;
+            std::optional<Quaternion> rot;
 
-            if(anim->clip->getPosRot(node->name, anim->time, pos, rot))
+            anim->clip->getPosRot(node->name, anim->time, pos, rot);
+
+            Vector3 translation;
+
+            if(pos.has_value())
             {
                 updated = true;
-
-                if(anim->next)
-                {
-                    float t = std::min(anim->time / anim->fadeIn, 1.0f);
-
-                    nodePos = Vector3::Lerp(nodePos, pos, t);
-                    nodeRot = Quaternion::Lerp(nodeRot, rot, t);
-                }
-                else 
-                {
-                    nodePos = pos;
-                    nodeRot = rot;
-                }
+                translation = pos.value();                
+            }
+            else
+            {
+                translation = node->localTransform.Translation();
             }
 
+            if(rot.has_value())
+            {
+                updated = true;
+                node->localTransform = Matrix::CreateFromQuaternion(rot.value());
+                node->localTransform.Translation(translation);
+            }
+            else if(updated)
+            {
+                node->localTransform.Translation(translation);
+            }
         }
 
-        if (updated)
-        {
-            node->localTransform = Matrix::CreateFromQuaternion(nodeRot) * Matrix::CreateTranslation(nodePos);
-            node->dirtyWorld = true;
-        }
+        node->dirtyWorld |= updated;
     }
 
     for (MeshInstance* instance : instances)
     {
         instance->dirtyPalette = instance->skinIndex >= 0;
-
-        if(instance->skinIndex >= 0)
-        {
-            _ASSERTE(instance->skinIndex < skins.size());
-
-            const Skin* skin = skins[instance->skinIndex];
-
-            for (UINT j = 0; j < skin->numJoints; ++j)
-            {
-                INT jointNodeIndex = skin->jointNodeIndices[j];
-                _ASSERTE(jointNodeIndex >= 0 && UINT(jointNodeIndex) < nodes.size());
-
-                const Node* jointNode = nodes[jointNodeIndex];
-
-                instance->palette[j] =  jointNode->worldTransform * skin->inverseBindMatrices[j];
-            }
-        }
     }
 }
 
@@ -470,7 +454,7 @@ void Model::updateSkinningMatrices(const MeshInstance* instance) const
 
         const Node* jointNode = nodes[jointNodeIndex];
 
-        instance->palette[j] = jointNode->worldTransform * skin->inverseBindMatrices[j];
+        instance->palette[j] = skin->inverseBindMatrices[j] * jointNode->worldTransform;
     }
 
     instance->dirtyPalette = false;

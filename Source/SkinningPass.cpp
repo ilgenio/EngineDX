@@ -36,7 +36,7 @@ UINT SkinningPass::copyPalettes(ID3D12GraphicsCommandList* commandList, std::spa
 
     UINT bytesCopied = 0;
 
-    UINT8* mappedData = nullptr;
+    Matrix* mappedData = nullptr;
     CD3DX12_RANGE readRange(0, 0);
     upload->Map(0, &readRange, reinterpret_cast<void**>(&mappedData));
 
@@ -44,9 +44,21 @@ UINT SkinningPass::copyPalettes(ID3D12GraphicsCommandList* commandList, std::spa
     {
         if (mesh.numJoints > 0)
         {
-            // Copy palette data to GPU
-            memcpy(&mappedData[bytesCopied], mesh.palette, mesh.numJoints * sizeof(Matrix));
-            bytesCopied += mesh.numJoints * sizeof(Matrix);
+            for(UINT i=0; i<mesh.numJoints; ++i)
+            {
+                mappedData[i] = mesh.palette[i].Transpose();
+            }
+
+            mappedData += mesh.numJoints;
+
+            for(UINT i=0; i<mesh.numJoints; ++i)
+            {
+                mappedData[i] = mesh.palette[i].Invert(); // Don't double transpose 
+            }
+
+            mappedData += mesh.numJoints;
+
+            bytesCopied += mesh.numJoints * sizeof(Matrix) * 2;
         }
     }
 
@@ -93,16 +105,19 @@ void SkinningPass::record(ID3D12GraphicsCommandList* commandList, std::span<Rend
             {
                 if (mesh.numJoints > 0)
                 {
+                    UINT paletteBytes = mesh.numJoints * sizeof(Matrix);
+
                     commandList->SetComputeRoot32BitConstant(0, mesh.mesh->getNumVertices(), 0);
                     commandList->SetComputeRootShaderResourceView(1, palette->GetGPUVirtualAddress()+paletteOffset);
-                    commandList->SetComputeRootShaderResourceView(2, mesh.mesh->getVertexBuffer());
-                    commandList->SetComputeRootShaderResourceView(3, mesh.mesh->getBoneData());
-                    commandList->SetComputeRootUnorderedAccessView(4, output->GetGPUVirtualAddress()+outputOffset);
+                    commandList->SetComputeRootShaderResourceView(2, palette->GetGPUVirtualAddress() + paletteOffset + paletteBytes);
+                    commandList->SetComputeRootShaderResourceView(3, mesh.mesh->getVertexBuffer());
+                    commandList->SetComputeRootShaderResourceView(4, mesh.mesh->getBoneData());
+                    commandList->SetComputeRootUnorderedAccessView(5, output->GetGPUVirtualAddress()+outputOffset);
 
                     commandList->Dispatch(getDivisedSize(mesh.mesh->getNumVertices(), 64), 1, 1);
 
                     mesh.skinningOffset = outputOffset; 
-                    paletteOffset += mesh.numJoints * sizeof(Matrix);
+                    paletteOffset += paletteBytes*2;
                     outputOffset += mesh.mesh->getNumVertices() * sizeof(Mesh::Vertex);
                 }
             }
@@ -118,15 +133,16 @@ void SkinningPass::record(ID3D12GraphicsCommandList* commandList, std::span<Rend
 bool SkinningPass::createRootSignature()
 {
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-    CD3DX12_ROOT_PARAMETER rootParameters[5] = {};
+    CD3DX12_ROOT_PARAMETER rootParameters[6] = {};
 
     rootParameters[0].InitAsConstants((sizeof(INT32) / sizeof(UINT32)), 0);
     rootParameters[1].InitAsShaderResourceView(0);
     rootParameters[2].InitAsShaderResourceView(1);
     rootParameters[3].InitAsShaderResourceView(2);
-    rootParameters[4].InitAsUnorderedAccessView(0);
+    rootParameters[4].InitAsShaderResourceView(3);
+    rootParameters[5].InitAsUnorderedAccessView(0);
 
-    rootSignatureDesc.Init(5, rootParameters);  
+    rootSignatureDesc.Init(6, rootParameters);  
 
     ComPtr<ID3DBlob> rootSignatureBlob;
 

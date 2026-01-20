@@ -30,5 +30,5 @@ public:
     void  load(const tinygltf::Model& model, int animationIndex);
     float getDuration() const { return duration; }
 
-    bool  getPosRot(const std::string& nodeName, float time, Vector3& pos, Quaternion& rot) const;
+    void  getPosRot(const std::string& nodeName, float time, std::optional<Vector3>& pos, std::optional<Quaternion>& rot) const;
 };
