@@ -111,14 +111,22 @@ void AnimationClip::load(const tinygltf::Model &model, int animationIndex)
             }
             else if(animChannel.target_path == "scale")
             {
-                // Not supported yet
-                _ASSERTE(false);
+                Channel& channel = channels[channelName];
+
+                loadProperty(channel.scales, model, sampler.input, sampler.output);
+
+                if (channel.scales.count > 0)
+                {
+                    duration = std::max(duration, channel.scales.times[channel.scales.count - 1]);
+                }
+
             }
         }
     }
 }
 
-void AnimationClip::getPosRot(const std::string &nodeName, float time, std::optional<Vector3>& pos, std::optional<Quaternion>& rot) const
+void AnimationClip::getPosRotScale(const std::string &nodeName, float time, std::optional<Vector3>& pos, std::optional<Quaternion>& rot, 
+                                   std::optional<Vector3>& scale) const
 {
     auto it = channels.find(nodeName);
     if (it != channels.end())
@@ -127,6 +135,7 @@ void AnimationClip::getPosRot(const std::string &nodeName, float time, std::opti
 
         interpolateProperty(channel.translations, time, pos);
         interpolateProperty(channel.rotations, time, rot);
+        interpolateProperty(channel.scales, time, scale);
     }
     
 }

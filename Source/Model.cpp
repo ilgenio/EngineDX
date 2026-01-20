@@ -407,12 +407,13 @@ void Model::updateAnim(float deltaTime)
 
             std::optional<Vector3> pos;
             std::optional<Quaternion> rot;
+            std::optional<Vector3> scl;
 
-            anim->clip->getPosRot(node->name, anim->time, pos, rot);
+            anim->clip->getPosRotScale(node->name, anim->time, pos, rot, scl);
 
             Vector3 translation;
 
-            if (pos.has_value() || rot.has_value())
+            if (pos.has_value() || rot.has_value() || scl.has_value())
             {
                 updated = true;
 
@@ -429,6 +430,11 @@ void Model::updateAnim(float deltaTime)
                     {
                         nodeRot = Quaternion::Lerp(nodeRot, rot.value(), t);
                     }
+
+                    if (scl.has_value())
+                    {
+                        nodeScale = Vector3::Lerp(nodeScale, scl.value(), t);
+                    }
                 }
                 else
                 {
@@ -440,7 +446,12 @@ void Model::updateAnim(float deltaTime)
                     if (rot.has_value())
                     {
                         nodeRot = rot.value();
-                    }             
+                    }         
+
+                    if (scl.has_value())
+                    {
+                        nodeScale = scl.value();
+                    }
                 }
             }
         }

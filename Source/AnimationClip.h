@@ -16,6 +16,7 @@ class AnimationClip
     {
         Property<Vector3> translations;
         Property<Quaternion> rotations;
+        Property<Vector3> scales;
     };
 
     std::unordered_map<std::string, Channel> channels;
@@ -30,5 +31,5 @@ public:
     void  load(const tinygltf::Model& model, int animationIndex);
     float getDuration() const { return duration; }
 
-    void  getPosRot(const std::string& nodeName, float time, std::optional<Vector3>& pos, std::optional<Quaternion>& rot) const;
+    void  getPosRotScale(const std::string& nodeName, float time, std::optional<Vector3>& pos, std::optional<Quaternion>& rot, std::optional<Vector3>& scale) const;
 };
