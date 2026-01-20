@@ -396,7 +396,11 @@ void Model::updateAnim(float deltaTime)
     {
         bool updated = false;
 
-        // TODO: Interpolations with next or blended animations
+        Vector3 nodePos;
+        Quaternion nodeRot;
+        Vector3 nodeScale;
+        node->localTransform.Decompose(nodeScale, nodeRot, nodePos);
+
         for(auto it = anims.rbegin(); it != anims.rend(); ++it)
         {
             AnimInstance* anim = *it;
@@ -408,29 +412,45 @@ void Model::updateAnim(float deltaTime)
 
             Vector3 translation;
 
-            if(pos.has_value())
+            if (pos.has_value() || rot.has_value())
             {
                 updated = true;
-                translation = pos.value();                
-            }
-            else
-            {
-                translation = node->localTransform.Translation();
-            }
 
-            if(rot.has_value())
-            {
-                updated = true;
-                node->localTransform = Matrix::CreateFromQuaternion(rot.value());
-                node->localTransform.Translation(translation);
-            }
-            else if(updated)
-            {
-                node->localTransform.Translation(translation);
+                if (anim->next)
+                {
+                    float t = std::min(anim->time / anim->fadeIn, 1.0f);
+
+                    if (pos.has_value())
+                    {
+                        nodePos = Vector3::Lerp(nodePos, pos.value(), t);
+                    }
+
+                    if (rot.has_value())
+                    {
+                        nodeRot = Quaternion::Lerp(nodeRot, rot.value(), t);
+                    }
+                }
+                else
+                {
+                    if (pos.has_value())
+                    {
+                        nodePos = pos.value();
+                    }
+
+                    if (rot.has_value())
+                    {
+                        nodeRot = rot.value();
+                    }             
+                }
             }
         }
 
-        node->dirtyWorld |= updated;
+        if (updated)
+        {
+            node->dirtyWorld = true;
+            node->localTransform = Matrix::CreateScale(nodeScale) * Matrix::CreateFromQuaternion(nodeRot) * Matrix::CreateTranslation(nodePos);
+        }
+
     }
 
     for (MeshInstance* instance : instances)

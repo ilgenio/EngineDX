@@ -3550,13 +3550,13 @@
       "name": "Ellen_Hair_Mat",
       "pbrMetallicRoughness": {
         "baseColorFactor": [
-          1,
-          1,
-          1,
+          0.3,
+          0.05,
+          0.05,
           1
         ],
-	"metallicFactor": 0.400000005960464,
-        "roughnessFactor": 0.524213314056396,
+	    "metallicFactor": 0.5,
+        "roughnessFactor": 1,
         "baseColorTexture": {
           "index": 0,
           "texCoord": 0
@@ -3588,8 +3588,8 @@
           1,
           1
         ],
-	"metallicFactor": 0.400000005960464,
-        "roughnessFactor": 0.31327211856842,
+	"metallicFactor": 1,
+        "roughnessFactor": 1,
         "baseColorTexture": {
           "index": 3,
           "texCoord": 0
@@ -3630,8 +3630,8 @@
           1,
           1
         ],
-	"metallicFactor": 0.400000005960464,
-        "roughnessFactor": 0.5506991147995,
+	"metallicFactor": 1,
+        "roughnessFactor": 1,
         "baseColorTexture": {
           "index": 8,
           "texCoord": 0
