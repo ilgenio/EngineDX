@@ -76,7 +76,5 @@ private:
 
     void setRenderTarget(ID3D12GraphicsCommandList* cmdList);
     void bindAsShaderResource(ID3D12GraphicsCommandList* cmdList, int slot);
-
-
 };
 

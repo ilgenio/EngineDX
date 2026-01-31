@@ -19,7 +19,7 @@ bool DemoSkinning::init()
     app->getScene()->getSkybox()->init("Assets/Textures/san_giuseppe_bridge_4k.hdr", false);
 
     UINT modelIdx = scene->addModel("Assets/Models/Ellen/Ellen.gltf", "Assets/Models/Ellen/");
-    UINT animIdx = scene->addClip("Assets/Models/Ellen/EllenIdle.gltf", 0);
+    UINT animIdx = scene->addClip("Assets/Models/Ellen/EllenWalkForward.gltf", 0);
     scene->getModel(modelIdx)->PlayAnim(scene->getClip(animIdx));
 
     ModuleRender* render = app->getRender();

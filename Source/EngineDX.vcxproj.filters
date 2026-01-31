@@ -217,6 +217,9 @@
     <ClCompile Include="SkinningPass.cpp">
       <Filter>Passes</Filter>
     </ClCompile>
+    <ClCompile Include="GBuffer.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EngineDX.h">
@@ -455,6 +458,9 @@
     </ClInclude>
     <ClInclude Include="SkinningPass.h">
       <Filter>Passes</Filter>
+    </ClInclude>
+    <ClInclude Include="GBuffer.h">
+      <Filter>Core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
