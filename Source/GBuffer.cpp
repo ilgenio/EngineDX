@@ -7,21 +7,19 @@
 #include "ModuleShaderDescriptors.h"
 #include "ModuleTargetDescriptors.h"
 
-namespace
+const DXGI_FORMAT GBuffer::gBufferFormats[BUFFER_COUNT] =
 {
+    DXGI_FORMAT_R8G8B8A8_UNORM,     // Albedo+alpha
+    DXGI_FORMAT_R32G32B32A32_FLOAT, // Normal+MetallicRoughness
+    DXGI_FORMAT_R8G8B8A8_UNORM      // Emissive+AO
+};
 
-    const DXGI_FORMAT gBufferFormats[GBuffer::BUFFER_COUNT] =
-    {
-        DXGI_FORMAT_R8G8B8A8_UNORM, // Albedo+alpha
-        DXGI_FORMAT_R32G32B32A32_FLOAT, // Normal+MetallicRoughness
-    };
-
-    const char* gBufferNames[GBuffer::BUFFER_COUNT] =
-    {
-        "GBuffer_Albedo",
-        "GBuffer_Normal_MetallicRoughness",
-    };
-}
+const char* GBuffer::gBufferNames[BUFFER_COUNT] =
+{
+    "GBuffer_Albedo",
+    "GBuffer_Normal_MetallicRoughness",
+    "GBuffer_Emissive_AO"
+};
 
 GBuffer::GBuffer()
 {
@@ -60,7 +58,7 @@ void GBuffer::resize(UINT width, UINT height)
 
     // Create Depth Texture
     resources->deferRelease(depthTexture);
-    depthTexture = resources->createDepthStencil(DXGI_FORMAT_D24_UNORM_S8_UINT, size_t(width), size_t(height), 1, 1.0, 0, "GBuffer_Depth");
+    depthTexture = resources->createDepthStencil(depthFormat, size_t(width), size_t(height), 1, 1.0, 0, "GBuffer_Depth");
 
     // Create DSV
     dsvDesc = targetDescriptors->createDS(depthTexture.Get());

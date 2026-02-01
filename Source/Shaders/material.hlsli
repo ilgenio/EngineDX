@@ -37,19 +37,21 @@ float computeSpecularAO(float NdotV, float ao, float roughness)
     return clamp(pow(NdotV + ao, exp2(-16.0 * roughness - 1.0)) - 1.0 + ao, 0.0, 1.0);
 }
 
-void getAmbientOcclusion(in Material material, in Texture2D occlusionTex, in float2 coord, in float NdotV, in float NdotR, 
-                         in float roughness, out float diffuseAO, out float specularAO)
+float getDiffuseAO(in Material material, in Texture2D occlusionTex, in float2 coord)
 {
     if (material.flags & HAS_OCCLUSION_TEX)
     {
-        diffuseAO = occlusionTex.Sample(bilinearWrap, coord).r * material.occlusionStrength;
-        specularAO = computeSpecularAO(NdotV, diffuseAO, roughness);
+        return occlusionTex.Sample(bilinearWrap, coord).r * material.occlusionStrength;
     }
-    else
-    {
-        diffuseAO = 1.0;
-        specularAO = 1.0;
-    }
+
+    return 1.0;
+}
+
+void getAmbientOcclusion(in Material material, in Texture2D occlusionTex, in float2 coord, in float NdotV, 
+                         in float NdotR, in float roughness, out float diffuseAO, out float specularAO)
+{
+    diffuseAO  = getDiffuseAO(material, occlusionTex, coord);
+    specularAO = computeSpecularAO(NdotV, diffuseAO, roughness);
     
     // Horizon fade for specular AO
     specularAO *= max(1.0 + NdotR, 1.0);
@@ -94,19 +96,8 @@ float3 getEmissive(in Material material, in Texture2D emissiveTex, in float2 coo
     }
 }
 
-// Computes the final base colour, roughness, alpha roughness, and metallic values for a material,
-// sampling from textures if the corresponding flags are set.
-// - material: Material parameters and flags
-// - baseColourTex: Base colour texture (if present)
-// - metallicRoughnessTex: Metallic-roughness texture (if present)
-// - coord: Texture coordinates
-// - baseColour: Output final base colour (RGB)
-// - roughness: Output final roughness value
-// - alphaRoughness: Output perceptual roughness (roughness squared)
-// - metallic: Output final metallic value
 void getMetallicRoughness(in Material material, in Texture2D baseColourTex, in Texture2D metallicRoughnessTex,
-                          in float2 coord, out float3 baseColour, out float roughness, 
-                          out float alphaRoughness, out float metallic)
+                          in float2 coord, out float3 baseColour, out float roughness, out float metallic)
 {
     baseColour = material.baseColour.rgb;
 
@@ -124,6 +115,23 @@ void getMetallicRoughness(in Material material, in Texture2D baseColourTex, in T
 
     metallic = metallicRoughness.x;
     roughness = metallicRoughness.y;
+}
+
+// Computes the final base colour, roughness, alpha roughness, and metallic values for a material,
+// sampling from textures if the corresponding flags are set.
+// - material: Material parameters and flags
+// - baseColourTex: Base colour texture (if present)
+// - metallicRoughnessTex: Metallic-roughness texture (if present)
+// - coord: Texture coordinates
+// - baseColour: Output final base colour (RGB)
+// - roughness: Output final roughness value
+// - alphaRoughness: Output perceptual roughness (roughness squared)
+// - metallic: Output final metallic value
+void getMetallicRoughness(in Material material, in Texture2D baseColourTex, in Texture2D metallicRoughnessTex,
+                          in float2 coord, out float3 baseColour, out float roughness, 
+                          out float alphaRoughness, out float metallic)
+{
+    getMetallicRoughness(material, baseColourTex, metallicRoughnessTex, coord, baseColour, roughness, metallic);
     alphaRoughness = roughness * roughness; // Perceptual roughness
 }
 
