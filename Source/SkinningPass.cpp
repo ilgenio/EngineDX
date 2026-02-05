@@ -144,19 +144,9 @@ bool SkinningPass::createRootSignature()
 
     rootSignatureDesc.Init(6, rootParameters);  
 
-    ComPtr<ID3DBlob> rootSignatureBlob;
+    rootSignature = app->getD3D12()->createRootSignature(rootSignatureDesc);
 
-    if (FAILED(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &rootSignatureBlob, nullptr)))
-    {
-        return false;
-    }
-
-    if (FAILED(app->getD3D12()->getDevice()->CreateRootSignature(0, rootSignatureBlob->GetBufferPointer(), rootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature))))
-    {
-        return false;
-    }
-
-    return true;
+    return rootSignature != nullptr;
 }
 
 bool SkinningPass::createPSO()

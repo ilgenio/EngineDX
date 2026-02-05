@@ -91,6 +91,8 @@ public:
     void                        setBackBufferRenderTarget(const Vector4& clearColor = Vector4(0.0f, 0.0f, 0.0f, 1.0f));
     void                        endFrameRender();
 
+    ComPtr<ID3D12RootSignature> createRootSignature(const CD3DX12_ROOT_SIGNATURE_DESC& desc);
+
 private:
     void getWindowSize(unsigned& width, unsigned& height);
 private:

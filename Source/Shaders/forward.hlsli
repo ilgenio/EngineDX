@@ -17,8 +17,11 @@ cbuffer PerFrame : register(b1)
     uint numSpotLights;     // Number of spot lights
     uint numRoughnessLevels; // Number of roughness levels in the prefiltered environment map
 
-    float3 viewPos;         // Camera position
+    float3 viewPos;          // Camera position
     uint   pad;              // Padding to ensure 16-byte alignment
+
+    float4x4 proj;           // projection matrix
+    float4x4 invView;        // Inverse view matrix
 };
 
 cbuffer PerInstance : register(b2)

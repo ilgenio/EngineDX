@@ -202,7 +202,7 @@ void Exercise13::renderToTexture(ID3D12GraphicsCommandList* commandList)
     float aspect = canvasSize.x / canvasSize.y;
 
     // skybox render
-    skybox->render(commandList, aspect);
+    skybox->render(commandList, ModuleCamera::getPerspectiveProj(aspect));
 
     // model render
     renderModel(commandList);

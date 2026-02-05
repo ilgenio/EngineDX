@@ -29,8 +29,8 @@ private:
     DepthStencilDesc dsvDesc;
 
     static const DXGI_FORMAT gBufferFormats[BUFFER_COUNT];
-    static const const char* gBufferNames[BUFFER_COUNT];
-    const DXGI_FORMAT depthFormat = DXGI_FORMAT_D32_FLOAT;
+    static const char* gBufferNames[BUFFER_COUNT];
+    static const DXGI_FORMAT depthFormat;
 
     UINT width  = 0;
     UINT height = 0;
@@ -62,8 +62,8 @@ public:
     const DepthStencilDesc& getDsvDesc() const { return dsvDesc; }
 
     static const DXGI_FORMAT getRTFormat(UINT index) { return gBufferFormats[index];  }
-    static UINT getRTFormatCount() const { return UINT(BUFFER_COUNT);  }
-    static DXGI_FORMAT getDepthFormat() const { return depthFormat;  }
+    static UINT getRTFormatCount() { return UINT(BUFFER_COUNT);  }
+    static DXGI_FORMAT getDepthFormat() { return depthFormat;  }
 
 private:
 

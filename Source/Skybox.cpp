@@ -80,11 +80,11 @@ bool Skybox::init(const char* hdrFile, bool useMSAA)
     return true;
 }
 
-void Skybox::render(ID3D12GraphicsCommandList *cmdList, float aspectRatio)
+void Skybox::render(ID3D12GraphicsCommandList *cmdList, const Matrix& proj)
 {
     if (tableDesc)
     {
-        skyboxRenderPass->record(cmdList, tableDesc.getGPUHandle(TEX_SLOT_SKYBOX), app->getCamera()->getRot(), ModuleCamera::getPerspectiveProj(aspectRatio));
+        skyboxRenderPass->record(cmdList, tableDesc.getGPUHandle(TEX_SLOT_SKYBOX), app->getCamera()->getRot(), proj);
     }
 }
     

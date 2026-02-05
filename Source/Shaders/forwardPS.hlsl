@@ -47,7 +47,8 @@ float4 main(float3 worldPos : POSITION, float2 texCoord : TEXCOORD, float3 norma
     getAmbientOcclusion(material, occlusionTex, texCoord, NdotV, NdotR, alphaRoughness, diffuseAO, specularAO);
         
     // IBL
-    float3 colour = computeLighting(V, N, irradiance, radiance, brdfLUT, numRoughnessLevels, baseColour, roughness, metallic, diffuseAO, specularAO);
+    float3 colour = computeLighting(V, N, irradiance, radiance, brdfLUT, numRoughnessLevels, baseColour, 
+                                    roughness, metallic, diffuseAO, specularAO);
 
     // Direct lights
     for (uint i = 0; i < numDirLights; i++)

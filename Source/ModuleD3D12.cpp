@@ -460,3 +460,25 @@ void ModuleD3D12::endFrameRender()
         getDrawCommandQueue()->ExecuteCommandLists(UINT(std::size(commandLists)), commandLists);
     }    
 }
+
+    ComPtr<ID3D12RootSignature> ModuleD3D12::createRootSignature(const CD3DX12_ROOT_SIGNATURE_DESC& desc)
+    {
+        ComPtr<ID3DBlob> rootSignatureBlob;
+        ComPtr<ID3DBlob> errorBlob;
+
+        if (FAILED(D3D12SerializeRootSignature(&desc, D3D_ROOT_SIGNATURE_VERSION_1, &rootSignatureBlob, &errorBlob)))
+        {
+            std::wstring msg((char*)errorBlob->GetBufferPointer(), (char*)errorBlob->GetBufferPointer() + errorBlob->GetBufferSize());
+            _ASSERT_EXPR(false, msg.c_str());
+
+            return nullptr;
+        }
+
+        ComPtr<ID3D12RootSignature> rootSig;
+        if (FAILED(device->CreateRootSignature(0, rootSignatureBlob->GetBufferPointer(), rootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSig))))
+        {
+            return nullptr;
+        }
+
+        return rootSig;
+    }

@@ -8,8 +8,10 @@
 #include "ModuleShaderDescriptors.h"
 #include "ModuleRingBuffer.h"
 
-#include "Material.h"
 #include "Scene.h"
+#include "Mesh.h"
+
+#include "ReadData.h"
 
 GBufferExportPass::GBufferExportPass()
 {
@@ -19,60 +21,80 @@ GBufferExportPass::~GBufferExportPass()
 {
 }
 
-void GBufferExportPass::render(ID3D12GraphicsCommandList* commandList, std::span<const RenderMesh> meshes, D3D12_GPU_VIRTUAL_ADDRESS skinningBuffer, D3D12_GPU_VIRTUAL_ADDRESS perFrameData, D3D12_GPU_DESCRIPTOR_HANDLE iblTable, const Matrix& viewProjection)
+void GBufferExportPass::resize(UINT sizeX, UINT sizeY)
+{
+    gBuffer.resize(sizeX, sizeY);
+}
+
+bool GBufferExportPass::init()
+{
+    bool ok = createRootSignature();
+    ok = ok && createPSO();
+
+    return ok;
+}
+
+void GBufferExportPass::render(ID3D12GraphicsCommandList* commandList, std::span<const RenderMesh> meshes, D3D12_GPU_VIRTUAL_ADDRESS skinningBuffer, const Matrix& viewProjection)
 {
     BEGIN_EVENT(commandList, "GBufferExport Pass");
 
-    ModuleRingBuffer* ringBuffer = app->getRingBuffer();
-    ModuleSamplers* samplers = app->getSamplers();
-
-    commandList->SetGraphicsRootSignature(rootSignature.Get());
-    commandList->SetPipelineState(pso.Get());
-
-    commandList->SetGraphicsRootDescriptorTable(SLOT_SAMPLERS, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
-    commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-    for (const RenderMesh& mesh : meshes)
+    if (!meshes.empty())
     {
-        if( mesh.material )
+        ModuleRingBuffer* ringBuffer = app->getRingBuffer();
+        ModuleSamplers* samplers = app->getSamplers();
+
+        commandList->SetGraphicsRootSignature(rootSignature.Get());
+        commandList->SetPipelineState(pso.Get());
+
+        gBuffer.beginRender(commandList);
+
+        commandList->SetGraphicsRootDescriptorTable(SLOT_SAMPLERS, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
+        commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+        for (const RenderMesh& mesh : meshes)
         {
-            Matrix mvp = (mesh.transform * viewProjection).Transpose();
-            commandList->SetGraphicsRoot32BitConstants(SLOT_MVP_MATRIX, sizeof(Matrix) / sizeof(UINT32), &mvp, 0);
-
-            PerInstance perInstance;
-            perInstance.material = mesh.material->getData();
-
-            commandList->SetGraphicsRootConstantBufferView(SLOT_PER_INSTANCE_CB, ringBuffer->alloc(&perInstance));
-            commandList->SetGraphicsRootDescriptorTable(SLOT_TEXTURES_TABLE, mesh.material->getTextureTable());
-
-            if (mesh.numJoints > 0) // skinned mesh
+            if (mesh.material)
             {
-                perInstance.modelMat = Matrix::Identity;
-                perInstance.normalMat = Matrix::Identity;
+                Matrix mvp = (mesh.transform * viewProjection).Transpose();
+                commandList->SetGraphicsRoot32BitConstants(SLOT_MVP_MATRIX, sizeof(Matrix) / sizeof(UINT32), &mvp, 0);
 
-                D3D12_VERTEX_BUFFER_VIEW vertexBufferView = mesh.mesh->getVertexBufferView();
-                vertexBufferView.BufferLocation = skinningBuffer + mesh.skinningOffset;
-                
-                commandList->IASetVertexBuffers(0, 1, &vertexBufferView);                
-            }
-            else // rigid mesh
-            {
-                perInstance.modelMat = mesh.transform.Transpose();
-                perInstance.normalMat = mesh.normalMatrix.Transpose();
+                PerInstance perInstance;
+                perInstance.material = mesh.material->getData();
 
-                commandList->IASetVertexBuffers(0, 1, &mesh.mesh->getVertexBufferView());
-            }
+                commandList->SetGraphicsRootConstantBufferView(SLOT_PER_INSTANCE_CB, ringBuffer->alloc(&perInstance));
+                commandList->SetGraphicsRootDescriptorTable(SLOT_TEXTURES_TABLE, mesh.material->getTextureTable());
 
-            if (mesh.mesh->getNumIndices() > 0) // indexed draw
-            {
-                commandList->IASetIndexBuffer(&mesh.mesh->getIndexBufferView());
-                commandList->DrawIndexedInstanced(mesh.mesh->getNumIndices(), 1, 0, 0, 0);
-            }
-            else if (mesh.mesh->getNumVertices() > 0) // non-indexed draw
-            {
-                commandList->DrawInstanced(mesh.mesh->getNumVertices(), 1, 0, 0);
+                if (mesh.numJoints > 0) // skinned mesh
+                {
+                    perInstance.modelMat = Matrix::Identity;
+                    perInstance.normalMat = Matrix::Identity;
+
+                    D3D12_VERTEX_BUFFER_VIEW vertexBufferView = mesh.mesh->getVertexBufferView();
+                    vertexBufferView.BufferLocation = skinningBuffer + mesh.skinningOffset;
+
+                    commandList->IASetVertexBuffers(0, 1, &vertexBufferView);
+                }
+                else // rigid mesh
+                {
+                    perInstance.modelMat = mesh.transform.Transpose();
+                    perInstance.normalMat = mesh.normalMatrix.Transpose();
+
+                    commandList->IASetVertexBuffers(0, 1, &mesh.mesh->getVertexBufferView());
+                }
+
+                if (mesh.mesh->getNumIndices() > 0) // indexed draw
+                {
+                    commandList->IASetIndexBuffer(&mesh.mesh->getIndexBufferView());
+                    commandList->DrawIndexedInstanced(mesh.mesh->getNumIndices(), 1, 0, 0, 0);
+                }
+                else if (mesh.mesh->getNumVertices() > 0) // non-indexed draw
+                {
+                    commandList->DrawInstanced(mesh.mesh->getNumVertices(), 1, 0, 0);
+                }
             }
         }
+
+        gBuffer.endRender(commandList);
     }
 
     END_EVENT(commandList);
@@ -95,26 +117,12 @@ bool GBufferExportPass::createRootSignature()
 
     rootSignatureDesc.Init(SLOT_COUNT, rootParameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
-    ComPtr<ID3DBlob> rootSignatureBlob;
-    ComPtr<ID3DBlob> errorBlob;
+    rootSignature = app->getD3D12()->createRootSignature(rootSignatureDesc);
 
-    if (FAILED(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &rootSignatureBlob, &errorBlob)))
-    {
-        std::wstring msg((char*)errorBlob->GetBufferPointer(), (char*)errorBlob->GetBufferPointer()+errorBlob->GetBufferSize());
-        _ASSERT_EXPR(false, msg.c_str());
-
-        return false;
-    }
-
-    if (FAILED(app->getD3D12()->getDevice()->CreateRootSignature(0, rootSignatureBlob->GetBufferPointer(), rootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature))))
-    {
-        return false;
-    }
-
-    return true;
+    return rootSignature;
 }
 
-bool GBufferExportPass::createPSO(bool useMSAA)
+bool GBufferExportPass::createPSO()
 {
     // Implementation for creating pipeline state object
     auto dataVS = DX::ReadData(L"gbufferVS.cso");
@@ -136,7 +144,7 @@ bool GBufferExportPass::createPSO(bool useMSAA)
     // Set render target formats
     for(UINT i=0; i<GBuffer::getRTFormatCount(); ++i)
     {
-        psoDesc.RTVFormats[i] = GBuffer::getRTFormats(i);
+        psoDesc.RTVFormats[i] = GBuffer::getRTFormat(i);
     }
 
     psoDesc.DSVFormat = GBuffer::getDepthFormat();
@@ -145,3 +153,4 @@ bool GBufferExportPass::createPSO(bool useMSAA)
     // create the pso
     return SUCCEEDED(app->getD3D12()->getDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pso)));
 }
+

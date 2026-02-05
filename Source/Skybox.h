@@ -43,7 +43,7 @@ public:
     ~Skybox();
 
     bool init(const char* hdrFileName, bool useMSAA);
-    void render(ID3D12GraphicsCommandList* cmdList, float aspectRatio);
+    void render(ID3D12GraphicsCommandList* cmdList, const Matrix& proj);
 
     bool  isValid() const { return tableDesc; }
     UINT  getNumIBLMipLevels() const {return iblMipLevels; }

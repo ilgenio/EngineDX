@@ -2,6 +2,7 @@
 
 #include "GBuffer.h"
 
+#include "Material.h"
 #include<span>
 
 struct RenderMesh;
@@ -36,11 +37,13 @@ public:
     GBufferExportPass();
     ~GBufferExportPass();
 
-    void render(ID3D12GraphicsCommandList* commandList, std::span<const RenderMesh> meshes, D3D12_GPU_VIRTUAL_ADDRESS skinningBuffer, D3D12_GPU_VIRTUAL_ADDRESS perFrameData, D3D12_GPU_DESCRIPTOR_HANDLE iblTable, const Matrix& viewProjection);
+    bool init();
+    void resize(UINT sizeX, UINT sizeY);
+    void render(ID3D12GraphicsCommandList* commandList, std::span<const RenderMesh> meshes, D3D12_GPU_VIRTUAL_ADDRESS skinningBuffer, const Matrix& viewProjection);
 
     const GBuffer& getGBuffer() const { return gBuffer;  }
 
 private:
     bool createRootSignature();
-    bool createPSO(bool useMSAA);
+    bool createPSO();
 };

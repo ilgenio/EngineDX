@@ -16,6 +16,8 @@
 #include "DebugDrawPass.h"
 #include "ImGuiPass.h"
 #include "RenderMeshPass.h"
+#include "GBufferExportPass.h"
+#include "DeferredPass.h"
 #include "RenderTexture.h"
 #include "SkinningPass.h"
 
@@ -40,9 +42,13 @@ bool ModuleRender::init()
     imguiPass       = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd(), debugDesc.getCPUHandle(1), debugDesc.getGPUHandle(1));
     renderTexture   = std::make_unique<RenderTexture>("ModuleRender", DXGI_FORMAT_R8G8B8A8_UNORM, Vector4(0.188f, 0.208f, 0.259f, 1.0f), DXGI_FORMAT_D32_FLOAT, 1.0f, false, false);
     renderMeshPass  = std::make_unique<RenderMeshPass>();
+    gbufferPass     = std::make_unique<GBufferExportPass>();
+    deferredPass    = std::make_unique<DeferredPass>();
     skinningPass    = std::make_unique<SkinningPass>();
 
     bool ok = renderMeshPass->init(false);
+    ok = ok && gbufferPass->init();
+    ok = ok && deferredPass->init();
 
     return ok;
 
@@ -97,8 +103,10 @@ void ModuleRender::preRender()
 
     if (canvasSize.x > 0.0f && canvasSize.y > 0.0f)
     {
-        renderTexture->resize(unsigned(canvasSize.x), unsigned(canvasSize.y));
-
+        UINT sizeX = UINT(canvasSize.x);
+        UINT sizeY = UINT(canvasSize.y);
+        renderTexture->resize(sizeX, sizeY);
+        gbufferPass->resize(sizeX, sizeY);
     }
 
     ModuleD3D12* d3d12 = app->getD3D12();
@@ -214,43 +222,75 @@ void ModuleRender::imGuiDrawCommands()
     ImGui::End();
 }
 
-void ModuleRender::renderMeshes(ID3D12GraphicsCommandList *commandList, const Matrix& view, const Matrix& projection)
+void ModuleRender::updatePerFrameBuffer(const Matrix& view, const Matrix& projection, const Matrix& invView)
 {
-    ModuleRingBuffer* ringBuffer = app->getRingBuffer();
+    Matrix viewProj = view * projection;
+
+    PerFrame perFrameData = {};
+    perFrameData.numDirectionalLights = 0;
+    perFrameData.numPointLights = 0;
+    perFrameData.numSpotLights = 0;
+    perFrameData.numRoughnessLevels = app->getScene()->getSkybox()->getNumIBLMipLevels();
+    perFrameData.cameraPosition = app->getCamera()->getPos();
+    perFrameData.proj = projection.Transpose();
+    perFrameData.invView = invView.Transpose();
+
+    perFrameAddress = app->getRingBuffer()->alloc(&perFrameData);
+}
+
+void ModuleRender::updateSkinning(ID3D12GraphicsCommandList* commandList)
+{
+    // Do skinnging
+    skinningPass->record(commandList, std::span<RenderMesh>(renderList.data(), renderList.size()));
+
+    // Update current skinning Buffer
+    skinningAddress = skinningPass->getOutputAddress(app->getD3D12()->getCurrentBackBufferIdx());
+}
+
+void ModuleRender::renderMeshesForward(ID3D12GraphicsCommandList *commandList, const Matrix& view, const Matrix& projection)
+{
     Skybox* skybox = app->getScene()->getSkybox();
-    UINT backBufferIndex = app->getD3D12()->getCurrentBackBufferIdx();
 
     if (!renderList.empty() && skybox->isValid())
     {
-        PerFrame perFrameData = {};
-        perFrameData.numDirectionalLights = 0;
-        perFrameData.numPointLights = 0;
-        perFrameData.numSpotLights = 0;
-        perFrameData.numRoughnessLevels = skybox->getNumIBLMipLevels();
-        perFrameData.cameraPosition = app->getCamera()->getPos();
-
-        renderMeshPass->render(commandList, renderList, skinningPass->getOutputAddress(backBufferIndex), ringBuffer->alloc(&perFrameData), skybox->getIBLTable(), view * projection);
+        renderMeshPass->render(commandList, renderList, skinningAddress, perFrameAddress, skybox->getIBLTable(), view * projection);
     }
 }
 
-void ModuleRender::renderToTexture(ID3D12GraphicsCommandList* commandList)
+void ModuleRender::renderMeshesGBuffer(ID3D12GraphicsCommandList* commandList, const Matrix& view, const Matrix& projection)
 {
-    ModuleCamera* camera = app->getCamera();
+    if (!renderList.empty())
+    {
+        gbufferPass->render(commandList, renderList, skinningAddress, view * projection);
+    }
+}
 
-    float aspect = float(renderTexture->getWidth()) / float(renderTexture->getHeight());
-    const Matrix& view = camera->getView();
-    Matrix proj = ModuleCamera::getPerspectiveProj(aspect);
+void ModuleRender::renderDeferred(ID3D12GraphicsCommandList* commandList)
+{
+    Skybox* skybox = app->getScene()->getSkybox();
 
+    if (skybox->isValid())
+    {
+        D3D12_GPU_DESCRIPTOR_HANDLE lightsTable = {}; // TODO:
+        deferredPass->render(commandList, perFrameAddress, gbufferPass->getGBuffer().getSrvTableDesc().getGPUHandle(), lightsTable, skybox->getIBLTable());
+    }
+}
+
+void ModuleRender::renderToTexture(ID3D12GraphicsCommandList* commandList, const Matrix& view, const Matrix& proj)
+{
     BEGIN_EVENT(commandList, "Render Scene to Texture");
 
     // Transition to RT + set render target
     renderTexture->beginRender(commandList);
 
-    // Render the skybox
-    app->getScene()->getSkybox()->render(commandList, aspect);
+    // Deferred pass
+    renderDeferred(commandList);
 
-    // Render meshes
-    renderMeshes(commandList, view, proj);
+    // Render meshes TODO: In future Will be the alpha blend pass
+    //renderMeshesForward(commandList, view, proj);
+
+    // Render the skybox
+    app->getScene()->getSkybox()->render(commandList, proj);
 
     // Debug Draw
     debugDrawPass->record(commandList, renderTexture->getWidth(), renderTexture->getHeight(), view, proj);
@@ -270,11 +310,24 @@ void ModuleRender::render()
 
     if (renderTexture->isValid() && canvasSize.x > 0.0f && canvasSize.y > 0.0f)
     {
-        // Do skinnging
-        skinningPass->record(commandList, std::span<RenderMesh>(renderList.data(), renderList.size()));
+        // Compute Camera matrices
+        ModuleCamera* camera = app->getCamera();
+        float aspect = float(renderTexture->getWidth()) / float(renderTexture->getHeight());
+        const Matrix& invView = camera->getCamera(); // Note: camera matrix is the inverse of the view matrix
+        const Matrix& view = camera->getView();
+        Matrix proj = ModuleCamera::getPerspectiveProj(aspect);
 
-        // Do forward mesh rendering
-        renderToTexture(commandList);
+        // Update PerFrame cbuffer
+        updatePerFrameBuffer(view, proj, invView);
+
+        // Runs skinning
+        updateSkinning(commandList);
+
+        // GBuffer Export
+        renderMeshesGBuffer(commandList, view, proj);
+
+        // Do forward mesh rendering + deferred pass
+        renderToTexture(commandList, view, proj);
     }
 
     // Set backbuffer render target and transition to RT

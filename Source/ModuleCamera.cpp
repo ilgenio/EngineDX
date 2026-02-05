@@ -103,6 +103,8 @@ void ModuleCamera::update()
         view = Matrix::CreateFromQuaternion(invRot);
         view.Translation(Vector3::Transform(-position, invRot));
 
+        camera = Matrix::CreateFromQuaternion(rotation);
+        camera.Translation(position);
     }
 
     dragPosX = mouseState.x;

@@ -47,14 +47,17 @@ float getDiffuseAO(in Material material, in Texture2D occlusionTex, in float2 co
     return 1.0;
 }
 
+float getSpecularAO(in float NdotV, in float NdotR, float diffuseAO, float roughness)
+{
+    float specularAO = computeSpecularAO(NdotV, diffuseAO, roughness);
+    return specularAO * max(1.0 + NdotR, 1.0);
+}
+
 void getAmbientOcclusion(in Material material, in Texture2D occlusionTex, in float2 coord, in float NdotV, 
                          in float NdotR, in float roughness, out float diffuseAO, out float specularAO)
 {
     diffuseAO  = getDiffuseAO(material, occlusionTex, coord);
-    specularAO = computeSpecularAO(NdotV, diffuseAO, roughness);
-    
-    // Horizon fade for specular AO
-    specularAO *= max(1.0 + NdotR, 1.0);
+    specularAO = getSpecularAO(NdotV, NdotR, diffuseAO, roughness);
 }
 
 

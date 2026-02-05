@@ -220,6 +220,12 @@
     <ClCompile Include="GBuffer.cpp">
       <Filter>Core</Filter>
     </ClCompile>
+    <ClCompile Include="GBufferExportPass.cpp">
+      <Filter>Passes</Filter>
+    </ClCompile>
+    <ClCompile Include="DeferredPass.cpp">
+      <Filter>Passes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EngineDX.h">
@@ -462,6 +468,12 @@
     <ClInclude Include="GBuffer.h">
       <Filter>Core</Filter>
     </ClInclude>
+    <ClInclude Include="GBufferExportPass.h">
+      <Filter>Passes</Filter>
+    </ClInclude>
+    <ClInclude Include="DeferredPass.h">
+      <Filter>Passes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="EngineDX.ico">
@@ -665,6 +677,15 @@
       <Filter>Exercises\Shaders</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\skinningCS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\gbufferPS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\gbufferVS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\deferredPS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>

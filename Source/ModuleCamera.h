@@ -26,6 +26,7 @@ class ModuleCamera : public Module
     Quaternion rotation;
     Vector3 position;
     Matrix view;
+    Matrix camera;
     bool enabled = true;
 public:
 
@@ -43,6 +44,7 @@ public:
     void setAzimuthal(float azimuthal) { params.azimuthal = azimuthal;  }
     void setTranslation(const Vector3& translation) { params.translation = translation;  }
 
+    const Matrix&     getCamera() const { return camera; }
     const Matrix&     getView() const {return view;}
     const Quaternion& getRot() const { return rotation; }
     const Vector3&    getPos() const { return position; }
