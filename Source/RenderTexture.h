@@ -42,11 +42,11 @@ public:
     bool isValid() const { return width > 0 || height > 0;  }
     void resize(UINT width, UINT height);
 
-    void beginRender(ID3D12GraphicsCommandList* cmdList)
+    void beginRender(ID3D12GraphicsCommandList* cmdList, D3D12_CPU_DESCRIPTOR_HANDLE* sharedDSV = nullptr)
     {
         transitionToRTV(cmdList);
 
-        setRenderTarget(cmdList);
+        setRenderTarget(cmdList, sharedDSV);
     }
 
     void endRender(ID3D12GraphicsCommandList* cmdList)
@@ -74,7 +74,7 @@ private:
     void transitionToRTV(ID3D12GraphicsCommandList* cmdList);
     void transitionToSRV(ID3D12GraphicsCommandList* cmdList);
 
-    void setRenderTarget(ID3D12GraphicsCommandList* cmdList);
+    void setRenderTarget(ID3D12GraphicsCommandList* cmdList, D3D12_CPU_DESCRIPTOR_HANDLE* sharedDSV);
     void bindAsShaderResource(ID3D12GraphicsCommandList* cmdList, int slot);
 };
 

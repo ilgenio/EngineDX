@@ -46,7 +46,6 @@ bool ModuleD3D12::init()
     }
 
     return ok;
-
 }
 
 bool ModuleD3D12::cleanUp()

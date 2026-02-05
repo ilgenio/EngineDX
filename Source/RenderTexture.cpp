@@ -84,15 +84,15 @@ void RenderTexture::transitionToSRV(ID3D12GraphicsCommandList* cmdList)
     cmdList->ResourceBarrier(1, &toSRV);
 }
 
-void RenderTexture::setRenderTarget(ID3D12GraphicsCommandList* cmdList)
+void RenderTexture::setRenderTarget(ID3D12GraphicsCommandList* cmdList, D3D12_CPU_DESCRIPTOR_HANDLE* sharedDSV)
 {
     ModuleD3D12* d3d12 = app->getD3D12();
 
     D3D12_CPU_DESCRIPTOR_HANDLE rtv = rtvDesc.getCPUHandle();
 
-    if (depthFormat == DXGI_FORMAT_UNKNOWN)
+    if (depthFormat == DXGI_FORMAT_UNKNOWN || sharedDSV )
     {
-        cmdList->OMSetRenderTargets(1, &rtv, FALSE, nullptr);
+        cmdList->OMSetRenderTargets(1, &rtv, FALSE, sharedDSV);
         cmdList->ClearRenderTargetView(rtvDesc.getCPUHandle(), reinterpret_cast<float*>(&clearColour), 0, nullptr);
     }
     else

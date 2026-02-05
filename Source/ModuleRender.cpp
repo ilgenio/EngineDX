@@ -40,7 +40,7 @@ bool ModuleRender::init()
 
     debugDrawPass   = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue(), false, debugDesc.getCPUHandle(0), debugDesc.getGPUHandle(0));
     imguiPass       = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd(), debugDesc.getCPUHandle(1), debugDesc.getGPUHandle(1));
-    renderTexture   = std::make_unique<RenderTexture>("ModuleRender", DXGI_FORMAT_R8G8B8A8_UNORM, Vector4(0.188f, 0.208f, 0.259f, 1.0f), DXGI_FORMAT_D32_FLOAT, 1.0f, false, false);
+    renderTexture   = std::make_unique<RenderTexture>("ModuleRender", DXGI_FORMAT_R8G8B8A8_UNORM, Vector4(0.188f, 0.208f, 0.259f, 1.0f), DXGI_FORMAT_UNKNOWN, 1.0f, false, false);
     renderMeshPass  = std::make_unique<RenderMeshPass>();
     gbufferPass     = std::make_unique<GBufferExportPass>();
     deferredPass    = std::make_unique<DeferredPass>();
@@ -281,7 +281,9 @@ void ModuleRender::renderToTexture(ID3D12GraphicsCommandList* commandList, const
     BEGIN_EVENT(commandList, "Render Scene to Texture");
 
     // Transition to RT + set render target
-    renderTexture->beginRender(commandList);
+    D3D12_CPU_DESCRIPTOR_HANDLE sharedDSV = gbufferPass->getGBuffer().getDsvDesc().getCPUHandle();
+    renderTexture->beginRender(commandList, &sharedDSV);
+
 
     // Deferred pass
     renderDeferred(commandList);
