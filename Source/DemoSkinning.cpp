@@ -12,6 +12,8 @@
 #include "AnimationClip.h"
 #include "ModuleRender.h"
 
+#include "Keyboard.h"
+
 bool DemoSkinning::init() 
 {
     ModuleScene* scene = app->getScene();
@@ -24,6 +26,10 @@ bool DemoSkinning::init()
     {
         anims[i] = scene->addClip("Assets/Models/Elf_arbalester/Elf_arbalester.gltf", i);
     }
+
+    std::shared_ptr<Model> character = scene->getModel(modelIdx);
+    character->PlayAnim(scene->getClip(anims[IDLE_LONG]));
+    currentAnim = IDLE_LONG;
 
     ModuleRender* render = app->getRender();
     render->addDebugDrawModel(modelIdx);
@@ -41,14 +47,37 @@ void DemoSkinning::preRender()
 {
     ImGui::Begin("Demo Viewer Options");
         
-    if (ImGui::Button("Start"))
-    {
-        ModuleScene* scene = app->getScene();
-
-        std::shared_ptr<Model> character = scene->getModel(modelIdx);
-
-        character->PlayAnim(scene->getClip(anims[IDLE_LONG]));
-    }
 
     ImGui::End();
 }
+
+void DemoSkinning::update()
+{
+    Keyboard& keyboard = Keyboard::Get();
+
+    const Keyboard::State& keyState = keyboard.GetState();
+
+    if (keyState.Up)
+    {
+        if (currentAnim == IDLE_LONG)
+        {
+            ModuleScene* scene = app->getScene();
+            std::shared_ptr<Model> character = scene->getModel(modelIdx);
+            character->PlayAnim(scene->getClip(anims[RUN]));
+            currentAnim = RUN;
+        }
+    }
+    else
+    {
+        if (currentAnim == RUN)
+        {
+            ModuleScene* scene = app->getScene();
+            std::shared_ptr<Model> character = scene->getModel(modelIdx);
+            character->PlayAnim(scene->getClip(anims[IDLE_LONG]));
+            currentAnim = IDLE_LONG;
+        }
+    }
+
+
+}
+

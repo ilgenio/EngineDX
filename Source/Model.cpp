@@ -379,7 +379,7 @@ void Model::updateAnim(float deltaTime)
         // Loop animation
         anim->time = fmodf(anim->time, anim->clip->getDuration());
 
-        if (anim->time > anim->fadeIn)
+        if (anim->time >= anim->fadeIn)
         {
             anim->next.release();
             anim = nullptr;

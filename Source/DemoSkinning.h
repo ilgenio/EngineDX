@@ -16,11 +16,11 @@ class DemoSkinning : public Module
 
     UINT modelIdx = UINT(-1);
     UINT anims[ANIM_COUNT] = { UINT(-1) };
+    UINT currentAnim = ANIM_COUNT;
 public:
 
     virtual bool init() override;
     virtual void preRender() override;
-
-
+    virtual void update() override;
 };
 
