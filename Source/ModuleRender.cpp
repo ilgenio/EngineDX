@@ -155,6 +155,7 @@ void ModuleRender::debugDrawCommands()
         auto drawNode = [](const char* name, const Matrix& worldT, const Matrix& parentT, void* userData)
             {
                 dd::line(ddConvert(worldT.Translation()), ddConvert(parentT.Translation()), dd::colors::White, 0, false);
+                dd::axisTriad(ddConvert(worldT), 0.01f, 0.1f);
             };
 
         for (UINT modelIdx : debugDrawModels)
@@ -170,8 +171,6 @@ void ModuleRender::debugDrawCommands()
 
 void ModuleRender::imGuiDrawCommands()
 {
-    ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
-
     ImGui::Begin("Demo Viewer Options");
     ImGui::Separator();
     ImGui::Text("FPS: [%d]. Avg. elapsed (Ms): [%g] ", uint32_t(app->getFPS()), app->getAvgElapsedMs());
@@ -283,7 +282,6 @@ void ModuleRender::renderToTexture(ID3D12GraphicsCommandList* commandList, const
     // Transition to RT + set render target
     D3D12_CPU_DESCRIPTOR_HANDLE sharedDSV = gbufferPass->getGBuffer().getDsvDesc().getCPUHandle();
     renderTexture->beginRender(commandList, &sharedDSV);
-
 
     // Deferred pass
     renderDeferred(commandList);

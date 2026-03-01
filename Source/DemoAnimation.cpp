@@ -5,6 +5,7 @@
 #include "Application.h"
 #include "ModuleCamera.h"
 #include "ModuleScene.h"
+#include "ModuleRender.h"
 
 #include "Scene.h"
 #include "Model.h"
@@ -21,6 +22,8 @@ bool DemoAnimation::init()
     UINT animIdx = scene->addClip("Assets/Models/busterDrone/busterDrone.gltf", 0);
     scene->getModel(modelIdx)->PlayAnim(scene->getClip(animIdx));
 
+    app->getRender()->addDebugDrawModel(modelIdx);
+
     ModuleCamera* camera = app->getCamera();
 
     camera->setPolar(XMConvertToRadians(1.30f));
@@ -29,3 +32,6 @@ bool DemoAnimation::init()
 
     return true;
 }
+
+
+

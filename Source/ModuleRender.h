@@ -45,7 +45,7 @@ class ModuleRender : public Module
     bool showGrid = true;
     bool showSkeleton = false;
     bool showQuadTree = false;
-    bool trackFrustum = true;
+    bool trackFrustum = false;
     bool showGuizmo = false;
 
     ImVec2 canvasSize;

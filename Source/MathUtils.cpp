@@ -189,3 +189,17 @@ IntersectionType insideAABB(const BoundingBox& aabb, const Vector3 points[8])
     return allInside ? INSIDE : (anyInside ? INTERSECTION : OUTSIDE);
 }
 
+Matrix InvertAffineTransform(const Matrix& transform)
+{
+    Matrix result = transform;
+    result.Translation(Vector3::Zero);
+    result.Transpose();
+
+    Vector3 resultTranslation;
+    Vector3::Transform(-transform.Translation(), result, resultTranslation);
+
+    result.Translation(resultTranslation);
+
+    return result;
+}
+

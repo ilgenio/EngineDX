@@ -7,5 +7,4 @@ class DemoAnimation : public Module
 public:
 
     bool init() override;
-
 };

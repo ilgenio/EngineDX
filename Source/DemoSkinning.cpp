@@ -18,9 +18,12 @@ bool DemoSkinning::init()
 
     app->getScene()->getSkybox()->init("Assets/Textures/san_giuseppe_bridge_4k.hdr", false);
 
-    UINT modelIdx = scene->addModel("Assets/Models/Ellen/Ellen.gltf", "Assets/Models/Ellen/");
-    UINT animIdx = scene->addClip("Assets/Models/Ellen/EllenWalkForward.gltf", 0);
-    scene->getModel(modelIdx)->PlayAnim(scene->getClip(animIdx));
+    modelIdx = scene->addModel("Assets/Models/Elf_arbalester/Elf_arbalester.gltf", "Assets/Models/Elf_arbalester/");
+
+    for (int i = 0; i < ANIM_COUNT; ++i)
+    {
+        anims[i] = scene->addClip("Assets/Models/Elf_arbalester/Elf_arbalester.gltf", i);
+    }
 
     ModuleRender* render = app->getRender();
     render->addDebugDrawModel(modelIdx);
@@ -32,4 +35,20 @@ bool DemoSkinning::init()
     camera->setTranslation(Vector3(0.0f, 1.24f, 4.65f));
 
     return true;
+}   
+
+void DemoSkinning::preRender()
+{
+    ImGui::Begin("Demo Viewer Options");
+        
+    if (ImGui::Button("Start"))
+    {
+        ModuleScene* scene = app->getScene();
+
+        std::shared_ptr<Model> character = scene->getModel(modelIdx);
+
+        character->PlayAnim(scene->getClip(anims[IDLE_LONG]));
+    }
+
+    ImGui::End();
 }
