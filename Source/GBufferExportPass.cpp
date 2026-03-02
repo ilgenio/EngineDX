@@ -53,17 +53,14 @@ void GBufferExportPass::render(ID3D12GraphicsCommandList* commandList, std::span
     {
         if (mesh.material)
         {
-            Matrix mvp = (mesh.transform * viewProjection).Transpose();
-            commandList->SetGraphicsRoot32BitConstants(SLOT_MVP_MATRIX, sizeof(Matrix) / sizeof(UINT32), &mvp, 0);
+            Matrix mvp;
 
             PerInstance perInstance;
-            perInstance.material = mesh.material->getData();
-
-            commandList->SetGraphicsRootConstantBufferView(SLOT_PER_INSTANCE_CB, ringBuffer->alloc(&perInstance));
-            commandList->SetGraphicsRootDescriptorTable(SLOT_TEXTURES_TABLE, mesh.material->getTextureTable());
 
             if (mesh.numJoints > 0) // skinned mesh
             {
+                // Note: Skinned mesh has already bee transformed in the skinning pass 
+                mvp = (viewProjection).Transpose();
                 perInstance.modelMat = Matrix::Identity;
                 perInstance.normalMat = Matrix::Identity;
 
@@ -74,11 +71,18 @@ void GBufferExportPass::render(ID3D12GraphicsCommandList* commandList, std::span
             }
             else // rigid mesh
             {
+                mvp = (mesh.transform * viewProjection).Transpose();
                 perInstance.modelMat = mesh.transform.Transpose();
                 perInstance.normalMat = mesh.normalMatrix.Transpose();
 
                 commandList->IASetVertexBuffers(0, 1, &mesh.mesh->getVertexBufferView());
             }
+
+            perInstance.material = mesh.material->getData();
+
+            commandList->SetGraphicsRoot32BitConstants(SLOT_MVP_MATRIX, sizeof(Matrix) / sizeof(UINT32), &mvp, 0);
+            commandList->SetGraphicsRootConstantBufferView(SLOT_PER_INSTANCE_CB, ringBuffer->alloc(&perInstance));
+            commandList->SetGraphicsRootDescriptorTable(SLOT_TEXTURES_TABLE, mesh.material->getTextureTable());
 
             if (mesh.mesh->getNumIndices() > 0) // indexed draw
             {

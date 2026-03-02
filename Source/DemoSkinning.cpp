@@ -90,19 +90,7 @@ void DemoSkinning::update()
         {
             setAnimation(RUN);
         }
-
-        if (keyState.Left)
-        {
-            moveCharacter(localLeft);
-        }
-        if (keyState.Right)
-        {
-            moveCharacter(localRight);
-        }
-        else
-        {
-            moveCharacter(localForward);
-        }
+        moveCharacter();
     }   
     else
     {
@@ -111,6 +99,16 @@ void DemoSkinning::update()
             setAnimation(IDLE_LONG);
         }
     }
+
+    if (keyState.Left)
+    {
+        rotateCharacter(localLeft);
+    }
+    if (keyState.Right)
+    {
+        rotateCharacter(localRight);
+    }
+
 }
 
 void DemoSkinning::setAnimation(Anims anim)
@@ -121,30 +119,44 @@ void DemoSkinning::setAnimation(Anims anim)
     currentAnim = anim;
 }
 
-void DemoSkinning::moveCharacter(const Vector3& localDir)
+void DemoSkinning::moveCharacter()
 {
     ModuleScene* scene = app->getScene();
     std::shared_ptr<Model> character = scene->getModel(modelIdx);
     float elapsedSec = app->getElapsedMilis() * 0.001f;
 
     Matrix transform = character->getRootTransform();
+    Vector3 translation = transform.Translation();
 
-    float angleDiff = atan2f(localDir.x, localDir.z) - atan2f(localForward.x, localForward.z) ;
+    Vector3 forward = Vector3::TransformNormal(localForward, transform);
+    translation += forward * linearSpeed * elapsedSec;
+       
+    transform.Translation(translation);
+    
+    character->setRootTransform(transform);
+}
+
+void DemoSkinning::rotateCharacter(const Vector3& localDir)
+{
+    ModuleScene* scene = app->getScene();
+    std::shared_ptr<Model> character = scene->getModel(modelIdx);
+    float elapsedSec = app->getElapsedMilis() * 0.001f;
+
+    float angleDiff = atan2f(localDir.x, localDir.z) - atan2f(localForward.x, localForward.z);
     while (angleDiff < -M_PI) angleDiff += M_PI * 2.0f;
     while (angleDiff > M_PI) angleDiff -= M_PI * 2.0f;
 
     float maxAngle = angularSpeed * elapsedSec;
     float angle = angleDiff > 0.0f ? std::min(maxAngle, angleDiff) : std::max(-maxAngle, angleDiff);
 
-    Quaternion rot = Quaternion::CreateFromAxisAngle(Vector3::UnitY, angle);
-    Matrix rotMat = Matrix::CreateFromQuaternion(rot);
-    transform = rotMat * transform;
+    Matrix transform = character->getRootTransform();
+    Vector3 translation, scale;
+    Quaternion rotation;
+    transform.Decompose(scale, rotation, translation);
+    
+    rotation = rotation * Quaternion::CreateFromAxisAngle(Vector3::UnitY, angle);
 
-    Vector3 forward = Vector3::TransformNormal(localForward, transform);
-
-    Vector3 currentPos = transform.Translation();
-    Vector3 targetPos = currentPos + forward * linearSpeed * elapsedSec;
-    transform.Translation(targetPos);
+    transform = Matrix::CreateScale(scale) * Matrix::CreateFromQuaternion(rotation) * Matrix::CreateTranslation(translation);
 
     character->setRootTransform(transform);
 }

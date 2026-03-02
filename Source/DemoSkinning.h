@@ -18,8 +18,8 @@ class DemoSkinning : public Module
     UINT anims[ANIM_COUNT] = { UINT(-1) };
     UINT currentAnim = ANIM_COUNT;
     bool showTPose = false;
-    float linearSpeed = 2.0f; // 2.0f;
-    float angularSpeed = 1.0f; // M_PI;
+    float linearSpeed = 4.0f; 
+    float angularSpeed = M_PI;
     const Vector3 localForward = Vector3::UnitZ;
     const Vector3 localLeft = Vector3::UnitX;
     const Vector3 localRight = -Vector3::UnitX;
@@ -32,6 +32,7 @@ public:
 private:
 
     void setAnimation(Anims anim);
-    void moveCharacter(const Vector3& localDir);
+    void moveCharacter();
+    void rotateCharacter(const Vector3& localDir);
 };
 
