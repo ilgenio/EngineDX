@@ -35,6 +35,10 @@ void ModuleScene::update()
 {
     // Update scene
     scene->updateAnimations(float(app->getElapsedMilis()) * 0.001f);
+}
+
+void ModuleScene::preRender()
+{
     scene->updateWorldTransforms();
 }
 

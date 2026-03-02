@@ -34,7 +34,8 @@ public:
     ~ModuleScene();
 
     bool cleanUp() override;
-    void update();
+    void update() override;
+    void preRender() override;
 
     Scene* getScene() { return scene.get(); }
     Skybox* getSkybox() { return skybox.get(); }

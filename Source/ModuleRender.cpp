@@ -256,14 +256,6 @@ void ModuleRender::renderMeshesForward(ID3D12GraphicsCommandList *commandList, c
     }
 }
 
-void ModuleRender::renderMeshesGBuffer(ID3D12GraphicsCommandList* commandList, const Matrix& view, const Matrix& projection)
-{
-    if (!renderList.empty())
-    {
-        gbufferPass->render(commandList, renderList, skinningAddress, view * projection);
-    }
-}
-
 void ModuleRender::renderDeferred(ID3D12GraphicsCommandList* commandList)
 {
     Skybox* skybox = app->getScene()->getSkybox();
@@ -324,7 +316,7 @@ void ModuleRender::render()
         updateSkinning(commandList);
 
         // GBuffer Export
-        renderMeshesGBuffer(commandList, view, proj);
+        gbufferPass->render(commandList, renderList, skinningAddress, view * proj);
 
         // Do forward mesh rendering + deferred pass
         renderToTexture(commandList, view, proj);

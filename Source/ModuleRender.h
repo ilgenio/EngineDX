@@ -76,7 +76,6 @@ public:
 private:
     void renderToTexture(ID3D12GraphicsCommandList* commandList, const Matrix& view, const Matrix& proj);
     void renderMeshesForward(ID3D12GraphicsCommandList* commandList, const Matrix& view, const Matrix& proj);
-    void renderMeshesGBuffer(ID3D12GraphicsCommandList* commandList, const Matrix& view, const Matrix& proj);
     void renderDeferred(ID3D12GraphicsCommandList* commandList);
 
     void updatePerFrameBuffer(const Matrix& view, const Matrix& projection, const Matrix& invView);

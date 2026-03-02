@@ -85,6 +85,8 @@ public:
 
     void enumerateNodes(void (*callbackFunc)(const char* name, const Matrix& worldT, const Matrix& parentT, void* userData), void* userData = nullptr) const;
 
+    Matrix getRootTransform() const { return nodes.size() > 0 ? nodes[0]->localTransform : Matrix::Identity; }
+    void   setRootTransform(const Matrix& transform) { if (nodes.size() > 0) { nodes[0]->localTransform = transform; setAllDirty(); } }
 private:
 
     Model(Scene* parentScene, const char* name);
@@ -102,5 +104,7 @@ private:
                        const std::vector<std::pair<UINT, UINT> >& meshMapping, 
                        const std::vector<int>& materialMapping,
                        std::vector<UINT>& nodeMapping);
+
+    void setAllDirty();
 
 };

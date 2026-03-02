@@ -490,3 +490,12 @@ void Model::updateSkinningMatrices(const MeshInstance* instance) const
 
     instance->dirtyPalette = false;
 }
+
+void Model::setAllDirty()
+{
+    for (Node* node : nodes)
+    {
+        node->dirtyWorld = true;
+    }
+}
+
