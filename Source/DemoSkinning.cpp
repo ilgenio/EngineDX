@@ -107,12 +107,23 @@ void DemoSkinning::update()
     GamePad& pad = GamePad::Get();
     GamePad::State padState = pad.GetState(0);
 
+    Vector2 localPadDir = Vector2::Zero;
+
     // Pad input
     if (padState.IsConnected())
     {
-        //padState.thumbSticks.leftX
-        //padState.thumbSticks.leftY;
+        localPadDir = Vector2(padState.thumbSticks.leftX, -padState.thumbSticks.leftY);
 
+        if (localPadDir.LengthSquared() > 1e-6)
+        {
+            if (currentAnim == IDLE_LONG)
+            {
+                setAnimation(RUN);
+            }
+
+            moveCharacter();
+            rotateCharacterFromPadDir(localPadDir);
+        }
     }
 
     // Keyboard input
@@ -126,7 +137,7 @@ void DemoSkinning::update()
         }
         moveCharacter();
     }   
-    else
+    else if(localPadDir.LengthSquared() <= 1e-5)
     {
         if (currentAnim == RUN)
         {
@@ -136,11 +147,11 @@ void DemoSkinning::update()
 
     if (keyState.Left)
     {
-        rotateCharacter(localLeft);
+        rotateCharacterFromLocalDir(localLeft);
     }
     if (keyState.Right)
     {
-        rotateCharacter(localRight);
+        rotateCharacterFromLocalDir(localRight);
     }
 
     if (cameraTrack)
@@ -180,13 +191,36 @@ void DemoSkinning::moveCharacter()
     character->setRootTransform(transform);
 }
 
-void DemoSkinning::rotateCharacter(const Vector3& localDir)
+void DemoSkinning::rotateCharacterFromPadDir(const Vector2& padDir)
+{
+    ModuleCamera* camera = app->getCamera();
+    ModuleScene* scene = app->getScene();
+    std::shared_ptr<Model> character = scene->getModel(modelIdx);
+
+    Vector3 localCameraDir = Vector3(padDir.x, 0.0, padDir.y);
+
+    const Matrix& cameraTransform = camera->getCamera();
+    const Matrix& characterTransform = character->getRootTransform();
+
+    Vector3 targetDir        = Vector3::TransformNormal(localCameraDir, cameraTransform);
+    Vector3 characterForward = Vector3::TransformNormal(Vector3::UnitZ, characterTransform);
+
+    rotateCharacter(targetDir, characterForward);
+}
+
+void DemoSkinning::rotateCharacterFromLocalDir(const Vector3& localDir)
+{
+    rotateCharacter(localDir, localForward);
+}
+
+void DemoSkinning::rotateCharacter(const Vector3& target, const Vector3& current)
 {
     ModuleScene* scene = app->getScene();
     std::shared_ptr<Model> character = scene->getModel(modelIdx);
+
     float elapsedSec = app->getElapsedMilis() * 0.001f;
 
-    float angleDiff = atan2f(localDir.x, localDir.z) - atan2f(localForward.x, localForward.z);
+    float angleDiff = atan2f(target.x, target.z) - atan2f(current.x, current.z);
     while (angleDiff < -M_PI) angleDiff += M_PI * 2.0f;
     while (angleDiff > M_PI) angleDiff -= M_PI * 2.0f;
 
@@ -197,8 +231,8 @@ void DemoSkinning::rotateCharacter(const Vector3& localDir)
     Vector3 translation, scale;
     Quaternion rotation;
     transform.Decompose(scale, rotation, translation);
-    
-    rotation  = rotation * Quaternion::CreateFromAxisAngle(Vector3::UnitY, angle);
+
+    rotation = rotation * Quaternion::CreateFromAxisAngle(Vector3::UnitY, angle);
     transform = Matrix::CreateScale(scale) * Matrix::CreateFromQuaternion(rotation) * Matrix::CreateTranslation(translation);
 
     character->setRootTransform(transform);

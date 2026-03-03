@@ -36,6 +36,8 @@ private:
 
     void setAnimation(Anims anim);
     void moveCharacter();
-    void rotateCharacter(const Vector3& localDir);
+    void rotateCharacterFromLocalDir(const Vector3& localDir);
+    void rotateCharacterFromPadDir(const Vector2& padDir);
+    void rotateCharacter(const Vector3& target, const Vector3& current);
 };
 
