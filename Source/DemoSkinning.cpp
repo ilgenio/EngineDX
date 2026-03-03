@@ -29,7 +29,7 @@ bool DemoSkinning::init()
     }
 
     std::shared_ptr<Model> character = scene->getModel(modelIdx);
-    character->PlayAnim(scene->getClip(anims[IDLE_LONG]));
+    character->playAnim(scene->getClip(anims[IDLE_LONG]));
     currentAnim = IDLE_LONG;
 
     ModuleRender* render = app->getRender();
@@ -37,9 +37,10 @@ bool DemoSkinning::init()
 
     ModuleCamera* camera = app->getCamera();
 
-    camera->setPolar(XMConvertToRadians(1.30f));
-    camera->setAzimuthal(XMConvertToRadians(-11.61f));
-    camera->setTranslation(Vector3(0.0f, 1.24f, 4.65f));
+    camera->setPolar(XMConvertToRadians(-1.20f));
+    camera->setAzimuthal(XMConvertToRadians(-30.0f));
+    camera->setTranslation(Vector3(0.0f, 3.3f, 6.0f));    
+    camera->setEnableInput(false); 
 
     return true;
 }   
@@ -55,12 +56,12 @@ void DemoSkinning::preRender()
 
         if (showTPose)
         {
-            character->PlayAnim(scene->getClip(anims[TPOSE]));
+            character->playAnim(scene->getClip(anims[TPOSE]));
             currentAnim = TPOSE;
         }
         else
         {
-            character->PlayAnim(scene->getClip(anims[IDLE_LONG]));
+            character->playAnim(scene->getClip(anims[IDLE_LONG]));
             currentAnim = IDLE_LONG;
         }
     }
@@ -109,49 +110,83 @@ void DemoSkinning::update()
 
     Vector2 localPadDir = Vector2::Zero;
 
-    // Pad input
     if (padState.IsConnected())
     {
         localPadDir = Vector2(padState.thumbSticks.leftX, -padState.thumbSticks.leftY);
-
-        if (localPadDir.LengthSquared() > 1e-6)
-        {
-            if (currentAnim == IDLE_LONG)
-            {
-                setAnimation(RUN);
-            }
-
-            moveCharacter();
-            rotateCharacterFromPadDir(localPadDir);
-        }
     }
 
-    // Keyboard input
     Keyboard& keyboard = Keyboard::Get();
     const Keyboard::State& keyState = keyboard.GetState();
-    if (keyState.Up)
-    {
-        if (currentAnim == IDLE_LONG)
-        {
-            setAnimation(RUN);
-        }
-        moveCharacter();
-    }   
-    else if(localPadDir.LengthSquared() <= 1e-5)
-    {
-        if (currentAnim == RUN)
-        {
-            setAnimation(IDLE_LONG);
-        }
-    }
 
-    if (keyState.Left)
+    bool inputMovementFromPad = localPadDir.LengthSquared() > 1e-6;
+    bool inputWantsMovement =  inputMovementFromPad || keyState.Up;
+    bool inputWantsShot = padState.IsRightTriggerPressed() || keyState.Enter;
+
+    auto doMovement = [localPadDir, inputMovementFromPad, keyState, this]()
+        {
+            moveCharacter();
+            if (inputMovementFromPad)
+            {
+                rotateCharacterFromPadDir(localPadDir);
+            }
+            else
+            {
+                if (keyState.Left)
+                {
+                    rotateCharacterFromLocalDir(localLeft);
+                }
+                if (keyState.Right)
+                {
+                    rotateCharacterFromLocalDir(localRight);
+                }
+            }
+        };
+
+    switch (currentAnim)
     {
-        rotateCharacterFromLocalDir(localLeft);
-    }
-    if (keyState.Right)
-    {
-        rotateCharacterFromLocalDir(localRight);
+        case IDLE:
+        case IDLE_LONG:
+        {
+            if (inputWantsShot)
+            {
+                setAnimation(SHOT);
+            }
+            else if (inputWantsMovement)
+            {
+                setAnimation(RUN);
+                doMovement();
+            }
+            break;
+        }
+        case RUN:
+        {
+            if (inputWantsShot)
+            {
+                setAnimation(SHOT);
+            }
+            else if (inputWantsMovement)
+            {
+                doMovement();
+            }
+            else
+            {
+                setAnimation(IDLE_LONG);
+            }
+            break;
+        }
+        case SHOT:
+        {
+            ModuleScene* scene = app->getScene();
+            std::shared_ptr<Model> character = scene->getModel(modelIdx);
+            float animTime = character->getAnimTime();
+            float animDuration = character->getAnimDuration();
+
+            if (animDuration < 1e-5 || (animTime / animDuration) >= 0.9f)
+            {
+                setAnimation(IDLE);
+            }
+            break;
+        }
     }
 
     if (cameraTrack)
@@ -170,7 +205,7 @@ void DemoSkinning::setAnimation(Anims anim)
 {
     ModuleScene* scene = app->getScene();
     std::shared_ptr<Model> character = scene->getModel(modelIdx);
-    character->PlayAnim(scene->getClip(anims[anim]));
+    character->playAnim(scene->getClip(anims[anim]), anim != SHOT, 0.2f);
     currentAnim = anim;
 }
 

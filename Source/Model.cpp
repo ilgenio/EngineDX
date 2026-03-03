@@ -346,7 +346,7 @@ void Model::frustumCulling(const Vector4 frustumPlanes[6], const Vector3 absFrus
     }
 }
 
-void Model::PlayAnim(std::shared_ptr<AnimationClip> clip, float fadeIn /*= 0.0f*/)
+void Model::playAnim(std::shared_ptr<AnimationClip> clip, bool loop, float fadeIn /*= 0.0f*/)
 {
     if (!clip) return;
 
@@ -354,14 +354,35 @@ void Model::PlayAnim(std::shared_ptr<AnimationClip> clip, float fadeIn /*= 0.0f*
     newAnim->clip = clip;
     newAnim->fadeIn = fadeIn;
     newAnim->time = 0.0f;
+    newAnim->loop = loop;
 
     newAnim->next = std::move(currentAnim);
     currentAnim = std::move(newAnim);
 }
 
-void Model::StopAnim()
+void Model::stopAnim()
 {
     currentAnim.reset();
+}
+
+float Model::getAnimTime() const
+{
+    if (currentAnim)
+    {
+        return currentAnim->time;
+    }
+
+    return 0.0f;
+}
+
+float Model::getAnimDuration() const
+{
+    if (currentAnim)
+    {
+        return currentAnim->clip->getDuration();
+    }
+
+    return 0.0f;
 }
 
 void Model::updateAnim(float deltaTime)
@@ -377,7 +398,14 @@ void Model::updateAnim(float deltaTime)
         anim->time += deltaTime;
 
         // Loop animation
-        anim->time = fmodf(anim->time, anim->clip->getDuration());
+        if (anim->loop)
+        {
+            anim->time = fmodf(anim->time, anim->clip->getDuration());
+        }
+        else
+        {
+            anim->time = std::min(anim->time, anim->clip->getDuration());
+        }
 
         if (anim->time >= anim->fadeIn)
         {

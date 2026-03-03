@@ -20,7 +20,7 @@ bool DemoAnimation::init()
 
     UINT modelIdx = scene->addModel("Assets/Models/busterDrone/busterDrone.gltf", "Assets/Models/busterDrone");
     UINT animIdx = scene->addClip("Assets/Models/busterDrone/busterDrone.gltf", 0);
-    scene->getModel(modelIdx)->PlayAnim(scene->getClip(animIdx));
+    scene->getModel(modelIdx)->playAnim(scene->getClip(animIdx));
 
     app->getRender()->addDebugDrawModel(modelIdx);
 

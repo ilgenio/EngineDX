@@ -19,8 +19,8 @@
 #include "Exercises/Exercise13.h"
 
 DemoDescriptors demos[] = {
-    { "DemoAnimation", "Shows Animation demo", []() -> Module* { return new DemoAnimation(); } },
-    { "DemoSkinning", "Shows Skinning and Character movement demo", []() -> Module* { return new DemoSkinning(); } },
+    { "DemoAnimation", "Shows Animations working (no skinning)", []() -> Module* { return new DemoAnimation(); } },
+    { "DemoCharacter", "Shows Skinning and character movement", []() -> Module* { return new DemoSkinning(); } },
     { "Exercise1", "Clears the screen with a solid color", []() -> Module* { return new Exercise1(); } },
     { "Exercise2", "Renders a 2D triangle", []() -> Module* { return new Exercise2(); } },
     { "Exercise3", "Renders a 3D triangle", []() -> Module* { return new Exercise3(); } },

@@ -49,6 +49,7 @@ class Model
         std::shared_ptr<class AnimationClip> clip;
         float time = 0.0f;
         float fadeIn = 0.0f;
+        bool loop = true;
 
         std::unique_ptr<AnimInstance> next;
     };
@@ -71,8 +72,11 @@ class Model
 public:
     ~Model();
 
-    void PlayAnim(std::shared_ptr<AnimationClip> clip, float fadeIn = 0.0f);
-    void StopAnim();
+    void playAnim(std::shared_ptr<AnimationClip> clip, bool loop = true, float fadeIn = 0.0f);
+    void stopAnim();
+
+    float getAnimTime() const;
+    float getAnimDuration() const;
 
     const std::string& getName() const { return name; }
 
