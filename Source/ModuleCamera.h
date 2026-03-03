@@ -28,6 +28,7 @@ class ModuleCamera : public Module
     Matrix view;
     Matrix camera;
     bool enabled = true;
+    bool enableInput = true; 
 public:
 
     bool init() override;
@@ -35,6 +36,9 @@ public:
 
     void setEnable(bool flag) { enabled = flag; }
     bool getEnabled() const { return enabled;  }
+
+    void setEnableInput(bool flag) { enableInput = flag; }
+    bool getEnableInput() const { return enableInput;  }
 
     float getPolar() const { return params.polar; }
     float getAzimuthal() const { return params.azimuthal;  }

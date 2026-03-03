@@ -13,6 +13,7 @@
 #include "ModuleRender.h"
 
 #include "Keyboard.h"
+#include "GamePad.h"
 
 bool DemoSkinning::init() 
 {
@@ -66,13 +67,36 @@ void DemoSkinning::preRender()
 
     if (ImGui::Button("Reset"))
     {
-        ModuleScene* scene = app->getScene();
+        ModuleScene* scene = app->getScene(); 
         std::shared_ptr<Model> character = scene->getModel(modelIdx);
 
         character->setRootTransform(Matrix::Identity);
     }
 
     ImGui::InputFloat("Linear Speed", &linearSpeed);
+    ImGui::InputFloat("Angular Speed", &angularSpeed);
+
+    if (ImGui::Checkbox("Camera track", &cameraTrack))
+    {
+        ModuleCamera* camera = app->getCamera();
+
+        if(cameraTrack)
+        {
+            ModuleScene* scene = app->getScene();
+
+            std::shared_ptr<Model> character = scene->getModel(modelIdx);
+
+            const Vector3& cameraPos = camera->getCamera().Translation();
+            const Vector3& characterPos = character->getRootTransform().Translation();
+
+            trackOffset = cameraPos - characterPos;
+            camera->setEnableInput(false);
+        }
+        else
+        {
+            camera->setEnableInput(true);
+        }
+    }
 
 
     ImGui::End();
@@ -80,10 +104,20 @@ void DemoSkinning::preRender()
 
 void DemoSkinning::update()
 {
+    GamePad& pad = GamePad::Get();
+    GamePad::State padState = pad.GetState(0);
+
+    // Pad input
+    if (padState.IsConnected())
+    {
+        //padState.thumbSticks.leftX
+        //padState.thumbSticks.leftY;
+
+    }
+
+    // Keyboard input
     Keyboard& keyboard = Keyboard::Get();
-
     const Keyboard::State& keyState = keyboard.GetState();
-
     if (keyState.Up)
     {
         if (currentAnim == IDLE_LONG)
@@ -109,6 +143,16 @@ void DemoSkinning::update()
         rotateCharacter(localRight);
     }
 
+    if (cameraTrack)
+    {
+        ModuleCamera* camera = app->getCamera();
+
+        ModuleScene* scene = app->getScene();
+        std::shared_ptr<Model> character = scene->getModel(modelIdx);
+
+        const Matrix& transform = character->getRootTransform();
+        camera->setTranslation(transform.Translation() + trackOffset);
+    }
 }
 
 void DemoSkinning::setAnimation(Anims anim)
@@ -154,8 +198,7 @@ void DemoSkinning::rotateCharacter(const Vector3& localDir)
     Quaternion rotation;
     transform.Decompose(scale, rotation, translation);
     
-    rotation = rotation * Quaternion::CreateFromAxisAngle(Vector3::UnitY, angle);
-
+    rotation  = rotation * Quaternion::CreateFromAxisAngle(Vector3::UnitY, angle);
     transform = Matrix::CreateScale(scale) * Matrix::CreateFromQuaternion(rotation) * Matrix::CreateTranslation(translation);
 
     character->setRootTransform(transform);

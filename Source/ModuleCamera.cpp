@@ -40,55 +40,57 @@ void ModuleCamera::update()
 
     if (enabled)
     {
-        Keyboard& keyboard = Keyboard::Get();
-        GamePad& pad = GamePad::Get();
-
-        const Keyboard::State& keyState = keyboard.GetState();
-        GamePad::State padState = pad.GetState(0);
-       
-        float elapsedSec = app->getElapsedMilis()*0.001f;
-        
-        Vector3 translate = Vector3::Zero;
-        Vector2 rotate = Vector2::Zero;
-        
-        // Check game pad
-        if (padState.IsConnected())
+        if (enableInput)
         {
-            rotate.x = -padState.thumbSticks.rightX * elapsedSec;
-            rotate.y = -padState.thumbSticks.rightY * elapsedSec;
+            Keyboard& keyboard = Keyboard::Get();
+            GamePad& pad = GamePad::Get();
 
-            translate.x = padState.thumbSticks.leftX  * elapsedSec;
-            translate.z = -padState.thumbSticks.leftY * elapsedSec;
+            const Keyboard::State& keyState = keyboard.GetState();
+            GamePad::State padState = pad.GetState(0);
 
-            if (padState.IsLeftTriggerPressed())
+            float elapsedSec = app->getElapsedMilis() * 0.001f;
+
+            Vector3 translate = Vector3::Zero;
+            Vector2 rotate = Vector2::Zero;
+
+            // Check game pad
+            if (padState.IsConnected())
             {
-                translate.y = 0.25f * elapsedSec;
+                rotate.x = -padState.thumbSticks.rightX * elapsedSec;
+                rotate.y = -padState.thumbSticks.rightY * elapsedSec;
+
+                translate.x = padState.thumbSticks.leftX * elapsedSec;
+                translate.z = -padState.thumbSticks.leftY * elapsedSec;
+
+                if (padState.IsLeftTriggerPressed())
+                {
+                    translate.y = 0.25f * elapsedSec;
+                }
+                else if (padState.IsRightTriggerPressed())
+                {
+                    translate.y -= 0.25f * elapsedSec;
+                }
             }
-            else if (padState.IsRightTriggerPressed())
+
+            if (mouseState.leftButton)
             {
-                translate.y -= 0.25f * elapsedSec;
+                rotate.x = float(dragPosX - mouseState.x) * 0.005f;
+                rotate.y = float(dragPosY - mouseState.y) * 0.005f;
             }
+
+            if (keyState.W) translate.z -= 0.45f * elapsedSec;
+            if (keyState.S) translate.z += 0.45f * elapsedSec;
+            if (keyState.A) translate.x -= 0.45f * elapsedSec;
+            if (keyState.D) translate.x += 0.45f * elapsedSec;
+            if (keyState.Q) translate.y += 0.45f * elapsedSec;
+            if (keyState.E) translate.y -= 0.45f * elapsedSec;
+
+
+            Vector3 localDir = Vector3::Transform(translate, rotation);
+            params.translation += localDir * getTranslationSpeed();
+            params.polar += XMConvertToRadians(getRotationSpeed() * rotate.x);
+            params.azimuthal += XMConvertToRadians(getRotationSpeed() * rotate.y);
         }
-        
-        if (mouseState.leftButton)
-        {
-            rotate.x = float(dragPosX - mouseState.x) * 0.005f;
-            rotate.y = float(dragPosY - mouseState.y) * 0.005f;
-        }
-
-        if (keyState.W) translate.z -= 0.45f * elapsedSec;
-        if (keyState.S) translate.z += 0.45f * elapsedSec;
-        if (keyState.A) translate.x -= 0.45f * elapsedSec;
-        if (keyState.D) translate.x += 0.45f * elapsedSec;
-        if (keyState.Q) translate.y += 0.45f * elapsedSec;
-        if (keyState.E) translate.y -= 0.45f * elapsedSec;
-
-
-        Vector3 localDir = Vector3::Transform(translate, rotation);
-        params.translation += localDir * getTranslationSpeed();
-        params.polar += XMConvertToRadians(getRotationSpeed() * rotate.x);
-        params.azimuthal += XMConvertToRadians(getRotationSpeed() * rotate.y);
-
             
         // Updates camera view 
 
