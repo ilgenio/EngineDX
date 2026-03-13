@@ -19,7 +19,7 @@ class DemoSkinning : public Module
     UINT currentAnim = ANIM_COUNT;
     bool showTPose = false;
     bool cameraTrack = true;
-    Vector3 trackOffset = Vector3(0.0f, 2.5, 5.0);
+    Vector3 trackOffset = Vector3(0.0f, 2.0, 3.5);
     float linearSpeed = 4.0f; 
     float angularSpeed = M_PI;
 

@@ -18,6 +18,8 @@ struct RenderMesh
     const Matrix* palette = nullptr;
     UINT numJoints = 0;
     UINT skinningOffset = 0;
+    const float* morphWeights = nullptr;
+    UINT numMorphTargets = 0;
 
     Matrix transform;
     Matrix normalMatrix;

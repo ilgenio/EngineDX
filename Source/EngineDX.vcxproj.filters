@@ -226,6 +226,9 @@
     <ClCompile Include="DeferredPass.cpp">
       <Filter>Passes</Filter>
     </ClCompile>
+    <ClCompile Include="DemoScene.cpp">
+      <Filter>Demos</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EngineDX.h">
@@ -473,6 +476,9 @@
     </ClInclude>
     <ClInclude Include="DeferredPass.h">
       <Filter>Passes</Filter>
+    </ClInclude>
+    <ClInclude Include="DemoScene.h">
+      <Filter>Demos</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -37,6 +37,8 @@ void Mesh::load(const tinygltf::Model& model, const tinygltf::Mesh& mesh, const 
 
         const tinygltf::Accessor& posAcc = model.accessors[itPos->second];
 
+        // Load vertex attributes
+
         numVertices = uint32_t(posAcc.count);
 
         std::unique_ptr<uint8_t[]> indices;
@@ -62,7 +64,7 @@ void Mesh::load(const tinygltf::Model& model, const tinygltf::Mesh& mesh, const 
                     const Vector4& src = tangents[i];
                     dst.x = src.x;
                     dst.y = src.y;
-                    dst.z = src.z*src.w;  
+                    dst.z = src.z * src.w;
                 }
             }
         }
@@ -82,7 +84,7 @@ void Mesh::load(const tinygltf::Model& model, const tinygltf::Mesh& mesh, const 
         const auto& it = primitive.attributes.find("JOINTS_0");
         if (it != primitive.attributes.end())
         {
-            size_t jointSize = getAccessorElementSize(model, it->second); 
+            size_t jointSize = getAccessorElementSize(model, it->second);
 
             if (jointSize == sizeof(UINT) * 4)
             {
@@ -95,7 +97,7 @@ void Mesh::load(const tinygltf::Model& model, const tinygltf::Mesh& mesh, const 
                 UINT numJointIndices = 0;
                 hasJoints = loadAccessorTyped(shortData, numJointIndices, model, it->second);
                 _ASSERT(numJointIndices == numVertices);
-                for (UINT i=0; i< numJointIndices; ++i)
+                for (UINT i = 0; i < numJointIndices; ++i)
                 {
                     for (UINT j = 0; j < 4; ++j)
                     {
@@ -106,6 +108,33 @@ void Mesh::load(const tinygltf::Model& model, const tinygltf::Mesh& mesh, const 
         }
 
         bool hasWeights = loadAccessorData(boneDataPtr + offsetof(SkinBoneData, weights), sizeof(Vector4), sizeof(SkinBoneData), numVertices, model, primitive.attributes, "WEIGHTS_0");
+
+        // Morph targets attributes
+
+        numMorphTargets = UINT(primitive.targets.size());
+        morphWeights = std::make_unique<float[]>(numMorphTargets);
+        std::unique_ptr<Vertex[]> morphVertices = std::make_unique<Vertex[]>(numVertices * numMorphTargets);
+
+        UINT morphIndex = 0;
+
+        for (const auto& target : primitive.targets)
+        {
+            auto itPos = target.find("POSITION");
+            _ASSERTE(itPos != target.end());
+
+            uint8_t* morphData = reinterpret_cast<uint8_t*>(morphVertices.get() + morphIndex * numVertices);
+
+            loadAccessorData(morphData + offsetof(Vertex, position), sizeof(Vector3), sizeof(Vertex), numVertices, model, itPos->second);
+            loadAccessorData(morphData + offsetof(Vertex, normal), sizeof(Vector3), sizeof(Vertex), numVertices, model, target, "NORMAL");
+            loadAccessorData(morphData + offsetof(Vertex, texCoord0), sizeof(Vector2), sizeof(Vertex), numVertices, model, target, "TEXCOORD_0");
+            loadAccessorData(morphData + offsetof(Vertex, tangent), sizeof(Vector3), sizeof(Vertex), numVertices, model, target, "TANGENT");
+
+            morphWeights[morphIndex] = float(mesh.weights[morphIndex]);
+
+            ++morphIndex;
+        }
+
+        // Load indices
 
         if (primitive.indices >= 0)
         {
@@ -129,10 +158,13 @@ void Mesh::load(const tinygltf::Model& model, const tinygltf::Mesh& mesh, const 
 
         if (!hasTangents)
         {
+            _ASSERT_EXPR(numMorphTargets == 0, L"Cannot compute tangents with morph targets");
+
+            // Compute tangents if not provided
             computeTSpace(vertices, indices, bones);
         }
 
-        if(numIndices > 0)
+        if (numIndices > 0)
         {
             staticBuffer->allocIndexBuffer(numIndices, indexElementSize, indices.get(), indexBufferView);
         }
@@ -142,6 +174,11 @@ void Mesh::load(const tinygltf::Model& model, const tinygltf::Mesh& mesh, const 
         if (hasJoints && hasWeights)
         {
             staticBuffer->allocBuffer(numVertices * sizeof(SkinBoneData), &bones[0], boneData);
+        }
+
+        if (numMorphTargets > 0)
+        {            
+            staticBuffer->allocVertexBuffer(numVertices * numMorphTargets, sizeof(Vertex), morphVertices.get(), morphView);
         }
     }
 }

@@ -41,6 +41,7 @@ class Model
         UINT nodeIndex = 0;
         UINT quadTreeCell = UINT(-1);
         mutable std::unique_ptr<Matrix[]> palette;
+        mutable std::unique_ptr<float[]> morphWeights;
         mutable bool dirtyPalette = true;
     };
 

@@ -178,7 +178,15 @@ UINT Model::generateNodes(const tinygltf::Model &model, UINT nodeIndex, INT pare
             {
                 _ASSERTE(instance->skinIndex < skins.size());
 
-                instance->palette = std::make_unique<Matrix[]>(skins[instance->skinIndex]->numJoints);
+                instance->palette = std::make_unique<Matrix[]>(skins[instance->skinIndex]->numJoints);                
+            }
+
+            const Mesh* mesh = meshes[instance->meshIndex];
+            if (mesh->needsMorphing())
+            {
+                instance->morphWeights = std::make_unique<float[]>(mesh->getNumMorphTargets());
+
+                memcpy(instance->morphWeights.get(), mesh->getInitialMorphWeights(), mesh->getNumMorphTargets() * sizeof(float));
             }
             
             _ASSERTE(instance->meshIndex < meshes.size());
@@ -338,7 +346,13 @@ void Model::frustumCulling(const Vector4 frustumPlanes[6], const Vector3 absFrus
                 updateSkinningMatrices(instance);
 
                 renderMesh.palette   = instance->palette.get();
-                renderMesh.numJoints = skins[instance->skinIndex]->numJoints;
+                renderMesh.numJoints = skins[instance->skinIndex]->numJoints;            
+            }
+
+            if(renderMesh.mesh->needsMorphing())
+            {
+                renderMesh.morphWeights = instance->morphWeights.get();
+                renderMesh.numMorphTargets = renderMesh.mesh->getNumMorphTargets();
             }
 
             renderList.push_back(renderMesh);
@@ -418,7 +432,7 @@ void Model::updateAnim(float deltaTime)
         }
     }
 
-    // update nodes
+    // update node transforms
 
     for(Node* node : nodes)
     {
@@ -494,7 +508,38 @@ void Model::updateAnim(float deltaTime)
 
     for (MeshInstance* instance : instances)
     {
+        // Skinning dirty 
         instance->dirtyPalette = instance->skinIndex >= 0;
+
+        // Compute morph target weights 
+        const Mesh* mesh = meshes[instance->meshIndex];
+        if (mesh->needsMorphing())
+        {
+            const Node* node = nodes[instance->nodeIndex];
+
+            memcpy(instance->morphWeights.get(), mesh->getInitialMorphWeights(), mesh->getNumMorphTargets() * sizeof(float));
+
+            for (auto it = anims.rbegin(); it != anims.rend(); ++it)
+            {
+                AnimInstance* anim = *it;
+
+                UINT count = anim->clip->getMorphTargetCount(node->name);
+                _ASSERTE(count == mesh->getNumMorphTargets());
+
+                if (anim->next)
+                {
+                    float t = std::min(anim->time / anim->fadeIn, 1.0f);
+
+                    std::vector<float> weights(count);
+
+                    anim->clip->blendMorphWeights(node->name, anim->time, instance->morphWeights.get(), t);
+                }
+                else
+                {
+                    anim->clip->getMorphWeights(node->name, anim->time, instance->morphWeights.get());
+                }
+            }
+        }
     }
 }
 

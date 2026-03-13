@@ -39,7 +39,7 @@ bool DemoSkinning::init()
 
     camera->setPolar(XMConvertToRadians(-1.20f));
     camera->setAzimuthal(XMConvertToRadians(-30.0f));
-    camera->setTranslation(Vector3(0.0f, 3.3f, 6.0f));    
+    camera->setTranslation(Vector3(0.0f, 2.3f, 1.0f));    
     camera->setEnableInput(false); 
 
     return true;

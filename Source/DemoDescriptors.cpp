@@ -4,6 +4,7 @@
 
 #include "DemoAnimation.h"
 #include "DemoSkinning.h"
+#include "DemoScene.h"
 #include "Exercises/Exercise1.h"
 #include "Exercises/Exercise2.h"
 #include "Exercises/Exercise3.h"
@@ -19,8 +20,9 @@
 #include "Exercises/Exercise13.h"
 
 DemoDescriptors demos[] = {
-    { "DemoAnimation", "Shows Animations working (no skinning)", []() -> Module* { return new DemoAnimation(); } },
     { "DemoCharacter", "Shows Skinning and character movement", []() -> Module* { return new DemoSkinning(); } },
+    { "DemoAnimation", "Shows Animations working (no skinning)", []() -> Module* { return new DemoAnimation(); } },
+    { "DemoScene", "Shows a demo scene with various elements", []() -> Module* { return new DemoScene(); } },
     { "Exercise1", "Clears the screen with a solid color", []() -> Module* { return new Exercise1(); } },
     { "Exercise2", "Renders a 2D triangle", []() -> Module* { return new Exercise2(); } },
     { "Exercise3", "Renders a 3D triangle", []() -> Module* { return new Exercise3(); } },
