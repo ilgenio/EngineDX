@@ -11,6 +11,7 @@ public:
     {
         Vector3 position;
         Vector2 texCoord0;
+        Vector2 texCoord1;
         Vector3 normal;
         Vector3 tangent;
     };
@@ -83,7 +84,7 @@ private:
 
     std::unique_ptr<float[]> morphWeights; // initial morph target weights
 
-    static const uint32_t numVertexAttribs = 4;
+    static const uint32_t numVertexAttribs = 5;
     static const D3D12_INPUT_ELEMENT_DESC inputLayout[numVertexAttribs]; 
     static const D3D12_INPUT_LAYOUT_DESC inputLayoutDesc;
 };

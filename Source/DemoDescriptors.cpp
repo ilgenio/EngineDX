@@ -5,6 +5,7 @@
 #include "DemoAnimation.h"
 #include "DemoSkinning.h"
 #include "DemoScene.h"
+#include "DemoMorph.h"
 #include "Exercises/Exercise1.h"
 #include "Exercises/Exercise2.h"
 #include "Exercises/Exercise3.h"
@@ -20,6 +21,7 @@
 #include "Exercises/Exercise13.h"
 
 DemoDescriptors demos[] = {
+    { "DemoMorphTargets", "Shows morph targets", []() -> Module* { return new DemoMorph(); } },
     { "DemoCharacter", "Shows Skinning and character movement", []() -> Module* { return new DemoSkinning(); } },
     { "DemoAnimation", "Shows Animations working (no skinning)", []() -> Module* { return new DemoAnimation(); } },
     { "DemoScene", "Shows a demo scene with various elements", []() -> Module* { return new DemoScene(); } },

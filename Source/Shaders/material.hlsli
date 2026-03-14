@@ -29,7 +29,8 @@ struct Material
     float3 emissiveFactor;     // Emissive factor
     float  alphaCutoff;        // Alpha cutoff threshold for alpha masking
     uint   flags;              // Bitfield flags indicating which textures are present
-    uint   padding;            // Padding to align struct to 16 bytes
+    uint   texcoords;          // Bitfield indicating which texture coordinates to use for each texture type 
+    uint   padding[2]; 
 };
 
 float computeSpecularAO(float NdotV, float ao, float roughness) 
@@ -37,11 +38,18 @@ float computeSpecularAO(float NdotV, float ao, float roughness)
     return clamp(pow(NdotV + ao, exp2(-16.0 * roughness - 1.0)) - 1.0 + ao, 0.0, 1.0);
 }
 
-float getDiffuseAO(in Material material, in Texture2D occlusionTex, in float2 coord)
+float getDiffuseAO(in Material material, in Texture2D occlusionTex, in float2 coord0, in float2 coord1)
 {
     if (material.flags & HAS_OCCLUSION_TEX)
     {
-        return occlusionTex.Sample(bilinearWrap, coord).r * material.occlusionStrength;
+        if (material.texcoords & HAS_OCCLUSION_TEX)
+        {
+            return occlusionTex.Sample(bilinearWrap, coord1).r * material.occlusionStrength;
+        }
+        else
+        {
+            return occlusionTex.Sample(bilinearWrap, coord0).r * material.occlusionStrength;
+        }
     }
 
     return 1.0;
@@ -53,19 +61,29 @@ float getSpecularAO(in float NdotV, in float NdotR, float diffuseAO, float rough
     return specularAO * max(1.0 + NdotR, 1.0);
 }
 
-void getAmbientOcclusion(in Material material, in Texture2D occlusionTex, in float2 coord, in float NdotV, 
-                         in float NdotR, in float roughness, out float diffuseAO, out float specularAO)
+void getAmbientOcclusion(in Material material, in Texture2D occlusionTex, in float2 coord0, in float2 coord1, 
+                         in float NdotV, in float NdotR, in float roughness, out float diffuseAO, out float specularAO)
 {
-    diffuseAO  = getDiffuseAO(material, occlusionTex, coord);
+    diffuseAO  = getDiffuseAO(material, occlusionTex, coord0, coord1);
     specularAO = getSpecularAO(NdotV, NdotR, diffuseAO, roughness);
 }
 
 
-float3 getNormal(in Material material, in Texture2D normalTex, in float2 coord, in float3 normal, in float3 tangent, in float3 bitangent)
+float3 getNormal(in Material material, in Texture2D normalTex, in float2 coord0, in float2 coord1, in float3 normal, in float3 tangent, in float3 bitangent)
 {
     if (material.flags & HAS_NORMAL_TEX)
     {
-        float3 normalMap = normalTex.Sample(bilinearWrap, coord).xyz * 2.0 - 1.0;
+        float3 normalMap;
+        
+        if (material.texcoords & HAS_NORMAL_TEX)
+        {
+            normalMap = normalTex.Sample(bilinearWrap, coord1).xyz * 2.0 - 1.0;
+        }
+        else
+        {
+            normalMap = normalTex.Sample(bilinearWrap, coord0).xyz * 2.0 - 1.0;
+        }
+
 
         if(material.flags & HAS_COMPRESSED_NORMALS) // Reconstruct Z component for compressed normal maps
         {
@@ -79,7 +97,6 @@ float3 getNormal(in Material material, in Texture2D normalTex, in float2 coord, 
         // Transform normal from tangent space to world space
         float3x3 TBN = float3x3(tangent, bitangent, normal);
         return mul(normalMap, TBN);
-
     }
     else
     {
@@ -87,11 +104,22 @@ float3 getNormal(in Material material, in Texture2D normalTex, in float2 coord, 
     }
 }
 
-float3 getEmissive(in Material material, in Texture2D emissiveTex, in float2 coord)
+float3 getEmissive(in Material material, in Texture2D emissiveTex, in float2 coord0, in float2 coord1)
 {
     if (material.flags & HAS_EMISSIVE_TEX)
     {
-        return emissiveTex.Sample(bilinearClamp, coord).rgb * material.emissiveFactor;
+        float3 emissive;
+
+        if (material.texcoords & HAS_EMISSIVE_TEX)
+        {
+            emissive = emissiveTex.Sample(bilinearClamp, coord1).rgb;
+        }
+        else
+        {
+            emissive = emissiveTex.Sample(bilinearClamp, coord0).rgb;
+        }
+        
+        return emissive * material.emissiveFactor;
     }
     else
     {
@@ -100,20 +128,34 @@ float3 getEmissive(in Material material, in Texture2D emissiveTex, in float2 coo
 }
 
 void getMetallicRoughness(in Material material, in Texture2D baseColourTex, in Texture2D metallicRoughnessTex,
-                          in float2 coord, out float3 baseColour, out float roughness, out float metallic)
+                          in float2 coord0, in float2 coord1, out float3 baseColour, out float roughness, out float metallic)
 {
     baseColour = material.baseColour.rgb;
 
     if (material.flags & HAS_BASECOLOUR_TEX)
     {
-        baseColour *= baseColourTex.Sample(bilinearWrap, coord).rgb;
+        if (material.texcoords & HAS_BASECOLOUR_TEX)
+        {
+            baseColour *= baseColourTex.Sample(bilinearWrap, coord1).rgb;
+        }
+        else
+        {
+            baseColour *= baseColourTex.Sample(bilinearWrap, coord0).rgb;
+        }
     }
 
     float2 metallicRoughness = float2(material.metallicFactor, material.roughnessFactor);
 
     if (material.flags & HAS_METALLICROUGHNESS_TEX)
     {
-        metallicRoughness *= metallicRoughnessTex.Sample(bilinearWrap, coord).bg;
+        if (material.texcoords & HAS_METALLICROUGHNESS_TEX)
+        {
+            metallicRoughness *= metallicRoughnessTex.Sample(bilinearWrap, coord1).bg;
+        }
+        else
+        {
+            metallicRoughness *= metallicRoughnessTex.Sample(bilinearWrap, coord0).bg;
+        }
     }
 
     metallic = metallicRoughness.x;
@@ -131,10 +173,10 @@ void getMetallicRoughness(in Material material, in Texture2D baseColourTex, in T
 // - alphaRoughness: Output perceptual roughness (roughness squared)
 // - metallic: Output final metallic value
 void getMetallicRoughness(in Material material, in Texture2D baseColourTex, in Texture2D metallicRoughnessTex,
-                          in float2 coord, out float3 baseColour, out float roughness, 
+                          in float2 coord0, in float2 coord1, out float3 baseColour, out float roughness, 
                           out float alphaRoughness, out float metallic)
 {
-    getMetallicRoughness(material, baseColourTex, metallicRoughnessTex, coord, baseColour, roughness, metallic);
+    getMetallicRoughness(material, baseColourTex, metallicRoughnessTex, coord0, coord1  , baseColour, roughness, metallic);
     alphaRoughness = roughness * roughness; // Perceptual roughness
 }
 

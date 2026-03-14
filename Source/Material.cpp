@@ -44,6 +44,7 @@ void Material::load(const tinygltf::Model& model, const tinygltf::Material &mate
                                                                          float(material.emissiveFactor[1]),
                                                                          float(material.emissiveFactor[2])) : Vector3::Zero;
     data.flags           = 0;
+    data.texCoords       = 0; 
 
     std::string base = basePath;
 
@@ -54,6 +55,13 @@ void Material::load(const tinygltf::Model& model, const tinygltf::Material &mate
     if (material.pbrMetallicRoughness.baseColorTexture.index >= 0 && loadTexture(model, base, material.pbrMetallicRoughness.baseColorTexture.index, true, textures[TEX_SLOT_BASECOLOUR]))
     {
         data.flags |= FLAG_HAS_BASECOLOUR_TEX;
+
+        _ASSERTE(material.pbrMetallicRoughness.baseColorTexture.texCoord <= 1); 
+        if (material.pbrMetallicRoughness.baseColorTexture.texCoord == 1)
+        {
+            data.texCoords |= FLAG_HAS_BASECOLOUR_TEX; 
+        }
+
         textureTableDesc.createTextureSRV(textures[TEX_SLOT_BASECOLOUR].texture.Get(), TEX_SLOT_BASECOLOUR);
     }
     else
@@ -65,6 +73,13 @@ void Material::load(const tinygltf::Model& model, const tinygltf::Material &mate
     if (material.pbrMetallicRoughness.metallicRoughnessTexture.index >= 0 && loadTexture(model, base, material.pbrMetallicRoughness.metallicRoughnessTexture.index, false, textures[TEX_SLOT_METALLIC_ROUGHNESS]))
     {
         data.flags |= FLAG_HAS_METALLICROUGHNESS_TEX;
+
+        _ASSERTE(material.pbrMetallicRoughness.metallicRoughnessTexture.texCoord <= 1);
+        if (material.pbrMetallicRoughness.metallicRoughnessTexture.texCoord == 1)
+        {
+            data.texCoords |= FLAG_HAS_METALLICROUGHNESS_TEX;
+        }
+
         textureTableDesc.createTextureSRV(textures[TEX_SLOT_METALLIC_ROUGHNESS].texture.Get(), TEX_SLOT_METALLIC_ROUGHNESS);
     }
     else
@@ -80,6 +95,12 @@ void Material::load(const tinygltf::Model& model, const tinygltf::Material &mate
         DXGI_FORMAT format = textures[TEX_SLOT_NORMAL].texture->GetDesc().Format;
         data.flags |= (format == DXGI_FORMAT_BC5_TYPELESS || format == DXGI_FORMAT_BC5_UNORM || format == DXGI_FORMAT_BC5_SNORM) ? FLAG_HAS_COMPRESSED_NORMAL : 0;
 
+        _ASSERTE(material.normalTexture.texCoord <= 1);
+        if (material.normalTexture.texCoord == 1)
+        {
+            data.texCoords |= FLAG_HAS_NORMAL_TEX;
+        }
+
         textureTableDesc.createTextureSRV(textures[TEX_SLOT_NORMAL].texture.Get(), TEX_SLOT_NORMAL);
     }
     else
@@ -93,6 +114,13 @@ void Material::load(const tinygltf::Model& model, const tinygltf::Material &mate
     if (material.occlusionTexture.index >= 0 && loadTexture(model, base, material.occlusionTexture.index, false, textures[TEX_SLOT_OCCLUSION]))
     {
         data.flags |= FLAG_HAS_OCCLUSION_TEX;
+
+        _ASSERTE(material.occlusionTexture.texCoord <= 1);
+        if (material.occlusionTexture.texCoord == 1)
+        {
+            data.texCoords |= FLAG_HAS_OCCLUSION_TEX;
+        }
+
         textureTableDesc.createTextureSRV(textures[TEX_SLOT_OCCLUSION].texture.Get(), TEX_SLOT_OCCLUSION);
     }
     else
@@ -105,7 +133,14 @@ void Material::load(const tinygltf::Model& model, const tinygltf::Material &mate
     if(material.emissiveTexture.index >= 0 && loadTexture(model, base, material.emissiveTexture.index, true, textures[TEX_SLOT_EMISSIVE]))
     {
         data.flags |= FLAG_HAS_EMISSIVE_TEX;
-        textureTableDesc.createTextureSRV(textures[TEX_SLOT_EMISSIVE].texture.Get(), TEX_SLOT_EMISSIVE);
+
+        _ASSERTE(material.emissiveTexture.texCoord <= 1);
+        if (material.emissiveTexture.texCoord == 1)
+        {
+            data.texCoords |= FLAG_HAS_EMISSIVE_TEX;
+        }
+
+        textureTableDesc.createTextureSRV(textures[ TEX_SLOT_EMISSIVE].texture.Get(), TEX_SLOT_EMISSIVE);
     }
     else
     {

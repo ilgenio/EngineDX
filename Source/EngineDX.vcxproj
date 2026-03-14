@@ -182,6 +182,7 @@
     <ClInclude Include="DeferredPass.h" />
     <ClInclude Include="DemoAnimation.h" />
     <ClInclude Include="DemoDescriptors.h" />
+    <ClInclude Include="DemoMorph.h" />
     <ClInclude Include="DemoScene.h" />
     <ClInclude Include="DemoSkinning.h" />
     <ClInclude Include="DepthStencilDesc.h" />
@@ -329,6 +330,7 @@
     <ClCompile Include="DeferredPass.cpp" />
     <ClCompile Include="DemoAnimation.cpp" />
     <ClCompile Include="DemoDescriptors.cpp" />
+    <ClCompile Include="DemoMorph.cpp" />
     <ClCompile Include="DemoScene.cpp" />
     <ClCompile Include="DemoSkinning.cpp" />
     <ClCompile Include="DepthStencilDesc.cpp" />

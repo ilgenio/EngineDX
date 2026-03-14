@@ -15,7 +15,8 @@ cbuffer MorphConstants : register(b1)
 struct Vertex
 {
     float3 position;
-    float2 uv;
+    float2 uv0;
+    float2 uv1;
     float3 normal;
     float3 tangent;
 };

@@ -37,6 +37,7 @@ public:
         Vector3     emissiveFactor = Vector3::Zero;
         float       alphaCutoff = 0.5f;
         UINT        flags = 0;                   
+        UINT        texCoords = 0;
         UINT        padding[2] = { 0, 0 };
    };
 
