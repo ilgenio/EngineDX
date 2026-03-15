@@ -115,13 +115,14 @@ void SkinningPass::record(ID3D12GraphicsCommandList* commandList, std::span<Rend
 
             for (auto& mesh : meshes)
             {
-                if (mesh.numJoints > 0)
+                if (mesh.numJoints > 0 || mesh.numMorphTargets > 0)
                 {
                     UINT paletteBytes = mesh.numJoints * sizeof(Matrix);
                     UINT morphBytes = mesh.numMorphTargets * sizeof(float);
 
                     commandList->SetComputeRoot32BitConstant(ROOTPARAM_NUM_VERTICES, mesh.mesh->getNumVertices(), 0);
-                    commandList->SetComputeRoot32BitConstant(ROOTPARAM_NUM_MORPH_TARGETS, mesh.numMorphTargets, 0);
+                    commandList->SetComputeRoot32BitConstant(ROOTPARAM_NUM_VERTICES, mesh.numJoints, 1);
+                    commandList->SetComputeRoot32BitConstant(ROOTPARAM_NUM_VERTICES, mesh.numMorphTargets, 2);
                     commandList->SetComputeRootShaderResourceView(ROOTPARAM_PALETTE, paletteAndWeights->GetGPUVirtualAddress()+paletteOffset);
                     commandList->SetComputeRootShaderResourceView(ROOTPARAM_PALETTE_NORMAL, paletteAndWeights->GetGPUVirtualAddress()+paletteOffset + paletteBytes);
                     commandList->SetComputeRootShaderResourceView(ROOTPARAM_VERTICES, mesh.mesh->getVertexBuffer());
@@ -152,8 +153,7 @@ bool SkinningPass::createRootSignature()
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
     CD3DX12_ROOT_PARAMETER rootParameters[ROOTPARAM_COUNT] = {};
 
-    rootParameters[ROOTPARAM_NUM_VERTICES].InitAsConstants((sizeof(INT32) / sizeof(UINT32)), 0);
-    rootParameters[ROOTPARAM_NUM_MORPH_TARGETS].InitAsConstants((sizeof(INT32) / sizeof(UINT32)), 1);
+    rootParameters[ROOTPARAM_NUM_VERTICES].InitAsConstants((sizeof(INT32) * 3 / sizeof(UINT32)), 0);
     rootParameters[ROOTPARAM_PALETTE].InitAsShaderResourceView(0);
     rootParameters[ROOTPARAM_PALETTE_NORMAL].InitAsShaderResourceView(1);
     rootParameters[ROOTPARAM_VERTICES].InitAsShaderResourceView(2);

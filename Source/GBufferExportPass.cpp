@@ -57,7 +57,7 @@ void GBufferExportPass::render(ID3D12GraphicsCommandList* commandList, std::span
 
             PerInstance perInstance;
 
-            if (mesh.numJoints > 0) // skinned mesh
+            if (mesh.numJoints > 0 || mesh.numMorphTargets > 0) // skinned mesh
             {
                 // Note: Skinned mesh has already bee transformed in the skinning pass 
                 mvp = (viewProjection).Transpose();

@@ -52,6 +52,7 @@ void Mesh::load(const tinygltf::Model& model, const tinygltf::Mesh& mesh, const 
         loadAccessorData(vertexData + offsetof(Vertex, normal), sizeof(Vector3), sizeof(Vertex), numVertices, model, primitive.attributes, "NORMAL");
 
         bool hasTangents = loadAccessorData(vertexData + offsetof(Vertex, tangent), sizeof(Vector3), sizeof(Vertex), numVertices, model, primitive.attributes, "TANGENT");
+
         if (!hasTangents)
         {
             std::vector<Vector4> tangents;
@@ -129,7 +130,10 @@ void Mesh::load(const tinygltf::Model& model, const tinygltf::Mesh& mesh, const 
             loadAccessorData(morphData + offsetof(Vertex, position), sizeof(Vector3), sizeof(Vertex), numVertices, model, itPos->second);
             loadAccessorData(morphData + offsetof(Vertex, normal), sizeof(Vector3), sizeof(Vertex), numVertices, model, target, "NORMAL");
             loadAccessorData(morphData + offsetof(Vertex, texCoord0), sizeof(Vector2), sizeof(Vertex), numVertices, model, target, "TEXCOORD_0");
+            loadAccessorData(morphData + offsetof(Vertex, texCoord1), sizeof(Vector2), sizeof(Vertex), numVertices, model, target, "TEXCOORD_1");
             loadAccessorData(morphData + offsetof(Vertex, tangent), sizeof(Vector3), sizeof(Vertex), numVertices, model, target, "TANGENT");
+
+            // TODO: Load Vector4 tangents ? 
 
             morphWeights[morphIndex] = float(mesh.weights[morphIndex]);
 

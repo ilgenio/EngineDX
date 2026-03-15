@@ -9,7 +9,6 @@ class SkinningPass
     enum RootParams
     {
         ROOTPARAM_NUM_VERTICES = 0,
-        ROOTPARAM_NUM_MORPH_TARGETS,
         ROOTPARAM_PALETTE,
         ROOTPARAM_PALETTE_NORMAL,
         ROOTPARAM_VERTICES,

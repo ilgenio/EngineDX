@@ -64,7 +64,7 @@ void RenderMeshPass::render(ID3D12GraphicsCommandList* commandList, std::span<co
             commandList->SetGraphicsRootConstantBufferView(SLOT_PER_INSTANCE_CB, ringBuffer->alloc(&perInstance));
             commandList->SetGraphicsRootDescriptorTable(SLOT_TEXTURES_TABLE, mesh.material->getTextureTable());
 
-            if (mesh.numJoints > 0) // skinned mesh
+            if (mesh.numJoints > 0 || mesh.numMorphTargets >0) // skinned mesh
             {
                 perInstance.modelMat = Matrix::Identity;
                 perInstance.normalMat = Matrix::Identity;
