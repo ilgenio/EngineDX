@@ -6,6 +6,7 @@
 #include "DemoSkinning.h"
 #include "DemoScene.h"
 #include "DemoMorph.h"
+#include "DemoTrail.h"
 #include "Exercises/Exercise1.h"
 #include "Exercises/Exercise2.h"
 #include "Exercises/Exercise3.h"
@@ -21,6 +22,7 @@
 #include "Exercises/Exercise13.h"
 
 DemoDescriptors demos[] = {
+    { "DemoMorphTrail", "Shows trails", []() -> Module* { return new DemoTrail(); } },
     { "DemoMorphTargets", "Shows morph targets", []() -> Module* { return new DemoMorph(); } },
     { "DemoCharacter", "Shows Skinning and character movement", []() -> Module* { return new DemoSkinning(); } },
     { "DemoAnimation", "Shows Animations working (no skinning)", []() -> Module* { return new DemoAnimation(); } },

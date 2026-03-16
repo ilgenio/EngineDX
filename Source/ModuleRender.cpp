@@ -155,7 +155,16 @@ void ModuleRender::debugDrawCommands()
         auto drawNode = [](const char* name, const Matrix& worldT, const Matrix& parentT, void* userData)
             {
                 dd::line(ddConvert(worldT.Translation()), ddConvert(parentT.Translation()), dd::colors::White, 0, false);
-                dd::axisTriad(ddConvert(worldT), 0.01f, 0.1f);
+
+                Vector3 scale;
+                Quaternion rotation;
+                Vector3 translation;
+
+                worldT.Decompose(scale, rotation, translation);
+
+                Matrix world = Matrix::CreateFromQuaternion(rotation) * Matrix::CreateTranslation(translation);
+
+                dd::axisTriad(ddConvert(world), 0.01f, 0.1f);
             };
 
         for (UINT modelIdx : debugDrawModels)
