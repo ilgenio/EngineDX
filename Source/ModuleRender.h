@@ -59,8 +59,14 @@ class ModuleRender : public Module
 
     std::set<UINT> debugDrawModels;
 
+    typedef std::function<void(ID3D12GraphicsCommandList* commandList, const Matrix& view, const Matrix& proj)> Callback;
+
+    std::vector<Callback> renderCallbacks;
 
 public:
+
+    typedef Callback RenderCallback;
+
     ModuleRender();
     ~ModuleRender();
 
@@ -72,6 +78,9 @@ public:
 
     void addDebugDrawModel(UINT index);
     void removeDebugDrawModel(UINT index);
+
+    void addRenderCallback(const RenderCallback& callback) { renderCallbacks.push_back(callback); }
+    void clearRenderCallbacks() { renderCallbacks.clear(); }
 
 private:
     void renderToTexture(ID3D12GraphicsCommandList* commandList, const Matrix& view, const Matrix& proj);

@@ -293,6 +293,12 @@ void ModuleRender::renderToTexture(ID3D12GraphicsCommandList* commandList, const
     // Render the skybox
     app->getScene()->getSkybox()->render(commandList, proj);
 
+    // Custom render scene functions (e.g. for demos)
+    for(const auto& callback : renderCallbacks)
+    {
+        callback(commandList, view, proj);
+    }
+
     // Debug Draw
     debugDrawPass->record(commandList, renderTexture->getWidth(), renderTexture->getHeight(), view, proj);
 
