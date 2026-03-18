@@ -9,6 +9,8 @@
 #include "ModuleD3D12.h"
 #include "ModuleSamplers.h"
 #include "ModuleRingBuffer.h"
+#include "ModuleResources.h"
+#include "ModuleShaderDescriptors.h"
 
 #include "Scene.h"
 #include "Model.h"
@@ -24,15 +26,23 @@ bool DemoTrail::init()
 
     ModuleScene* scene = app->getScene();
 
+    // Skybox
     app->getScene()->getSkybox()->init("Assets/Textures/san_giuseppe_bridge_4k.hdr", false);
 
+    // Sword Model
     modelIdx = scene->addModel("Assets/Models/Sword/sword.gltf", "Assets/Models/Sword/");
     auto model = scene->getModel(modelIdx);
 
+    // Trail
     trailIdx = model->findNode("Trail");
+    ModuleResources* resources = app->getResources();
+    texture = resources->createTextureFromFile(std::wstring(L"Assets/Models/Sword/swoosh.dds"), true);
+    ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
+    textureDescriptor = descriptors->allocTable();
+    textureDescriptor.createTextureSRV(texture.Get());
 
+    // Animation
     UINT animIdx = scene->addClip("Assets/Models/Sword/sword.gltf", 0);
-
     model->playAnim(scene->getClip(animIdx));
 
     app->getRender()->addDebugDrawModel(modelIdx);    
@@ -52,7 +62,6 @@ bool DemoTrail::init()
 
 void DemoTrail::update()
 {
-
     // Update delta time
 
     float deltaTime = float(app->getElapsedMilis()) * 0.001f;
@@ -92,6 +101,20 @@ void DemoTrail::update()
 
 void DemoTrail::preRender()
 {
+    ImGui::Begin("Demo Viewer Options");
+    ImGui::SliderFloat("Segment Life Time", &segmentLifeTime, 0.0f, 1.0f);
+    ImGui::SliderFloat("Segment Length", &segmentLength, 0.001f, 1.0f);
+    ImGui::SliderFloat("Segment Width", &segmentWidth, 0.0f, 1.0f);
+    ImGui::Checkbox("Enable debug draw", &enableDebugDraw);
+    
+    bool timePaused = app->isTimePaused();
+    if (ImGui::Checkbox("Pause time", &timePaused))
+    {
+        app->setTimePaused(timePaused);
+    }
+    ImGui::End();
+
+
     if (enableDebugDraw)
     {
         for (Segment& segment : segments)
@@ -104,8 +127,11 @@ void DemoTrail::preRender()
             Vector3 down = transform.Backward();
             down.Normalize();
 
-            Vector3 top = segment.transform.Translation() + up * segmentWidth;
-            Vector3 bottom = segment.transform.Translation() + down * segmentWidth;
+            float overTimeWidth = segment.lifeTime / segmentLifeTime;
+
+
+            Vector3 top = segment.transform.Translation() + up * segmentWidth * overTimeWidth;
+            Vector3 bottom = segment.transform.Translation() + down * segmentWidth * overTimeWidth;
 
             dd::point(ddConvert(segment.transform.Translation()), dd::colors::White, 5.0f);
             dd::point(ddConvert(top), dd::colors::Green, 5.0f);
@@ -119,9 +145,9 @@ void DemoTrail::preRender()
     vertices.clear();
     vertices.reserve(segments.size() * 2);
 
-    for(Segment& segment : segments)
+    for(UINT i = 0, count = UINT(segments.size()); i < count; ++i)
     {
-
+        const Segment& segment = segments[i];
         const Matrix& transform = segment.transform;
 
         Vector3 up = transform.Forward();
@@ -130,11 +156,15 @@ void DemoTrail::preRender()
         Vector3 down = transform.Backward();
         down.Normalize();
 
-        Vector3 top = segment.transform.Translation() + up * segmentWidth;
-        Vector3 bottom = segment.transform.Translation() + down * segmentWidth;
+        float overTimeWidth = segment.lifeTime / segmentLifeTime;
 
-        vertices.push_back({ top, Vector2(0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f) });
-        vertices.push_back({ bottom, Vector2(0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f) });
+        Vector3 top = segment.transform.Translation() + up * segmentWidth * overTimeWidth;
+        Vector3 bottom = segment.transform.Translation() + down * segmentWidth * overTimeWidth;
+
+        float x = float(i) / float(count - 1);
+
+        vertices.push_back({ top, Vector2(x, 0.0f), Vector3(1.0f, 1.0f, 1.0f) });
+        vertices.push_back({ bottom, Vector2(x, 1.0f), Vector3(1.0f, 1.0f, 1.0f) });
     }
 
 
@@ -150,6 +180,11 @@ void DemoTrail::preRender()
 
 void DemoTrail::record(ID3D12GraphicsCommandList* commandList, const Matrix& view, const Matrix& proj)
 {
+    if(vertices.empty() || indices.empty())
+        return;
+
+    BEGIN_EVENT(commandList, "Trail Demo Pass");
+
     Matrix mvp = view * proj;
     mvp = mvp.Transpose();
 
@@ -157,7 +192,7 @@ void DemoTrail::record(ID3D12GraphicsCommandList* commandList, const Matrix& vie
     commandList->SetGraphicsRootSignature(rootSignature.Get());
     commandList->SetGraphicsRoot32BitConstants(SLOT_MVP, sizeof(Matrix) / sizeof(UINT32), &mvp, 0);
 
-    //TODO: commandList->SetGraphicsRootDescriptorTable(SLOT_TEXTURE, app->getD3D12()->getGPUDescriptorHandleForSRV(app->getScene()->getSkybox()->getIrradianceMap()));
+    commandList->SetGraphicsRootDescriptorTable(SLOT_TEXTURE, textureDescriptor.getGPUHandle());
 
     commandList->SetGraphicsRootDescriptorTable(SLOT_SAMPLERS, app->getSamplers()->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
     commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
@@ -166,7 +201,7 @@ void DemoTrail::record(ID3D12GraphicsCommandList* commandList, const Matrix& vie
 
     // Trail Dynamic Vertex Buffer
     D3D12_VERTEX_BUFFER_VIEW vertexBufferView = {};
-    vertexBufferView.BufferLocation = ringBuffer->alloc(vertices.data(), sizeof(Vertex) * vertices.size());
+    vertexBufferView.BufferLocation = ringBuffer->alloc(vertices.data(), vertices.size());
     vertexBufferView.SizeInBytes = UINT(sizeof(Vertex) * vertices.size());
     vertexBufferView.StrideInBytes = sizeof(Vertex);
 
@@ -175,7 +210,7 @@ void DemoTrail::record(ID3D12GraphicsCommandList* commandList, const Matrix& vie
     // Trail Dynamic Index Buffer
 
     D3D12_INDEX_BUFFER_VIEW indexBufferView = {};
-    indexBufferView.BufferLocation = ringBuffer->alloc(indices.data(), sizeof(SHORT) * indices.size());
+    indexBufferView.BufferLocation = ringBuffer->alloc(indices.data(), indices.size());
     indexBufferView.SizeInBytes = UINT(sizeof(SHORT) * indices.size());
     indexBufferView.Format = DXGI_FORMAT_R16_UINT;
 
@@ -183,6 +218,8 @@ void DemoTrail::record(ID3D12GraphicsCommandList* commandList, const Matrix& vie
     commandList->IASetIndexBuffer(&indexBufferView);
 
     commandList->DrawIndexedInstanced(UINT(indices.size()), 1, 0, 0, 0);
+
+    END_EVENT(commandList);
 }
 
 void DemoTrail::createRootSignature()
@@ -230,7 +267,17 @@ void DemoTrail::createPSO()
     psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);                               // a default rasterizer state.
     psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;                                        
     psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+    psoDesc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;                         // disable depth writes
+
     psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);                                         // a default blend state.
+    psoDesc.BlendState.RenderTarget[0].BlendEnable = TRUE;                                          // enable blending for the first render target
+    psoDesc.BlendState.RenderTarget[0].SrcBlend = D3D12_BLEND_ONE;
+    psoDesc.BlendState.RenderTarget[0].DestBlend = D3D12_BLEND_ONE;
+    psoDesc.BlendState.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
+    psoDesc.BlendState.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ZERO;
+    psoDesc.BlendState.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ONE;
+    psoDesc.BlendState.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
+
     psoDesc.NumRenderTargets = 1;                                                                   // we are only binding one render target
 
     // create the pso

@@ -41,8 +41,6 @@ public:
     ModuleStaticBuffer*         getStaticBuffer() { return staticBuffer;  }
     ModuleScene*                getScene() { return scene; }
 
-    //void                        swapModule(Module* from, Module* to) { swapModules.push_back(std::make_pair(from, to)); }
-
     void                        setDemo(UINT index);      
 
     ModuleRingBuffer*           getRingBuffer() { return ringBuffer; }
@@ -52,7 +50,10 @@ public:
     uint64_t                    getElapsedMilis() const { return elapsedMilis; }
 
     bool                        isPaused() const { return paused; }
-    bool                        setPaused(bool p) { paused = p; return paused; }
+    void                        setPaused(bool p) { paused = p; }
+
+    bool                        isTimePaused() const { return pausedTime; }
+    void                        setTimePaused(bool p) { pausedTime = p;  }
 
 private:
 
@@ -84,6 +85,7 @@ private:
     uint64_t  tickSum = 0;
     uint64_t  elapsedMilis = 0;
     bool      paused = false;
+    bool      pausedTime = false;
     bool      updating = false;
 };
 

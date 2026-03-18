@@ -789,17 +789,17 @@
   "textures": [
     {
       "sampler": 0,
-      "name": "base.png",
+      "name": "base.dds",
       "source": 0
     },
     {
       "sampler": 1,
-      "name": "normal.png",
+      "name": "normal.dds",
       "source": 1
     },
     {
       "sampler": 2,
-      "name": "occlusion.png",
+      "name": "occlusion.dds",
       "source": 2
     }
   ],
@@ -873,19 +873,19 @@
   ],
   "images": [
     {
-      "uri": "base.png",
-      "mimeType": "image/png",
-      "name": "base.png"
+      "uri": "base.dds",
+      "mimeType": "image/dds",
+      "name": "base.dds"
     },
     {
-      "uri": "normal.png",
-      "mimeType": "image/png",
-      "name": "normal.png"
+      "uri": "normal.dds",
+      "mimeType": "image/dds",
+      "name": "normal.dds"
     },
     {
-      "uri": "occlusion.png",
-      "mimeType": "image/png",
-      "name": "occlusion.png"
+      "uri": "occlusion.dds",
+      "mimeType": "image/dds",
+      "name": "occlusion.dds"
     }
   ],
   "extensionsUsed": [

@@ -6,7 +6,7 @@
 #include "ModuleD3D12.h"
 
  // 16 Mb
-#define UPLOAD_TOTAL_SIZE UINT(16 * (1 << 20))
+#define UPLOAD_TOTAL_SIZE UINT(64 * (1 << 20))
 
 ModuleRingBuffer::ModuleRingBuffer()
 {
@@ -31,7 +31,7 @@ bool ModuleRingBuffer::init()
     buffer->SetName(L"Upload Ring Buffer");
 
     CD3DX12_RANGE readRange(0, 0);
-    buffer->Map(0, &readRange, reinterpret_cast<void**>(&data));
+    buffer->Map(0, &readRange, reinterpret_cast<void**>(&dstPtr));
 
     return true;
 }
@@ -43,9 +43,9 @@ void ModuleRingBuffer::preRender()
 }
  
 
-D3D12_GPU_VIRTUAL_ADDRESS ModuleRingBuffer::allocRaw(const void *data, size_t size)
+D3D12_GPU_VIRTUAL_ADDRESS ModuleRingBuffer::allocRaw(const void *src, size_t size)
 {
     size_t offset = allocator.alloc(alignUp(size, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT));
-    memcpy(this->data + offset, data, size);
+    memcpy(&dstPtr[offset], src, size);
     return buffer->GetGPUVirtualAddress() + offset;
 }

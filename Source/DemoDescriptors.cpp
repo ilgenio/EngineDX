@@ -22,11 +22,6 @@
 #include "Exercises/Exercise13.h"
 
 DemoDescriptors demos[] = {
-    { "DemoMorphTrail", "Shows trails", false, []() -> Module* { return new DemoTrail(); } },
-    { "DemoMorphTargets", "Shows morph targets", false, []() -> Module* { return new DemoMorph(); } },
-    { "DemoCharacter", "Shows Skinning and character movement", false, []() -> Module* { return new DemoSkinning(); } },
-    { "DemoAnimation", "Shows Animations working (no skinning)", false, []() -> Module* { return new DemoAnimation(); } },
-    { "DemoScene", "Shows a demo scene with various elements", false, []() -> Module* { return new DemoScene(); } },
     { "Exercise1", "Clears the screen with a solid color", true, []() -> Module* { return new Exercise1(); } },
     { "Exercise2", "Renders a 2D triangle", true, []() -> Module* { return new Exercise2(); } },
     { "Exercise3", "Renders a 3D triangle", true, []() -> Module* { return new Exercise3(); } },
@@ -40,6 +35,11 @@ DemoDescriptors demos[] = {
     { "Exercise11", "Renders a sphere using Image Based Lighting irradiance", true, []() -> Module* { return new Exercise11(); } },
     { "Exercise12", "Renders a model to test Image Based Lighting irradiance and radiance", true, []() -> Module* { return new Exercise12(); } },
     { "Exercise13", "Renders 3 models to test normal maps, ambient occlusion and emissive", true, []() -> Module* { return new Exercise13(); } },
+    { "Animation", "Shows Animations working (no skinning)", false, []() -> Module* { return new DemoAnimation(); } },
+    { "Character", "Shows Skinning and character movement", false, []() -> Module* { return new DemoSkinning(); } },
+    { "Morphing", "Shows morph targets", false, []() -> Module* { return new DemoMorph(); } },
+    { "Trail", "Shows trails", false, []() -> Module* { return new DemoTrail(); } },
+    { "Scene", "Shows a demo scene with various elements", false, []() -> Module* { return new DemoScene(); } },
 };
 
 std::span<DemoDescriptors> getDemoDescriptors()

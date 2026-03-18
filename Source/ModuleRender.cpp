@@ -228,6 +228,8 @@ void ModuleRender::imGuiDrawCommands()
 
     ImGui::EndChildFrame();
     ImGui::End();
+
+    app->getCamera()->setEnable(viewerFocused);
 }
 
 void ModuleRender::updatePerFrameBuffer(const Matrix& view, const Matrix& projection, const Matrix& invView)
@@ -290,14 +292,15 @@ void ModuleRender::renderToTexture(ID3D12GraphicsCommandList* commandList, const
     // Render meshes TODO: In future Will be the alpha blend pass
     //renderMeshesForward(commandList, view, proj);
 
+
+    // Render the skybox
+    app->getScene()->getSkybox()->render(commandList, proj);
+
     // Custom render scene functions (e.g. for demos)
     for (const auto& callback : renderCallbacks)
     {
         callback(commandList, view, proj);
     }
-
-    // Render the skybox
-    app->getScene()->getSkybox()->render(commandList, proj);
 
     // Debug Draw
     debugDrawPass->record(commandList, renderTexture->getWidth(), renderTexture->getHeight(), view, proj);

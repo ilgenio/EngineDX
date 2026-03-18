@@ -89,17 +89,17 @@ void Application::update()
         // Update milis
         uint64_t currentMilis = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
-        elapsedMilis = currentMilis - lastMilis;
+        elapsedMilis = pausedTime ? 0 : currentMilis - lastMilis;
         lastMilis = currentMilis;
         tickSum -= tickList[tickIndex];
         tickSum += elapsedMilis;
         tickList[tickIndex] = elapsedMilis;
         tickIndex = (tickIndex + 1) % MAX_FPS_TICKS;
 
+        swapDemoIfNeeded();
+
         if (!app->paused)
         {
-            swapDemoIfNeeded();
-
             for (auto it = modules.begin(); it != modules.end(); ++it)
                 (*it)->update();
 

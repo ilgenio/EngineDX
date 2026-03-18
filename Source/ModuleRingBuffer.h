@@ -8,7 +8,7 @@
 // The buffer is reset each frame to maximize memory reuse and minimize allocation overhead.
 class ModuleRingBuffer : public Module
 {
-    UINT8*                  data = nullptr;
+    UINT8*                 dstPtr = nullptr;
     ComPtr<ID3D12Resource> buffer;
     Ring                   allocator;
 public:

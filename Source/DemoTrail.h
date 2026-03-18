@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Module.h"
+#include "ShaderTableDesc.h"
 
 #include <deque>
 
@@ -35,12 +36,14 @@ class DemoTrail : public Module
     UINT trailIdx = UINT_MAX;
 
     float segmentLifeTime = 0.25f;
-    float segmentLength = 0.2f;
+    float segmentLength = 0.01f;
     float segmentWidth = 0.35f;
-    bool enableDebugDraw = false;
+    bool enableDebugDraw = false;    
 
     ComPtr<ID3D12RootSignature>  rootSignature;
     ComPtr<ID3D12PipelineState>  pso;
+    ComPtr<ID3D12Resource>       texture;
+    ShaderTableDesc              textureDescriptor;  
 
 public:
 
