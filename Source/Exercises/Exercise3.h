@@ -12,10 +12,8 @@ class Exercise3 : public Module
     ComPtr<ID3D12PipelineState>     pso;
     std::unique_ptr<DebugDrawPass>  debugDrawPass;
 
-    Matrix                      mvp;
+    Matrix                          mvp;
 public:
-
-
 
     virtual bool init() override;
     virtual void render() override;

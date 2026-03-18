@@ -26,25 +26,34 @@ Application::Application(int argc, wchar_t** argv, void* hWnd)
     modules.push_back(samplers = new ModuleSamplers());
     modules.push_back(ringBuffer = new ModuleRingBuffer());
     modules.push_back(staticBuffer = new ModuleStaticBuffer());
-    modules.push_back(scene = new ModuleScene());
-    modules.push_back(render = new ModuleRender());
 
+    bool demoFound = false;
     if (argc > 1)
     {
         char cstr[512];
         size_t converted = 0;
         wcstombs_s(&converted, cstr, 512, argv[1], 511);
-        for(auto demo : getDemoDescriptors())
-            if (strcmp(cstr, demo.name) == 0)
+        auto demos = getDemoDescriptors();
+        for (UINT i = 0; !demoFound && i < demos.size(); ++i)
+        {
+            if (strcmp(cstr, demos[i].name) == 0)
             {
-                modules.push_back(demo.createFunc());
-                break;
+                setDemo(i);
+                demoFound = true;
             }
+        }
     }
-    else
+
+
+    if(!demoFound)
     {
-        modules.push_back(new StartMenu);
+        modules.push_back(startMenu = new StartMenu);
     }
+}
+
+void Application::setDemo(UINT index)
+{
+    swapDemo = index;
 }
 
 Application::~Application()
@@ -89,20 +98,7 @@ void Application::update()
 
         if (!app->paused)
         {
-            for (auto it = swapModules.begin(); it != swapModules.end(); ++it)
-            {
-                auto pos = std::find(modules.begin(), modules.end(), it->first);
-                if (pos != modules.end())
-                {
-                    (*pos)->cleanUp();
-                    delete* pos;
-
-                    it->second->init();
-                    *pos = it->second;
-                }
-            }
-
-            swapModules.clear();
+            swapDemoIfNeeded();
 
             for (auto it = modules.begin(); it != modules.end(); ++it)
                 (*it)->update();
@@ -118,6 +114,64 @@ void Application::update()
         }
 
         updating = false;
+    }
+}
+
+void Application::swapDemoIfNeeded()
+{
+    auto demos = getDemoDescriptors();
+
+    if (swapDemo < demos.size())
+    {
+        const auto& demoDesc = demos[swapDemo];
+
+        auto releaseModule = [&](Module* module)
+            {
+                if (module)
+                {
+                    auto it = std::find(modules.begin(), modules.end(), module);
+                    if (it != modules.end())
+                    {
+                        modules.erase(it);
+                    }
+
+                    module->cleanUp();
+                    delete module;
+                }
+            };
+
+        if (demoDesc.isExercise)
+        {
+            releaseModule(render);
+            releaseModule(scene);
+            releaseModule(demo);
+            releaseModule(startMenu);
+
+            modules.push_back(demo = demoDesc.createFunc());
+            demo->init();
+        }
+        else
+        {
+            releaseModule(demo);
+            releaseModule(startMenu);
+
+            if (scene == nullptr)
+            {
+                modules.push_back(scene = new ModuleScene);
+                scene->init();
+            }
+
+            if (render == nullptr)
+            {
+                modules.push_back(render = new ModuleRender);
+                render->init();
+            }
+
+            modules.push_back(demo = demoDesc.createFunc());
+            demo->init();
+        }
+
+        swapDemo = UINT_MAX;
     }
 }
 

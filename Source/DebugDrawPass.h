@@ -21,5 +21,5 @@ public:
 
 private:
 
-    static DDRenderInterfaceCoreD3D12* implementation;
+    DDRenderInterfaceCoreD3D12* implementation = nullptr;
 };

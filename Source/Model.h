@@ -86,9 +86,14 @@ public:
     UINT getNumNodes() const { return UINT(nodes.size()); }
     UINT getNumInstances() const { return UINT(instances.size()); }
 
-    Scene* getScene() const { return scene; }
+    const Matrix&   getLocalTransform(UINT nodeIdx) const { return nodes[nodeIdx]->localTransform; }
+    const Matrix&   getWorldTransform(UINT nodeIdx) const;
+    UINT            getParentNode(UINT nodeIdx) const { return nodes[nodeIdx]->parent; }
+    UINT            findNode(const char* name) const;
 
     void enumerateNodes(void (*callbackFunc)(const char* name, const Matrix& worldT, const Matrix& parentT, void* userData), void* userData = nullptr) const;
+
+    Scene* getScene() const { return scene; }
 
     Matrix getRootTransform() const { return nodes.size() > 0 ? nodes[0]->localTransform : Matrix::Identity; }
     void   setRootTransform(const Matrix& transform) { if (nodes.size() > 0) { nodes[0]->localTransform = transform; setAllDirty(); } }

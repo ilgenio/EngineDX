@@ -465,7 +465,6 @@ private:
 
 }; // class DDRenderInterfaceCoreD3D12
 
-DDRenderInterfaceCoreD3D12* DebugDrawPass::implementation = 0;
 
 DebugDrawPass::DebugDrawPass(ID3D12Device4* device, ID3D12CommandQueue* uploadQueue, 
                              bool useMSAA, D3D12_CPU_DESCRIPTOR_HANDLE cpuText, D3D12_GPU_DESCRIPTOR_HANDLE gpuText)

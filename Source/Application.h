@@ -41,7 +41,9 @@ public:
     ModuleStaticBuffer*         getStaticBuffer() { return staticBuffer;  }
     ModuleScene*                getScene() { return scene; }
 
-    void                        swapModule(Module* from, Module* to) { swapModules.push_back(std::make_pair(from, to)); }
+    //void                        swapModule(Module* from, Module* to) { swapModules.push_back(std::make_pair(from, to)); }
+
+    void                        setDemo(UINT index);      
 
     ModuleRingBuffer*           getRingBuffer() { return ringBuffer; }
 
@@ -53,11 +55,15 @@ public:
     bool                        setPaused(bool p) { paused = p; return paused; }
 
 private:
+
+    void                        swapDemoIfNeeded();
+
+private:
     enum { MAX_FPS_TICKS = 30 };
     typedef std::array<uint64_t, MAX_FPS_TICKS> TickList;
 
     std::vector<Module*> modules;
-    std::vector<std::pair<Module*, Module*> > swapModules;
+    UINT swapDemo = UINT_MAX;
 
     ModuleD3D12* d3d12 = nullptr;
     ModuleCamera* camera = nullptr;
@@ -69,6 +75,8 @@ private:
     ModuleSamplers* samplers = nullptr;
     ModuleRingBuffer* ringBuffer = nullptr;
     ModuleScene*  scene = nullptr;
+    Module* startMenu = nullptr;
+    Module* demo = nullptr;
 
     uint64_t  lastMilis = 0;
     TickList  tickList;

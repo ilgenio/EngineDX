@@ -15,6 +15,7 @@ class DemoMorph : public Module
     UINT modelIdx = 0;
     UINT clips[CLIP_COUNT];
     UINT active = 0;
+
 public:
 
     bool init() override;

@@ -207,6 +207,42 @@ UINT Model::generateNodes(const tinygltf::Model &model, UINT nodeIndex, INT pare
 
 }
 
+const Matrix& Model::getWorldTransform(UINT nodeIdx) const
+{
+    Node* node = nodes[nodeIdx];
+
+    if (node->dirtyWorld)
+    {
+        Matrix world = node->localTransform;
+
+        INT parent = node->parent;
+        while (parent > 0)
+        {
+            Node* parentNode = nodes[node->parent];
+            world = world * parentNode->localTransform;
+            parent = parentNode->parent;
+        }
+
+        return world;
+    }
+
+
+    return node->worldTransform;
+}
+
+UINT Model::findNode(const char* name) const
+{
+    for (UINT nodeIdx = 0; nodeIdx < nodes.size(); ++nodeIdx)
+    {
+        if (strcmp(nodes[nodeIdx]->name.c_str(), name) == 0)
+            return nodeIdx;
+    }
+
+    return UINT_MAX;
+}
+
+
+
 void Model::enumerateNodes(void (*callbackFunc)(const char* name, const Matrix& worldT, const Matrix& parentT, void* userData), void* userData) const
 {
     for(const Node* node : nodes)

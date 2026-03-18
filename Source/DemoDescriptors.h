@@ -8,6 +8,7 @@ struct DemoDescriptors
 {
     const char* name;                                      // Name of the demo or module
     const char* description;                               // Short description of the demo
+    bool isExercise;
     Module* (*createFunc) ();                              // Factory function to create the module instance
 };
 
