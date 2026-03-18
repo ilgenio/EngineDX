@@ -8,6 +8,7 @@
 #include "ModuleRender.h"
 #include "ModuleD3D12.h"
 #include "ModuleSamplers.h"
+#include "ModuleRingBuffer.h"
 
 #include "Scene.h"
 #include "Model.h"
@@ -18,6 +19,9 @@
 
 bool DemoTrail::init() 
 {
+    createRootSignature();
+    createPSO();
+
     ModuleScene* scene = app->getScene();
 
     app->getScene()->getSkybox()->init("Assets/Textures/san_giuseppe_bridge_4k.hdr", false);
@@ -38,6 +42,10 @@ bool DemoTrail::init()
     camera->setPolar(XMConvertToRadians(1.30f));
     camera->setAzimuthal(XMConvertToRadians(-11.61f));
     camera->setTranslation(Vector3(0.0f, 1.24f, 4.65f));
+
+    ModuleRender* render = app->getRender();
+
+    render->addRenderCallback(std::bind(&DemoTrail::record, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 
     return true;
 }
@@ -140,20 +148,41 @@ void DemoTrail::preRender()
     }
 }
 
-void DemoTrail::render()
+void DemoTrail::record(ID3D12GraphicsCommandList* commandList, const Matrix& view, const Matrix& proj)
 {
-    /*
-    ModuleD3D12* d3d12 = app->getD3D12();
-    ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
-    ModuleSamplers* samplers = app->getSamplers();
-    ID3D12GraphicsCommandList* commandList = d3d12->getCommandList();
+    Matrix mvp = view * proj;
+    mvp = mvp.Transpose();
 
-    commandList->Reset(d3d12->getCommandAllocator(), nullptr);
+    commandList->SetPipelineState(pso.Get());
+    commandList->SetGraphicsRootSignature(rootSignature.Get());
+    commandList->SetGraphicsRoot32BitConstants(SLOT_MVP, sizeof(Matrix) / sizeof(UINT32), &mvp, 0);
 
-    ID3D12DescriptorHeap* descriptorHeaps[] = { descriptors->getHeap(), samplers->getHeap() };
-    commandList->SetDescriptorHeaps(2, descriptorHeaps);
+    //TODO: commandList->SetGraphicsRootDescriptorTable(SLOT_TEXTURE, app->getD3D12()->getGPUDescriptorHandleForSRV(app->getScene()->getSkybox()->getIrradianceMap()));
 
-    */
+    commandList->SetGraphicsRootDescriptorTable(SLOT_SAMPLERS, app->getSamplers()->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
+    commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+
+    ModuleRingBuffer* ringBuffer = app->getRingBuffer();
+
+    // Trail Dynamic Vertex Buffer
+    D3D12_VERTEX_BUFFER_VIEW vertexBufferView = {};
+    vertexBufferView.BufferLocation = ringBuffer->alloc(vertices.data(), sizeof(Vertex) * vertices.size());
+    vertexBufferView.SizeInBytes = UINT(sizeof(Vertex) * vertices.size());
+    vertexBufferView.StrideInBytes = sizeof(Vertex);
+
+    commandList->IASetVertexBuffers(0, 1, &vertexBufferView);
+
+    // Trail Dynamic Index Buffer
+
+    D3D12_INDEX_BUFFER_VIEW indexBufferView = {};
+    indexBufferView.BufferLocation = ringBuffer->alloc(indices.data(), sizeof(SHORT) * indices.size());
+    indexBufferView.SizeInBytes = UINT(sizeof(SHORT) * indices.size());
+    indexBufferView.Format = DXGI_FORMAT_R16_UINT;
+
+    commandList->IASetVertexBuffers(0, 1, &vertexBufferView);
+    commandList->IASetIndexBuffer(&indexBufferView);
+
+    commandList->DrawIndexedInstanced(UINT(indices.size()), 1, 0, 0, 0);
 }
 
 void DemoTrail::createRootSignature()

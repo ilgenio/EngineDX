@@ -34,7 +34,7 @@ class DemoTrail : public Module
     UINT modelIdx = 0;
     UINT trailIdx = UINT_MAX;
 
-    float segmentLifeTime = 1.0f;
+    float segmentLifeTime = 0.25f;
     float segmentLength = 0.2f;
     float segmentWidth = 0.35f;
     bool enableDebugDraw = false;
@@ -47,7 +47,8 @@ public:
     bool init() override;
     void update() override;
     void preRender() override;
-    void render() override;
+
+    void record(ID3D12GraphicsCommandList* commandList, const Matrix& view, const Matrix& proj);
 
 private:
     void createPSO();

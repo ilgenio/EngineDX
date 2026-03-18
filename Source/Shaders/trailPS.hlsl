@@ -2,7 +2,7 @@
 
 //Texture2D texture : register(t0);
 
-float4 main(float2 texCoord : TEXCOORD, float3 color : COLOR)
+float4 main(float2 texCoord : TEXCOORD, float3 color : COLOR) : SV_Target
 {
 #if 0
     float4 sampledColor = texture.Sample(bilinearWrap, texCoord);

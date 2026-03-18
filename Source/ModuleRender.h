@@ -83,6 +83,7 @@ public:
     void clearRenderCallbacks() { renderCallbacks.clear(); }
 
 private:
+
     void renderToTexture(ID3D12GraphicsCommandList* commandList, const Matrix& view, const Matrix& proj);
     void renderMeshesForward(ID3D12GraphicsCommandList* commandList, const Matrix& view, const Matrix& proj);
     void renderDeferred(ID3D12GraphicsCommandList* commandList);
