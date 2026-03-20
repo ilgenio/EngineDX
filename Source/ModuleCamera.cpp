@@ -30,6 +30,8 @@ bool ModuleCamera::init()
 
     view = Matrix::CreateLookAt(Vector3(0.0f, 0.0f, 10.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(0.0f, 1.0f, 0.0f));
 
+    lastMilis = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+
     return true;
 }
 
@@ -37,6 +39,11 @@ void ModuleCamera::update()
 {
     Mouse& mouse = Mouse::Get();
     const Mouse::State& mouseState = mouse.GetState();
+
+    UINT64 currentMilis = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+
+    elapsedMilis = currentMilis - lastMilis;
+    lastMilis = currentMilis;
 
     if (enabled)
     {
@@ -48,7 +55,7 @@ void ModuleCamera::update()
             const Keyboard::State& keyState = keyboard.GetState();
             GamePad::State padState = pad.GetState(0);
 
-            float elapsedSec = app->getElapsedMilis() * 0.001f;
+            float elapsedSec = elapsedMilis * 0.001f;
 
             Vector3 translate = Vector3::Zero;
             Vector2 rotate = Vector2::Zero;

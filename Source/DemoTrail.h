@@ -28,6 +28,19 @@ class DemoTrail : public Module
         SLOT_COUNT
     };
 
+    struct CubicSegment
+    {
+        Vector3 a;
+        Vector3 b;
+        Vector3 c;
+        Vector3 d;
+
+        Vector3 evaluate(float t) const
+        {
+            return a * t * t * t + b * t * t + c * t + d;
+        }
+    };
+
     std::deque<Segment> segments;
     std::vector<Vertex>  vertices;
     std::vector<SHORT> indices;
@@ -36,8 +49,10 @@ class DemoTrail : public Module
     UINT trailIdx = UINT_MAX;
 
     float segmentLifeTime = 0.25f;
-    float segmentLength = 0.01f;
+    float segmentLength = 0.075f;
     float segmentWidth = 0.35f;
+    float maxSegmentAngle = 15.0f;
+    UINT numCurveInterpolationPoints = 30;
     bool enableDebugDraw = false;    
 
     ComPtr<ID3D12RootSignature>  rootSignature;
@@ -56,4 +71,6 @@ public:
 private:
     void createPSO();
     void createRootSignature();
+    void centripetalCatmullRom(const Vector3 p[4], CubicSegment& segment, float alpha, float tension) const;
+    void generateControlPoints(UINT index, const Matrix& trailWorldTransform, Vector3* topPoints, Vector3* bottomPoints) const;
 };

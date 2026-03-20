@@ -105,6 +105,8 @@ void DemoTrail::preRender()
     ImGui::SliderFloat("Segment Life Time", &segmentLifeTime, 0.0f, 1.0f);
     ImGui::SliderFloat("Segment Length", &segmentLength, 0.001f, 1.0f);
     ImGui::SliderFloat("Segment Width", &segmentWidth, 0.0f, 1.0f);
+    ImGui::SliderAngle("Max Segment Angle", &maxSegmentAngle, 0.0f, 180.0f);
+    ImGui::InputInt("Curve Interpolation Points", (int*)&numCurveInterpolationPoints);
     ImGui::Checkbox("Enable debug draw", &enableDebugDraw);
     
     bool timePaused = app->isTimePaused();
@@ -114,68 +116,62 @@ void DemoTrail::preRender()
     }
     ImGui::End();
 
+    vertices.clear();
+    indices.clear();
 
-    if (enableDebugDraw)
+    if (trailIdx != UINT_MAX)
     {
-        for (Segment& segment : segments)
+        ModuleScene* scene = app->getScene();
+        auto model = scene->getModel(modelIdx);
+
+        const Matrix& trailWorldTransform = model->getWorldTransform(trailIdx);
+
+        // Building vertices 
+
+        UINT totalVertices = UINT(segments.size() * numCurveInterpolationPoints);
+        UINT currentVertex = 0;
+        
+
+        for (UINT i = 0, count = UINT(segments.size()); i < count; ++i)
         {
-            const Matrix& transform = segment.transform;
+            Vector3 topPoints[4];
+            Vector3 bottomPoints[4];
+            generateControlPoints(i, trailWorldTransform, &topPoints[0], &bottomPoints[0]);
 
-            Vector3 up = transform.Forward();
-            up.Normalize();
+            // Generate curve
+            CubicSegment topCurve, bottomCurve;
+            centripetalCatmullRom(topPoints, topCurve, 1.0f, 0.0f);
+            centripetalCatmullRom(bottomPoints, bottomCurve, 1.0f, 0.0f);
 
-            Vector3 down = transform.Backward();
-            down.Normalize();
+            for (UINT j = 0; j < numCurveInterpolationPoints; ++j)
+            {
+                float t = float(j) / float(numCurveInterpolationPoints - 1);
 
-            float overTimeWidth = segment.lifeTime / segmentLifeTime;
+                Vector3 top = topCurve.evaluate(t);
+                Vector3 bottom = bottomCurve.evaluate(t);
 
+                float x = float(currentVertex++) / float(totalVertices);
 
-            Vector3 top = segment.transform.Translation() + up * segmentWidth * overTimeWidth;
-            Vector3 bottom = segment.transform.Translation() + down * segmentWidth * overTimeWidth;
+                vertices.push_back({ top, Vector2(x, 0.0f), Vector3(1.0f, 1.0f, 1.0f) });
+                vertices.push_back({ bottom, Vector2(x, 1.0f), Vector3(1.0f, 1.0f, 1.0f) });
 
-            dd::point(ddConvert(segment.transform.Translation()), dd::colors::White, 5.0f);
-            dd::point(ddConvert(top), dd::colors::Green, 5.0f);
-            dd::point(ddConvert(bottom), dd::colors::Red, 5.0f);
+                if (enableDebugDraw)
+                {
+                    dd::line(ddConvert(top), ddConvert(bottom), dd::colors::White);
+                }
+            }
+        }
 
-            dd::line(ddConvert(top), ddConvert(bottom), dd::colors::White);
+        // Building trinagle strips 
+        indices.clear();
+        indices.resize(vertices.size());
+
+        for (UINT i = 0; i < indices.size(); ++i)
+        {
+            indices[i] = SHORT(i);
         }
     }
 
-    // Build vertices
-    vertices.clear();
-    vertices.reserve(segments.size() * 2);
-
-    for(UINT i = 0, count = UINT(segments.size()); i < count; ++i)
-    {
-        const Segment& segment = segments[i];
-        const Matrix& transform = segment.transform;
-
-        Vector3 up = transform.Forward();
-        up.Normalize();
-
-        Vector3 down = transform.Backward();
-        down.Normalize();
-
-        float overTimeWidth = segment.lifeTime / segmentLifeTime;
-
-        Vector3 top = segment.transform.Translation() + up * segmentWidth * overTimeWidth;
-        Vector3 bottom = segment.transform.Translation() + down * segmentWidth * overTimeWidth;
-
-        float x = float(i) / float(count - 1);
-
-        vertices.push_back({ top, Vector2(x, 0.0f), Vector3(1.0f, 1.0f, 1.0f) });
-        vertices.push_back({ bottom, Vector2(x, 1.0f), Vector3(1.0f, 1.0f, 1.0f) });
-    }
-
-
-    // Building trinagle strips 
-    indices.clear();
-    indices.resize(vertices.size());
-
-    for(UINT i = 0; i < indices.size(); ++i)
-    {
-        indices[i] = SHORT(i);
-    }
 }
 
 void DemoTrail::record(ID3D12GraphicsCommandList* commandList, const Matrix& view, const Matrix& proj)
@@ -283,4 +279,77 @@ void DemoTrail::createPSO()
     // create the pso
     app->getD3D12()->getDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pso));
 }
+
+void DemoTrail::centripetalCatmullRom(const Vector3 p[4], CubicSegment& segment, float alpha, float tension) const
+{
+    const float epsilon = 0.00001f;
+
+    float t0 = 0.0f;
+    float t1 = t0 + pow(Vector3::Distance(p[0], p[1]), alpha);
+    float t2 = t1 + pow(Vector3::Distance(p[1], p[2]), alpha);
+    float t3 = t2 + pow(Vector3::Distance(p[2], p[3]), alpha);
+
+    Vector3 m1 = Vector3::Zero;
+    Vector3 m2 = Vector3::Zero;
+
+    if (t0 + epsilon < t1)
+    {
+        m1 = (1.0f - tension) * (t2 - t1) * ((p[1] - p[0]) / (t1 - t0) - (p[2] - p[0]) / (t2 - t0) + (p[2] - p[1]) / (t2 - t1));
+    }
+
+    if (t2 + epsilon < t3)
+    {
+        m2 = (1.0f - tension) * (t2 - t1) * ((p[2] - p[1]) / (t2 - t1) - (p[3] - p[1]) / (t3 - t1) + (p[3] - p[2]) / (t3 - t2));
+    }
+
+    segment.a = 2.0f * (p[1] - p[2]) + m1 + m2;
+    segment.b = -3.0f * (p[1] - p[2]) - m1 - m1 - m2;
+    segment.c = m1;
+    segment.d = p[1];
+}
+
+void DemoTrail::generateControlPoints(UINT index, const Matrix& trailWorldTransform, Vector3* topPoints, Vector3* bottomPoints)  const
+{
+    auto getTopBottom = [](const Matrix& transform, float width, Vector3& top, Vector3& bottom)
+        {
+            Vector3 up = transform.Forward();
+            up.Normalize();
+            Vector3 down = transform.Backward();
+            down.Normalize();
+
+            top = transform.Translation() + up * width;
+            bottom = transform.Translation() + down * width;
+        };
+
+    if (index > 0)  // Is the first segment
+    {
+        getTopBottom(segments[index - 1].transform, segmentWidth * segments[index - 1].lifeTime / segmentLifeTime, topPoints[0], bottomPoints[0]);
+    }
+    else
+    {
+        getTopBottom(segments[index].transform, segmentWidth * segments[index].lifeTime / segmentLifeTime, topPoints[0], bottomPoints[0]);
+    }
+
+    getTopBottom(segments[index].transform, segmentWidth * segments[index].lifeTime / segmentLifeTime, topPoints[1], bottomPoints[1]);
+
+    if (index + 1 < segments.size()) // Is the last segment
+    {
+        getTopBottom(segments[index + 1].transform, segmentWidth * segments[index + 1].lifeTime / segmentLifeTime, topPoints[2], bottomPoints[2]);
+    }
+    else
+    {
+        getTopBottom(trailWorldTransform, segmentWidth, topPoints[2], bottomPoints[2]);
+    }
+
+    if (index + 2 < segments.size()) // Is the last or the penultimate segment
+    {
+        getTopBottom(segments[index + 2].transform, segmentWidth * segments[index + 2].lifeTime / segmentLifeTime, topPoints[3], bottomPoints[3]);
+    }
+    else
+    {
+        getTopBottom(trailWorldTransform, segmentWidth, topPoints[3], bottomPoints[3]);
+    }
+};
+
+
 

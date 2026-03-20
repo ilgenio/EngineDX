@@ -29,6 +29,9 @@ class ModuleCamera : public Module
     Matrix camera;
     bool enabled = true;
     bool enableInput = true; 
+    UINT64  lastMilis = 0;
+    UINT64  elapsedMilis = 0;
+
 public:
 
     bool init() override;
