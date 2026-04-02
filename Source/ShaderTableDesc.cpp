@@ -84,6 +84,32 @@ void ShaderTableDesc::createTextureSRV(ID3D12Resource *resource, UINT8 slot)
     }
 }
 
+void ShaderTableDesc::createTexture2DSRV(ID3D12Resource* resource, DXGI_FORMAT format, UINT8 slot)
+{
+    _ASSERTE(slot < ModuleShaderDescriptors::DESCRIPTORS_PER_TABLE);
+
+    if (resource)
+    {
+        ModuleShaderDescriptors* descriptors = app->getShaderDescriptors();
+        _ASSERTE(descriptors->isValid(handle));
+
+        D3D12_RESOURCE_DESC desc = resource->GetDesc();
+
+        D3D12_SHADER_RESOURCE_VIEW_DESC viewDesc;
+        viewDesc.Format = format;
+        viewDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+        viewDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+        viewDesc.Texture2D.MostDetailedMip = 0;
+        viewDesc.Texture2D.MipLevels = desc.MipLevels;
+        viewDesc.Texture2D.PlaneSlice = 0;
+        viewDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+        viewDesc.Texture2DArray.PlaneSlice = 0;
+        viewDesc.Texture2DArray.ResourceMinLODClamp = 0.0f;
+
+        app->getD3D12()->getDevice()->CreateShaderResourceView(resource, &viewDesc, descriptors->getCPUHandle(handle, slot));
+    }
+}
+
 void ShaderTableDesc::createTexture2DSRV(ID3D12Resource *resource, UINT arraySlice, UINT mipSlice, UINT8 slot)
 {
     if (resource)

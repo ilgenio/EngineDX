@@ -351,5 +351,3 @@ void DemoTrail::generateControlPoints(UINT index, const Matrix& trailWorldTransf
     }
 };
 
-
-

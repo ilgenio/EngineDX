@@ -16,15 +16,15 @@ bool DemoScene::init()
 {
     ModuleScene* scene = app->getScene();
 
-    app->getScene()->getSkybox()->init("Assets/Textures/san_giuseppe_bridge_4k.hdr", false);
+    app->getScene()->getSkybox()->init("Assets/Textures/qwantani_moon_noon_puresky_4k.hdr", false);
 
-    UINT modelIdx = scene->addModel("Assets/Models/BistroExterior/BistroExterior.gltf", "Assets/Models/BistroExterior/");
+    UINT modelIdx = scene->addModel("Assets/Models/Sponza/Sponza.gltf", "Assets/Models/Sponza/");
    
     ModuleCamera* camera = app->getCamera();
 
-    camera->setPolar(XMConvertToRadians(1.30f));
-    camera->setAzimuthal(XMConvertToRadians(-11.61f));
-    camera->setTranslation(Vector3(0.0f, 1.24f, 4.65f));
+    camera->setPolar(XMConvertToRadians(-90.0f));
+    camera->setAzimuthal(XMConvertToRadians(-15.0f));
+    camera->setTranslation(Vector3(-6.0f, 4.0f, -0.5f));
 
     return true;
 }
