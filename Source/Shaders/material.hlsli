@@ -128,20 +128,26 @@ float3 getEmissive(in Material material, in Texture2D emissiveTex, in float2 coo
 }
 
 void getMetallicRoughness(in Material material, in Texture2D baseColourTex, in Texture2D metallicRoughnessTex,
-                          in float2 coord0, in float2 coord1, out float3 baseColour, out float roughness, out float metallic)
+                          in float2 coord0, in float2 coord1, out float3 baseColour, out float roughness, 
+                          out float metallic, out float alpha)
 {
     baseColour = material.baseColour.rgb;
+    alpha = material.baseColour.a;
 
     if (material.flags & HAS_BASECOLOUR_TEX)
     {
+        float4 sampledBaseColour;
         if (material.texcoords & HAS_BASECOLOUR_TEX)
         {
-            baseColour *= baseColourTex.Sample(bilinearWrap, coord1).rgb;
+            sampledBaseColour = baseColourTex.Sample(bilinearWrap, coord1);
         }
         else
         {
-            baseColour *= baseColourTex.Sample(bilinearWrap, coord0).rgb;
+            sampledBaseColour = baseColourTex.Sample(bilinearWrap, coord0);
         }
+
+        baseColour *= sampledBaseColour.rgb;
+        alpha *= sampledBaseColour.a;
     }
 
     float2 metallicRoughness = float2(material.metallicFactor, material.roughnessFactor);
@@ -174,9 +180,9 @@ void getMetallicRoughness(in Material material, in Texture2D baseColourTex, in T
 // - metallic: Output final metallic value
 void getMetallicRoughness(in Material material, in Texture2D baseColourTex, in Texture2D metallicRoughnessTex,
                           in float2 coord0, in float2 coord1, out float3 baseColour, out float roughness, 
-                          out float alphaRoughness, out float metallic)
+                          out float alphaRoughness, out float metallic, out float alpha)
 {
-    getMetallicRoughness(material, baseColourTex, metallicRoughnessTex, coord0, coord1  , baseColour, roughness, metallic);
+    getMetallicRoughness(material, baseColourTex, metallicRoughnessTex, coord0, coord1  , baseColour, roughness, metallic, alpha);
     alphaRoughness = roughness * roughness; // Perceptual roughness
 }
 

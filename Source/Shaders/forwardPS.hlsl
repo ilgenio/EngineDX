@@ -30,7 +30,14 @@ float4 main(float3 worldPos : POSITION, float2 texCoord0 : TEXCOORD0, float2 tex
     float roughness;
     float alphaRoughness;
     float metallic;
-    getMetallicRoughness(material, baseColourTex, metallicRoughnessTex, texCoord0, texCoord1, baseColour, roughness, alphaRoughness, metallic);
+    float alpha;
+
+    getMetallicRoughness(material, baseColourTex, metallicRoughnessTex, texCoord0, texCoord1, baseColour, roughness, alphaRoughness, metallic, alpha);
+
+    if(alpha < material.alphaCutoff)
+    {
+        discard;
+    }
 
     roughness = getGeometricSpecularAA(N, roughness);
     alphaRoughness = roughness * roughness;

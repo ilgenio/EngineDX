@@ -14,7 +14,13 @@ PSOutput main(float3 worldPos : POSITION, float2 texCoord0 : TEXCOORD0, float2 t
     float3 baseColour;
     float roughness;
     float metallic;
-    getMetallicRoughness(material, baseColourTex, metallicRoughnessTex, texCoord0, texCoord1, baseColour, roughness, metallic);
+    float alpha;
+    getMetallicRoughness(material, baseColourTex, metallicRoughnessTex, texCoord0, texCoord1, baseColour, roughness, metallic, alpha);
+
+    if(alpha < material.alphaCutoff)
+    {
+        discard;
+    }
 
     float3 N = normalize(normal);
     float3 T = normalize(tangent);
