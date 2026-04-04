@@ -6938,6 +6938,7 @@
       "alphaMode": "MASK",
       "alphaCutoff": 0.5,
       "doubleSided": true,
+      "roughnessFactor" : 1,
       "pbrMetallicRoughness": {
         "baseColorFactor": [
           0.5879999995231628,

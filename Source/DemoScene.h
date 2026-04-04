@@ -6,5 +6,6 @@ class DemoScene : public Module
 {
 public:
 
+    bool cleanUp() override;
     bool init() override;
 };

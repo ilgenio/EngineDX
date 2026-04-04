@@ -2,6 +2,10 @@
 
 #include "Module.h"
 
+namespace json { 
+    class jobject; 
+};
+
 //-----------------------------------------------------------------------------
 // ModuleCamera manages the application's main camera.
 // It handles camera position, rotation, and view matrix updates based on
@@ -36,6 +40,9 @@ public:
 
     bool init() override;
     void update() override;
+
+    void serialize(json::jobject& obj) const;
+    void deserialize(const json::jobject& obj);
 
     void setEnable(bool flag) { enabled = flag; }
     bool getEnabled() const { return enabled;  }

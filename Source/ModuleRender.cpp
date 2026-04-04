@@ -21,6 +21,8 @@
 #include "RenderTexture.h"
 #include "SkinningPass.h"
 
+#include "json_utils.h"
+
 
 ModuleRender::ModuleRender()
 {
@@ -30,6 +32,26 @@ ModuleRender::ModuleRender()
 ModuleRender::~ModuleRender()
 {
 
+}
+
+void ModuleRender::serialize(json::jobject& obj) const
+{
+    obj["showAxis"].set_boolean(showAxis);
+    obj["showGrid"].set_boolean(showGrid);
+    obj["showSkeleton"].set_boolean(showSkeleton);
+    obj["showQuadTree"].set_boolean(showQuadTree);
+    obj["trackFrustum"].set_boolean(trackFrustum);
+    obj["showGuizmo"].set_boolean(showGuizmo);
+}
+
+void ModuleRender::deserialize(const json::jobject& obj)
+{
+    showAxis = obj["showAxis"].is_true();
+    showGrid = obj["showGrid"].is_true();
+    showSkeleton = obj["showSkeleton"].is_true();
+    showQuadTree = obj["showQuadTree"].is_true();
+    trackFrustum = obj["trackFrustum"].is_true();
+    showGuizmo = obj["showGuizmo"].is_true();
 }
 
 bool ModuleRender::init()

@@ -2,6 +2,7 @@
 
 #include "Scene.h"
 #include "Model.h"
+#include "Light.h"
 #include "QuadTree.h"
 #include "Application.h"
 #include "ModuleStaticBuffer.h"
@@ -61,7 +62,30 @@ Model* Scene::loadModel(const char* fileName, const char* basePath)
 
 void Scene::onRemoveModel(Model *model)
 {
-    auto it = std::erase(models, model);
+    std::erase(models, model);
+}
+
+void Scene::addLight(const Directional &directional)
+{
+    Light* light = new Light(directional, this);
+    lights.push_back(light);
+}
+
+void Scene::addLight(const Point &point)
+{
+    Light* light = new Light(point, this);
+    lights.push_back(light);
+}
+
+void Scene::addLight(const Spot &spot)
+{
+    Light* light = new Light(spot, this);
+    lights.push_back(light);
+}
+
+void Scene::onRemoveLight(Light *light)
+{
+    std::erase(lights, light);
 }
 
 void Scene::updateAnimations(float deltaTime)

@@ -212,7 +212,9 @@
     <ClInclude Include="HDRToCubemapPass.h" />
     <ClInclude Include="ImGuiPass.h" />
     <ClInclude Include="IrradianceMapPass.h" />
+    <ClInclude Include="json.h" />
     <ClInclude Include="Keyboard.h" />
+    <ClInclude Include="Light.h" />
     <ClInclude Include="Material.h" />
     <ClInclude Include="MathUtils.h" />
     <ClInclude Include="Mesh.h" />
@@ -368,7 +370,14 @@
     <ClCompile Include="HDRToCubemapPass.cpp" />
     <ClCompile Include="ImGuiPass.cpp" />
     <ClCompile Include="IrradianceMapPass.cpp" />
+    <ClCompile Include="json.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">_CRT_SECURE_NO_WARNINGS;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">_CRT_SECURE_NO_WARNINGS;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
     <ClCompile Include="Keyboard.cpp" />
+    <ClCompile Include="Light.cpp" />
     <ClCompile Include="Material.cpp" />
     <ClCompile Include="MathUtils.cpp" />
     <ClCompile Include="Mesh.cpp" />

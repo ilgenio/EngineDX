@@ -8,6 +8,8 @@
 #include "Keyboard.h"
 #include "GamePad.h"
 
+#include "json_utils.h"
+
 #define FAR_PLANE 200.0f
 #define NEAR_PLANE 0.1f
 
@@ -118,6 +120,22 @@ void ModuleCamera::update()
 
     dragPosX = mouseState.x;
     dragPosY = mouseState.y;
+}
+
+void ModuleCamera::serialize(json::jobject& obj) const
+{
+    obj["polar"] = params.polar;
+    obj["azimuthal"] = params.azimuthal;
+    json::jobject translationObj;
+    ::serialize(params.translation, translationObj);
+    obj["translation"] = translationObj;
+}
+
+void ModuleCamera::deserialize(const json::jobject& obj)
+{
+    params.polar = obj["polar"];
+    params.azimuthal = obj["azimuthal"];
+    ::deserialize(obj["translation"], params.translation);
 }
 
 Matrix ModuleCamera::getPerspectiveProj(float aspect, float fov) 

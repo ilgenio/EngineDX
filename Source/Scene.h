@@ -8,6 +8,10 @@ class Model;
 class Mesh;
 class Material;
 class QuadTree;
+class Light;
+struct Directional;
+struct Point;
+struct Spot;
 
 namespace tinygltf { class Model;  class Node; }
 
@@ -29,6 +33,7 @@ class Scene
 {
 private:
     friend class Model;
+    friend class Light;
     friend class Material;
 
     struct SharedTexture
@@ -38,8 +43,9 @@ private:
     };
 
     std::vector<Model*> models;
-    std::unordered_map<std::filesystem::path, SharedTexture> textures;
+    std::vector<Light*> lights;
 
+    std::unordered_map<std::filesystem::path, SharedTexture> textures;
     std::unique_ptr<QuadTree> quadTree;
 
 public:
@@ -47,6 +53,10 @@ public:
     ~Scene();
 
     Model* loadModel(const char* fileName, const char* basePath);
+
+    void   addLight(const Directional& directional);
+    void   addLight(const Point& point);
+    void   addLight(const Spot& spot);
 
     void updateAnimations(float deltaTime);
     void updateWorldTransforms();
@@ -56,6 +66,7 @@ public:
 
 private:
     void onRemoveModel(Model* model);
+    void onRemoveLight(Light* light);
     
     ComPtr<ID3D12Resource> loadTexture(const std::filesystem::path& path, bool defaultSRGB = false);
     void unloadTexture(const std::filesystem::path& path);

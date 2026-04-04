@@ -16,6 +16,10 @@ class RenderTexture;
 class SkinningPass;
 struct RenderMesh;
 
+namespace json {
+    class jobject;
+}
+
 class ModuleRender : public Module
 {
     struct PerFrame
@@ -69,6 +73,9 @@ public:
 
     ModuleRender();
     ~ModuleRender();
+
+    void serialize(json::jobject& obj) const;
+    void deserialize(const json::jobject& obj);
 
     virtual bool init() override;
     virtual bool cleanUp() override;

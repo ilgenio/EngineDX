@@ -235,6 +235,12 @@
     <ClCompile Include="DemoTrail.cpp">
       <Filter>Demos</Filter>
     </ClCompile>
+    <ClCompile Include="Light.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="json.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EngineDX.h">
@@ -491,6 +497,12 @@
     </ClInclude>
     <ClInclude Include="DemoTrail.h">
       <Filter>Demos</Filter>
+    </ClInclude>
+    <ClInclude Include="Light.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="json.h">
+      <Filter>Core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
