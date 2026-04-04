@@ -238,7 +238,7 @@
     <ClCompile Include="Light.cpp">
       <Filter>Scene</Filter>
     </ClCompile>
-    <ClCompile Include="json.cpp">
+    <ClCompile Include="json11.cpp">
       <Filter>Core</Filter>
     </ClCompile>
   </ItemGroup>
@@ -501,7 +501,7 @@
     <ClInclude Include="Light.h">
       <Filter>Scene</Filter>
     </ClInclude>
-    <ClInclude Include="json.h">
+    <ClInclude Include="json11.hpp">
       <Filter>Core</Filter>
     </ClInclude>
   </ItemGroup>

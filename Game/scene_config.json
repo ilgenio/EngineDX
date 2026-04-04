@@ -1,1 +1,1 @@
-{"camera":{"polar":-1.682059e+00,"azimuthal":-3.905166e-01,"translation":{"x":-6.123638e+00,"y":2.399845e+00,"z":-4.726780e-01}},"render":{"showAxis":false,"showGrid":false,"showSkeleton":false,"showQuadTree":false,"trackFrustum":false,"showGuizmo":false}}
+{"camera": {"azimuthal": -0.29888775944709778, "polar": -1.5228011608123779, "translation": {"x": -5.0705990791320801, "y": 2.9446337223052979, "z": -0.070446290075778961}}, "render": {"showAxis": true, "showGrid": false, "showGuizmo": false, "showQuadTree": false, "showSkeleton": false, "trackFrustum": false}}

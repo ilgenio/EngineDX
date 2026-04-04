@@ -2,9 +2,6 @@
 
 #include "Module.h"
 
-namespace json { 
-    class jobject; 
-};
 
 //-----------------------------------------------------------------------------
 // ModuleCamera manages the application's main camera.
@@ -41,8 +38,8 @@ public:
     bool init() override;
     void update() override;
 
-    void serialize(json::jobject& obj) const;
-    void deserialize(const json::jobject& obj);
+    void serialize(Json& obj) const;
+    void deserialize(const Json& obj);
 
     void setEnable(bool flag) { enabled = flag; }
     bool getEnabled() const { return enabled;  }

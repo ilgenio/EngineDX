@@ -122,20 +122,21 @@ void ModuleCamera::update()
     dragPosY = mouseState.y;
 }
 
-void ModuleCamera::serialize(json::jobject& obj) const
+void ModuleCamera::serialize(Json& obj) const
 {
-    obj["polar"] = params.polar;
-    obj["azimuthal"] = params.azimuthal;
-    json::jobject translationObj;
-    ::serialize(params.translation, translationObj);
-    obj["translation"] = translationObj;
+    Json::object jsonObj;
+    jsonObj["polar"] = params.polar;
+    jsonObj["azimuthal"] = params.azimuthal;
+    jsonObj["translation"] = serializeVector3(params.translation);
+
+    obj = std::move(jsonObj);
 }
 
-void ModuleCamera::deserialize(const json::jobject& obj)
+void ModuleCamera::deserialize(const Json& obj)
 {
-    params.polar = obj["polar"];
-    params.azimuthal = obj["azimuthal"];
-    ::deserialize(obj["translation"], params.translation);
+    params.polar = float(obj["polar"].number_value());
+    params.azimuthal = float(obj["azimuthal"].number_value());
+    params.translation = deserializeVector3(obj["translation"]);
 }
 
 Matrix ModuleCamera::getPerspectiveProj(float aspect, float fov) 

@@ -8,4 +8,8 @@ public:
 
     bool cleanUp() override;
     bool init() override;
+
+private:
+    void serialize();
+    bool deserialize();
 };

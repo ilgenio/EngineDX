@@ -34,25 +34,30 @@ ModuleRender::~ModuleRender()
 
 }
 
-void ModuleRender::serialize(json::jobject& obj) const
+void ModuleRender::serialize(Json& obj) const
 {
-    obj["showAxis"].set_boolean(showAxis);
-    obj["showGrid"].set_boolean(showGrid);
-    obj["showSkeleton"].set_boolean(showSkeleton);
-    obj["showQuadTree"].set_boolean(showQuadTree);
-    obj["trackFrustum"].set_boolean(trackFrustum);
-    obj["showGuizmo"].set_boolean(showGuizmo);
+    Json::object renderObj;
+
+    renderObj["showAxis"] = showAxis;
+    renderObj["showGrid"] = showGrid;
+    renderObj["showSkeleton"] = showSkeleton;
+    renderObj["showQuadTree"] = showQuadTree;
+    renderObj["trackFrustum"] = trackFrustum;
+    renderObj["showGuizmo"] = showGuizmo;
+
+    obj = renderObj;
 }
 
-void ModuleRender::deserialize(const json::jobject& obj)
+void ModuleRender::deserialize(const Json& obj)
 {
-    showAxis = obj["showAxis"].is_true();
-    showGrid = obj["showGrid"].is_true();
-    showSkeleton = obj["showSkeleton"].is_true();
-    showQuadTree = obj["showQuadTree"].is_true();
-    trackFrustum = obj["trackFrustum"].is_true();
-    showGuizmo = obj["showGuizmo"].is_true();
+    showAxis = obj["showAxis"].bool_value();
+    showGrid = obj["showGrid"].bool_value();
+    showSkeleton = obj["showSkeleton"].bool_value();
+    showQuadTree = obj["showQuadTree"].bool_value();
+    trackFrustum = obj["trackFrustum"].bool_value();
+    showGuizmo = obj["showGuizmo"].bool_value();
 }
+
 
 bool ModuleRender::init()
 {
