@@ -18,6 +18,7 @@ class ModuleTargetDescriptors;
 class ModuleSamplers;
 class ModuleRingBuffer;
 class ModuleStaticBuffer;
+class ModuleDynamicBuffer;
 
 class Application
 {
@@ -39,6 +40,7 @@ public:
     ModuleTargetDescriptors*    getTargetDescriptors() { return targetDescriptors;  }
     ModuleSamplers*             getSamplers() { return samplers;  }
     ModuleStaticBuffer*         getStaticBuffer() { return staticBuffer;  }
+    ModuleDynamicBuffer*        getDynamicBuffer() { return dynamicBuffer; }
     ModuleScene*                getScene() { return scene; }
 
     void                        setDemo(UINT index);      
@@ -71,6 +73,7 @@ private:
     ModuleRender* render = nullptr;
     ModuleResources* resources = nullptr;
     ModuleStaticBuffer* staticBuffer = nullptr;
+    ModuleDynamicBuffer* dynamicBuffer = nullptr;
     ModuleShaderDescriptors* shaderDescriptors = nullptr;
     ModuleTargetDescriptors* targetDescriptors = nullptr;
     ModuleSamplers* samplers = nullptr;

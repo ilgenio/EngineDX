@@ -6,6 +6,7 @@
 #include "ModuleCamera.h"
 #include "ModuleScene.h"
 #include "ModuleRender.h"
+#include "Light.h"
 
 #include "Scene.h"
 #include "Model.h"
@@ -86,4 +87,13 @@ bool DemoScene::deserialize()
     return false;
 }
 
+void DemoScene::addLights()
+{
+    ModuleScene* scene = app->getScene();
+
+    Vector3 lightDir = Vector3(-0.5f, -1.0f, -0.5f);
+    lightDir.Normalize();
+
+    scene->addLight(Directional(lightDir, Color(1.0f, 1.0f, 1.0f, 1.0f)));
+}
 

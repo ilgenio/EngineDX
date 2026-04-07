@@ -6,11 +6,11 @@
 // Casts parallel rays in a single direction, simulating infinitely distant light sources.
 struct Directional
 {
-    Vector3 Ld;         // Light direction vector (normalized)
-    float   intensity;  // Light intensity multiplier
-    Vector3 Lc;         // Light color (RGB)
+    Vector3 Ld;       // Light direction vector (normalized)
+    Color Lc;         // Light color (RGB) + intensity (alpha)
 
-    Directional() : Ld(Vector3::UnitX), intensity(1.0f), Lc(Vector3::One) {}
+    Directional() : Ld(Vector3::UnitX), Lc(Vector3::One) {}
+    Directional(const Vector3& direction, const Color& color) : Ld(direction), Lc(color) {}
 };
 
 // Point light (omnidirectional).
@@ -20,10 +20,9 @@ struct Point
 {
     Vector3 Lp;         // Light position in world space
     float   sqRadius;   // Squared radius for attenuation falloff
-    Vector3 Lc;         // Light color (RGB)
-    float   intensity;  // Light intensity multiplier
+    Color   Lc;         // Light color (RGB) + intensity (alpha )
 
-    Point() : Lp(Vector3::Zero), sqRadius(1.0f), Lc(Vector3::One), intensity(1.0f) {}
+    Point() : Lp(Vector3::Zero), sqRadius(1.0f), Lc(Vector3::One) {}
 };
 
 // Spot light (conical).
@@ -35,11 +34,10 @@ struct Spot
     float  sqRadius;    // Squared radius for distance attenuation
     Vector3 Lp;         // Light position in world space
     float  inner;       // Inner cone angle (cosine) - full intensity
-    Vector3 Lc;         // Light color (RGB)
+    Color   Lc;         // Light color (RGB) + intensity (alpha)
     float  outer;       // Outer cone angle (cosine) - falloff boundary
-    float  intensity;   // Light intensity multiplier
 
-    Spot() : Ld(Vector3::UnitX), sqRadius(1.0f), Lp(Vector3::Zero), inner(0.5f), Lc(Vector3::One), outer(1.0f), intensity(1.0f) {}
+    Spot() : Ld(Vector3::UnitX), sqRadius(1.0f), Lp(Vector3::Zero), inner(0.5f), Lc(Vector3::One), outer(1.0f) {}
 };
 
 // Enum identifying the type of light stored in the union
@@ -50,7 +48,6 @@ enum ELightType
     LIGHT_SPOT                // Spot light (conical)
 };
 
-
 class Scene;
 
 // Main light structure supporting multiple light types (directional, point, spot).
@@ -58,27 +55,36 @@ class Scene;
 class Light
 {
 
-    typedef std::variant<Directional, Point, Spot> LightData; // Alternative using std::variant for type safety
+    union LightData
+    {
+        Directional* directional;
+        Point* point;
+        Spot* spot;
+    } data;
 
-    LightData data;
-    Scene* scene = nullptr; 
+    ELightType type;
+    Scene* scene = nullptr;
+
 public:
 
-    Light(const Directional& directional, Scene* scene) : scene(scene) { data = directional; }
-    Light(const Point& point, Scene* scene) : scene(scene) { data = point; }
-    Light(const Spot& spot, Scene* scene) : scene(scene) { data = spot; }
-
-    Light() : scene(nullptr) { data = Directional(); }
     ~Light();
 
-    ELightType          getType() const { return ELightType(data.index()); }
+    ELightType          getType() const { return type; }
 
-    const Directional&  getDirectional() const { _ASSERTE(getType() == LIGHT_DIRECTIONAL); return std::get<Directional>(data); }
-    const Point&        getPoint() const { _ASSERTE(getType() == LIGHT_POINT); return std::get<Point>(data); }
-    const Spot&         getSpot() const { _ASSERTE(getType() == LIGHT_SPOT); return std::get<Spot>(data); }
+    const Directional&  getDirectional() const { _ASSERTE(getType() == LIGHT_DIRECTIONAL); return *data.directional; }
+    const Point&        getPoint() const { _ASSERTE(getType() == LIGHT_POINT); return *data.point; }
+    const Spot&         getSpot() const { _ASSERTE(getType() == LIGHT_SPOT); return *data.spot; }
 
-    void setDirectional(const Directional& directional) {  data = directional; }
-    void setPoint(const Point& point) { data = point; }
-    void setSpot(const Spot& spot) { data = spot; } 
+    void setDirectional(const Directional& directional) {  type = LIGHT_DIRECTIONAL; *data.directional = directional; }
+    void setPoint(const Point& point) { type = LIGHT_POINT; *data.point = point; }
+    void setSpot(const Spot& spot) { type = LIGHT_SPOT; *data.spot = spot; } 
 
+private:
+    friend class Scene;
+
+    Light(Directional* directional, Scene* scene) : scene(scene) { type = LIGHT_DIRECTIONAL; data.directional = directional; }
+    Light(Point* point, Scene* scene) : scene(scene) { type = LIGHT_POINT; data.point = point; }
+    Light(Spot* spot, Scene* scene) : scene(scene) { type = LIGHT_SPOT; data.spot = spot; }
+
+    Light() : scene(nullptr) { data.directional = nullptr; }
 };

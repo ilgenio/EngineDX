@@ -58,3 +58,25 @@ UINT ModuleScene::addClip(const char* filePath, UINT animationIndex)
     animations.push_back(newClip);
     return static_cast<UINT>(animations.size() - 1);
 }
+
+UINT ModuleScene::addLight(const Directional& directional)
+{
+    std::shared_ptr<Light> newLight(scene->addLight(directional));
+    lights.push_back(newLight);
+    return static_cast<UINT>(lights.size() - 1);
+}
+
+UINT ModuleScene::addLight(const Point& point)
+{
+    std::shared_ptr<Light> newLight(scene->addLight(point));
+    lights.push_back(newLight);
+    return static_cast<UINT>(lights.size() - 1);
+}
+
+UINT ModuleScene::addLight(const Spot& spot)
+{
+    std::shared_ptr<Light> newLight(scene->addLight(spot));
+    lights.push_back(newLight);
+    return static_cast<UINT>(lights.size() - 1);
+}
+

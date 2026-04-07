@@ -65,27 +65,35 @@ void Scene::onRemoveModel(Model *model)
     std::erase(models, model);
 }
 
-void Scene::addLight(const Directional &directional)
+Light* Scene::addLight(const Directional &directional)
 {
-    Light* light = new Light(directional, this);
-    lights.push_back(light);
+    Directional* dir = new Directional(directional);
+    directionalLights.push_back(dir);
+
+    return new Light(dir, this);
 }
 
-void Scene::addLight(const Point &point)
+Light* Scene::addLight(const Point &point)
 {
-    Light* light = new Light(point, this);
-    lights.push_back(light);
+    Point* pt = new Point(point);
+    pointLights.push_back(pt);
+
+    return new Light(pt, this);   
 }
 
-void Scene::addLight(const Spot &spot)
+Light* Scene::addLight(const Spot &spot)
 {
-    Light* light = new Light(spot, this);
-    lights.push_back(light);
+    Spot* sp = new Spot(spot);
+    spotLights.push_back(sp);
+
+    return new Light(sp, this);
 }
 
 void Scene::onRemoveLight(Light *light)
 {
-    std::erase(lights, light);
+    //std::erase(directionalLights, light);
+    //std::erase(pointLights, light);
+    //std::erase(spotLights, light);
 }
 
 void Scene::updateAnimations(float deltaTime)

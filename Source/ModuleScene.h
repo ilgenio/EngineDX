@@ -70,9 +70,9 @@ public:
 
     // Lights Management
     UINT      getLightCount() const { return (UINT)lights.size(); }
-    void      addLight(const Directional& directional);
-    void      addLight(const Point& point);
-    void      addLight(const Spot& spot);
+    UINT      addLight(const Directional& directional);
+    UINT      addLight(const Point& point);
+    UINT      addLight(const Spot& spot);
     void      removeLight(UINT index) { _ASSERTE(index < lights.size()); lights.erase(lights.begin() + index); }
     LightPtr  getLight(UINT index) const { _ASSERTE(index < lights.size()); return lights[index]; }
     LightSpan getLights() const { return LightSpan(lights.data(), lights.size()); }

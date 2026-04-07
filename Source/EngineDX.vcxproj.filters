@@ -241,6 +241,9 @@
     <ClCompile Include="json11.cpp">
       <Filter>Core</Filter>
     </ClCompile>
+    <ClCompile Include="ModuleDynamicBuffer.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EngineDX.h">
@@ -503,6 +506,9 @@
     </ClInclude>
     <ClInclude Include="json11.hpp">
       <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="ModuleDynamicBuffer.h">
+      <Filter>Modules</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

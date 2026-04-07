@@ -43,7 +43,9 @@ private:
     };
 
     std::vector<Model*> models;
-    std::vector<Light*> lights;
+    std::vector<Directional*> directionalLights;
+    std::vector<Point*> pointLights;
+    std::vector<Spot*> spotLights;  
 
     std::unordered_map<std::filesystem::path, SharedTexture> textures;
     std::unique_ptr<QuadTree> quadTree;
@@ -54,13 +56,17 @@ public:
 
     Model* loadModel(const char* fileName, const char* basePath);
 
-    void   addLight(const Directional& directional);
-    void   addLight(const Point& point);
-    void   addLight(const Spot& spot);
+    Light* addLight(const Directional& directional);
+    Light* addLight(const Point& point);
+    Light* addLight(const Spot& spot);
 
     void updateAnimations(float deltaTime);
     void updateWorldTransforms();
     void frustumCulling(Vector4 planes[6], std::vector<RenderMesh>& renderList);
+
+    std::span<Directional*> getDirectionalLights() { return std::span<Directional*>(directionalLights.data(), directionalLights.size()); }
+    std::span<Point*>       getPointLights() { return std::span<Point*>(pointLights.data(), pointLights.size()); }
+    std::span<Spot*>        getSpotLights() { return std::span<Spot*>(spotLights.data(), spotLights.size()); }  
 
     void debugDrawQuadTree(const Vector4 planes[6], UINT level) const;
 

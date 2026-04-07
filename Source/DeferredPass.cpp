@@ -27,7 +27,9 @@ bool DeferredPass::init()
     return true;
 }
 
-void DeferredPass::render(ID3D12GraphicsCommandList* commandList, D3D12_GPU_VIRTUAL_ADDRESS perFrameData, D3D12_GPU_DESCRIPTOR_HANDLE gbufferTable, D3D12_GPU_DESCRIPTOR_HANDLE lightsTable, D3D12_GPU_DESCRIPTOR_HANDLE iblTable)
+void DeferredPass::render(ID3D12GraphicsCommandList* commandList, D3D12_GPU_VIRTUAL_ADDRESS perFrameData, 
+                          D3D12_GPU_DESCRIPTOR_HANDLE gbufferTable, D3D12_GPU_DESCRIPTOR_HANDLE lightsTable, 
+                          D3D12_GPU_DESCRIPTOR_HANDLE iblTable)
 {
     BEGIN_EVENT(commandList, "Deferred Pass");
 

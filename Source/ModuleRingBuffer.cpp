@@ -5,7 +5,7 @@
 #include "Application.h"
 #include "ModuleD3D12.h"
 
- // 16 Mb
+ // 64 Mb
 #define UPLOAD_TOTAL_SIZE UINT(64 * (1 << 20))
 
 ModuleRingBuffer::ModuleRingBuffer()

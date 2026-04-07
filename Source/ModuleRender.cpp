@@ -256,7 +256,7 @@ void ModuleRender::imGuiDrawCommands()
     ImGui::EndChildFrame();
     ImGui::End();
 
-    app->getCamera()->setEnable(viewerFocused);
+    app->getCamera()->setEnableInput(viewerFocused);
 }
 
 void ModuleRender::updatePerFrameBuffer(const Matrix& view, const Matrix& projection, const Matrix& invView)
