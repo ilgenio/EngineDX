@@ -40,6 +40,8 @@ class ModuleRender : public Module
     std::vector<RenderMesh>             renderList;
     D3D12_GPU_VIRTUAL_ADDRESS           perFrameAddress = {};
     D3D12_GPU_VIRTUAL_ADDRESS           skinningAddress = {};
+    D3D12_GPU_VIRTUAL_ADDRESS           lightsAddress[3] = {};
+     
 
     bool showAxis = false;
     bool showGrid = true;
@@ -93,6 +95,8 @@ private:
 
     void updatePerFrameBuffer(const Matrix& view, const Matrix& projection, const Matrix& invView);
     void updateSkinning(ID3D12GraphicsCommandList* commandList);
+
+    void updateLightsList(ID3D12GraphicsCommandList* commandList);
 
     void debugDrawCommands();
     void imGuiDrawCommands();

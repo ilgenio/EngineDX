@@ -27,8 +27,8 @@ bool DeferredPass::init()
     return true;
 }
 
-void DeferredPass::render(ID3D12GraphicsCommandList* commandList, D3D12_GPU_VIRTUAL_ADDRESS perFrameData, 
-                          D3D12_GPU_DESCRIPTOR_HANDLE gbufferTable, D3D12_GPU_DESCRIPTOR_HANDLE lightsTable, 
+void DeferredPass::render(ID3D12GraphicsCommandList* commandList, D3D12_GPU_VIRTUAL_ADDRESS perFrameData,
+                          D3D12_GPU_DESCRIPTOR_HANDLE gbufferTable, D3D12_GPU_VIRTUAL_ADDRESS lightsAddress[3],
                           D3D12_GPU_DESCRIPTOR_HANDLE iblTable)
 {
     BEGIN_EVENT(commandList, "Deferred Pass");
@@ -38,7 +38,9 @@ void DeferredPass::render(ID3D12GraphicsCommandList* commandList, D3D12_GPU_VIRT
 
     commandList->SetGraphicsRootConstantBufferView(SLOT_PER_FRAME_CB, perFrameData);
     commandList->SetGraphicsRootDescriptorTable(SLOT_GBUFFER_TABLE, gbufferTable);
-    //commandList->SetGraphicsRootDescriptorTable(SLOT_LIGHTS_TABLE, lightsTable);
+    commandList->SetGraphicsRootShaderResourceView(SLOT_DIRECTIONAL_BUFFER, lightsAddress[0]);
+    commandList->SetGraphicsRootShaderResourceView(SLOT_POINT_BUFFER, lightsAddress[1]);
+    commandList->SetGraphicsRootShaderResourceView(SLOT_SPOT_BUFFER, lightsAddress[2]);
     commandList->SetGraphicsRootDescriptorTable(SLOT_IBL_TABLE, iblTable);
     commandList->SetGraphicsRootDescriptorTable(SLOT_SAMPLERS, app->getSamplers()->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
 
@@ -64,7 +66,9 @@ bool DeferredPass::createRootSignature()
 
     rootParameters[SLOT_PER_FRAME_CB].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_PIXEL);
     rootParameters[SLOT_GBUFFER_TABLE].InitAsDescriptorTable(1, &gbufferTableRange, D3D12_SHADER_VISIBILITY_PIXEL);
-    rootParameters[SLOT_LIGHTS_TABLE].InitAsDescriptorTable(1, &lightsTableRange, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[SLOT_DIRECTIONAL_BUFFER].InitAsShaderResourceView(4, 0, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[SLOT_POINT_BUFFER].InitAsShaderResourceView(5, 0, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[SLOT_SPOT_BUFFER].InitAsShaderResourceView(6, 0, D3D12_SHADER_VISIBILITY_PIXEL);
     rootParameters[SLOT_IBL_TABLE].InitAsDescriptorTable(1, &iblTableRange, D3D12_SHADER_VISIBILITY_PIXEL);
     rootParameters[SLOT_SAMPLERS].InitAsDescriptorTable(1, &sampRange, D3D12_SHADER_VISIBILITY_PIXEL);
 

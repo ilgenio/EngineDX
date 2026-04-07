@@ -8,10 +8,12 @@
 #include "ModuleCamera.h"
 #include "ModuleShaderDescriptors.h"
 #include "ModuleRingBuffer.h"
+#include "ModuleDynamicBuffer.h"
 
 #include "Scene.h"
 #include "Model.h"
 #include "Skybox.h"
+#include "Light.h"
 
 #include "DebugDrawPass.h"
 #include "ImGuiPass.h"
@@ -263,10 +265,12 @@ void ModuleRender::updatePerFrameBuffer(const Matrix& view, const Matrix& projec
 {
     Matrix viewProj = view * projection;
 
+    Scene* scene = app->getScene()->getScene();
+
     PerFrame perFrameData = {};
-    perFrameData.numDirectionalLights = 0;
-    perFrameData.numPointLights = 0;
-    perFrameData.numSpotLights = 0;
+    perFrameData.numDirectionalLights = UINT(scene->getDirectionalLights().size());
+    perFrameData.numPointLights = UINT(scene->getPointLights().size());
+    perFrameData.numSpotLights = UINT(scene->getSpotLights().size());
     perFrameData.numRoughnessLevels = app->getScene()->getSkybox()->getNumIBLMipLevels();
     perFrameData.cameraPosition = app->getCamera()->getPos();
     perFrameData.proj = projection.Transpose();
@@ -282,6 +286,32 @@ void ModuleRender::updateSkinning(ID3D12GraphicsCommandList* commandList)
 
     // Update current skinning Buffer
     skinningAddress = skinningPass->getOutputAddress(app->getD3D12()->getCurrentBackBufferIdx());
+}
+
+void ModuleRender::updateLightsList(ID3D12GraphicsCommandList* commandList)
+{
+    ModuleDynamicBuffer* dynamicBuffer = app->getDynamicBuffer();
+
+    auto buildData = [=]<typename T>(std::span<T*> list) -> D3D12_GPU_VIRTUAL_ADDRESS
+    {
+        std::vector<T> data;
+        data.reserve(list.size());
+
+        for (T* light : list)
+        {
+            data.push_back(*light);
+        }
+
+        return dynamicBuffer->alloc(data.data(), data.size());
+    };
+
+    Scene* scene = app->getScene()->getScene();
+
+    lightsAddress[0] = buildData(scene->getDirectionalLights());
+    lightsAddress[1] = buildData(scene->getPointLights());
+    lightsAddress[2] = buildData(scene->getSpotLights());
+
+    dynamicBuffer->submitCopy(commandList);
 }
 
 void ModuleRender::renderMeshesForward(ID3D12GraphicsCommandList *commandList, const Matrix& view, const Matrix& projection)
@@ -300,8 +330,7 @@ void ModuleRender::renderDeferred(ID3D12GraphicsCommandList* commandList)
 
     if (skybox->isValid())
     {
-        D3D12_GPU_DESCRIPTOR_HANDLE lightsTable = {}; // TODO:
-        deferredPass->render(commandList, perFrameAddress, gbufferPass->getGBuffer().getSrvTableDesc().getGPUHandle(), lightsTable, skybox->getIBLTable());
+        deferredPass->render(commandList, perFrameAddress, gbufferPass->getGBuffer().getSrvTableDesc().getGPUHandle(), lightsAddress, skybox->getIBLTable());
     }
 }
 
@@ -316,9 +345,8 @@ void ModuleRender::renderToTexture(ID3D12GraphicsCommandList* commandList, const
     // Deferred pass
     renderDeferred(commandList);
 
-    // Render meshes TODO: In future Will be the alpha blend pass
+    // Render meshes TODO: In future will be the alpha blend pass
     //renderMeshesForward(commandList, view, proj);
-
 
     // Render the skybox
     app->getScene()->getSkybox()->render(commandList, proj);
@@ -359,6 +387,9 @@ void ModuleRender::render()
 
         // Runs skinning
         updateSkinning(commandList);
+
+        // Updates light lists buffers
+        updateLightsList(commandList);
 
         // GBuffer Export
         gbufferPass->render(commandList, renderList, skinningAddress, view * proj);
