@@ -39,7 +39,8 @@ Model* Scene::loadModel(const char* fileName, const char* basePath)
     bool loadOk = gltfContext.LoadASCIIFromFile(&model, &error, &warning, fileName);
     if (loadOk)
     {
-        Model* newModel = new Model(this, fileName);
+        std::string name = std::filesystem::path(fileName).filename().string();
+        Model* newModel = new Model(this, name.c_str());
         if(newModel->load(model, basePath))
         {
             models.push_back(newModel);

@@ -5,6 +5,7 @@
 #include <vector>
 #include <memory>
 #include <span>
+#include<set>
 
 class Scene;
 class Model;
@@ -20,6 +21,9 @@ class ModuleScene : public Module
     typedef std::vector<std::shared_ptr<AnimationClip>> AnimationClipList;
     typedef std::vector<std::shared_ptr<Model> > ModelList;
     typedef std::vector<std::shared_ptr<Light> > LightList;
+
+    std::set<UINT>          debugDrawModels;
+    std::set<UINT>          debugDrawLights;
 
     AnimationClipList       animations;
     ModelList               models;
@@ -78,6 +82,14 @@ public:
     LightSpan getLights() const { return LightSpan(lights.data(), lights.size()); }
     void      clearLights() { lights.clear(); }
 
-private:
+    // Debug 
+    void      addDebugDrawModel(UINT index) { debugDrawModels.insert(index); }
+    void      removeDebugDrawModel(UINT index) { debugDrawModels.erase(index); }
+    void      clearDebugDrawModels() { debugDrawModels.clear(); }
+    void      renderDebugDrawModels();
 
+    void      addDebugDrawLight(UINT index) { debugDrawLights.insert(index); }
+    void      removeDebugDrawLight(UINT index) { debugDrawLights.erase(index); }
+    void      clearDebugDrawLights() { debugDrawLights.clear(); }
+    void      renderDebugDrawLights();
 };

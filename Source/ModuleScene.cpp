@@ -6,6 +6,7 @@
 #include "Application.h"
 #include "Scene.h"
 #include "Model.h"
+#include "Light.h"           
 #include "Skybox.h"
 
 ModuleScene::ModuleScene()
@@ -42,8 +43,8 @@ void ModuleScene::preRender()
     scene->updateWorldTransforms();
 }
 
-UINT ModuleScene::addModel(const char* filePath, const char* basePath)
-{
+UINT ModuleScene::addModel(const char* filePath, const char* basePath) 
+{    
     std::shared_ptr<Model> newModel(scene->loadModel(filePath, basePath));
 
     models.push_back(newModel);
@@ -78,5 +79,70 @@ UINT ModuleScene::addLight(const Spot& spot)
     std::shared_ptr<Light> newLight(scene->addLight(spot));
     lights.push_back(newLight);
     return static_cast<UINT>(lights.size() - 1);
+}
+
+void ModuleScene::renderDebugDrawModels()
+{
+    auto drawNode = [](const char* name, const Matrix& worldT, const Matrix& parentT, void* userData)
+        {
+            dd::line(ddConvert(worldT.Translation()), ddConvert(parentT.Translation()), dd::colors::White, 0, false);
+
+            Vector3 scale;
+            Quaternion rotation;
+            Vector3 translation;
+
+            worldT.Decompose(scale, rotation, translation);
+
+            Matrix world = Matrix::CreateFromQuaternion(rotation) * Matrix::CreateTranslation(translation);
+
+            dd::axisTriad(ddConvert(world), 0.01f, 0.1f);
+        };
+
+    for (UINT modelIdx : debugDrawModels)
+    {
+        if (modelIdx < models.size())
+        {
+            std::shared_ptr<const Model> model = models[modelIdx];
+            model->enumerateNodes(drawNode);
+        }
+    }
+}
+
+void ModuleScene::renderDebugDrawLights()
+{
+    for (UINT lightIdx : debugDrawLights)
+    {
+        if (lightIdx < lights.size())
+        {
+            std::shared_ptr<const Light> light = lights[lightIdx];
+            switch (light->getType())
+            {
+                case LIGHT_DIRECTIONAL:
+                {
+                    const float distance = 10.0f;
+                    const float size = 0.5f;
+                    const Directional& dirLight = light->getDirectional();
+                    Vector3 color(dirLight.Lc.x * dirLight.Lc.w, dirLight.Lc.y * dirLight.Lc.w, dirLight.Lc.z * dirLight.Lc.w);
+                    dd::arrow(ddConvert(-dirLight.Ld * (distance + size)), ddConvert(-dirLight.Ld * distance), ddConvert(color), 0.1f);
+                    break;
+                }
+                case LIGHT_POINT:
+                {
+                    const Point& pointLight = light->getPoint();
+                    Vector3 color(pointLight.Lc.x * pointLight.Lc.w, pointLight.Lc.y * pointLight.Lc.w, pointLight.Lc.z * pointLight.Lc.w);
+                    dd::sphere(ddConvert(pointLight.Lp), ddConvert(color), sqrtf(pointLight.sqRadius));
+                    break;
+                }
+                case LIGHT_SPOT:
+                {
+                    const Spot& spotLight = light->getSpot();
+                    Vector3 color(spotLight.Lc.x * spotLight.Lc.w, spotLight.Lc.y * spotLight.Lc.w, spotLight.Lc.z * spotLight.Lc.w);
+                    dd::arrow(ddConvert(spotLight.Lp), ddConvert(spotLight.Lp + spotLight.Ld * sqrtf(spotLight.sqRadius)), ddConvert(color), 0.1f);
+                    dd::cone(ddConvert(spotLight.Lp), ddConvert(spotLight.Ld * sqrtf(spotLight.sqRadius)), ddConvert(color), sqrtf(spotLight.sqRadius) * tanf(acosf(spotLight.outer)), 0.0f);
+                    break;
+                }
+            }
+        }
+    }
 }
 

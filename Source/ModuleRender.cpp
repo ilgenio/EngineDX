@@ -42,7 +42,7 @@ void ModuleRender::serialize(Json& obj) const
 
     renderObj["showAxis"] = showAxis;
     renderObj["showGrid"] = showGrid;
-    renderObj["showSkeleton"] = showSkeleton;
+    renderObj["showSceneDebug"] = showSceneDebug;
     renderObj["showQuadTree"] = showQuadTree;
     renderObj["trackFrustum"] = trackFrustum;
     renderObj["showGuizmo"] = showGuizmo;
@@ -54,7 +54,7 @@ void ModuleRender::deserialize(const Json& obj)
 {
     showAxis = obj["showAxis"].bool_value();
     showGrid = obj["showGrid"].bool_value();
-    showSkeleton = obj["showSkeleton"].bool_value();
+    showSceneDebug = obj["showSceneDebug"].bool_value();
     showQuadTree = obj["showQuadTree"].bool_value();
     trackFrustum = obj["trackFrustum"].bool_value();
     showGuizmo = obj["showGuizmo"].bool_value();
@@ -122,10 +122,12 @@ void ModuleRender::preRender()
         ImGui::DockBuilderAddNode(dockspace_id, ImGuiDockNodeFlags_CentralNode);
         ImGui::DockBuilderSetNodeSize(dockspace_id, mainSize);
 
-        ImGuiID dock_id_left = 0, dock_id_right = 0;
-        ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Left, 0.75f, &dock_id_left, &dock_id_right);
-        ImGui::DockBuilderDockWindow("Demo Viewer Options", dock_id_right);
-        ImGui::DockBuilderDockWindow("Scene", dock_id_left);
+        ImGuiID dock_id_left = 0, dock_id_center = 0, dock_id_right = 0;
+        ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Left, 0.2f, &dock_id_left, &dockspace_id);
+        ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Right, 0.25f, &dock_id_right, &dock_id_center);
+        ImGui::DockBuilderDockWindow("Viewer Options", dock_id_right);
+        ImGui::DockBuilderDockWindow("Scene", dock_id_center);
+        ImGui::DockBuilderDockWindow("Objects", dock_id_left);
 
         ImGui::DockBuilderFinish(dockspace_id);
     }
@@ -176,46 +178,25 @@ void ModuleRender::debugDrawCommands()
         dd::box(ddConvert(points), dd::colors::White);
     }
 
-    if (showSkeleton)
+    if (showSceneDebug)
     {
         // Draw Model transforms
         ModuleScene* sceneModule = app->getScene();
 
-        auto drawNode = [](const char* name, const Matrix& worldT, const Matrix& parentT, void* userData)
-            {
-                dd::line(ddConvert(worldT.Translation()), ddConvert(parentT.Translation()), dd::colors::White, 0, false);
-
-                Vector3 scale;
-                Quaternion rotation;
-                Vector3 translation;
-
-                worldT.Decompose(scale, rotation, translation);
-
-                Matrix world = Matrix::CreateFromQuaternion(rotation) * Matrix::CreateTranslation(translation);
-
-                dd::axisTriad(ddConvert(world), 0.01f, 0.1f);
-            };
-
-        for (UINT modelIdx : debugDrawModels)
-        {
-            if (modelIdx < sceneModule->getModelCount())
-            {
-                std::shared_ptr<const Model> model = sceneModule->getModel(modelIdx);
-                model->enumerateNodes(drawNode);
-            }
-        }
+        sceneModule->renderDebugDrawModels();
+        sceneModule->renderDebugDrawLights();
     }
 }
 
 void ModuleRender::imGuiDrawCommands()
 {
-    ImGui::Begin("Demo Viewer Options");
+    ImGui::Begin("Viewer Options");
     ImGui::Separator();
     ImGui::Text("FPS: [%d]. Avg. elapsed (Ms): [%g] ", uint32_t(app->getFPS()), app->getAvgElapsedMs());
     ImGui::Separator();
     ImGui::Checkbox("Show grid", &showGrid);
     ImGui::Checkbox("Show axis", &showAxis);
-    ImGui::Checkbox("Show skeleton", &showSkeleton);
+    ImGui::Checkbox("Show scene debug", &showSceneDebug);
     ImGui::Checkbox("Show quadtree", &showQuadTree);
     if (showQuadTree)
     {
@@ -406,15 +387,5 @@ void ModuleRender::render()
 
     // Transition to Present, command list Close + queue 
     d3d12->endFrameRender();
-}
-
-void ModuleRender::addDebugDrawModel(UINT index)
-{
-    debugDrawModels.insert(index);
-}
-
-void ModuleRender::removeDebugDrawModel(UINT index)
-{
-    debugDrawModels.erase(index);
 }
 

@@ -39,7 +39,7 @@ bool DemoMorph::init()
 
 void DemoMorph::preRender()
 {
-    ImGui::Begin("Demo Viewer Options");
+    ImGui::Begin("Viewer Options");
     ImGui::Separator();
     if (ImGui::Combo("Animation", (int*)&active, "Individual\0Wave\0Pulse\0"))
     {

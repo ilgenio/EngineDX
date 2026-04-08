@@ -32,8 +32,7 @@ bool DemoSkinning::init()
     character->playAnim(scene->getClip(anims[IDLE_LONG]));
     currentAnim = IDLE_LONG;
 
-    ModuleRender* render = app->getRender();
-    render->addDebugDrawModel(modelIdx);
+    app->getScene()->addDebugDrawModel(modelIdx);
 
     ModuleCamera* camera = app->getCamera();
 
@@ -47,7 +46,7 @@ bool DemoSkinning::init()
 
 void DemoSkinning::preRender()
 {
-    ImGui::Begin("Demo Viewer Options");
+    ImGui::Begin("Viewer Options");
     
     if (ImGui::Checkbox("Show T-Pose", &showTPose))
     {

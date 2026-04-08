@@ -23,6 +23,7 @@ struct Point
     Color   Lc;         // Light color (RGB) + intensity (alpha )
 
     Point() : Lp(Vector3::Zero), sqRadius(1.0f), Lc(Vector3::One) {}
+    Point(const Vector3& position, float radius, const Color& color) : Lp(position), sqRadius(radius* radius), Lc(color) {}
 };
 
 // Spot light (conical).
@@ -38,6 +39,9 @@ struct Spot
     float  outer;       // Outer cone angle (cosine) - falloff boundary
 
     Spot() : Ld(Vector3::UnitX), sqRadius(1.0f), Lp(Vector3::Zero), inner(0.5f), Lc(Vector3::One), outer(1.0f) {}
+    Spot(const Vector3& direction, float radius, const Vector3& position, float innerAngle, float outerAngle, const Color& color)
+        : Ld(direction), sqRadius(radius* radius), Lp(position), inner(innerAngle), Lc(color), outer(outerAngle) {
+    }
 };
 
 // Enum identifying the type of light stored in the union

@@ -45,7 +45,7 @@ bool DemoTrail::init()
     UINT animIdx = scene->addClip("Assets/Models/Sword/sword.gltf", 0);
     model->playAnim(scene->getClip(animIdx));
 
-    app->getRender()->addDebugDrawModel(modelIdx);    
+    app->getScene()->addDebugDrawModel(modelIdx);    
 
     ModuleCamera* camera = app->getCamera();
 
@@ -101,7 +101,7 @@ void DemoTrail::update()
 
 void DemoTrail::preRender()
 {
-    ImGui::Begin("Demo Viewer Options");
+    ImGui::Begin("Viewer Options");
     ImGui::SliderFloat("Segment Life Time", &segmentLifeTime, 0.0f, 1.0f);
     ImGui::SliderFloat("Segment Length", &segmentLength, 0.001f, 1.0f);
     ImGui::SliderFloat("Segment Width", &segmentWidth, 0.0f, 1.0f);

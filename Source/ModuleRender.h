@@ -5,7 +5,6 @@
 
 #include<memory>
 #include<vector>
-#include<set>
 
 class DebugDrawPass;
 class ImGuiPass;
@@ -30,6 +29,7 @@ class ModuleRender : public Module
         Matrix invView;
     };
 
+    // Passes
     std::unique_ptr<DebugDrawPass>      debugDrawPass;
     std::unique_ptr<ImGuiPass>          imguiPass;
     std::unique_ptr<RenderMeshPass>     renderMeshPass;
@@ -37,15 +37,16 @@ class ModuleRender : public Module
     std::unique_ptr<DeferredPass>       deferredPass;
     std::unique_ptr<SkinningPass>       skinningPass;
 
+    // Render Data
     std::vector<RenderMesh>             renderList;
     D3D12_GPU_VIRTUAL_ADDRESS           perFrameAddress = {};
     D3D12_GPU_VIRTUAL_ADDRESS           skinningAddress = {};
     D3D12_GPU_VIRTUAL_ADDRESS           lightsAddress[3] = {};
-     
+    std::unique_ptr<RenderTexture> renderTexture;
 
     bool showAxis = false;
     bool showGrid = true;
-    bool showSkeleton = false;
+    bool showSceneDebug = false;
     bool showQuadTree = false;
     bool trackFrustum = false;
     bool showGuizmo = false;
@@ -53,13 +54,10 @@ class ModuleRender : public Module
     ImVec2 canvasSize;
     ImVec2 canvasPos;
     Vector4 frustumPlanes[6];
-    std::unique_ptr<RenderTexture> renderTexture;
     ShaderTableDesc debugDesc;
 
     BoundingFrustum trackedFrustum;
     UINT quadTreeLevel = 0;
-
-    std::set<UINT> debugDrawModels;
 
     typedef std::function<void(ID3D12GraphicsCommandList* commandList, const Matrix& view, const Matrix& proj)> Callback;
 
@@ -80,9 +78,6 @@ public:
 
     virtual void preRender() override;
     virtual void render() override;
-
-    void addDebugDrawModel(UINT index);
-    void removeDebugDrawModel(UINT index);
 
     void addRenderCallback(const RenderCallback& callback) { renderCallbacks.push_back(callback); }
     void clearRenderCallbacks() { renderCallbacks.clear(); }

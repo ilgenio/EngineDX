@@ -6,8 +6,8 @@
 struct Directional
 {
     float3 Ld;
-    float  intensity;
     float3 Lc;
+    float  intensity;
 };
 
 struct Point
@@ -25,8 +25,8 @@ struct Spot
     float3 Lp;
     float  inner;
     float3 Lc;
+    float intensity;
     float  outter;
-    float  intensity;
 };
 
 float pointFalloff(float sqDist, float sqRadius)
