@@ -113,52 +113,6 @@ void DemoScene::addLights()
     ));
 }
 
-void DemoScene::preRender()
-{
-    ModuleScene* scene = app->getScene();
 
-    ImGui::Begin("Objects");
-    //if (ImGui::TreeNode("Models"))
-    if (ImGui::CollapsingHeader("Models", ImGuiTreeNodeFlags_DefaultOpen))
-    {
-        const auto& models = scene->getModels();        
-        UINT index = 0;
-        for (const auto& model : models)
-        {
-            bool selected = (index == selectedIndex) && selectionType == SELECTION_MODEL;
-            if(ImGui::Selectable(model->getName().c_str(), selected, ImGuiSelectableFlags_SpanAllColumns))
-            {
-                selectedIndex = index;
-                selectionType = SELECTION_MODEL;
 
-                scene->clearDebugDrawLights();
-                scene->addDebugDrawModel(index);
-            }
-
-            ++index;
-        }
-    }
-
-    if(ImGui::CollapsingHeader("Lights", ImGuiTreeNodeFlags_DefaultOpen))
-    {
-        const auto& lights = scene->getLights();
-        UINT index = 0;
-        for (const auto& light : lights)
-        {
-            std::string lightName = "Light " + std::to_string(index);
-            bool selected = (index == selectedIndex) && selectionType == SELECTION_LIGHT;
-            if (ImGui::Selectable(lightName.c_str(), selected, ImGuiSelectableFlags_SpanAllColumns))
-            {
-                selectedIndex = index;
-                selectionType = SELECTION_LIGHT;
-
-                scene->clearDebugDrawModels();
-                scene->addDebugDrawLight(index);
-            }
-            ++index;
-        }
-    }
-
-    ImGui::End();
-}
 

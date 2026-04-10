@@ -12,6 +12,7 @@ class ModuleD3D12;
 class ModuleCamera;
 class ModuleRender;
 class ModuleScene;
+class ModuleSceneEditor;
 class ModuleResources;
 class ModuleShaderDescriptors;
 class ModuleTargetDescriptors;
@@ -42,6 +43,7 @@ public:
     ModuleStaticBuffer*         getStaticBuffer() { return staticBuffer;  }
     ModuleDynamicBuffer*        getDynamicBuffer() { return dynamicBuffer; }
     ModuleScene*                getScene() { return scene; }
+    ModuleSceneEditor*          getSceneEditor() { return sceneEditor; }
 
     void                        setDemo(UINT index);      
 
@@ -79,6 +81,7 @@ private:
     ModuleSamplers* samplers = nullptr;
     ModuleRingBuffer* ringBuffer = nullptr;
     ModuleScene*  scene = nullptr;
+    ModuleSceneEditor* sceneEditor = nullptr;
     Module* startMenu = nullptr;
     Module* demo = nullptr;
 

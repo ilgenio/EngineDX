@@ -32,8 +32,6 @@ bool DemoSkinning::init()
     character->playAnim(scene->getClip(anims[IDLE_LONG]));
     currentAnim = IDLE_LONG;
 
-    app->getScene()->addDebugDrawModel(modelIdx);
-
     ModuleCamera* camera = app->getCamera();
 
     camera->setPolar(XMConvertToRadians(-1.20f));

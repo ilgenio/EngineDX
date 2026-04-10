@@ -45,9 +45,7 @@ bool DemoTrail::init()
     UINT animIdx = scene->addClip("Assets/Models/Sword/sword.gltf", 0);
     model->playAnim(scene->getClip(animIdx));
 
-    app->getScene()->addDebugDrawModel(modelIdx);    
-
-    ModuleCamera* camera = app->getCamera();
+   ModuleCamera* camera = app->getCamera();
 
     camera->setPolar(XMConvertToRadians(1.30f));
     camera->setAzimuthal(XMConvertToRadians(-11.61f));

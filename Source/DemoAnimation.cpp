@@ -22,8 +22,6 @@ bool DemoAnimation::init()
     UINT animIdx = scene->addClip("Assets/Models/busterDrone/busterDrone.gltf", 0);
     scene->getModel(modelIdx)->playAnim(scene->getClip(animIdx));
 
-    app->getScene()->addDebugDrawModel(modelIdx);
-
     ModuleCamera* camera = app->getCamera();
 
     camera->setPolar(XMConvertToRadians(1.30f));

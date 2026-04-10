@@ -22,9 +22,6 @@ class ModuleScene : public Module
     typedef std::vector<std::shared_ptr<Model> > ModelList;
     typedef std::vector<std::shared_ptr<Light> > LightList;
 
-    std::set<UINT>          debugDrawModels;
-    std::set<UINT>          debugDrawLights;
-
     AnimationClipList       animations;
     ModelList               models;
     LightList               lights;
@@ -48,6 +45,7 @@ public:
     bool cleanUp() override;
     void update() override;
     void preRender() override;
+    void render() override; 
 
     Scene* getScene() { return scene.get(); }
     Skybox* getSkybox() { return skybox.get(); }
@@ -82,14 +80,6 @@ public:
     LightSpan getLights() const { return LightSpan(lights.data(), lights.size()); }
     void      clearLights() { lights.clear(); }
 
-    // Debug 
-    void      addDebugDrawModel(UINT index) { debugDrawModels.insert(index); }
-    void      removeDebugDrawModel(UINT index) { debugDrawModels.erase(index); }
-    void      clearDebugDrawModels() { debugDrawModels.clear(); }
-    void      renderDebugDrawModels();
 
-    void      addDebugDrawLight(UINT index) { debugDrawLights.insert(index); }
-    void      removeDebugDrawLight(UINT index) { debugDrawLights.erase(index); }
-    void      clearDebugDrawLights() { debugDrawLights.clear(); }
-    void      renderDebugDrawLights();
+private:
 };

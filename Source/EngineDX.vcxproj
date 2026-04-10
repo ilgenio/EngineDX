@@ -229,6 +229,7 @@
     <ClInclude Include="ModuleRingBuffer.h" />
     <ClInclude Include="ModuleSamplers.h" />
     <ClInclude Include="ModuleScene.h" />
+    <ClInclude Include="ModuleSceneEditor.h" />
     <ClInclude Include="ModuleShaderDescriptors.h" />
     <ClInclude Include="ModuleStaticBuffer.h" />
     <ClInclude Include="ModuleTargetDescriptors.h" />
@@ -390,6 +391,7 @@
     <ClCompile Include="ModuleRingBuffer.cpp" />
     <ClCompile Include="ModuleSamplers.cpp" />
     <ClCompile Include="ModuleScene.cpp" />
+    <ClCompile Include="ModuleSceneEditor.cpp" />
     <ClCompile Include="ModuleShaderDescriptors.cpp" />
     <ClCompile Include="ModuleStaticBuffer.cpp" />
     <ClCompile Include="ModuleTargetDescriptors.cpp" />

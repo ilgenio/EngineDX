@@ -11,6 +11,7 @@
 #include "ModuleStaticBuffer.h"
 #include "ModuleDynamicBuffer.h"
 #include "ModuleScene.h"
+#include "ModuleSceneEditor.h"
 #include "ModuleRender.h"
 #include "DemoDescriptors.h"
 
@@ -161,6 +162,12 @@ void Application::swapDemoIfNeeded()
             {
                 modules.push_back(scene = new ModuleScene);
                 scene->init();
+            }
+
+            if(sceneEditor == nullptr)
+            {
+                modules.push_back(sceneEditor = new ModuleSceneEditor);
+                sceneEditor->init();
             }
 
             if (render == nullptr)

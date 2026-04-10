@@ -244,6 +244,9 @@
     <ClCompile Include="ModuleDynamicBuffer.cpp">
       <Filter>Modules</Filter>
     </ClCompile>
+    <ClCompile Include="ModuleSceneEditor.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EngineDX.h">
@@ -508,6 +511,9 @@
       <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="ModuleDynamicBuffer.h">
+      <Filter>Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="ModuleSceneEditor.h">
       <Filter>Modules</Filter>
     </ClInclude>
   </ItemGroup>

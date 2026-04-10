@@ -45,7 +45,6 @@ void ModuleRender::serialize(Json& obj) const
     renderObj["showSceneDebug"] = showSceneDebug;
     renderObj["showQuadTree"] = showQuadTree;
     renderObj["trackFrustum"] = trackFrustum;
-    renderObj["showGuizmo"] = showGuizmo;
 
     obj = renderObj;
 }
@@ -57,7 +56,6 @@ void ModuleRender::deserialize(const Json& obj)
     showSceneDebug = obj["showSceneDebug"].bool_value();
     showQuadTree = obj["showQuadTree"].bool_value();
     trackFrustum = obj["trackFrustum"].bool_value();
-    showGuizmo = obj["showGuizmo"].bool_value();
 }
 
 
@@ -177,15 +175,6 @@ void ModuleRender::debugDrawCommands()
         trackedFrustum.GetCorners(points);
         dd::box(ddConvert(points), dd::colors::White);
     }
-
-    if (showSceneDebug)
-    {
-        // Draw Model transforms
-        ModuleScene* sceneModule = app->getScene();
-
-        sceneModule->renderDebugDrawModels();
-        sceneModule->renderDebugDrawLights();
-    }
 }
 
 void ModuleRender::imGuiDrawCommands()
@@ -236,10 +225,26 @@ void ModuleRender::imGuiDrawCommands()
         ImGui::Image((ImTextureID)renderTexture->getSrvHandle().ptr, canvasSize);
     }
 
+    if (showGuizmo)
+    {
+        ImGuizmo::BeginFrame();
+
+        if (ImGui::IsKeyPressed(ImGuiKey_T)) gizmoOperation = ImGuizmo::TRANSLATE;
+        if (ImGui::IsKeyPressed(ImGuiKey_R)) gizmoOperation = ImGuizmo::ROTATE;
+
+        const Matrix& viewMatrix = camera->getView();
+        Matrix projMatrix = ModuleCamera::getPerspectiveProj(float(canvasSize.x) / float(canvasSize.y));
+
+        ImGuizmo::SetRect(cursorPos.x, cursorPos.y, canvasSize.x, canvasSize.y);
+        ImGuizmo::SetDrawlist();
+        ImGuizmo::Manipulate((const float*)&viewMatrix, (const float*)&projMatrix, gizmoOperation, ImGuizmo::LOCAL, (float*)&guizmoTransform);
+    }
+
+
     ImGui::EndChildFrame();
     ImGui::End();
 
-    app->getCamera()->setEnableInput(viewerFocused);
+    camera->setEnableInput(viewerFocused && !ImGuizmo::IsUsing());
 }
 
 void ModuleRender::updatePerFrameBuffer(const Matrix& view, const Matrix& projection, const Matrix& invView)

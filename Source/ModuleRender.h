@@ -2,6 +2,7 @@
 
 #include "Module.h"
 #include "ShaderTableDesc.h"
+#include "ImGuizmo.h"
 
 #include<memory>
 #include<vector>
@@ -49,7 +50,11 @@ class ModuleRender : public Module
     bool showSceneDebug = false;
     bool showQuadTree = false;
     bool trackFrustum = false;
+
+
     bool showGuizmo = false;
+    Matrix guizmoTransform = Matrix::Identity;
+    ImGuizmo::OPERATION gizmoOperation = ImGuizmo::TRANSLATE;
 
     ImVec2 canvasSize;
     ImVec2 canvasPos;
@@ -81,6 +86,12 @@ public:
 
     void addRenderCallback(const RenderCallback& callback) { renderCallbacks.push_back(callback); }
     void clearRenderCallbacks() { renderCallbacks.clear(); }
+
+    void setShowGuizmo(bool show) { showGuizmo = show; }
+    void setGuizmoOperation(ImGuizmo::OPERATION operation) { gizmoOperation = operation; }
+    ImGuizmo::OPERATION getGuizmoOperation() const { return gizmoOperation; }
+    void setGuizmoTransform(const Matrix& transform) { guizmoTransform = transform;  }
+    const Matrix& getGuizmoTransform() const { return  guizmoTransform; }
 
 private:
 

@@ -213,17 +213,15 @@ const Matrix& Model::getWorldTransform(UINT nodeIdx) const
 
     if (node->dirtyWorld)
     {
-        Matrix world = node->localTransform;
+        node->worldTransform = node->localTransform;
 
         INT parent = node->parent;
         while (parent > 0)
         {
             Node* parentNode = nodes[node->parent];
-            world = world * parentNode->localTransform;
+            node->worldTransform = node->worldTransform * parentNode->localTransform;
             parent = parentNode->parent;
         }
-
-        return world;
     }
 
 
