@@ -203,6 +203,8 @@ void ModuleSceneEditor::imGuiDrawProperties()
 void ModuleSceneEditor::imGuiDrawLightProperties()
 {
     ModuleScene* scene = app->getScene();
+    ModuleRender* render = app->getRender();
+
     const auto& light = scene->getLight(selectedIndex);
     switch (light->getType())
     {
@@ -221,6 +223,11 @@ void ModuleSceneEditor::imGuiDrawLightProperties()
             if (imGuiDrawPointProperties(pointLight))
             {
                 light->setPoint(pointLight);
+
+                Matrix transform = Matrix::Identity;
+                transform.Translation(light->getPoint().Lp);
+
+                render->setGuizmoTransform(transform);
             }
 
             break;
@@ -231,6 +238,12 @@ void ModuleSceneEditor::imGuiDrawLightProperties()
             if (imGuiDrawSpotProperties(spotLight))
             {
                 light->setSpot(spotLight);
+
+                Quaternion rotation = Quaternion::FromToRotation(Vector3::UnitZ, spotLight.Ld);
+                Matrix transform = Matrix::CreateFromQuaternion(rotation);
+                transform.Translation(spotLight.Lp);
+
+                render->setGuizmoTransform(transform);
             }
 
             break;
