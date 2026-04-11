@@ -16,7 +16,7 @@ class ModuleSceneEditor : public Module
     };
 
     bool showAxis = false;
-    bool showGrid = true;
+    bool showGrid = false;
     bool showQuadTree = false;
     bool trackFrustum = false;
 
