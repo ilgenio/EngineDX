@@ -55,7 +55,7 @@ public:
 
     // Models Management
     UINT      getModelCount() const { return (UINT)models.size(); }
-    UINT      addModel(const char* filePath, const char* basePath);
+    UINT      addModel(const char* filePath);
     void      removeModel(UINT index) { _ASSERTE(index < models.size()); models.erase(models.begin() + index); }
     ModelPtr  getModel(UINT index) const { _ASSERTE(index < models.size()); return models[index]; }
     ModelSpan getModels() const { return ModelSpan(models.data(), models.size()); }

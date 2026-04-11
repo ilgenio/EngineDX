@@ -36,29 +36,6 @@ ModuleRender::~ModuleRender()
 
 }
 
-void ModuleRender::serialize(Json& obj) const
-{
-    Json::object renderObj;
-
-    renderObj["showAxis"] = showAxis;
-    renderObj["showGrid"] = showGrid;
-    renderObj["showSceneDebug"] = showSceneDebug;
-    renderObj["showQuadTree"] = showQuadTree;
-    renderObj["trackFrustum"] = trackFrustum;
-
-    obj = renderObj;
-}
-
-void ModuleRender::deserialize(const Json& obj)
-{
-    showAxis = obj["showAxis"].bool_value();
-    showGrid = obj["showGrid"].bool_value();
-    showSceneDebug = obj["showSceneDebug"].bool_value();
-    showQuadTree = obj["showQuadTree"].bool_value();
-    trackFrustum = obj["trackFrustum"].bool_value();
-}
-
-
 bool ModuleRender::init()
 {
     ModuleD3D12* d3d12 = app->getD3D12();
@@ -123,7 +100,7 @@ void ModuleRender::preRender()
         ImGuiID dock_id_left = 0, dock_id_center = 0, dock_id_right = 0;
         ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Left, 0.2f, &dock_id_left, &dockspace_id);
         ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Right, 0.25f, &dock_id_right, &dock_id_center);
-        ImGui::DockBuilderDockWindow("Viewer Options", dock_id_right);
+        ImGui::DockBuilderDockWindow("Viewer Properties", dock_id_right);
         ImGui::DockBuilderDockWindow("Scene", dock_id_center);
         ImGui::DockBuilderDockWindow("Objects", dock_id_left);
 
@@ -147,52 +124,14 @@ void ModuleRender::preRender()
     if (scene && scene->getModelCount() > 0)
     {
         imGuiDrawCommands();
-        debugDrawCommands();
-    }
-}
-
-void ModuleRender::debugDrawCommands()
-{
-    if (showGrid) dd::xzSquareGrid(-10.0f, 10.0f, 0.0f, 1.0f, dd::colors::LightGray);
-    if (showAxis) dd::axisTriad(ddConvert(Matrix::Identity), 0.1f, 2.0f);
-    
-    char lTmp[1024];
-    sprintf_s(lTmp, 1023, "FPS: [%d]. Avg. elapsed (Ms): [%g] ", uint32_t(app->getFPS()), app->getAvgElapsedMs());
-    dd::screenText(lTmp, ddConvert(Vector3(10.0f, 10.0f, 0.0f)), dd::colors::White, 0.6f);
-
-    if (trackFrustum && renderTexture->isValid())
-    {
-        float aspect = float(renderTexture->getWidth()) / float(renderTexture->getHeight());
-        app->getCamera()->getFrustumPlanes(frustumPlanes, aspect, true);
-        trackedFrustum = app->getCamera()->getFrustum(aspect);
-    }
-
-    if (showQuadTree)
-    {
-        app->getScene()->getScene()->debugDrawQuadTree(frustumPlanes, quadTreeLevel);
-        
-        Vector3 points[8];
-        trackedFrustum.GetCorners(points);
-        dd::box(ddConvert(points), dd::colors::White);
     }
 }
 
 void ModuleRender::imGuiDrawCommands()
 {
-    ImGui::Begin("Viewer Options");
+    ImGui::Begin("Viewer Properties");
     ImGui::Separator();
     ImGui::Text("FPS: [%d]. Avg. elapsed (Ms): [%g] ", uint32_t(app->getFPS()), app->getAvgElapsedMs());
-    ImGui::Separator();
-    ImGui::Checkbox("Show grid", &showGrid);
-    ImGui::Checkbox("Show axis", &showAxis);
-    ImGui::Checkbox("Show scene debug", &showSceneDebug);
-    ImGui::Checkbox("Show quadtree", &showQuadTree);
-    if (showQuadTree)
-    {
-        ImGui::SliderInt("QuadTree level", (int*)&quadTreeLevel, 0, 10);
-    }
-    ImGui::Checkbox("Track frustum", &trackFrustum);
-
     ImGui::Separator();
     ModuleCamera* camera = app->getCamera();
     ImGui::Text("Camera pos: [%.2f, %.2f, %.2f], Camera spherical angles: [%.2f, %.2f]", camera->getPos().x, camera->getPos().y, camera->getPos().z,
@@ -392,5 +331,15 @@ void ModuleRender::render()
 
     // Transition to Present, command list Close + queue 
     d3d12->endFrameRender();
+}
+
+float ModuleRender::getRenderTargetAspect() const
+{
+    if (renderTexture->isValid())
+    {
+        return float(renderTexture->getWidth()) / float(renderTexture->getHeight());
+    }
+
+    return 0.0f;
 }
 

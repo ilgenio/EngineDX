@@ -54,7 +54,7 @@ public:
     Scene();
     ~Scene();
 
-    Model* loadModel(const char* fileName, const char* basePath);
+    Model* loadModel(const char* fileName);
 
     Light* addLight(const Directional& directional);
     Light* addLight(const Point& point);

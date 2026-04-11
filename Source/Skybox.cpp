@@ -34,6 +34,8 @@ Skybox::~Skybox()
 
 bool Skybox::init(const char* hdrFile, bool useMSAA)
 {
+    path = hdrFile;
+
     irradianceMapPass = std::make_unique<IrradianceMapPass>();
     prefilterEnvMapPass = std::make_unique<PrefilterEnvMapPass>();
     environmentBRDFPass = std::make_unique<EnvironmentBRDFPass>();

@@ -14,6 +14,4 @@ public:
 private:
     void serialize();
     bool deserialize();
-    void addLights();
-
 };

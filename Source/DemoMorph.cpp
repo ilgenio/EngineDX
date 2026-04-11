@@ -18,7 +18,7 @@ bool DemoMorph::init()
 
     app->getScene()->getSkybox()->init("Assets/Textures/san_giuseppe_bridge_4k.hdr", false);
 
-    modelIdx = scene->addModel("Assets/Models/MorphStressTest/MorphStressTest.gltf", "Assets/Models/MorphStressTest/");
+    modelIdx = scene->addModel("Assets/Models/MorphStressTest/MorphStressTest.gltf");
 
     for (UINT i = 0; i < CLIP_COUNT; ++i)
     {
@@ -39,7 +39,7 @@ bool DemoMorph::init()
 
 void DemoMorph::preRender()
 {
-    ImGui::Begin("Viewer Options");
+    ImGui::Begin("Viewer Properties");
     ImGui::Separator();
     if (ImGui::Combo("Animation", (int*)&active, "Individual\0Wave\0Pulse\0"))
     {

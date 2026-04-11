@@ -47,9 +47,9 @@ void ModuleScene::render()
 {
 }
 
-UINT ModuleScene::addModel(const char* filePath, const char* basePath) 
+UINT ModuleScene::addModel(const char* filePath) 
 {    
-    std::shared_ptr<Model> newModel(scene->loadModel(filePath, basePath));
+    std::shared_ptr<Model> newModel(scene->loadModel(filePath));
 
     models.push_back(newModel);
     return static_cast<UINT>(models.size() - 1);

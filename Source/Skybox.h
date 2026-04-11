@@ -36,6 +36,7 @@ class Skybox
 
     ShaderTableDesc         tableDesc;
     UINT                    iblMipLevels = 0;
+    std::string             path;
 
 public:
 
@@ -49,4 +50,7 @@ public:
     UINT  getNumIBLMipLevels() const {return iblMipLevels; }
     D3D12_GPU_DESCRIPTOR_HANDLE getIBLTable() const { return tableDesc.getGPUHandle(); }
     D3D12_GPU_DESCRIPTOR_HANDLE getCubemapSRV() const { return tableDesc.getGPUHandle(TEX_SLOT_SKYBOX); }
+
+    const std::string& getPath() const { return path; }
+
 };

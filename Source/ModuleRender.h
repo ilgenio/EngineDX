@@ -45,24 +45,13 @@ class ModuleRender : public Module
     D3D12_GPU_VIRTUAL_ADDRESS           lightsAddress[3] = {};
     std::unique_ptr<RenderTexture> renderTexture;
 
-    bool showAxis = false;
-    bool showGrid = true;
-    bool showSceneDebug = false;
-    bool showQuadTree = false;
-    bool trackFrustum = false;
-
-
     bool showGuizmo = false;
     Matrix guizmoTransform = Matrix::Identity;
     ImGuizmo::OPERATION gizmoOperation = ImGuizmo::TRANSLATE;
 
     ImVec2 canvasSize;
     ImVec2 canvasPos;
-    Vector4 frustumPlanes[6];
     ShaderTableDesc debugDesc;
-
-    BoundingFrustum trackedFrustum;
-    UINT quadTreeLevel = 0;
 
     typedef std::function<void(ID3D12GraphicsCommandList* commandList, const Matrix& view, const Matrix& proj)> Callback;
 
@@ -75,9 +64,6 @@ public:
     ModuleRender();
     ~ModuleRender();
 
-    void serialize(Json& obj) const;
-    void deserialize(const Json& obj);
-    
     virtual bool init() override;
     virtual bool cleanUp() override;
 
@@ -93,6 +79,8 @@ public:
     void setGuizmoTransform(const Matrix& transform) { guizmoTransform = transform;  }
     const Matrix& getGuizmoTransform() const { return  guizmoTransform; }
 
+    float getRenderTargetAspect() const;
+
 private:
 
     void renderToTexture(ID3D12GraphicsCommandList* commandList, const Matrix& view, const Matrix& proj);
@@ -103,7 +91,5 @@ private:
     void updateSkinning(ID3D12GraphicsCommandList* commandList);
 
     void updateLightsList(ID3D12GraphicsCommandList* commandList);
-
-    void debugDrawCommands();
     void imGuiDrawCommands();
 };

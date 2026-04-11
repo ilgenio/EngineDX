@@ -18,7 +18,7 @@ bool DemoAnimation::init()
 
     app->getScene()->getSkybox()->init("Assets/Textures/san_giuseppe_bridge_4k.hdr", false);
 
-    UINT modelIdx = scene->addModel("Assets/Models/busterDrone/busterDrone.gltf", "Assets/Models/busterDrone");
+    UINT modelIdx = scene->addModel("Assets/Models/busterDrone/busterDrone.gltf");
     UINT animIdx = scene->addClip("Assets/Models/busterDrone/busterDrone.gltf", 0);
     scene->getModel(modelIdx)->playAnim(scene->getClip(animIdx));
 

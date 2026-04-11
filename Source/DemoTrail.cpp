@@ -30,7 +30,7 @@ bool DemoTrail::init()
     app->getScene()->getSkybox()->init("Assets/Textures/san_giuseppe_bridge_4k.hdr", false);
 
     // Sword Model
-    modelIdx = scene->addModel("Assets/Models/Sword/sword.gltf", "Assets/Models/Sword/");
+    modelIdx = scene->addModel("Assets/Models/Sword/sword.gltf");
     auto model = scene->getModel(modelIdx);
 
     // Trail
@@ -99,7 +99,7 @@ void DemoTrail::update()
 
 void DemoTrail::preRender()
 {
-    ImGui::Begin("Viewer Options");
+    ImGui::Begin("Viewer Properties");
     ImGui::SliderFloat("Segment Life Time", &segmentLifeTime, 0.0f, 1.0f);
     ImGui::SliderFloat("Segment Length", &segmentLength, 0.001f, 1.0f);
     ImGui::SliderFloat("Segment Width", &segmentWidth, 0.0f, 1.0f);

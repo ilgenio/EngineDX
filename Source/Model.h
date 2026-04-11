@@ -68,6 +68,8 @@ class Model
     SkinList skins;
     std::unique_ptr<AnimInstance> currentAnim;
     Scene* scene = nullptr;
+    std::string path;
+    std::string basePath;
     std::string name;
 
 public:
@@ -80,6 +82,8 @@ public:
     float getAnimDuration() const;
 
     const std::string& getName() const { return name; }
+    const std::string& getPath() const { return path; }
+    const std::string& getBasePath() const { return basePath; }
 
     UINT getNumMeshes() const { return UINT(meshes.size()); }
     UINT getNumMaterials() const { return UINT(materials.size()); }
@@ -99,9 +103,9 @@ public:
     void   setRootTransform(const Matrix& transform) { if (nodes.size() > 0) { nodes[0]->localTransform = transform; setAllDirty(); } }
 private:
 
-    Model(Scene* parentScene, const char* name);
+    Model(Scene* parentScene, const char* path);
 
-    bool load(const tinygltf::Model& srcModel, const char* basePath);
+    bool load(const tinygltf::Model& srcModel);
     void updateAnim(float deltaTime);
     void updateWorldTransforms();
     void updateSkinningMatrices(const MeshInstance *instance) const;

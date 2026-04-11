@@ -5,9 +5,12 @@
 #include "Application.h"
 #include "ModuleScene.h"
 #include "ModuleRender.h"
+#include "ModuleCamera.h"
 
 #include "Light.h"
 #include "Model.h"
+#include "Scene.h"
+#include "Skybox.h"
 
 namespace
 {
@@ -52,6 +55,7 @@ ModuleSceneEditor::~ModuleSceneEditor()
 
 void ModuleSceneEditor::render()
 {
+    debugDrawCommands();
     imGuiDrawObjects();
     imGuiDrawProperties();
 
@@ -63,6 +67,28 @@ void ModuleSceneEditor::render()
     case SELECTION_LIGHT:
         renderDebugDrawLight();
         break;
+    }
+}
+void ModuleSceneEditor::debugDrawCommands()
+{
+    if (showGrid) dd::xzSquareGrid(-10.0f, 10.0f, 0.0f, 1.0f, dd::colors::LightGray);
+    if (showAxis) dd::axisTriad(ddConvert(Matrix::Identity), 0.1f, 2.0f);
+
+    float aspect = app->getRender()->getRenderTargetAspect();
+
+    if (trackFrustum && aspect > 0.0f)
+    {
+        app->getCamera()->getFrustumPlanes(frustumPlanes, aspect, true);
+        trackedFrustum = app->getCamera()->getFrustum(aspect);
+    }
+
+    if (showQuadTree)
+    {
+        app->getScene()->getScene()->debugDrawQuadTree(frustumPlanes, quadTreeLevel);
+
+        Vector3 points[8];
+        trackedFrustum.GetCorners(points);
+        dd::box(ddConvert(points), dd::colors::White);
     }
 }
 
@@ -84,6 +110,8 @@ void ModuleSceneEditor::imGuiDrawObjects()
             {
                 model->setRootTransform(render->getGuizmoTransform());
             }
+
+
 
             if(ImGui::Selectable(model->getName().c_str(), selected, ImGuiSelectableFlags_SpanAllColumns))
             {
@@ -191,7 +219,18 @@ void ModuleSceneEditor::imGuiDrawObjects()
 
 void ModuleSceneEditor::imGuiDrawProperties()
 {
-    ImGui::Begin("Viewer Options");
+    ImGui::Begin("Viewer Properties");
+    ImGui::Separator();
+    ImGui::Checkbox("Show grid", &showGrid);
+    ImGui::Checkbox("Show axis", &showAxis);
+    ImGui::Checkbox("Show quadtree", &showQuadTree);
+    if (showQuadTree)
+    {
+        ImGui::SliderInt("QuadTree level", (int*)&quadTreeLevel, 0, 10);
+    }
+    ImGui::Checkbox("Track frustum", &trackFrustum);
+    ImGui::Separator();
+
     if(selectionType == SELECTION_LIGHT)
     { 
         imGuiDrawLightProperties();
@@ -369,6 +408,181 @@ void ModuleSceneEditor::renderDebugDrawLight()
         dd::cone(ddConvert(spotLight.Lp), ddConvert(spotLight.Ld * sqrtf(spotLight.sqRadius)), ddConvert(color), sqrtf(spotLight.sqRadius) * tanf(acosf(spotLight.outer)), 0.0f);
         break;
     }
+    }
+}
+
+Json::object ModuleSceneEditor::serialize() const
+{
+    Json::object skyboxJson;
+    Json::object cameraJson;
+    Json::object renderJson;
+    Json::object sceneJson;
+    Json::object editorJson;
+
+    ModuleCamera* camera = app->getCamera();
+    ModuleRender* render = app->getRender(); 
+    ModuleScene* scene = app->getScene();
+
+    cameraJson["polar"] = camera->getPolar();
+    cameraJson["azimuthal"] = camera->getAzimuthal();
+    cameraJson["translation"] = serializeVector3(camera->getTranslation());
+
+    editorJson["showAxis"] = showAxis;
+    editorJson["showGrid"] = showGrid;
+    editorJson["showQuadTree"] = showQuadTree;
+    editorJson["trackFrustum"] = trackFrustum;
+
+    skyboxJson["path"] = scene->getSkybox()->getPath();
+    sceneJson["skybox"] = skyboxJson;
+    
+    const auto& models = scene->getModels();
+    Json::array modelArray;
+    for (const auto& model : models)
+    {
+        Json::object modelJson;
+        modelJson["path"] = model->getPath();
+        modelJson["transform"] = serializeMatrix(model->getRootTransform());
+
+        modelArray.push_back(modelJson);
+    }
+
+    sceneJson["models"] = modelArray;
+
+    const auto& lights = scene->getLights();
+    Json::array lightArray;
+    for (const auto& light : lights)
+    {
+        Json::object lightJson;
+        switch (light->getType())
+        {
+        case LIGHT_DIRECTIONAL:
+        {
+            const Directional& dirLight = light->getDirectional();
+            lightJson["type"] = "directional";
+            lightJson["direction"] = serializeVector3(dirLight.Ld);
+            lightJson["color"] = serializeVector4(dirLight.Lc);
+            break;
+        }
+        case LIGHT_POINT:
+        {
+            const Point& pointLight = light->getPoint();
+            lightJson["type"] = "point";
+            lightJson["position"] = serializeVector3(pointLight.Lp);
+            lightJson["color"] = serializeVector4(pointLight.Lc);
+            lightJson["radius"] = sqrtf(pointLight.sqRadius);
+            break;
+        }
+        case LIGHT_SPOT:
+        {
+            const Spot& spotLight = light->getSpot();
+            lightJson["type"] = "spot";
+            lightJson["position"] = serializeVector3(spotLight.Lp);
+            lightJson["direction"] = serializeVector3(spotLight.Ld);
+            lightJson["color"] = serializeVector4(spotLight.Lc);
+            lightJson["radius"] = sqrtf(spotLight.sqRadius);
+            lightJson["innerConeAngle"] = XMConvertToDegrees(acosf(spotLight.inner));
+            lightJson["outerConeAngle"] = XMConvertToDegrees(acosf(spotLight.outer));
+            break;
+        }
+        }
+
+        lightArray.push_back(lightJson);
+    }
+
+    sceneJson["lights"] = lightArray;
+
+    Json::object obj;
+
+    obj["scene"] = sceneJson;
+    obj["camera"] = cameraJson;
+    obj["render"] = renderJson;
+    obj["editor"] = editorJson;
+
+    return obj;
+}
+
+void ModuleSceneEditor::deserialize(const Json& obj) 
+{
+    ModuleCamera* camera = app->getCamera();
+    ModuleRender* render = app->getRender();
+    ModuleScene* scene = app->getScene();
+
+    const Json& cameraJson = obj["camera"];
+    const Json& renderJson = obj["render"];
+    const Json& sceneJson = obj["scene"];
+    const Json& editorJson = obj["editor"];
+
+    camera->setPolar(float(cameraJson["polar"].number_value()));
+    camera->setAzimuthal(float(cameraJson["azimuthal"].number_value()));
+    camera->setTranslation(deserializeVector3(cameraJson["translation"]));
+
+    setShowAxis(editorJson["showAxis"].bool_value());
+    setShowGrid(editorJson["showGrid"].bool_value());
+    setShowQuadtree(editorJson["showQuadTree"].bool_value());
+    setTrackFrustum(editorJson["trackFrustum"].bool_value());
+
+    const Json& skyboxJson = sceneJson["skybox"];
+    const Json& modelJson = sceneJson["models"];
+    const Json& animationsJson = sceneJson["animations"];
+    const Json& lightsJson = sceneJson["lights"];
+
+    scene->getSkybox()->init(skyboxJson["path"].string_value().c_str(), false);
+
+    scene->clearModels();
+
+    for (const Json& modelItem : modelJson.array_items())
+    {
+        const std::string& path = modelItem["path"].string_value();
+        Matrix transform = deserializeMatrix(modelItem["transform"]);
+
+        UINT modelIndex = scene->addModel(path.c_str());
+        scene->getModel(modelIndex)->setRootTransform(transform);
+    }
+
+    scene->clearClips();
+
+    for (const Json& animItem : animationsJson.array_items())
+    {
+        const std::string& path = animItem["path"].string_value();
+
+        scene->addClip(path.c_str());
+    }
+
+    scene->clearLights();
+
+    for (const Json& lightItem : lightsJson.array_items())
+    {
+        const std::string& type = lightItem["type"].string_value();
+
+        if (type == "directional")
+        {
+            Directional dirLight;
+            dirLight.Ld = deserializeVector3(lightItem["direction"]);
+            dirLight.Lc = deserializeVector4(lightItem["color"]);
+
+            scene->addLight(dirLight);
+        }
+        else if (type == "point")
+        {
+            Point pointLight;
+            pointLight.Lp = deserializeVector3(lightItem["position"]);
+            pointLight.Lc = deserializeVector4(lightItem["color"]);
+            pointLight.sqRadius = float(lightItem["radius"].number_value() * lightItem["radius"].number_value());
+
+            scene->addLight(pointLight);
+        }
+        else if (type == "spot")
+        {
+            Spot spotLight;
+            spotLight.Lp = deserializeVector3(lightItem["position"]);
+            spotLight.Ld = deserializeVector3(lightItem["direction"]);
+            spotLight.Lc = deserializeVector4(lightItem["color"]);
+            spotLight.sqRadius = float(lightItem["radius"].number_value() * lightItem["radius"].number_value());
+            spotLight.inner = cosf(XMConvertToRadians(float(lightItem["innerConeAngle"].number_value())));
+            spotLight.outer = cosf(XMConvertToRadians(float(lightItem["outerConeAngle"].number_value())));
+
+            scene->addLight(spotLight);
+        }
     }
 }
 

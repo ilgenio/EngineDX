@@ -30,7 +30,7 @@ Scene::~Scene()
     _ASSERT_EXPR(models.empty(), L"There are live models!!");
 }
 
-Model* Scene::loadModel(const char* fileName, const char* basePath)
+Model* Scene::loadModel(const char* fileName)
 {
     tinygltf::TinyGLTF gltfContext;
     tinygltf::Model model;
@@ -39,9 +39,9 @@ Model* Scene::loadModel(const char* fileName, const char* basePath)
     bool loadOk = gltfContext.LoadASCIIFromFile(&model, &error, &warning, fileName);
     if (loadOk)
     {
-        std::string name = std::filesystem::path(fileName).filename().string();
-        Model* newModel = new Model(this, name.c_str());
-        if(newModel->load(model, basePath))
+        Model* newModel = new Model(this, fileName);
+
+        if(newModel->load(model))
         {
             models.push_back(newModel);
 

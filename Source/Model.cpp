@@ -18,9 +18,12 @@
 
 #include "gltf_utils.h"
 
-
-Model::Model(Scene* parentScene, const char* name) : scene(parentScene), name(name)
+Model::Model(Scene* parentScene, const char* path) : scene(parentScene), path(path)
 {
+    namespace fs = std::filesystem;
+    const auto& fullPath = fs::path(path);
+    basePath = fullPath.parent_path().string();
+    name = fullPath.filename().string();
 }
 
 Model::~Model()
@@ -34,7 +37,7 @@ Model::~Model()
     scene->onRemoveModel(this);   
 }
 
-bool Model::load(const tinygltf::Model &srcModel, const char *basePath)
+bool Model::load(const tinygltf::Model &srcModel)
 {
     std::vector<int> materialMappings;
     materialMappings.reserve(srcModel.meshes.size());
@@ -64,7 +67,7 @@ bool Model::load(const tinygltf::Model &srcModel, const char *basePath)
     {
         Material* material = new Material(this, srcMaterial.name.c_str());
 
-        material->load(srcModel, srcMaterial, basePath);
+        material->load(srcModel, srcMaterial, basePath.c_str());
 
         materials.emplace_back(material);
     }

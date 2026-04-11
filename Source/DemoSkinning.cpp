@@ -21,7 +21,7 @@ bool DemoSkinning::init()
 
     app->getScene()->getSkybox()->init("Assets/Textures/san_giuseppe_bridge_4k.hdr", false);
 
-    modelIdx = scene->addModel("Assets/Models/Elf_arbalester/Elf_arbalester.gltf", "Assets/Models/Elf_arbalester/");
+    modelIdx = scene->addModel("Assets/Models/Elf_arbalester/Elf_arbalester.gltf");
 
     for (int i = 0; i < ANIM_COUNT; ++i)
     {
@@ -44,7 +44,7 @@ bool DemoSkinning::init()
 
 void DemoSkinning::preRender()
 {
-    ImGui::Begin("Viewer Options");
+    ImGui::Begin("Viewer Properties");
     
     if (ImGui::Checkbox("Show T-Pose", &showTPose))
     {
