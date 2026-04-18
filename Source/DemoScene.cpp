@@ -35,20 +35,20 @@ bool DemoScene::init()
         Vector3 lightDir = Vector3(-0.5f, -1.0f, -0.5f);
         lightDir.Normalize();
 
-        scene->addLight(Spot(
-            lightDir,           // Direction
-            10.0f,              // Radius
-            Vector3(0.0f, 1.0f, 0.0f), // Position
-            0.75f,               // Inner cone angle (cosine)
-            0.7f,              // Outer cone angle (cosine)
-            Color(1.0f, 1.0f, 1.0f, 5.0f) // Color (white)
-        ));
-
-        scene->addLight(Point(
-            Vector3(2.0f, 1.0f, 0.0f), // Position
-            2.0f,              // Radius
-            Color(1.0f, 1.0f, 1.0f, 5.0f) // Color (white)
-        ));
+        for(int x = -4; x <= 4; x += 2)
+        {
+             for(int z = -4; z <= 4; z += 2)
+             {
+                 for (int y = 1; y <= 4; y += 2)
+                 {
+                     scene->addLight(Point(
+                         Vector3(float(x), float(y), float(z)), // Position
+                         2.0f,              // Radius
+                         Color(1.0f, 1.0f, 1.0f, 10.0f) // Color (white)
+                     ));
+                 }
+             }
+        }
     }
 
     return true;

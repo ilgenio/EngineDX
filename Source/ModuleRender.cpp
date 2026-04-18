@@ -142,7 +142,7 @@ void ModuleRender::imGuiDrawCommands()
 
     ImGui::Separator();
 
-    ImGui::Text("Renedering %d meshes", renderList.size());
+    ImGui::Text("Rendering %d meshes with %d lights", renderList.size(), app->getScene()->getLightCount());    
 
     ImGui::Separator();
 
