@@ -40,8 +40,12 @@ public:
     void preRender() override;
     bool cleanUp() override;
 
-    ComPtr<ID3D12Resource> createUploadBuffer(const void* data, size_t size, const char* name);
-    ComPtr<ID3D12Resource> createDefaultBuffer(const void* data, size_t size, const char* name);
+    ComPtr<ID3D12Resource> createUploadBuffer(const void* data, size_t size, const char* name = nullptr);
+    ComPtr<ID3D12Resource> createDefaultBuffer(const void* data, size_t size, const char* name = nullptr);
+    ComPtr< ID3D12Resource> createUnorderedAccessBuffer(size_t size, const char* name = nullptr)
+    {
+        return createDefaultBuffer(size, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, name);
+    }
 
     ComPtr<ID3D12Resource> createRawTexture2D(const void* data, size_t rowSize, size_t width, size_t height, DXGI_FORMAT format);
     ComPtr<ID3D12Resource> createTextureFromMemory(const void* data, size_t size, const char* name);
@@ -59,7 +63,8 @@ private:
 
     ComPtr<ID3D12Resource> createTextureFromImage(const ScratchImage& image, const char* name);
     ComPtr<ID3D12Resource> createRenderTarget(DXGI_FORMAT format, size_t width, size_t height, size_t arraySize, size_t mipLevels, UINT sampleCount, const Vector4& clearColour, const char* name);
-    ComPtr<ID3D12Resource> getUploadHeap(size_t size);
+    ComPtr<ID3D12Resource> createUploadBuffer(size_t size, const char* name = nullptr);
+    ComPtr<ID3D12Resource> createDefaultBuffer(size_t size, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE, const char* name = nullptr);
 };
 
 inline ComPtr<ID3D12Resource> ModuleResources::createRenderTarget(DXGI_FORMAT format, size_t width, size_t height, UINT sampleCount, const Vector4& clearColour, const char* name)

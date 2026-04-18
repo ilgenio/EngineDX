@@ -16,7 +16,8 @@ public:
         BUFFER_ALBEDO = 0,
         BUFFER_NORMAL_METALLIC_ROUGHNESS,
         BUFFER_EMISSIVE_AO, 
-        BUFFER_COUNT
+        BUFFER_DEPTH,
+        BUFFER_COUNT = BUFFER_DEPTH
     };
 
 private:

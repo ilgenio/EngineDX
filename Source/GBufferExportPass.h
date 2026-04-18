@@ -6,6 +6,7 @@
 #include<span>
 
 struct RenderMesh;
+struct RenderData;
 
 // Renders scene meshes into the G-buffer for deferred shading.
 class GBufferExportPass
@@ -39,7 +40,7 @@ public:
 
     bool init();
     void resize(UINT sizeX, UINT sizeY);
-    void render(ID3D12GraphicsCommandList* commandList, std::span<const RenderMesh> meshes, D3D12_GPU_VIRTUAL_ADDRESS skinningBuffer, const Matrix& viewProjection);
+    void render(ID3D12GraphicsCommandList* commandList, std::span<const RenderMesh> meshes, const RenderData& renderData);
 
     const GBuffer& getGBuffer() const { return gBuffer;  }
 

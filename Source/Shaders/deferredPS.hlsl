@@ -6,19 +6,22 @@
 #include "material.hlsli"
 #include "tonemap.hlsli"
 #include "ibl.hlsli"
+#include "tileCulling.hlsli"
 
 cbuffer PerFrame : register(b0)
 {
-    uint numDirLights;              // Number of directional lights
-    uint numPointLights;            // Number of point lights 
-    uint numSpotLights;             // Number of spot lights
-    uint numRoughnessLevels;        // Number of roughness levels in the prefiltered environment map
+    uint numDirLights; // Number of directional lights
+    uint numPointLights; // Number of point lights 
+    uint numSpotLights; // Number of spot lights
+    uint numRoughnessLevels; // Number of roughness levels in the prefiltered environment map
 
-    float3      viewPos;            // Camera position
-    uint        pad;
+    uint width; // Viewport width
+    uint height; // Viewport height
 
-    float4x4    projection;         // projection matrix
-    float4x4    invView;            // Inverse view matrix
+    float3 viewPos; // Camera position
+
+    float4x4 proj; // projection matrix
+    float4x4 invView; // Inverse view matrix
 };
 
 Texture2D gBufferAlbedo : register(t0);
@@ -30,9 +33,12 @@ StructuredBuffer<Directional> dirLights : register(t4);
 StructuredBuffer<Point> pointLights : register(t5);
 StructuredBuffer<Spot>  spotLights  : register(t6);
 
-TextureCube irradiance : register(t7);
-TextureCube radiance : register(t8);
-Texture2D  brdfLUT : register(t9);
+StructuredBuffer<int> pointLightIndices : register(t7);
+StructuredBuffer<int> spotLightIndices : register(t8);
+
+TextureCube irradiance : register(t9);
+TextureCube radiance : register(t10);
+Texture2D  brdfLUT : register(t11);
 
 float4 main(in float2 uv : TEXCOORD) : SV_Target
 {
@@ -51,7 +57,7 @@ float4 main(in float2 uv : TEXCOORD) : SV_Target
     float diffuseAO = emissiveOcclData.a;
 
     float depth = depthTex.Sample(pointClamp, uv).r;
-    float3 worldPos = reconstructWorldPosition(uv, depth, projection, invView);
+    float3 worldPos = reconstructWorldPosition(uv, depth, proj, invView);
     float3 V = normalize(viewPos - worldPos);
 
     float3 R = reflect(-V, N);
@@ -62,19 +68,44 @@ float4 main(in float2 uv : TEXCOORD) : SV_Target
 
     // Compute lighting
 
-    // IBL
+    // IBL<
     float3 colour = computeLighting(V, N, irradiance, radiance, brdfLUT, numRoughnessLevels, 
                                     baseColour, roughness, metallic, diffuseAO, specularAO);
 
     // Direct lights
     for (uint i = 0; i < numDirLights; i++)
         colour += computeLighting(V, N, dirLights[i], baseColour, alphaRoughness, metallic);
-    
-    for (uint i = 0; i < numPointLights; i++) 
-        colour += computeLighting(V, N, pointLights[i], worldPos, baseColour, alphaRoughness, metallic);
 
-    for( uint i = 0; i< numSpotLights; i++)
-        colour += computeLighting(V, N, spotLights[i], worldPos, baseColour, alphaRoughness, metallic);
+    // Tiled lights
+
+    uint tileIndex = getTileIndex(uint(uv.x*width), uint(uv.y*height), width);
+
+    // Point lights
+    for (uint i = 0; i < MAX_LIGHTS_PER_TILE; i++)
+    {
+        uint index = tileIndex*MAX_LIGHTS_PER_TILE + i;
+        int pointLightIndex = pointLightIndices[index];
+
+        if(pointLightIndex == -1)
+        {
+            break;
+        }
+
+        colour += computeLighting(V, N, pointLights[pointLightIndex], worldPos, baseColour, alphaRoughness, metallic);
+    }
+    
+    // Spot lights
+    for (uint i = 0; i < MAX_LIGHTS_PER_TILE; i++)
+    {
+        int spotLightIndex = spotLightIndices[tileIndex*MAX_LIGHTS_PER_TILE + i];
+
+        if(spotLightIndex == -1)
+        {
+            break;
+        }
+
+        colour += computeLighting(V, N, spotLights[spotLightIndex], worldPos, baseColour, alphaRoughness, metallic);
+    }
 
     colour += emissive;
 

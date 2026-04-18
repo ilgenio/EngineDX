@@ -3,6 +3,7 @@
 #include "lighting.hlsli"
 #include "tonemap.hlsli"
 #include "ibl.hlsli"
+#include "tileCulling.hlsli"
 
 #define VARIANCE 0.3
 #define THRESHOLD 0.2
@@ -21,7 +22,7 @@ float getGeometricSpecularAA(float3 N, float roughness)
     return saturate( roughness + geomRoughnessOffset);
 }
 
-float4 main(float3 worldPos : POSITION, float2 texCoord0 : TEXCOORD0, float2 texCoord1 : TEXCOORD1, float3 normal : NORMAL0, float3 tangent : TANGENT) : SV_TARGET
+float4 main(float3 worldPos : POSITION0, float3 ndcPos : POSITION1, float2 texCoord0 : TEXCOORD0, float2 texCoord1 : TEXCOORD1, float3 normal : NORMAL0, float3 tangent : TANGENT) : SV_TARGET
 {
     float3 V  = normalize(viewPos - worldPos);   
     float3 N = normalize(normal);
@@ -60,12 +61,34 @@ float4 main(float3 worldPos : POSITION, float2 texCoord0 : TEXCOORD0, float2 tex
     // Direct lights
     for (uint i = 0; i < numDirLights; i++)
         colour += computeLighting(V, N, dirLights[i], baseColour, alphaRoughness, metallic);
-    
-    for (uint i = 0; i < numPointLights; i++) 
-        colour += computeLighting(V, N, pointLights[i], worldPos, baseColour, alphaRoughness, metallic);
 
-    for( uint i = 0; i< numSpotLights; i++)
-        colour += computeLighting(V, N, spotLights[i], worldPos, baseColour, alphaRoughness, metallic);
+    uint tileIndex = getTileIndexFromNDC(ndcPos.xy, width, height);
+
+    // Point lights    
+    for (uint i = 0; i < MAX_LIGHTS_PER_TILE; i++)
+    {
+        int pointLightIndex = pointLightIndices[tileIndex * MAX_LIGHTS_PER_TILE + i];
+
+        if (pointLightIndex == -1)
+        {
+            break;
+        }
+
+        colour += computeLighting(V, N, pointLights[pointLightIndex], worldPos, baseColour, alphaRoughness, metallic);
+    }
+
+    // Spot lights
+    for (uint i = 0; i < MAX_LIGHTS_PER_TILE; i++)
+    {
+        int spotLightIndex = spotLightIndices[tileIndex * MAX_LIGHTS_PER_TILE + i];
+
+        if (spotLightIndex == -1)
+        {
+            break;
+        }
+
+        colour += computeLighting(V, N, spotLights[spotLightIndex], worldPos, baseColour, alphaRoughness, metallic);
+    }
 
     colour += getEmissive(material, emissiveTex, texCoord0, texCoord1);
 

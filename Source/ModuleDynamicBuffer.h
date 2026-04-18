@@ -40,6 +40,8 @@ public:
         return allocRaw(data, sizeof(T)*count);
     }
 
+    D3D12_GPU_VIRTUAL_ADDRESS alloc(size_t size);
+
     void submitCopy(ID3D12GraphicsCommandList* commandList);
 
 private:

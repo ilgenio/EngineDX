@@ -3,6 +3,7 @@
 #include "Module.h"
 #include "ShaderTableDesc.h"
 #include "ImGuizmo.h"
+#include "RenderStructs.h"
 
 #include<memory>
 #include<vector>
@@ -14,36 +15,24 @@ class GBufferExportPass;
 class DeferredPass;
 class RenderTexture;
 class SkinningPass;
+class BuildTileLightsPass;
 struct RenderMesh;
 
 class ModuleRender : public Module
 {
-    struct PerFrame
-    {
-        UINT numDirectionalLights = 0;
-        UINT numPointLights = 0;
-        UINT numSpotLights = 0;
-        UINT numRoughnessLevels = 0;
-        Vector3 cameraPosition;
-        UINT pad; // Padding to ensure 16-byte alignment
-        Matrix proj;
-        Matrix invView;
-    };
-
     // Passes
-    std::unique_ptr<DebugDrawPass>      debugDrawPass;
-    std::unique_ptr<ImGuiPass>          imguiPass;
-    std::unique_ptr<RenderMeshPass>     renderMeshPass;
-    std::unique_ptr<GBufferExportPass>  gbufferPass;
-    std::unique_ptr<DeferredPass>       deferredPass;
-    std::unique_ptr<SkinningPass>       skinningPass;
+    std::unique_ptr<DebugDrawPass>       debugDrawPass;
+    std::unique_ptr<ImGuiPass>           imguiPass;
+    std::unique_ptr<RenderMeshPass>      renderMeshPass;
+    std::unique_ptr<GBufferExportPass>   gbufferPass;
+    std::unique_ptr<DeferredPass>        deferredPass;
+    std::unique_ptr<SkinningPass>        skinningPass;
+    std::unique_ptr<BuildTileLightsPass> buildTileLightsPass;
 
     // Render Data
     std::vector<RenderMesh>             renderList;
-    D3D12_GPU_VIRTUAL_ADDRESS           perFrameAddress = {};
-    D3D12_GPU_VIRTUAL_ADDRESS           skinningAddress = {};
-    D3D12_GPU_VIRTUAL_ADDRESS           lightsAddress[3] = {};
-    std::unique_ptr<RenderTexture> renderTexture;
+    RenderData                          renderData;
+    std::unique_ptr<RenderTexture>      renderTexture;
 
     bool showGuizmo = false;
     Matrix guizmoTransform = Matrix::Identity;
@@ -73,6 +62,7 @@ public:
     void addRenderCallback(const RenderCallback& callback) { renderCallbacks.push_back(callback); }
     void clearRenderCallbacks() { renderCallbacks.clear(); }
 
+    // Guizmo management stuff 
     void setShowGuizmo(bool show) { showGuizmo = show; }
     void setGuizmoOperation(ImGuizmo::OPERATION operation) { gizmoOperation = operation; }
     ImGuizmo::OPERATION getGuizmoOperation() const { return gizmoOperation; }
@@ -83,13 +73,10 @@ public:
 
 private:
 
-    void renderToTexture(ID3D12GraphicsCommandList* commandList, const Matrix& view, const Matrix& proj);
-    void renderMeshesForward(ID3D12GraphicsCommandList* commandList, const Matrix& view, const Matrix& proj);
-    void renderDeferred(ID3D12GraphicsCommandList* commandList);
-
-    void updatePerFrameBuffer(const Matrix& view, const Matrix& projection, const Matrix& invView);
-    void updateSkinning(ID3D12GraphicsCommandList* commandList);
-
+    void updatePerFrameData(ID3D12GraphicsCommandList* commandList);
     void updateLightsList(ID3D12GraphicsCommandList* commandList);
+    void renderToTexture(ID3D12GraphicsCommandList* commandList);
+
+
     void imGuiDrawCommands();
 };

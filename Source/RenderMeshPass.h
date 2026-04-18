@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Material.h"
+#include "RenderStructs.h"
 #include <span>
 
 struct RenderMesh;
@@ -12,10 +13,14 @@ class RenderMeshPass
         SLOT_MVP_MATRIX = 0,
         SLOT_PER_FRAME_CB = 1,
         SLOT_PER_INSTANCE_CB = 2,
-        SLOT_LIGHTS_TABLE = 3,
-        SLOT_IBL_TABLE = 4,
-        SLOT_TEXTURES_TABLE = 5,
-        SLOT_SAMPLERS = 6,
+        SLOT_DIRECTIONAL_BUFFER = 3,
+        SLOT_POINT_BUFFER = 4,
+        SLOT_SPOT_BUFFER = 5,
+        SLOT_POINT_LIST = 6,
+        SLOT_SPOT_LIST = 7,
+        SLOT_IBL_TABLE = 8,
+        SLOT_TEXTURES_TABLE = 9,
+        SLOT_SAMPLERS = 10,
         SLOT_COUNT
     };
 
@@ -34,7 +39,7 @@ public:
     ~RenderMeshPass();
 
     bool init(bool useMSAA);
-    void render(ID3D12GraphicsCommandList* commandList, std::span<const RenderMesh> meshes, D3D12_GPU_VIRTUAL_ADDRESS skinningBuffer, D3D12_GPU_VIRTUAL_ADDRESS perFrameData, D3D12_GPU_DESCRIPTOR_HANDLE iblTable, const Matrix& viewProjection);
+    void render(ID3D12GraphicsCommandList* commandList, std::span<const RenderMesh> meshes, const RenderData& renderData);
 
 private:
     bool createRootSignature();

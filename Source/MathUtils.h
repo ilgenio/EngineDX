@@ -3,10 +3,13 @@
 #include <cmath>
 #include <numbers>
 
+struct Spot;
+
 constexpr const float M_PI = std::numbers::pi_v<float>; 
 
 #define M_TWO_PI 2.0f*std::numbers::pi_v<float>
 #define M_HALF_PI 0.5f*std::numbers::pi_v<float>
+#define M_QUARTER_PI 0.25f*std::numbers::pi_v<float>
 
 void euclideanToSpherical(const Vector3 & dir, float& azimuth, float& elevation);
 void sphericalToEuclidean(float azimuth, float elevation, Vector3& dir);
@@ -27,4 +30,4 @@ IntersectionType insidePlanes(const Vector4 planes[6], const Vector3 absPlanes[6
 IntersectionType insideAABB(const BoundingBox& aabb, const Vector3 points[8]);
 
 Matrix InvertAffineTransform(const Matrix& matrix);
-
+Vector4 getBoundingSphere(const Spot& spotLight);

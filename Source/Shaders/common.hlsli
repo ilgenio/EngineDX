@@ -24,8 +24,8 @@ float3x3 computeTangetSpace(in float3 normal)
 
 float lineariseDepth(float depth, in float4x4 projection)
 {
-    float a = projection._m32;
-    float b = projection._m22;
+    float a = projection[3][2];
+    float b = projection[2][2];
 
     return -a / (b + depth); 
 }
@@ -33,8 +33,8 @@ float lineariseDepth(float depth, in float4x4 projection)
 float3 reconstructViewPosition(float2 uv, float depth, in float4x4 projection)
 {
     float zView = lineariseDepth(depth, projection);
-    float xView = (uv.x * 2.0 - 1.0) * (-zView) / projection._m00;
-    float yView = (1.0 - uv.y * 2.0) * (-zView) / projection._m11;
+    float xView = (uv.x * 2.0 - 1.0) * (-zView) / projection[0][0];
+    float yView = ((1.0 - uv.y) * 2.0 - 1.0) * (-zView) / projection[1][1];
 
     return float3(xView, yView, zView);
 }

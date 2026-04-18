@@ -7,6 +7,8 @@
 #include "ModuleRender.h"
 #include "ModuleCamera.h"
 
+#include "MathUtils.h"
+
 #include "Light.h"
 #include "Model.h"
 #include "Scene.h"
@@ -58,17 +60,8 @@ void ModuleSceneEditor::render()
     debugDrawCommands();
     imGuiDrawObjects();
     imGuiDrawProperties();
-
-    switch(selectionType)
-    {
-    case SELECTION_MODEL:
-        renderDebugDrawModel();
-        break;
-    case SELECTION_LIGHT:
-        renderDebugDrawLight();
-        break;
-    }
 }
+
 void ModuleSceneEditor::debugDrawCommands()
 {
     if (showGrid) dd::xzSquareGrid(-10.0f, 10.0f, 0.0f, 1.0f, dd::colors::LightGray);
@@ -89,6 +82,16 @@ void ModuleSceneEditor::debugDrawCommands()
         Vector3 points[8];
         trackedFrustum.GetCorners(points);
         dd::box(ddConvert(points), dd::colors::White);
+    }
+
+    switch (selectionType)
+    {
+    case SELECTION_MODEL:
+        renderDebugDrawModel();
+        break;
+    case SELECTION_LIGHT:
+        renderDebugDrawLight();
+        break;
     }
 }
 
@@ -350,6 +353,9 @@ bool ModuleSceneEditor::imGuiDrawSpotProperties(Spot &spotLight)
 
         change = ImGui::DragFloat("Radius", &spotLight.sqRadius, 0.1f, 0.1f, 1000.0f) || change;
 
+        ImGui::Separator();
+        ImGui::Checkbox("Show as bounding sphere", &showSpotSphere);
+
         return change;
     }
 
@@ -402,10 +408,19 @@ void ModuleSceneEditor::renderDebugDrawLight()
     }
     case LIGHT_SPOT:
     {
-        const Spot &spotLight = light->getSpot();
+        const Spot& spotLight = light->getSpot();
+
+        if (showSpotSphere)
+        {
+            Vector4 sphere = getBoundingSphere(spotLight);
+            Vector3 color(spotLight.Lc.x * spotLight.Lc.w, spotLight.Lc.y * spotLight.Lc.w, spotLight.Lc.z * spotLight.Lc.w);
+            dd::sphere(ddConvert(Vector3(sphere.x, sphere.y, sphere.z)), ddConvert(color), sphere.w);
+        }
+
         Vector3 color(spotLight.Lc.x * spotLight.Lc.w, spotLight.Lc.y * spotLight.Lc.w, spotLight.Lc.z * spotLight.Lc.w);
         dd::arrow(ddConvert(spotLight.Lp), ddConvert(spotLight.Lp + spotLight.Ld * sqrtf(spotLight.sqRadius)), ddConvert(color), 0.1f);
         dd::cone(ddConvert(spotLight.Lp), ddConvert(spotLight.Ld * sqrtf(spotLight.sqRadius)), ddConvert(color), sqrtf(spotLight.sqRadius) * tanf(acosf(spotLight.outer)), 0.0f);
+        
         break;
     }
     }
@@ -585,4 +600,3 @@ void ModuleSceneEditor::deserialize(const Json& obj)
         }
     }
 }
-

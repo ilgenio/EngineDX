@@ -5,6 +5,7 @@
 #include "Application.h"
 #include "ModuleD3D12.h"
 #include "ModuleDynamicBuffer.h"
+#include "ModuleResources.h"
 
 #include "Scene.h"
 #include "Mesh.h"
@@ -180,17 +181,17 @@ bool SkinningPass::createPSO()
 
 bool SkinningPass::buildBuffers()
 {
-    auto* device = app->getD3D12()->getDevice();
-
-    CD3DX12_HEAP_PROPERTIES defaultProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+    ModuleResources* resources = app->getResources();
 
     for (UINT i = 0; i < FRAMES_IN_FLIGHT; ++i)
     {
-        CD3DX12_RESOURCE_DESC outputDesc = CD3DX12_RESOURCE_DESC::Buffer(MAX_NUM_OBJECTS* MAX_NUM_VERTICES * sizeof(Mesh::Vertex), D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
-        device->CreateCommittedResource(&defaultProps, D3D12_HEAP_FLAG_NONE, &outputDesc, D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&outputs[i]));
-        outputs[i]->SetName(L"Skinning Output Buffer");
+        outputs[i] = resources->createUnorderedAccessBuffer(MAX_NUM_OBJECTS * MAX_NUM_VERTICES * sizeof(Mesh::Vertex), "Skinning Output Buffer");
     }
 
     return true;
 }
 
+D3D12_GPU_VIRTUAL_ADDRESS SkinningPass::getOutputAddress() const
+{
+    return outputs[app->getD3D12()->getCurrentBackBufferIdx()]->GetGPUVirtualAddress();
+}

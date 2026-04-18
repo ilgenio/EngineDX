@@ -46,6 +46,29 @@ void ModuleDynamicBuffer::preRender()
     resources[currentFrame].copiedOffset = 0;
 }
 
+D3D12_GPU_VIRTUAL_ADDRESS ModuleDynamicBuffer::alloc(size_t size)
+{
+    auto& res = resources[currentFrame];
+
+    D3D12_GPU_VIRTUAL_ADDRESS gpuAddress = res.defaultBuffer->GetGPUVirtualAddress() + res.currentOffset;
+
+    if (size > 0)
+    {
+        size_t alignedSize = alignUp(size, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
+
+        if (res.currentOffset + alignedSize > BUFFER_TOTAL_SIZE)
+        {
+            return 0;
+        }
+
+        memset(static_cast<uint8_t*>(res.mappedPtr) + res.currentOffset, 0, size);
+        res.currentOffset += UINT(alignedSize);
+    }
+
+    return gpuAddress;
+
+}
+
 D3D12_GPU_VIRTUAL_ADDRESS ModuleDynamicBuffer::allocRaw(const void *data, size_t size)
 {
     auto& res = resources[currentFrame];

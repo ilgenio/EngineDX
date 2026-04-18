@@ -1,5 +1,6 @@
 #include "Globals.h"
 #include "Math.h"
+#include "Light.h"
 
 void euclideanToSpherical(const Vector3 & dir, float& azimuth, float& elevation)
 {
@@ -203,3 +204,25 @@ Matrix InvertAffineTransform(const Matrix& transform)
     return result;
 }
 
+
+Vector4 getBoundingSphere(const Spot& spotLight)
+{
+    Vector4 sphere;
+
+    float halfAngle = acosf(spotLight.outer);
+    float spotRadius = sqrt(spotLight.sqRadius);
+
+    if (halfAngle > M_QUARTER_PI)
+    {
+        float sphereRadius = spotRadius * tan(halfAngle);
+        Vector3 sphereCenter = spotLight.Lp + spotLight.Ld * spotRadius;
+
+        return Vector4(sphereCenter.x, sphereCenter.y, sphereCenter.z, sphereRadius);
+    }
+
+    float cosAngle = cos(halfAngle);
+    float sphereRadius = spotRadius * 0.5f / (cosAngle * cosAngle);
+    Vector3 sphereCenter = spotLight.Lp + spotLight.Ld * sphereRadius;
+
+    return Vector4(sphereCenter.x, sphereCenter.y, sphereCenter.z, sphereRadius);
+}

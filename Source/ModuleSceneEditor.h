@@ -26,6 +26,7 @@ class ModuleSceneEditor : public Module
 
     SelectionType selectionType = SELECTION_NONE;
     UINT selectedIndex = UINT_MAX;
+    bool showSpotSphere = false;
 
 public:
     ModuleSceneEditor();

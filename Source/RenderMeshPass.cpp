@@ -36,7 +36,7 @@ bool RenderMeshPass::init(bool useMSAA)
     return ok;
 }
 
-void RenderMeshPass::render(ID3D12GraphicsCommandList* commandList, std::span<const RenderMesh> meshes, D3D12_GPU_VIRTUAL_ADDRESS skinningBuffer, D3D12_GPU_VIRTUAL_ADDRESS perFrameData, D3D12_GPU_DESCRIPTOR_HANDLE iblTable, const Matrix& viewProjection)
+void RenderMeshPass::render(ID3D12GraphicsCommandList* commandList, std::span<const RenderMesh> meshes, const RenderData& renderData)
 {
     BEGIN_EVENT(commandList, "RenderMesh Pass");
 
@@ -46,8 +46,13 @@ void RenderMeshPass::render(ID3D12GraphicsCommandList* commandList, std::span<co
     commandList->SetGraphicsRootSignature(rootSignature.Get());
     commandList->SetPipelineState(pso.Get());
 
-    commandList->SetGraphicsRootConstantBufferView(SLOT_PER_FRAME_CB, perFrameData);
-    commandList->SetGraphicsRootDescriptorTable(SLOT_IBL_TABLE, iblTable);
+    commandList->SetGraphicsRootConstantBufferView(SLOT_PER_FRAME_CB, renderData.perFrameBuffer);    
+    commandList->SetGraphicsRootShaderResourceView(SLOT_DIRECTIONAL_BUFFER, renderData.lightsData.directionalLightsAddress);
+    commandList->SetGraphicsRootShaderResourceView(SLOT_POINT_BUFFER, renderData.lightsData.pointLightsAddress);
+    commandList->SetGraphicsRootShaderResourceView(SLOT_SPOT_BUFFER, renderData.lightsData.spotLightsAddress);
+    commandList->SetGraphicsRootShaderResourceView(SLOT_POINT_LIST, renderData.lightsData.pointLightIndicesAddress);
+    commandList->SetGraphicsRootShaderResourceView(SLOT_SPOT_LIST, renderData.lightsData.spotLightIndicesAddress);
+    commandList->SetGraphicsRootDescriptorTable(SLOT_IBL_TABLE, renderData.iblTable);
     commandList->SetGraphicsRootDescriptorTable(SLOT_SAMPLERS, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
     commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -55,7 +60,7 @@ void RenderMeshPass::render(ID3D12GraphicsCommandList* commandList, std::span<co
     {
         if( mesh.material )
         {
-            Matrix mvp = (mesh.transform * viewProjection).Transpose();
+            Matrix mvp = (mesh.transform * renderData.viewProj).Transpose();
             commandList->SetGraphicsRoot32BitConstants(SLOT_MVP_MATRIX, sizeof(Matrix) / sizeof(UINT32), &mvp, 0);
 
             PerInstance perInstance;
@@ -70,7 +75,7 @@ void RenderMeshPass::render(ID3D12GraphicsCommandList* commandList, std::span<co
                 perInstance.normalMat = Matrix::Identity;
 
                 D3D12_VERTEX_BUFFER_VIEW vertexBufferView = mesh.mesh->getVertexBufferView();
-                vertexBufferView.BufferLocation = skinningBuffer + mesh.skinningOffset;
+                vertexBufferView.BufferLocation = renderData.skinningBuffer + mesh.skinningOffset;
                 
                 commandList->IASetVertexBuffers(0, 1, &vertexBufferView);                
             }
@@ -101,18 +106,21 @@ bool RenderMeshPass::createRootSignature()
 {
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
     CD3DX12_ROOT_PARAMETER rootParameters[SLOT_COUNT] = {};
-    CD3DX12_DESCRIPTOR_RANGE lightsTableRange, iblTableRange, materialTableRange;
+    CD3DX12_DESCRIPTOR_RANGE iblTableRange, materialTableRange;
     CD3DX12_DESCRIPTOR_RANGE sampRange;
 
-    lightsTableRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 0);
-    iblTableRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 3);
-    materialTableRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, Material::getNumTextureSlots(), 6);
+    iblTableRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 5);
+    materialTableRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, Material::getNumTextureSlots(), 8);
     sampRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, ModuleSamplers::COUNT, 0);
 
     rootParameters[SLOT_MVP_MATRIX].InitAsConstants((sizeof(Matrix) / sizeof(UINT32)), 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
     rootParameters[SLOT_PER_FRAME_CB].InitAsConstantBufferView(1, 0, D3D12_SHADER_VISIBILITY_ALL);
     rootParameters[SLOT_PER_INSTANCE_CB].InitAsConstantBufferView(2, 0, D3D12_SHADER_VISIBILITY_ALL);
-    rootParameters[SLOT_LIGHTS_TABLE].InitAsDescriptorTable(1, &lightsTableRange, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[SLOT_DIRECTIONAL_BUFFER].InitAsShaderResourceView(0, 0, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[SLOT_POINT_BUFFER].InitAsShaderResourceView(1, 0, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[SLOT_SPOT_BUFFER].InitAsShaderResourceView(2, 0, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[SLOT_POINT_LIST].InitAsShaderResourceView(3, 0, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[SLOT_SPOT_LIST].InitAsShaderResourceView(4, 0, D3D12_SHADER_VISIBILITY_PIXEL);
     rootParameters[SLOT_IBL_TABLE].InitAsDescriptorTable(1, &iblTableRange, D3D12_SHADER_VISIBILITY_PIXEL);
     rootParameters[SLOT_TEXTURES_TABLE].InitAsDescriptorTable(1, &materialTableRange, D3D12_SHADER_VISIBILITY_PIXEL);
     rootParameters[SLOT_SAMPLERS].InitAsDescriptorTable(1, &sampRange, D3D12_SHADER_VISIBILITY_PIXEL);
@@ -163,3 +171,4 @@ bool RenderMeshPass::createPSO(bool useMSAA)
     // create the pso
     return SUCCEEDED(app->getD3D12()->getDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pso)));
 }
+

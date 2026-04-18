@@ -7,6 +7,7 @@
 #include "ModuleSamplers.h"
 #include "ModuleShaderDescriptors.h"
 #include "ModuleRingBuffer.h"
+#include "RenderStructs.h"
 
 #include "Scene.h"
 #include "Mesh.h"
@@ -34,7 +35,7 @@ bool GBufferExportPass::init()
     return ok;
 }
 
-void GBufferExportPass::render(ID3D12GraphicsCommandList* commandList, std::span<const RenderMesh> meshes, D3D12_GPU_VIRTUAL_ADDRESS skinningBuffer, const Matrix& viewProjection)
+void GBufferExportPass::render(ID3D12GraphicsCommandList* commandList, std::span<const RenderMesh> meshes, const RenderData& renderData)
 {
     BEGIN_EVENT(commandList, "GBufferExport Pass");
 
@@ -60,18 +61,18 @@ void GBufferExportPass::render(ID3D12GraphicsCommandList* commandList, std::span
             if (mesh.numJoints > 0 || mesh.numMorphTargets > 0) // skinned mesh
             {
                 // Note: Skinned mesh has already bee transformed in the skinning pass 
-                mvp = (viewProjection).Transpose();
+                mvp = (renderData.viewProj).Transpose();
                 perInstance.modelMat = Matrix::Identity;
                 perInstance.normalMat = Matrix::Identity;
 
                 D3D12_VERTEX_BUFFER_VIEW vertexBufferView = mesh.mesh->getVertexBufferView();
-                vertexBufferView.BufferLocation = skinningBuffer + mesh.skinningOffset;
+                vertexBufferView.BufferLocation = renderData.skinningBuffer + mesh.skinningOffset;
 
                 commandList->IASetVertexBuffers(0, 1, &vertexBufferView);
             }
             else // rigid mesh
             {
-                mvp = (mesh.transform * viewProjection).Transpose();
+                mvp = (mesh.transform * renderData.viewProj).Transpose();
                 perInstance.modelMat = mesh.transform.Transpose();
                 perInstance.normalMat = mesh.normalMatrix.Transpose();
 

@@ -17,6 +17,9 @@ cbuffer PerFrame : register(b1)
     uint numSpotLights;     // Number of spot lights
     uint numRoughnessLevels; // Number of roughness levels in the prefiltered environment map
 
+    uint  width;             // Viewport width
+    uint  height;            // Viewport height
+
     float3 viewPos;          // Camera position
     uint   pad;              // Padding to ensure 16-byte alignment
 
@@ -32,19 +35,21 @@ cbuffer PerInstance : register(b2)
     Material material;
 };
 
-
 StructuredBuffer<Directional> dirLights : register(t0);
 StructuredBuffer<Point> pointLights : register(t1);
 StructuredBuffer<Spot>  spotLights  : register(t2);
 
-TextureCube irradiance : register(t3);
-TextureCube radiance : register(t4);
-Texture2D  brdfLUT : register(t5);
+StructuredBuffer<int> pointLightIndices : register(t3);
+StructuredBuffer<int> spotLightIndices : register(t4);
 
-Texture2D baseColourTex : register(t6);
-Texture2D metallicRoughnessTex : register(t7);
-Texture2D normalTex : register(t8);
-Texture2D occlusionTex : register(t9);
-Texture2D emissiveTex : register(t10);
+TextureCube irradiance : register(t5);
+TextureCube radiance : register(t6);
+Texture2D  brdfLUT : register(t7);
+
+Texture2D baseColourTex : register(t8);
+Texture2D metallicRoughnessTex : register(t9);
+Texture2D normalTex : register(t10);
+Texture2D occlusionTex : register(t11);
+Texture2D emissiveTex : register(t12);
 
 #endif // _FORWARD_HLSLI_
