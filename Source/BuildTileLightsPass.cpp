@@ -15,7 +15,7 @@
 
 #include "ReadData.h"
 
-#define MAX_LIGHTS_PER_TILE 2
+#define MAX_LIGHTS_PER_TILE 1024
 #define TILE_SIZE 16
 
 namespace

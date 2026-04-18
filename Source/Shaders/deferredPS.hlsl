@@ -68,7 +68,7 @@ float4 main(in float2 uv : TEXCOORD) : SV_Target
 
     // Compute lighting
 
-    // IBL<
+    // IBL
     float3 colour = computeLighting(V, N, irradiance, radiance, brdfLUT, numRoughnessLevels, 
                                     baseColour, roughness, metallic, diffuseAO, specularAO);
 

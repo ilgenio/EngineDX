@@ -139,13 +139,13 @@ void ModuleSceneEditor::imGuiDrawObjects()
 
     if(ImGui::CollapsingHeader("Lights", ImGuiTreeNodeFlags_DefaultOpen))
     {
-        const auto& lights = scene->getLights();
-        UINT index = 0;
         UINT dirIndex = 0;
         UINT pointIndex = 0;
         UINT spotIndex = 0;
-        for (const auto& light : lights)
+        for (UINT index = 0; index < scene->getLightCount(); )
         {
+            const auto light = scene->getLight(index);
+
             std::string lightName;
             switch (light->getType())
             {
@@ -179,6 +179,7 @@ void ModuleSceneEditor::imGuiDrawObjects()
                 }
             }
 
+            ImGui::PushID(index);
             if (ImGui::Selectable(lightName.c_str(), selected, ImGuiSelectableFlags_SpanAllColumns))
             {
                 if (selected)
@@ -213,8 +214,45 @@ void ModuleSceneEditor::imGuiDrawObjects()
 
                 }
             }
-            ++index;
+
+            bool lightDeleted = false;
+            if (ImGui::BeginPopupContextItem("Light Menu"))
+            {
+                if (ImGui::MenuItem("Delete"))
+                {
+                    scene->removeLight(index);
+                    lightDeleted = true;
+                    if (selectedIndex == index)
+                    {
+                        selectionType = SELECTION_NONE;
+                        render->setShowGuizmo(false);
+                    }
+                }
+                ImGui::EndPopup();
+            }
+            ImGui::PopID();
+
+            if (!lightDeleted)
+            {
+                ++index;
+            }
         }
+        ImGui::Separator();
+        if(ImGui::SmallButton("Add Directional"))
+        {
+            scene->addLight(Directional(Vector3(0.0f, -1.0f, 0.0f), Vector4::One));
+        }
+        ImGui::SameLine();
+        if (ImGui::SmallButton("Add Point"))
+        {
+            scene->addLight(Point(Vector3(0.0f, 1.0f, 0.0f), 215.0f, Vector4::One));
+        }
+        ImGui::SameLine();
+        if (ImGui::SmallButton("Add Spot"))
+        {
+            scene->addLight(Spot(Vector3(0.0f, -1.0f, 0.0f), 25.0f, Vector3::Zero, cosf(XMConvertToRadians(15.0f)), cosf(XMConvertToRadians(30.0f)), Vector4::One));
+        }
+        ImGui::Separator();
     }
 
     ImGui::End();
