@@ -94,9 +94,6 @@ void SkinningPass::record(ID3D12GraphicsCommandList* commandList, std::span<Rend
 
             dynamicBuffer->submitCopy(commandList);
 
-            UINT currentBackBufferIndex = d3d12->getCurrentBackBufferIdx();
-            ComPtr<ID3D12Resource> output = outputs[currentBackBufferIndex];
-
             commandList->SetComputeRootSignature(rootSignature.Get());
             commandList->SetPipelineState(pso.Get());
 
@@ -183,15 +180,12 @@ bool SkinningPass::buildBuffers()
 {
     ModuleResources* resources = app->getResources();
 
-    for (UINT i = 0; i < FRAMES_IN_FLIGHT; ++i)
-    {
-        outputs[i] = resources->createUnorderedAccessBuffer(MAX_NUM_OBJECTS * MAX_NUM_VERTICES * sizeof(Mesh::Vertex), "Skinning Output Buffer");
-    }
+    output = resources->createUnorderedAccessBuffer(MAX_NUM_OBJECTS * MAX_NUM_VERTICES * sizeof(Mesh::Vertex), "Skinning Output Buffer");
 
     return true;
 }
 
 D3D12_GPU_VIRTUAL_ADDRESS SkinningPass::getOutputAddress() const
 {
-    return outputs[app->getD3D12()->getCurrentBackBufferIdx()]->GetGPUVirtualAddress();
+    return output->GetGPUVirtualAddress();
 }

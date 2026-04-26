@@ -22,7 +22,7 @@ class SkinningPass
     ComPtr<ID3D12RootSignature> rootSignature;
     ComPtr<ID3D12PipelineState> pso;
 
-    ComPtr<ID3D12Resource> outputs[FRAMES_IN_FLIGHT];
+    ComPtr<ID3D12Resource> output;
 
 public:
 

@@ -87,13 +87,13 @@ void main(uint2 globalIdx : SV_DispatchThreadID, uint localIndex : SV_GroupIndex
 
         // Compute tile frustum planes
 
-        uint2 groupIdx = globalIdx / TILE_GROUP_SIZE;
+        uint2 groupIdx = globalIdx / TILE_RES;
 
         float3 planePoints[4];
-        planePoints[0] = getViewPos(1.0, float2(float(groupIdx.x)/float(numTiles.x),   float(groupIdx.y)/float(numTiles.y)));
-        planePoints[1] = getViewPos(1.0, float2(float(groupIdx.x+1)/float(numTiles.x), float(groupIdx.y)/float(numTiles.y)));
-        planePoints[2] = getViewPos(1.0, float2(float(groupIdx.x+1)/float(numTiles.x), float(groupIdx.y+1)/float(numTiles.y)));
-        planePoints[3] = getViewPos(1.0, float2(float(groupIdx.x)/float(numTiles.x),   float(groupIdx.y+1)/float(numTiles.y)));
+        planePoints[0] = getViewPos(0.0, float2(saturate(float(groupIdx.x)*TILE_RES/float(width)), saturate(float(groupIdx.y)*TILE_RES/float(height))));
+        planePoints[1] = getViewPos(0.0, float2(saturate(float(groupIdx.x+1)*TILE_RES/float(width)), saturate(float(groupIdx.y)*TILE_RES/float(height))));
+        planePoints[2] = getViewPos(0.0, float2(saturate(float(groupIdx.x+1)*TILE_RES/float(width)), saturate(float(groupIdx.y+1)*TILE_RES/float(height))));
+        planePoints[3] = getViewPos(0.0, float2(saturate(float(groupIdx.x)*TILE_RES/float(width)),   saturate(float(groupIdx.y+1)*TILE_RES/float(height))));
 
         float3 planes[4];
 
