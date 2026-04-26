@@ -3,7 +3,7 @@
 #include "Module.h"
 #include "Ring.h"
 
-class ModuleDynamicBuffer : public Module
+class ModulePerFrameBuffer : public Module
 {
     ComPtr<ID3D12Resource> stagingBuffer;   // Upload Heap for CPU writes
     ComPtr<ID3D12Resource> defaultBuffer;   // Default Heap for GPU reads
@@ -13,8 +13,8 @@ class ModuleDynamicBuffer : public Module
 
 public:
 
-    ModuleDynamicBuffer();
-    ~ModuleDynamicBuffer();
+    ModulePerFrameBuffer();
+    ~ModulePerFrameBuffer();
 
     bool init() override;
     void preRender() override;

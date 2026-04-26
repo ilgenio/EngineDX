@@ -1,6 +1,6 @@
 #include "Globals.h"
 
-#include "ModuleDynamicBuffer.h"
+#include "ModulePerFrameBuffer.h"
 
 #include "Application.h"
 #include "ModuleD3D12.h"
@@ -8,15 +8,16 @@
 // 64 MB total buffer size per frame, which should be enough for most use cases. Adjust as needed.
 #define BUFFER_TOTAL_SIZE UINT(64 * (1 << 20))
 
-ModuleDynamicBuffer::ModuleDynamicBuffer()
+ModulePerFrameBuffer::ModulePerFrameBuffer()
 {
 }
 
-ModuleDynamicBuffer::~ModuleDynamicBuffer()
+ModulePerFrameBuffer::~ModulePerFrameBuffer()
 {
+
 }
 
-bool ModuleDynamicBuffer::init()
+bool ModulePerFrameBuffer::init()
 {
     auto* device = app->getD3D12()->getDevice();
 
@@ -37,13 +38,13 @@ bool ModuleDynamicBuffer::init()
     return true;
 }
 
-void ModuleDynamicBuffer::preRender()
+void ModulePerFrameBuffer::preRender()
 {
     currentOffset = 0;
     copiedOffset = 0;
 }
 
-D3D12_GPU_VIRTUAL_ADDRESS ModuleDynamicBuffer::allocRaw(const void *data, size_t size)
+D3D12_GPU_VIRTUAL_ADDRESS ModulePerFrameBuffer::allocRaw(const void *data, size_t size)
 {
     D3D12_GPU_VIRTUAL_ADDRESS gpuAddress = defaultBuffer->GetGPUVirtualAddress() + currentOffset;
 
@@ -63,7 +64,7 @@ D3D12_GPU_VIRTUAL_ADDRESS ModuleDynamicBuffer::allocRaw(const void *data, size_t
     return gpuAddress;
 }
 
-void ModuleDynamicBuffer::submitCopy(ID3D12GraphicsCommandList *commandList)
+void ModulePerFrameBuffer::submitCopy(ID3D12GraphicsCommandList *commandList)
 {
     CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(defaultBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
     commandList->ResourceBarrier(1, &barrier);

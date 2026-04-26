@@ -8,7 +8,7 @@
 #include "ModuleCamera.h"
 #include "ModuleShaderDescriptors.h"
 #include "ModuleRingBuffer.h"
-#include "ModuleDynamicBuffer.h"
+#include "ModulePerFrameBuffer.h"
 
 #include "Scene.h"
 #include "Model.h"
@@ -234,7 +234,7 @@ void ModuleRender::updateLightsList(ID3D12GraphicsCommandList* commandList)
     buildTileLightsPass->record(commandList, renderData.width, renderData.height, renderData.view, renderData.proj, scene->getPointLights(), scene->getSpotLights(),
         gbufferPass->getGBuffer().getSrvTableDesc().getGPUHandle(GBuffer::BUFFER_DEPTH));
 
-    ModuleDynamicBuffer* dynamicBuffer = app->getDynamicBuffer();
+    ModulePerFrameBuffer* perFrameBuffer = app->getPerFrameBuffer();
 
     auto buildData = [=]<typename T>(std::span<T*> list) -> D3D12_GPU_VIRTUAL_ADDRESS
     {
@@ -246,7 +246,7 @@ void ModuleRender::updateLightsList(ID3D12GraphicsCommandList* commandList)
             data.push_back(*light);
         }
 
-        return dynamicBuffer->alloc(data.data(), data.size());
+        return perFrameBuffer->alloc(data.data(), data.size());
     };
 
     renderData.lightsData.directionalLightsAddress  = buildData(scene->getDirectionalLights());
@@ -255,7 +255,7 @@ void ModuleRender::updateLightsList(ID3D12GraphicsCommandList* commandList)
     renderData.lightsData.pointLightIndicesAddress  = buildTileLightsPass->getPointListAddress();
     renderData.lightsData.spotLightIndicesAddress   = buildTileLightsPass->getSpotListAddress();
 
-    dynamicBuffer->submitCopy(commandList);
+    perFrameBuffer->submitCopy(commandList);
 }
 
 void ModuleRender::renderToTexture(ID3D12GraphicsCommandList* commandList)

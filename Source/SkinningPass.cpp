@@ -4,7 +4,7 @@
 
 #include "Application.h"
 #include "ModuleD3D12.h"
-#include "ModuleDynamicBuffer.h"
+#include "ModulePerFrameBuffer.h"
 #include "ModuleResources.h"
 
 #include "Scene.h"
@@ -87,12 +87,12 @@ void SkinningPass::record(ID3D12GraphicsCommandList* commandList, std::span<Rend
         if(!palettes.empty() || !morphWeights.empty())
         {
             ModuleD3D12* d3d12 = app->getD3D12();
-            ModuleDynamicBuffer* dynamicBuffer = app->getDynamicBuffer();
+            ModulePerFrameBuffer* perFrameBuffer = app->getPerFrameBuffer();
 
-            D3D12_GPU_VIRTUAL_ADDRESS palettesAddress = dynamicBuffer->alloc(palettes.data(), palettes.size());
-            D3D12_GPU_VIRTUAL_ADDRESS weightsAddress = dynamicBuffer->alloc(morphWeights.data(), morphWeights.size());
+            D3D12_GPU_VIRTUAL_ADDRESS palettesAddress = perFrameBuffer->alloc(palettes.data(), palettes.size());
+            D3D12_GPU_VIRTUAL_ADDRESS weightsAddress = perFrameBuffer->alloc(morphWeights.data(), morphWeights.size());
 
-            dynamicBuffer->submitCopy(commandList);
+            perFrameBuffer->submitCopy(commandList);
 
             commandList->SetComputeRootSignature(rootSignature.Get());
             commandList->SetPipelineState(pso.Get());
