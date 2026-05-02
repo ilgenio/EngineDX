@@ -70,6 +70,7 @@ void BuildTileLightsPass::record(ID3D12GraphicsCommandList* commandList, int wid
     commandList->SetPipelineState(pso.Get());
     commandList->SetComputeRootSignature(rootSignature.Get());
 
+
     ModuleCamera* camera = app->getCamera();
     ModulePerFrameBuffer* perFrameBuffer = app->getPerFrameBuffer();
     UINT outputIndex = app->getD3D12()->getCurrentBackBufferIdx();

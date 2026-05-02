@@ -8,13 +8,11 @@ class Decal
     {
         FLAG_HAS_COLOR = 1 << 0,
         FLAG_HAS_NORMAL = 1 << 1,
-        FLAG_HAS_AO = 1 << 2
     };
 
     enum {
         TEX_SLOT_BASECOLOUR = 0,
         TEX_SLOT_NORMAL = 1,
-        TEX_SLOT_OCCLUSION = 2,
         TEX_SLOT_COUNT
     };
 
@@ -23,27 +21,31 @@ class Decal
 
     ComPtr<ID3D12Resource> color;
     ComPtr<ID3D12Resource> normal;
-    ComPtr<ID3D12Resource> ambientOcclusion;
 
     ShaderTableDesc  textureTableDesc;
 
     UINT materialFlags = 0; 
 
+    std::string colorPath;
+    std::string normalPath;
+
 public:
 
-    Decal(const char* colorPath, const char* normalPath, const char* aoPath, const Matrix& transform);
+    Decal(const char* colorPath, const char* normalPath, const Matrix& transform);
     Decal();
     ~Decal();
 
     const Matrix& getTransform() const { return transform; }
+    void setTransform(const Matrix& newTransform) { transform = newTransform; }
 
     ID3D12Resource* getColor() const { return color.Get(); }
     ID3D12Resource* getNormal() const { return normal.Get(); }
-    ID3D12Resource* getAmbientOcclusion() const { return ambientOcclusion.Get(); }
+
+    const char* getColorPath() const { return colorPath.c_str(); }
+    const char* getNormalPath() const { return normalPath.c_str(); }    
 
     bool hasColor() const { return (materialFlags & FLAG_HAS_COLOR) != 0; }
     bool hasNormal() const { return (materialFlags & FLAG_HAS_NORMAL) != 0; }
-    bool hasAO() const { return (materialFlags & FLAG_HAS_AO) != 0; }   
 
     const ShaderTableDesc& getTextureTableDesc() const { return textureTableDesc; }
 };

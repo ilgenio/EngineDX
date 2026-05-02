@@ -6,7 +6,7 @@
 #include "ModuleResources.h"
 #include "ModuleShaderDescriptors.h"
 
-Decal::Decal(const char* colorPath, const char* normalPath, const char* aoPath, const Matrix& transform)
+Decal::Decal(const char* colorPath, const char* normalPath, const Matrix& transform)
 {
     // TODO: Add to scene for sharing textures and do decal frustum culling
 
@@ -15,26 +15,37 @@ Decal::Decal(const char* colorPath, const char* normalPath, const char* aoPath, 
 
     textureTableDesc = shaderDescriptors->allocTable();
 
-    if(colorPath)
+    if (colorPath)
     {
-        color = resources->createTextureFromFile(colorPath, true);
+        color = resources->createTextureFromFile(colorPath, false);
+    }
+
+    if(color)
+    {
+        this->colorPath = colorPath;
         materialFlags |= FLAG_HAS_COLOR;
 
         textureTableDesc.createTextureSRV(color.Get(), TEX_SLOT_BASECOLOUR);
     }
+    else
+    {
+        textureTableDesc.createNullTexture2DSRV(TEX_SLOT_BASECOLOUR);
+    }
 
-    if(normalPath)
+    if (normalPath)
     {
         normal = resources->createTextureFromFile(normalPath, false);
+    }
+
+    if(normal)
+    {
+        this->normalPath = normalPath;
         materialFlags |= FLAG_HAS_NORMAL;
         textureTableDesc.createTextureSRV(normal.Get(), TEX_SLOT_NORMAL);
     }
-
-    if(aoPath)
+    else
     {
-        ambientOcclusion = resources->createTextureFromFile(aoPath, false);
-        materialFlags |= FLAG_HAS_AO;
-        textureTableDesc.createTextureSRV(ambientOcclusion.Get(), TEX_SLOT_OCCLUSION);
+        textureTableDesc.createNullTexture2DSRV(TEX_SLOT_NORMAL);
     }
 
     this->transform = transform;

@@ -13,8 +13,9 @@ class DecalPass
     {
         SLOT_MVP_MATRIX = 0,
         SLOT_DECAL_CONSTANTS = 1,
-        SLOT_TEXTURES_TABLE = 2,
-        SLOT_SAMPLERS = 3,
+        SLOT_DEPTH_SRV = 2,
+        SLOT_TEXTURES_TABLE = 3,
+        SLOT_SAMPLERS = 4,
         SLOT_COUNT
     };
 

@@ -10,7 +10,6 @@ cbuffer DecalConstants : register(b1)
 
 Texture2D depthMap : register(t0);
 Texture2D baseColorMap : register(t1);
-Texture2D aoMap : register(t2);
 Texture2D normalMap : register(t3);
 
 // Note: G-Buffer 
@@ -18,7 +17,6 @@ struct PSOutput
 {
     float4 albedo : SV_Target0;
     float4 normalMetalRough : SV_Target1;
-    float4 emissiveAO : SV_Target2;
 };
 
 PSOutput main(float3 ndcPos : POSITION) 
@@ -40,10 +38,16 @@ PSOutput main(float3 ndcPos : POSITION)
 
     PSOutput output;
 
-    float3 baseColor = baseColorMap.Sample(bilinearWrap, objectUV).rgb;
-    output.albedo = float4(baseColor, 1.0);
+    float4 baseColor = baseColorMap.Sample(bilinearWrap, objectUV);
+
+    if(baseColor.a < 0.1)
+    {
+        // Transparent pixel, discard
+        discard;
+    }
+
+    output.albedo = float4(baseColor.rgb, 1.0);
     output.normalMetalRough = 0.0;
-    output.emissiveAO = 0.0;    
 
     //float ao         = aoMap.Sample(bilinearWrap, objectUV).r;
     //float3 normal    = normalMap.Sample(bilinearWrap, objectUV).rgb;

@@ -16,6 +16,7 @@ class DeferredPass;
 class RenderTexture;
 class SkinningPass;
 class BuildTileLightsPass;
+class DecalPass;
 struct RenderMesh;
 
 class ModuleRender : public Module
@@ -28,6 +29,7 @@ class ModuleRender : public Module
     std::unique_ptr<DeferredPass>        deferredPass;
     std::unique_ptr<SkinningPass>        skinningPass;
     std::unique_ptr<BuildTileLightsPass> buildTileLightsPass;
+    std::unique_ptr<DecalPass>           decalPass;        
 
     // Render Data
     std::vector<RenderMesh>             renderList;
@@ -73,6 +75,7 @@ public:
 
 private:
 
+    void renderGBuffer(ID3D12GraphicsCommandList* commandList);
     void updatePerFrameData(ID3D12GraphicsCommandList* commandList);
     void updateLightsList(ID3D12GraphicsCommandList* commandList);
     void renderToTexture(ID3D12GraphicsCommandList* commandList);

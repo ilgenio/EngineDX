@@ -87,7 +87,7 @@ public:
 
     // Decals Management
     UINT      getDecalCount() const { return (UINT)decals.size(); }
-    UINT      addDecal(const char* colorPath, const char* normalPath, const char* aoPath, const Matrix& transform);
+    UINT      addDecal(const char* colorPath, const char* normalPath, const Matrix& transform);
     void      removeDecal(UINT index) { _ASSERTE(index < decals.size()); decals.erase(decals.begin() + index); }
     DecalPtr  getDecal(UINT index) const { _ASSERTE(index < decals.size()); return decals[index]; }
     DecalSpan getDecals() const { return DecalSpan(decals.data(), decals.size()); }

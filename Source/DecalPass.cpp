@@ -34,6 +34,9 @@ DecalPass::~DecalPass()
 
 void DecalPass::render(ID3D12GraphicsCommandList* commandList, std::span<const std::shared_ptr<Decal> > decals, const RenderData& renderData)
 {
+    if(decals.empty())
+        return;
+
     ModuleRingBuffer* ringBuffer = app->getRingBuffer();
     ModuleSamplers* samplers = app->getSamplers();
 
@@ -43,7 +46,13 @@ void DecalPass::render(ID3D12GraphicsCommandList* commandList, std::span<const s
     commandList->SetGraphicsRootDescriptorTable(SLOT_SAMPLERS, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
     commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-    // TODO G-buffer render targets already transitioned RTV must be set
+    // Set Render Targets
+    D3D12_CPU_DESCRIPTOR_HANDLE rtv[2];
+
+    rtv[0] = renderData.gBuffer.getRtvDesc(GBuffer::BUFFER_ALBEDO).getCPUHandle();
+    rtv[1] = renderData.gBuffer.getRtvDesc(GBuffer::BUFFER_NORMAL_METALLIC_ROUGHNESS).getCPUHandle();
+
+    commandList->OMSetRenderTargets(2, &rtv[0], FALSE, nullptr);
 
     for (const auto& decal : decals)
     {
@@ -54,11 +63,12 @@ void DecalPass::render(ID3D12GraphicsCommandList* commandList, std::span<const s
         commandList->SetGraphicsRoot32BitConstants(SLOT_MVP_MATRIX, sizeof(Matrix) / sizeof(UINT32), &mvp, 0);
 
         Constants constants     = {};
-        constants.projection    = renderData.proj;
-        constants.invView       = renderData.invView;
-        constants.invModel      = invertAffineTransform(model);
+        constants.projection    = renderData.proj.Transpose();
+        constants.invView       = renderData.invView.Transpose();
+        constants.invModel      = invertAffineTransform(model).Transpose();
 
-        commandList->SetGraphicsRootConstantBufferView(SLOT_DECAL_CONSTANTS, ringBuffer->alloc(&constants, sizeof(constants)));
+        commandList->SetGraphicsRootConstantBufferView(SLOT_DECAL_CONSTANTS, ringBuffer->alloc(&constants));
+        commandList->SetGraphicsRootDescriptorTable(SLOT_DEPTH_SRV, renderData.gBuffer.getSrvTableDesc().getGPUHandle(GBuffer::BUFFER_DEPTH));
         commandList->SetGraphicsRootDescriptorTable(SLOT_TEXTURES_TABLE, decal->getTextureTableDesc().getGPUHandle());
 
         decalCubeMesh->draw(commandList);
@@ -70,13 +80,16 @@ bool DecalPass::createRootSignature()
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
     CD3DX12_ROOT_PARAMETER rootParameters[SLOT_COUNT] = {};
     CD3DX12_DESCRIPTOR_RANGE texturesTableRange;
+    CD3DX12_DESCRIPTOR_RANGE depthSrvRange;
     CD3DX12_DESCRIPTOR_RANGE sampRange;
 
-    texturesTableRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 0);
+    depthSrvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
+    texturesTableRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 1);
     sampRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, ModuleSamplers::COUNT, 0);
 
     rootParameters[SLOT_MVP_MATRIX].InitAsConstants((sizeof(Matrix) / sizeof(UINT32)), 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
     rootParameters[SLOT_DECAL_CONSTANTS].InitAsConstantBufferView(1, 0, D3D12_SHADER_VISIBILITY_ALL);
+    rootParameters[SLOT_DEPTH_SRV].InitAsDescriptorTable(1, &depthSrvRange, D3D12_SHADER_VISIBILITY_PIXEL);
     rootParameters[SLOT_TEXTURES_TABLE].InitAsDescriptorTable(1, &texturesTableRange, D3D12_SHADER_VISIBILITY_PIXEL);
     rootParameters[SLOT_SAMPLERS].InitAsDescriptorTable(1, &sampRange, D3D12_SHADER_VISIBILITY_PIXEL);
 
@@ -106,7 +119,7 @@ bool DecalPass::createPSO()
     psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
     psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);                   
 
-    psoDesc.NumRenderTargets = 3;
+    psoDesc.NumRenderTargets = 2;
     psoDesc.RTVFormats[0] = GBuffer::getRTFormat(GBuffer::BUFFER_ALBEDO);
 
     // Enable writing to RGB 
@@ -117,10 +130,6 @@ bool DecalPass::createPSO()
     // Enable writing to RGB 
     psoDesc.BlendState.RenderTarget[1].RenderTargetWriteMask = 0 ; //( D3D12_COLOR_WRITE_ENABLE_RED | D3D12_COLOR_WRITE_ENABLE_GREEN )  | D3D12_COLOR_WRITE_ENABLE_BLUE );
 
-    psoDesc.RTVFormats[2] = GBuffer::getRTFormat(GBuffer::BUFFER_EMISSIVE_AO);
-
-    // Enable writing to Alpha only (AO)
-    psoDesc.BlendState.RenderTarget[2].RenderTargetWriteMask = 0; //D3D12_COLOR_WRITE_ENABLE_ALPHA;
 
     psoDesc.DSVFormat = DXGI_FORMAT_UNKNOWN;
     psoDesc.DepthStencilState.DepthEnable = FALSE;

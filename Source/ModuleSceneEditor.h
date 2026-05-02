@@ -13,6 +13,7 @@ class ModuleSceneEditor : public Module
         SELECTION_NONE = 0,
         SELECTION_MODEL,
         SELECTION_LIGHT,
+        SELECTION_DECAL,
     };
 
     bool showAxis = false;
@@ -53,9 +54,11 @@ private:
     void imGuiDrawObjects();
     void imGuiDrawProperties();
     void imGuiDrawLightProperties();
+    void imGuiDrawDecalProperties();
     bool imGuiDrawDirectionalProperties(Directional& dirLight);
     bool imGuiDrawPointProperties(Point& pointLight);
     bool imGuiDrawSpotProperties(Spot& spotLight);
     void renderDebugDrawModel();
     void renderDebugDrawLight();
+    void renderDebugDrawDecal();
 };

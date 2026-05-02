@@ -86,9 +86,9 @@ UINT ModuleScene::addLight(const Spot& spot)
     return static_cast<UINT>(lights.size() - 1);
 }
 
-UINT ModuleScene::addDecal(const char* colorPath, const char* normalPath, const char* aoPath, const Matrix& transform)
+UINT ModuleScene::addDecal(const char* colorPath, const char* normalPath, const Matrix& transform)
 {
-    std::shared_ptr<Decal> newDecal = std::make_shared<Decal>(colorPath, normalPath, aoPath, transform);
+    std::shared_ptr<Decal> newDecal = std::make_shared<Decal>(colorPath, normalPath, transform);
     decals.push_back(newDecal);
     return static_cast<UINT>(decals.size() - 1);
 }

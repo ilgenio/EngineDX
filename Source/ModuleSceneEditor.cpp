@@ -13,6 +13,7 @@
 #include "Model.h"
 #include "Scene.h"
 #include "Skybox.h"
+#include "Decal.h"
 
 namespace
 {
@@ -92,8 +93,12 @@ void ModuleSceneEditor::debugDrawCommands()
     case SELECTION_LIGHT:
         renderDebugDrawLight();
         break;
+    case SELECTION_DECAL:
+        renderDebugDrawDecal();
+        break;
     }
 }
+
 
 void ModuleSceneEditor::imGuiDrawObjects()
 {
@@ -113,8 +118,6 @@ void ModuleSceneEditor::imGuiDrawObjects()
             {
                 model->setRootTransform(render->getGuizmoTransform());
             }
-
-
 
             if(ImGui::Selectable(model->getName().c_str(), selected, ImGuiSelectableFlags_SpanAllColumns))
             {
@@ -255,6 +258,53 @@ void ModuleSceneEditor::imGuiDrawObjects()
         ImGui::Separator();
     }
 
+    if (ImGui::CollapsingHeader("Decals", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        const auto& decals = scene->getDecals();
+        UINT index = 0;
+        for(const auto& decal : decals)
+        {
+            UINT id = index++;
+
+            ImGui::PushID(id);
+
+            std::string decalName = "Decal " + std::to_string(id);
+
+            bool selected = (id == selectedIndex) && selectionType == SELECTION_DECAL;
+
+            if (selected)
+            {
+                decal->setTransform(render->getGuizmoTransform());
+            }
+
+            if (ImGui::Selectable(decalName.c_str(), selected, ImGuiSelectableFlags_SpanAllColumns))
+            {
+                if (selected)
+                {
+                    selectionType = SELECTION_NONE;
+                    render->setShowGuizmo(false);
+                }
+                else
+                {
+                    selectedIndex = id;
+                    selectionType = SELECTION_DECAL;
+
+                    const Matrix& transform = decal->getTransform();
+
+                    render->setShowGuizmo(true);
+                    render->setGuizmoTransform(transform);
+                }
+            }
+            ImGui::PopID();
+            ImGui::Separator();
+            if (ImGui::SmallButton("Add Decal"))
+            {
+                scene->addDecal(nullptr, nullptr, Matrix::Identity);
+            }
+            ImGui::Separator();
+        }
+    }
+
     ImGui::End();
 }
 
@@ -276,8 +326,44 @@ void ModuleSceneEditor::imGuiDrawProperties()
     { 
         imGuiDrawLightProperties();
     }
+    else if(selectionType == SELECTION_DECAL)
+    {
+        imGuiDrawDecalProperties();
+    }
+
     ImGui::End();   
 
+}
+
+void ModuleSceneEditor::imGuiDrawDecalProperties()
+{
+    ModuleScene* scene = app->getScene();
+
+    const auto& decal = scene->getDecal(selectedIndex);
+    Matrix transform = decal->getTransform();
+
+    if (ImGui::CollapsingHeader("Decal Properties", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        bool change = false;
+
+        Vector3 scale;
+        Quaternion rotation;
+        Vector3 position;
+        transform.Decompose(scale, rotation, position);
+        Vector3 euler = rotation.ToEuler();
+
+        change = ImGui::DragFloat3("Position", reinterpret_cast<float*>(&position), 0.1f) || change;
+
+        change = ImGui::DragFloat3("Rotation", reinterpret_cast<float*>(&euler), 0.1f) || change;
+        change = ImGui::DragFloat3("Scale", reinterpret_cast<float*>(&scale), 0.1f) || change;
+
+        if (change)
+        {
+            rotation = Quaternion::CreateFromYawPitchRoll(euler);
+            transform = Matrix::CreateScale(scale) * Matrix::CreateFromQuaternion(rotation) * Matrix::CreateTranslation(transform.Translation());
+            decal->setTransform(transform);
+        }
+    }
 }
 
 void ModuleSceneEditor::imGuiDrawLightProperties()
@@ -421,6 +507,20 @@ void ModuleSceneEditor::renderDebugDrawModel()
     app->getScene()->getModel(selectedIndex)->enumerateNodes(drawNode, nullptr);
 }
 
+void ModuleSceneEditor::renderDebugDrawDecal()
+{
+    _ASSERTE(selectionType == SELECTION_DECAL);
+    std::shared_ptr<const Decal> decal = app->getScene()->getDecal(selectedIndex);
+
+    const Matrix& transform = decal->getTransform();
+    Vector3 position = transform.Translation();
+    float width = transform.Right().Length();
+    float height = transform.Up().Length();
+    float depth = transform.Backward().Length();
+
+    dd::box(ddConvert(position), dd::colors::White, width, height, depth);
+}
+
 void ModuleSceneEditor::renderDebugDrawLight()
 {
     _ASSERTE(selectionType == SELECTION_LIGHT);
@@ -428,39 +528,39 @@ void ModuleSceneEditor::renderDebugDrawLight()
 
     switch (light->getType())
     {
-    case LIGHT_DIRECTIONAL:
-    {
-        const float distance = 10.0f;
-        const float size = 0.5f;
-        const Directional &dirLight = light->getDirectional();
-        Vector3 color(dirLight.Lc.x * dirLight.Lc.w, dirLight.Lc.y * dirLight.Lc.w, dirLight.Lc.z * dirLight.Lc.w);
-        dd::arrow(ddConvert(-dirLight.Ld * (distance + size)), ddConvert(-dirLight.Ld * distance), ddConvert(color), 0.1f);
-        break;
-    }
-    case LIGHT_POINT:
-    {
-        const Point &pointLight = light->getPoint();
-        Vector3 color(pointLight.Lc.x * pointLight.Lc.w, pointLight.Lc.y * pointLight.Lc.w, pointLight.Lc.z * pointLight.Lc.w);
-        dd::sphere(ddConvert(pointLight.Lp), ddConvert(color), sqrtf(pointLight.sqRadius));
-        break;
-    }
-    case LIGHT_SPOT:
-    {
-        const Spot& spotLight = light->getSpot();
-
-        if (showSpotSphere)
+        case LIGHT_DIRECTIONAL:
         {
-            Vector4 sphere = getBoundingSphere(spotLight);
-            Vector3 color(spotLight.Lc.x * spotLight.Lc.w, spotLight.Lc.y * spotLight.Lc.w, spotLight.Lc.z * spotLight.Lc.w);
-            dd::sphere(ddConvert(Vector3(sphere.x, sphere.y, sphere.z)), ddConvert(color), sphere.w);
+            const float distance = 10.0f;
+            const float size = 0.5f;
+            const Directional &dirLight = light->getDirectional();
+            Vector3 color(dirLight.Lc.x * dirLight.Lc.w, dirLight.Lc.y * dirLight.Lc.w, dirLight.Lc.z * dirLight.Lc.w);
+            dd::arrow(ddConvert(-dirLight.Ld * (distance + size)), ddConvert(-dirLight.Ld * distance), ddConvert(color), 0.1f);
+            break;
         }
+        case LIGHT_POINT:
+        {
+            const Point &pointLight = light->getPoint();
+            Vector3 color(pointLight.Lc.x * pointLight.Lc.w, pointLight.Lc.y * pointLight.Lc.w, pointLight.Lc.z * pointLight.Lc.w);
+            dd::sphere(ddConvert(pointLight.Lp), ddConvert(color), sqrtf(pointLight.sqRadius));
+            break;
+        }
+        case LIGHT_SPOT:
+        {
+            const Spot& spotLight = light->getSpot();
 
-        Vector3 color(spotLight.Lc.x * spotLight.Lc.w, spotLight.Lc.y * spotLight.Lc.w, spotLight.Lc.z * spotLight.Lc.w);
-        dd::arrow(ddConvert(spotLight.Lp), ddConvert(spotLight.Lp + spotLight.Ld * sqrtf(spotLight.sqRadius)), ddConvert(color), 0.1f);
-        dd::cone(ddConvert(spotLight.Lp), ddConvert(spotLight.Ld * sqrtf(spotLight.sqRadius)), ddConvert(color), sqrtf(spotLight.sqRadius) * tanf(acosf(spotLight.outer)), 0.0f);
-        
-        break;
-    }
+            if (showSpotSphere)
+            {
+                Vector4 sphere = getBoundingSphere(spotLight);
+                Vector3 color(spotLight.Lc.x * spotLight.Lc.w, spotLight.Lc.y * spotLight.Lc.w, spotLight.Lc.z * spotLight.Lc.w);
+                dd::sphere(ddConvert(Vector3(sphere.x, sphere.y, sphere.z)), ddConvert(color), sphere.w);
+            }
+
+            Vector3 color(spotLight.Lc.x * spotLight.Lc.w, spotLight.Lc.y * spotLight.Lc.w, spotLight.Lc.z * spotLight.Lc.w);
+            dd::arrow(ddConvert(spotLight.Lp), ddConvert(spotLight.Lp + spotLight.Ld * sqrtf(spotLight.sqRadius)), ddConvert(color), 0.1f);
+            dd::cone(ddConvert(spotLight.Lp), ddConvert(spotLight.Ld * sqrtf(spotLight.sqRadius)), ddConvert(color), sqrtf(spotLight.sqRadius) * tanf(acosf(spotLight.outer)), 0.0f);
+            
+            break;
+        }
     }
 }
 
@@ -544,6 +644,20 @@ Json::object ModuleSceneEditor::serialize() const
 
     sceneJson["lights"] = lightArray;
 
+    Json::array decalArray;
+    const auto& decals = scene->getDecals();
+    for (const auto& decal : decals)
+    {
+        Json::object decalJson;
+        decalJson["colorPath"] = decal->getColorPath();
+        decalJson["normalPath"] = decal->getNormalPath();
+        decalJson["transform"] = serializeMatrix(decal->getTransform());
+
+        decalArray.push_back(decalJson);
+    }
+
+    sceneJson["decals"] = decalArray;
+
     Json::object obj;
 
     obj["scene"] = sceneJson;
@@ -578,6 +692,7 @@ void ModuleSceneEditor::deserialize(const Json& obj)
     const Json& modelJson = sceneJson["models"];
     const Json& animationsJson = sceneJson["animations"];
     const Json& lightsJson = sceneJson["lights"];
+    const Json& decalsJson = sceneJson["decals"];
 
     scene->getSkybox()->init(skyboxJson["path"].string_value().c_str(), false);
 
@@ -637,4 +752,17 @@ void ModuleSceneEditor::deserialize(const Json& obj)
             scene->addLight(spotLight);
         }
     }
+
+    scene->clearDecals();
+
+    for (const Json& decalItem : decalsJson.array_items())
+    {
+        std::string colorPath = decalItem["colorPath"].string_value();
+        std::string normalPath = decalItem["normalPath"].string_value();
+
+        Matrix transform = deserializeMatrix(decalItem["transform"]);
+
+        scene->addDecal(colorPath.c_str(), normalPath.c_str(), transform);
+    }
+
 }

@@ -19,10 +19,10 @@
 
 bool DemoScene::init() 
 {
+    ModuleScene* scene = app->getScene();
+
     if (!deserialize())
     {
-        ModuleScene* scene = app->getScene();
-
         scene->getSkybox()->init("Assets/Textures/qwantani_very_dark.hdr", false);
 
         scene->addModel("Assets/Models/Sponza/Sponza.gltf");
@@ -49,6 +49,12 @@ bool DemoScene::init()
                  }
              }
         }
+
+        scene->addDecal(
+            "Assets/Decals/diffuse_green_single.tga",
+            "Assets/Decals/normal_single.tga",
+            Matrix::Identity);
+
     }
 
     return true;

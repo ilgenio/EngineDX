@@ -23,6 +23,7 @@
 #include "RenderTexture.h"
 #include "SkinningPass.h"
 #include "BuildTileLightsPass.h"
+#include "DecalPass.h"
 
 #include "json_utils.h"
 
@@ -51,6 +52,7 @@ bool ModuleRender::init()
     deferredPass        = std::make_unique<DeferredPass>();
     skinningPass        = std::make_unique<SkinningPass>();
     buildTileLightsPass = std::make_unique<BuildTileLightsPass>();
+    decalPass           = std::make_unique<DecalPass>();  
 
     bool ok = renderMeshPass->init(false);
     ok = ok && gbufferPass->init();
@@ -224,6 +226,21 @@ void ModuleRender::updatePerFrameData(ID3D12GraphicsCommandList* commandList)
     renderData.iblTable = app->getScene()->getSkybox()->getIBLTable();
 }
 
+void ModuleRender::renderGBuffer(ID3D12GraphicsCommandList* commandList)
+{
+    // Render GBuffer passes and transitions 
+    renderData.gBuffer.beginRender(commandList);
+    gbufferPass->render(commandList, renderList, renderData);
+
+    // Transition depth buffer to SRV for light culling and decals rendering
+    renderData.gBuffer.transitionDepthToSRV(commandList);
+
+    // Render decals
+    decalPass->render(commandList, app->getScene()->getDecals(), renderData);
+
+    renderData.gBuffer.endRender(commandList);
+}
+
 void ModuleRender::updateLightsList(ID3D12GraphicsCommandList* commandList)
 {
     Scene* scene = app->getScene()->getScene();
@@ -260,7 +277,8 @@ void ModuleRender::renderToTexture(ID3D12GraphicsCommandList* commandList)
 {
     BEGIN_EVENT(commandList, "Render Scene to Texture");
 
-    // Transition to RT + set render target
+    renderData.gBuffer.transitionDepthToDSV(commandList);
+
     D3D12_CPU_DESCRIPTOR_HANDLE sharedDSV = renderData.gBuffer.getDsvDesc().getCPUHandle();
     renderTexture->beginRender(commandList, &sharedDSV);
 
@@ -304,19 +322,10 @@ void ModuleRender::render()
         skinningPass->record(commandList, std::span<RenderMesh>(renderList.data(), renderList.size()));
         renderData.skinningBuffer = skinningPass->getOutputAddress();
 
+        renderGBuffer(commandList);
 
-        renderData.gBuffer.beginRender(commandList);
-
-        gbufferPass->render(commandList, renderList, renderData);
-
-        renderData.gBuffer.endRender(commandList);
-
-        renderData.gBuffer.transitionDepthToSRV(commandList);
-
-        // Updates light lists buffers ( note: must be done after GBuffer pass, since it needs depth buffer SRV for light culling)
+        // Tile light building pass
         updateLightsList(commandList);
-
-        renderData.gBuffer.transitionDepthToDSV(commandList);
 
         // Do forward mesh rendering + deferred pass
         renderToTexture(commandList);
