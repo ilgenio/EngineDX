@@ -89,6 +89,18 @@ void GBuffer::transitionToSRV(ID3D12GraphicsCommandList* cmdList)
     cmdList->ResourceBarrier(BUFFER_COUNT, &toSRV[0]);
 }
 
+void GBuffer::transitionDepthToSRV(ID3D12GraphicsCommandList* cmdList)
+{
+    CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(depthTexture.Get(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    cmdList->ResourceBarrier(1, &barrier);
+}
+
+void GBuffer::transitionDepthToDSV(ID3D12GraphicsCommandList* cmdList)
+{
+    CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(depthTexture.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+    cmdList->ResourceBarrier(1, &barrier);
+}
+
 void GBuffer::setRenderTarget(ID3D12GraphicsCommandList* cmdList)
 {
     // Implementation for setting GBuffer textures as render targets

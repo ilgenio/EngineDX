@@ -1,5 +1,7 @@
 #pragma once
 
+#include "GBuffer.h"
+
 
 // The common per-frame data structure that is sent to shaders. Contains camera info, light counts, and other global parameters.
 struct PerFrame
@@ -44,7 +46,7 @@ struct RenderData
     D3D12_GPU_VIRTUAL_ADDRESS   perFrameBuffer;
     D3D12_GPU_VIRTUAL_ADDRESS   skinningBuffer;
     D3D12_GPU_DESCRIPTOR_HANDLE iblTable;
-    D3D12_GPU_DESCRIPTOR_HANDLE gbufferTable;
 
     LightsData                  lightsData;
+    GBuffer                     gBuffer;
 };

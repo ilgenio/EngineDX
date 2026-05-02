@@ -55,6 +55,9 @@ public:
         transitionToSRV(cmdList);
     }
 
+    void transitionDepthToSRV(ID3D12GraphicsCommandList* cmdList);
+    void transitionDepthToDSV(ID3D12GraphicsCommandList* cmdList);
+
     UINT getWidth() const { return width;  }
     UINT getHeight() const { return height;  }
 
@@ -65,6 +68,8 @@ public:
     static const DXGI_FORMAT getRTFormat(UINT index) { return gBufferFormats[index];  }
     static UINT getRTFormatCount() { return UINT(BUFFER_COUNT);  }
     static DXGI_FORMAT getDepthFormat() { return depthFormat;  }
+
+    ID3D12Resource* getTexture(EBuffers buffer) const { return textures[int(buffer)].Get(); }
 
 private:
 

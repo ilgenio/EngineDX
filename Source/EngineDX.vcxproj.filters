@@ -250,6 +250,15 @@
     <ClCompile Include="ModulePerFrameBuffer.cpp">
       <Filter>Modules</Filter>
     </ClCompile>
+    <ClCompile Include="Decal.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="DecalPass.cpp">
+      <Filter>Passes</Filter>
+    </ClCompile>
+    <ClCompile Include="DecalCubeMesh.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EngineDX.h">
@@ -522,6 +531,15 @@
     <ClInclude Include="ModulePerFrameBuffer.h">
       <Filter>Modules</Filter>
     </ClInclude>
+    <ClInclude Include="Decal.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="DecalPass.h">
+      <Filter>Passes</Filter>
+    </ClInclude>
+    <ClInclude Include="DecalCubeMesh.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="EngineDX.ico">
@@ -743,6 +761,12 @@
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\tileCullingCS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\decalPS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\decalVS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>

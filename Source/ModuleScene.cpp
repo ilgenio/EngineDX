@@ -8,6 +8,7 @@
 #include "Model.h"
 #include "Light.h"           
 #include "Skybox.h"
+#include "Decal.h"
 
 ModuleScene::ModuleScene()
 {
@@ -83,6 +84,13 @@ UINT ModuleScene::addLight(const Spot& spot)
     std::shared_ptr<Light> newLight(scene->addLight(spot));
     lights.push_back(newLight);
     return static_cast<UINT>(lights.size() - 1);
+}
+
+UINT ModuleScene::addDecal(const char* colorPath, const char* normalPath, const char* aoPath, const Matrix& transform)
+{
+    std::shared_ptr<Decal> newDecal = std::make_shared<Decal>(colorPath, normalPath, aoPath, transform);
+    decals.push_back(newDecal);
+    return static_cast<UINT>(decals.size() - 1);
 }
 
 

@@ -15,17 +15,19 @@ struct Point;
 struct Spot;
 class Skybox;
 class AnimationClip;
+class Decal;
 
 class ModuleScene : public Module
 {
     typedef std::vector<std::shared_ptr<AnimationClip>> AnimationClipList;
     typedef std::vector<std::shared_ptr<Model> > ModelList;
     typedef std::vector<std::shared_ptr<Light> > LightList;
+    typedef std::vector<std::shared_ptr<Decal> > DecalList;
 
     AnimationClipList       animations;
     ModelList               models;
     LightList               lights;
-
+    DecalList               decals;
     std::unique_ptr<Scene>  scene;
     std::unique_ptr<Skybox> skybox;
 
@@ -34,9 +36,12 @@ public:
     typedef std::shared_ptr<Model> ModelPtr;
     typedef std::shared_ptr<AnimationClip> ClipPtr;
     typedef std::shared_ptr<Light> LightPtr;
+    typedef std::shared_ptr<Decal> DecalPtr;
+
     typedef std::span<const ModelPtr> ModelSpan;
     typedef std::span<const ClipPtr> ClipSpan;
     typedef std::span<const LightPtr> LightSpan;
+    typedef std::span<const DecalPtr> DecalSpan;
 
 
     ModuleScene();
@@ -80,6 +85,12 @@ public:
     LightSpan getLights() const { return LightSpan(lights.data(), lights.size()); }
     void      clearLights() { lights.clear(); }
 
+    // Decals Management
+    UINT      getDecalCount() const { return (UINT)decals.size(); }
+    UINT      addDecal(const char* colorPath, const char* normalPath, const char* aoPath, const Matrix& transform);
+    void      removeDecal(UINT index) { _ASSERTE(index < decals.size()); decals.erase(decals.begin() + index); }
+    DecalPtr  getDecal(UINT index) const { _ASSERTE(index < decals.size()); return decals[index]; }
+    DecalSpan getDecals() const { return DecalSpan(decals.data(), decals.size()); }
+    void      clearDecals() { decals.clear(); } 
 
-private:
 };

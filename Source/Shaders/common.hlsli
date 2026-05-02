@@ -45,5 +45,12 @@ float3 reconstructWorldPosition(float2 uv, float depth, in float4x4 projection, 
     return mul(float4(viewPos, 1.0), invView).xyz;
 }
 
+float2 ndcToUV(float2 ndcPos)
+{
+    float2 uv = ndcPos * 0.5 + 0.5;
+    uv.y = 1.0 - uv.y; // Flip Y coordinate for texture sampling
+    return uv;
+}
+
 
 #endif /* _COMMON_HLSLI_ */

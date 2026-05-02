@@ -29,5 +29,5 @@ IntersectionType insidePlanes(const Vector4 planes[6], const Vector3 absPlanes[6
 IntersectionType insidePlanes(const Vector4 planes[6], const Vector3 absPlanes[6], const BoundingOrientedBox& box);
 IntersectionType insideAABB(const BoundingBox& aabb, const Vector3 points[8]);
 
-Matrix InvertAffineTransform(const Matrix& matrix);
+Matrix invertAffineTransform(const Matrix& matrix);
 Vector4 getBoundingSphere(const Spot& spotLight);

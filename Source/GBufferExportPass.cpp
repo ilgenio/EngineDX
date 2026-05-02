@@ -24,7 +24,6 @@ GBufferExportPass::~GBufferExportPass()
 
 void GBufferExportPass::resize(UINT sizeX, UINT sizeY)
 {
-    gBuffer.resize(sizeX, sizeY);
 }
 
 bool GBufferExportPass::init()
@@ -44,8 +43,6 @@ void GBufferExportPass::render(ID3D12GraphicsCommandList* commandList, std::span
 
     commandList->SetGraphicsRootSignature(rootSignature.Get());
     commandList->SetPipelineState(pso.Get());
-
-    gBuffer.beginRender(commandList);
 
     commandList->SetGraphicsRootDescriptorTable(SLOT_SAMPLERS, samplers->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
     commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -96,8 +93,6 @@ void GBufferExportPass::render(ID3D12GraphicsCommandList* commandList, std::span
             }
         }
     }
-
-    gBuffer.endRender(commandList);
 
     END_EVENT(commandList);
 }

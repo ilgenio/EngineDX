@@ -35,28 +35,6 @@ float3 createPlaneEq(in float3 p0, in float3 p1)
     return N;
 }
 
-// TODO: Move to common.hlsli and use in other shaders as well
-float getLinearZ(float depthValue)
-{
-    return -proj[3][2]/(proj[2][2]+depthValue);
-}
-
-float3 getViewPos(float depthValue, float2 uv)
-{
-    float viewZ = getLinearZ(depthValue);
-
-    // Remap from 0..1 to -1..1 and then multiply by viewZ to get the view space X and Y coordinates.
-
-    float viewX = (uv.x*2.0-1.0)*(-viewZ)/proj[0][0];
-
-    // Why 1.0-uv.y ? Because vertical Vs goes from 0 at top to 1 at bottom but in view space Y goes from  +1 at top to -1 at bottom 
-    // so we need to flip the V coordinate and then remap it from 0..1 to 1..-1
-
-    float viewY = ((1.0-uv.y)*2.0-1.0)*(-viewZ)/proj[1][1];
-
-    return float3(viewX, viewY, viewZ);
-}
-
 float getDistanceFromPlane(float3 plane, float3 p)
 {
     // plane w is 0
@@ -90,10 +68,10 @@ void main(uint2 globalIdx : SV_DispatchThreadID, uint localIndex : SV_GroupIndex
         uint2 groupIdx = globalIdx / TILE_RES;
 
         float3 planePoints[4];
-        planePoints[0] = getViewPos(0.0, float2(saturate(float(groupIdx.x)*TILE_RES/float(width)), saturate(float(groupIdx.y)*TILE_RES/float(height))));
-        planePoints[1] = getViewPos(0.0, float2(saturate(float(groupIdx.x+1)*TILE_RES/float(width)), saturate(float(groupIdx.y)*TILE_RES/float(height))));
-        planePoints[2] = getViewPos(0.0, float2(saturate(float(groupIdx.x+1)*TILE_RES/float(width)), saturate(float(groupIdx.y+1)*TILE_RES/float(height))));
-        planePoints[3] = getViewPos(0.0, float2(saturate(float(groupIdx.x)*TILE_RES/float(width)),   saturate(float(groupIdx.y+1)*TILE_RES/float(height))));
+        planePoints[0] = reconstructViewPosition(float2(saturate(float(groupIdx.x)*TILE_RES/float(width)), saturate(float(groupIdx.y)*TILE_RES/float(height))), 0.0, proj);    
+        planePoints[1] = reconstructViewPosition(float2(saturate(float(groupIdx.x+1)*TILE_RES/float(width)), saturate(float(groupIdx.y)*TILE_RES/float(height))), 0.0, proj);
+        planePoints[2] = reconstructViewPosition(float2(saturate(float(groupIdx.x+1)*TILE_RES/float(width)), saturate(float(groupIdx.y+1)*TILE_RES/float(height))), 0.0, proj);
+        planePoints[3] = reconstructViewPosition(float2(saturate(float(groupIdx.x)*TILE_RES/float(width)),   saturate(float(groupIdx.y+1)*TILE_RES/float(height))), 0.0, proj);
 
         float3 planes[4];
 
@@ -114,8 +92,8 @@ void main(uint2 globalIdx : SV_DispatchThreadID, uint localIndex : SV_GroupIndex
         int tileIndex = int(getTileIndex(globalIdx.x, globalIdx.y, width));
         uint threadIndex = localIndex;
 
-        float viewMinZ = getLinearZ(asfloat(minZ));
-        float viewMaxZ = getLinearZ(asfloat(maxZ));
+        float viewMinZ = lineariseDepth(asfloat(minZ), proj);
+        float viewMaxZ = lineariseDepth(asfloat(maxZ), proj);
 
         // Point lights
         for(uint i=threadIndex;i<numPointLights; i+=NUM_THREADS)

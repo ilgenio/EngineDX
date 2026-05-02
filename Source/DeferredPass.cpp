@@ -35,7 +35,7 @@ void DeferredPass::render(ID3D12GraphicsCommandList* commandList, const RenderDa
     commandList->SetPipelineState(pso.Get());
 
     commandList->SetGraphicsRootConstantBufferView(SLOT_PER_FRAME_CB, renderData.perFrameBuffer);
-    commandList->SetGraphicsRootDescriptorTable(SLOT_GBUFFER_TABLE, renderData.gbufferTable);
+    commandList->SetGraphicsRootDescriptorTable(SLOT_GBUFFER_TABLE, renderData.gBuffer.getSrvTableDesc().getGPUHandle());
     commandList->SetGraphicsRootShaderResourceView(SLOT_DIRECTIONAL_BUFFER, renderData.lightsData.directionalLightsAddress);
     commandList->SetGraphicsRootShaderResourceView(SLOT_POINT_BUFFER, renderData.lightsData.pointLightsAddress);
     commandList->SetGraphicsRootShaderResourceView(SLOT_SPOT_BUFFER, renderData.lightsData.spotLightsAddress);
@@ -94,7 +94,7 @@ bool DeferredPass::createPSO()
     psoDesc.PS = { dataPS.data(), dataPS.size() };                                                  
     psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;                         
     psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;                                         
-    psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
+    psoDesc.DSVFormat = DXGI_FORMAT_UNKNOWN;
     psoDesc.SampleDesc = {1, 0};                                                                    
     psoDesc.SampleMask = 0xffffffff;                                                                
     psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);                               

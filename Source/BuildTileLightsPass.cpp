@@ -96,8 +96,8 @@ void BuildTileLightsPass::record(ID3D12GraphicsCommandList* commandList, int wid
 
 
     CD3DX12_RESOURCE_BARRIER barrier[2];
-    barrier[0] = CD3DX12_RESOURCE_BARRIER::Transition(pointLists[outputIndex].Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-    barrier[1] = CD3DX12_RESOURCE_BARRIER::Transition(spotLists[outputIndex].Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+    barrier[0] = CD3DX12_RESOURCE_BARRIER::Transition(pointLists[outputIndex].Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+    barrier[1] = CD3DX12_RESOURCE_BARRIER::Transition(spotLists[outputIndex].Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
     commandList->ResourceBarrier(2, &barrier[0]);
 
     perFrameBuffer->submitCopy(commandList);
@@ -107,8 +107,8 @@ void BuildTileLightsPass::record(ID3D12GraphicsCommandList* commandList, int wid
 
     commandList->Dispatch(dispatchX, dispatchY, 1);
 
-    barrier[0] = CD3DX12_RESOURCE_BARRIER::Transition(pointLists[outputIndex].Get() , D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-    barrier[1] = CD3DX12_RESOURCE_BARRIER::Transition(spotLists[outputIndex].Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE); 
+    barrier[0] = CD3DX12_RESOURCE_BARRIER::Transition(pointLists[outputIndex].Get() , D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    barrier[1] = CD3DX12_RESOURCE_BARRIER::Transition(spotLists[outputIndex].Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
     commandList->ResourceBarrier(2, &barrier[0]);
 
     END_EVENT(commandList);

@@ -11,8 +11,6 @@ struct RenderData;
 // Renders scene meshes into the G-buffer for deferred shading.
 class GBufferExportPass
 {
-    GBuffer gBuffer;
-
     enum RootSlots
     {
         SLOT_MVP_MATRIX = 0,
@@ -41,8 +39,6 @@ public:
     bool init();
     void resize(UINT sizeX, UINT sizeY);
     void render(ID3D12GraphicsCommandList* commandList, std::span<const RenderMesh> meshes, const RenderData& renderData);
-
-    const GBuffer& getGBuffer() const { return gBuffer;  }
 
 private:
     bool createRootSignature();
