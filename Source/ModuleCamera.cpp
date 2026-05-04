@@ -10,9 +10,6 @@
 
 #include "json_utils.h"
 
-#define FAR_PLANE 200.0f
-#define NEAR_PLANE 0.1f
-
 namespace
 {
     constexpr float getRotationSpeed() { return 25.0f; }
@@ -139,9 +136,9 @@ void ModuleCamera::deserialize(const Json& obj)
     params.translation = deserializeVector3(obj["translation"]);
 }
 
-Matrix ModuleCamera::getPerspectiveProj(float aspect, float fov) 
+Matrix ModuleCamera::getPerspectiveProj(float aspect, float fov, float nearPlane, float farPlane) 
 {
-    return Matrix::CreatePerspectiveFieldOfView(fov, aspect, NEAR_PLANE, FAR_PLANE);
+    return Matrix::CreatePerspectiveFieldOfView(fov, aspect, nearPlane, farPlane);
 }
 
 void ModuleCamera::getFrustumPlanes(Vector4 planes[6], float aspect, bool normalize) const
@@ -152,16 +149,25 @@ void ModuleCamera::getFrustumPlanes(Vector4 planes[6], float aspect, bool normal
     getPlanes(planes, viewProjection, normalize);
 }
 
-BoundingFrustum ModuleCamera::getFrustum(float aspect) const
+void ModuleCamera::getFrustumCorners(Vector3 corners[8], float aspect) const
 {
-    Matrix proj  = getPerspectiveProj(aspect);
+    Vector3 ndcCorners[8] =
+    {
+        Vector3(-1, 1, 0),
+        Vector3(1, 1, 0),
+        Vector3(1, -1, 0),
+        Vector3(-1, -1, 0),
+        Vector3(-1, 1, 1),
+        Vector3(1, 1, 1),
+        Vector3(1, -1, 1),
+        Vector3(-1, -1, 1)
+    };
 
-    BoundingFrustum frustum;
-    BoundingFrustum::CreateFromMatrix(frustum, proj, true);
+    Matrix proj = getPerspectiveProj(aspect);
 
-    frustum.Origin = position;
-    frustum.Orientation = rotation;
-
-    return frustum;
+    for(int i = 0; i < 8; ++i)
+    {
+        corners[i] = reconstructWorldPosition(ndcCorners[i], proj, camera);
+    }
 }
 

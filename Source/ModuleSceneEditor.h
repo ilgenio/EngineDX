@@ -22,7 +22,7 @@ class ModuleSceneEditor : public Module
     bool trackFrustum = false;
 
     Vector4 frustumPlanes[6];
-    BoundingFrustum trackedFrustum;
+    Vector3 trackedFrustumCorners[8];
     UINT quadTreeLevel = 0;
 
     SelectionType selectionType = SELECTION_NONE;

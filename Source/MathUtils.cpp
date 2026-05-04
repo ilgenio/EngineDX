@@ -22,6 +22,29 @@ void sphericalToEuclidean(float azimuth, float elevation, Vector3& dir)
     dir.y = cos_elevation;
 };
 
+float lineariseDepth(float depth, const Matrix& projection)
+{
+    float a = projection._34;
+    float b = projection._33;
+
+    return -a / (b + depth); 
+};
+
+Vector3 reconstructViewPosition(const Vector3& ndcSpace, const Matrix& projection)
+{
+    float zView = lineariseDepth(ndcSpace.z, projection);
+    float xView = ndcSpace.x * (-zView) / projection._11;
+    float yView = ndcSpace.y * (-zView) / projection._22;
+
+    return Vector3(xView, yView, zView);
+};
+
+Vector3 reconstructWorldPosition(const Vector3& ndcSpace, const Matrix& projection, const Matrix& invView)
+{
+    Vector3 viewPos = reconstructViewPosition(ndcSpace, projection);
+    return Vector3::Transform(Vector3(viewPos), invView);
+};
+
 // From https://www8.cs.umu.se/kurser/5DV051/HT12/lab/plane_extraction.pdf
 void getPlanes(Vector4 planes[6], const Matrix& viewProjection, bool normalize /*= false*/)
 {

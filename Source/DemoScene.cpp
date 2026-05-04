@@ -32,29 +32,7 @@ bool DemoScene::init()
         camera->setAzimuthal(XMConvertToRadians(-15.0f));
         camera->setTranslation(Vector3(-6.0f, 4.0f, -0.5f));
 
-        Vector3 lightDir = Vector3(-0.5f, -1.0f, -0.5f);
-        lightDir.Normalize();
-
-        for(int x = -4; x <= 4; x += 2)
-        {
-             for(int z = -4; z <= 4; z += 2)
-             {
-                 for (int y = 1; y <= 4; y += 2)
-                 {
-                     scene->addLight(Point(
-                         Vector3(float(x), float(y), float(z)), // Position
-                         2.0f,              // Radius
-                         Color(1.0f, 1.0f, 1.0f, 10.0f) // Color (white)
-                     ));
-                 }
-             }
-        }
-
-        scene->addDecal(
-            "Assets/Decals/diffuse_green_single.tga",
-            "Assets/Decals/normal_single.tga",
-            Matrix::Identity);
-
+        scene->addLight(Directional(Vector3(-0.5f, -1.0f, -0.5f), Color(1.0f, 1.0f, 1.0f, 1.0f)));
     }
 
     return true;

@@ -21,6 +21,10 @@ enum IntersectionType
     INSIDE = 2
 };
 
+float lineariseDepth(float depth, const Matrix& projection);
+Vector3 reconstructViewPosition(const Vector3& ndcSpace, const Matrix& projection);
+Vector3 reconstructWorldPosition(const Vector3& ndcSpace, const Matrix& projection, const Matrix& invView);
+
 void getPlanes(Vector4 planes[6], const Matrix& viewProjection, bool normalize = false);
 void getPlanes(const BoundingOrientedBox& obb, Vector4 planes[6], Vector3 absPlanes[6]);
 void getPoints(const BoundingOrientedBox& obb, Vector3 points[8]);
