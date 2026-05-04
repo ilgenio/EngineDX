@@ -259,6 +259,9 @@
     <ClCompile Include="DecalCubeMesh.cpp">
       <Filter>Scene</Filter>
     </ClCompile>
+    <ClCompile Include="DemoDecal.cpp">
+      <Filter>Demos</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EngineDX.h">
@@ -539,6 +542,9 @@
     </ClInclude>
     <ClInclude Include="DecalCubeMesh.h">
       <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="DemoDecal.h">
+      <Filter>Demos</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

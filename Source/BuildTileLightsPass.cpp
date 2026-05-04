@@ -65,7 +65,7 @@ void BuildTileLightsPass::record(ID3D12GraphicsCommandList* commandList, int wid
 {
     generateSphereData(pointLights, spotLights);
 
-    BEGIN_EVENT(commandList, "BuildTileLightsPass");
+    BEGIN_EVENT(commandList, "TileLightsPass");
 
     commandList->SetPipelineState(pso.Get());
     commandList->SetComputeRootSignature(rootSignature.Get());

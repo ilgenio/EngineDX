@@ -37,6 +37,8 @@ void DecalPass::render(ID3D12GraphicsCommandList* commandList, std::span<const s
     if(decals.empty())
         return;
 
+    BEGIN_EVENT(commandList, "DecalsPass");
+
     ModuleRingBuffer* ringBuffer = app->getRingBuffer();
     ModuleSamplers* samplers = app->getSamplers();
 
@@ -73,6 +75,8 @@ void DecalPass::render(ID3D12GraphicsCommandList* commandList, std::span<const s
 
         decalCubeMesh->draw(commandList);
     }
+
+    END_EVENT(commandList);
 }
 
 bool DecalPass::createRootSignature()
@@ -119,6 +123,8 @@ bool DecalPass::createPSO()
     psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
     psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);                   
 
+    psoDesc.BlendState.IndependentBlendEnable = TRUE;
+
     psoDesc.NumRenderTargets = 2;
     psoDesc.RTVFormats[0] = GBuffer::getRTFormat(GBuffer::BUFFER_ALBEDO);
 
@@ -128,7 +134,7 @@ bool DecalPass::createPSO()
     psoDesc.RTVFormats[1] = GBuffer::getRTFormat(GBuffer::BUFFER_NORMAL_METALLIC_ROUGHNESS);
 
     // Enable writing to RGB 
-    psoDesc.BlendState.RenderTarget[1].RenderTargetWriteMask = 0 ; //( D3D12_COLOR_WRITE_ENABLE_RED | D3D12_COLOR_WRITE_ENABLE_GREEN )  | D3D12_COLOR_WRITE_ENABLE_BLUE );
+    psoDesc.BlendState.RenderTarget[1].RenderTargetWriteMask = (D3D12_COLOR_WRITE_ENABLE_RED | D3D12_COLOR_WRITE_ENABLE_GREEN | D3D12_COLOR_WRITE_ENABLE_BLUE);
 
 
     psoDesc.DSVFormat = DXGI_FORMAT_UNKNOWN;

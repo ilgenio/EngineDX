@@ -7,6 +7,7 @@
 #include "DemoScene.h"
 #include "DemoMorph.h"
 #include "DemoTrail.h"
+#include "DemoDecal.h"
 #include "Exercises/Exercise1.h"
 #include "Exercises/Exercise2.h"
 #include "Exercises/Exercise3.h"
@@ -39,6 +40,7 @@ DemoDescriptors demos[] = {
     { "Character", "Shows Skinning and character movement", false, []() -> Module* { return new DemoSkinning(); } },
     { "Morphing", "Shows morph targets", false, []() -> Module* { return new DemoMorph(); } },
     { "Trail", "Shows trails", false, []() -> Module* { return new DemoTrail(); } },
+    { "Decal", "Shows decals and tile light culling", false, []() -> Module* { return new DemoDecal(); } },
     { "Scene", "Shows a demo scene with various elements", false, []() -> Module* { return new DemoScene(); } },
 };
 

@@ -43,7 +43,7 @@ public:
 
 private:
 
-    enum{
+    enum     {
         TEX_SLOT_BASECOLOUR = 0,
         TEX_SLOT_METALLIC_ROUGHNESS = 1,
         TEX_SLOT_NORMAL = 2,

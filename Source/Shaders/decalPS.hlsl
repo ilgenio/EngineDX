@@ -10,7 +10,7 @@ cbuffer DecalConstants : register(b1)
 
 Texture2D depthMap : register(t0);
 Texture2D baseColorMap : register(t1);
-Texture2D normalMap : register(t3);
+Texture2D normalMap : register(t2);
 
 // Note: G-Buffer 
 struct PSOutput
@@ -46,16 +46,16 @@ PSOutput main(float3 ndcPos : POSITION)
         discard;
     }
 
+    float3 textureNormal = normalize(normalMap.Sample(bilinearWrap, objectUV).rgb * 2.0 - 1.0); // Convert from [0,1] to [-1,1]
+    float3 tangent = normalize(ddx(worldPos));
+    float3 bitangent = normalize(-ddy(worldPos));
+    float3 normal = cross(tangent, bitangent);
+    float3x3 TBN = float3x3(tangent, bitangent, normal);
+
+    float3 worldNormal = mul(textureNormal, TBN);
+
     output.albedo = float4(baseColor.rgb, 1.0);
-    output.normalMetalRough = 0.0;
-
-    //float ao         = aoMap.Sample(bilinearWrap, objectUV).r;
-    //float3 normal    = normalMap.Sample(bilinearWrap, objectUV).rgb;
-
-    // TODO: Check G-Buffer packing  and ao and normal  and using normal maps 
-
-    //output.normal = normal;
-    //output.ao = ao;
+    output.normalMetalRough = float4(worldNormal, 1.0);
 
     return output;
 }

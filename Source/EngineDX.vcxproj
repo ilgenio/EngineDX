@@ -185,6 +185,7 @@
     <ClInclude Include="DecalPass.h" />
     <ClInclude Include="DeferredPass.h" />
     <ClInclude Include="DemoAnimation.h" />
+    <ClInclude Include="DemoDecal.h" />
     <ClInclude Include="DemoDescriptors.h" />
     <ClInclude Include="DemoMorph.h" />
     <ClInclude Include="DemoScene.h" />
@@ -342,6 +343,7 @@
     <ClCompile Include="DecalPass.cpp" />
     <ClCompile Include="DeferredPass.cpp" />
     <ClCompile Include="DemoAnimation.cpp" />
+    <ClCompile Include="DemoDecal.cpp" />
     <ClCompile Include="DemoDescriptors.cpp" />
     <ClCompile Include="DemoMorph.cpp" />
     <ClCompile Include="DemoScene.cpp" />

@@ -362,6 +362,7 @@ void ModuleSceneEditor::imGuiDrawDecalProperties()
             rotation = Quaternion::CreateFromYawPitchRoll(euler);
             transform = Matrix::CreateScale(scale) * Matrix::CreateFromQuaternion(rotation) * Matrix::CreateTranslation(transform.Translation());
             decal->setTransform(transform);
+            app->getRender()->setGuizmoTransform(transform);
         }
     }
 }

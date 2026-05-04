@@ -17,7 +17,7 @@ Decal::Decal(const char* colorPath, const char* normalPath, const Matrix& transf
 
     if (colorPath)
     {
-        color = resources->createTextureFromFile(colorPath, false);
+        color = resources->createTextureFromFile(colorPath, true);
     }
 
     if(color)
