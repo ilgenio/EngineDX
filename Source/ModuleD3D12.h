@@ -56,42 +56,46 @@ public:
     ModuleD3D12(HWND hWnd);
     ~ModuleD3D12();
 
-    bool                        init() override;
-    bool                        cleanUp() override;
+    bool                                init() override;
+    bool                                cleanUp() override;
 
-    void                        preRender() override;
-    void                        postRender() override;
+    void                                preRender() override;
+    void                                postRender() override;
 
-    void                        resize();
-    void                        toogleFullscreen();
-    void                        flush();
+    void                                resize();
+    void                                toogleFullscreen();
+    void                                flush();
 
-    HWND                        getHWnd()             { return hWnd; }
-    IDXGISwapChain4*            getSwapChain()        { return swapChain.Get();  }
-    ID3D12Device5*              getDevice()           { return device.Get(); }
-    ID3D12GraphicsCommandList*  getCommandList()      { return commandList.Get(); }
-    ID3D12CommandAllocator*     getCommandAllocator() { return commandAllocators[currentBackBufferIdx].Get(); }
-    ID3D12Resource*             getBackBuffer()       { return backBuffers[currentBackBufferIdx].Get(); }
-    ID3D12CommandQueue*         getDrawCommandQueue() { return drawCommandQueue.Get(); }
+    HWND                                getHWnd()             { return hWnd; }
+    IDXGISwapChain4*                    getSwapChain()        { return swapChain.Get();  }
+    ID3D12Device5*                      getDevice()           { return device.Get(); }
+    ID3D12GraphicsCommandList*          getCommandList()      { return commandList.Get(); }
+    ID3D12CommandAllocator*             getCommandAllocator() { return commandAllocators[currentBackBufferIdx].Get(); }
+    ID3D12Resource*                     getBackBuffer()       { return backBuffers[currentBackBufferIdx].Get(); }
+    ID3D12CommandQueue*                 getDrawCommandQueue() { return drawCommandQueue.Get(); }
 
-    unsigned                    getCurrentBackBufferIdx() const {return currentBackBufferIdx; }
+    unsigned                            getCurrentBackBufferIdx() const {return currentBackBufferIdx; }
 
-    D3D12_CPU_DESCRIPTOR_HANDLE getRenderTargetDescriptor();
-    D3D12_CPU_DESCRIPTOR_HANDLE getDepthStencilDescriptor();
+    D3D12_CPU_DESCRIPTOR_HANDLE         getRenderTargetDescriptor();
+    D3D12_CPU_DESCRIPTOR_HANDLE         getDepthStencilDescriptor();
 
-    UINT                        signalDrawQueue();
+    UINT                                signalDrawQueue();
 
-    unsigned                    getCurrentFrame() const { return frameIndex; }
-    unsigned                    getLastCompletedFrame() const { return lastCompletedFrame; }
+    unsigned                            getCurrentFrame() const { return frameIndex; }
+    unsigned                            getLastCompletedFrame() const { return lastCompletedFrame; }
 
-    unsigned                    getWindowWidth() const { return windowWidth; }
-    unsigned                    getWindowHeight() const { return windowHeight; }
+    unsigned                            getWindowWidth() const { return windowWidth; }
+    unsigned                            getWindowHeight() const { return windowHeight; }
 
-    ID3D12GraphicsCommandList*  beginFrameRender();
-    void                        setBackBufferRenderTarget(const Vector4& clearColor = Vector4(0.0f, 0.0f, 0.0f, 1.0f));
-    void                        endFrameRender();
+    ID3D12GraphicsCommandList*          beginFrameRender();
+    void                                setBackBufferRenderTarget(const Vector4& clearColor = Vector4(0.0f, 0.0f, 0.0f, 1.0f));
+    void                                endFrameRender();
 
-    ComPtr<ID3D12RootSignature> createRootSignature(const CD3DX12_ROOT_SIGNATURE_DESC& desc);
+    void                                resetCommandList(ID3D12GraphicsCommandList* commandList);
+    void                                executeCommandList(ID3D12GraphicsCommandList* commandList);
+    ComPtr<ID3D12GraphicsCommandList>   createCommandList();
+
+    ComPtr<ID3D12RootSignature>         createRootSignature(const CD3DX12_ROOT_SIGNATURE_DESC& desc);
 
 private:
     void getWindowSize(unsigned& width, unsigned& height);
@@ -105,6 +109,6 @@ private:
     bool createSwapChain();
     bool createRenderTargets();
     bool createDepthStencil();
-    bool createCommandList();
+    bool createCommandAllocator();
     bool createDrawFence();
 };

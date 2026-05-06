@@ -80,22 +80,6 @@ void ModuleSceneEditor::debugDrawCommands()
         app->getScene()->getScene()->debugDrawQuadTree(frustumPlanes, quadTreeLevel);
 
         dd::box(ddConvert(trackedFrustumCorners), dd::colors::White);
-
-        Vector3 frustumCenter = Vector3::Zero;
-        for(UINT i = 0; i < 8; ++i)
-        {
-            frustumCenter += trackedFrustumCorners[i];
-        }
-
-        frustumCenter *= 0.125f;
-
-        float sphereRadius = 0.0f;
-        for(UINT i=0; i< 8; ++i)
-        {
-            sphereRadius = std::max(sphereRadius, Vector3::Distance(frustumCenter, trackedFrustumCorners[i]));
-        }
-
-        dd::sphere(ddConvert(frustumCenter), dd::colors::Yellow, sphereRadius);
     }
 
     switch (selectionType)

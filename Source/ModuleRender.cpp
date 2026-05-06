@@ -23,6 +23,7 @@
 #include "RenderTexture.h"
 #include "SkinningPass.h"
 #include "BuildTileLightsPass.h"
+#include "ShadowMapPass.h"
 #include "DecalPass.h"
 
 #include "json_utils.h"
@@ -53,6 +54,7 @@ bool ModuleRender::init()
     skinningPass        = std::make_unique<SkinningPass>();
     buildTileLightsPass = std::make_unique<BuildTileLightsPass>();
     decalPass           = std::make_unique<DecalPass>();  
+    shadowMapPass       = std::make_unique<ShadowMapPass>();
 
     bool ok = renderMeshPass->init(false);
     ok = ok && gbufferPass->init();
@@ -70,6 +72,36 @@ bool ModuleRender::cleanUp()
     return true;
 }
 
+Vector4 ModuleRender::computeShadowBoundingSphere() const
+{
+    const auto& directionalLights = app->getScene()->getScene()->getDirectionalLights();
+    if (!directionalLights.empty())
+    {
+        Vector3 corners[8];
+        float aspect = getRenderTargetAspect();
+        app->getCamera()->getFrustumCorners(corners, aspect);
+
+        Vector3 frustumCenter = Vector3::Zero;
+        for (UINT i = 0; i < 8; ++i)
+        {
+            frustumCenter += corners[i];
+        }
+
+        frustumCenter *= 0.125f;
+
+        float sphereRadius = 0.0f;
+        for (UINT i = 0; i < 8; ++i)
+        {
+            sphereRadius = std::max(sphereRadius, Vector3::Distance(frustumCenter, corners[i]));
+        }
+
+        return Vector4(frustumCenter.x, frustumCenter.y, frustumCenter.z, sphereRadius);
+    }
+
+    return Vector4::Zero;
+}
+
+
 void ModuleRender::preRender()
 {
     // Frustum culling
@@ -78,10 +110,27 @@ void ModuleRender::preRender()
         float aspect = float(renderTexture->getWidth()) / float(renderTexture->getHeight());
 
         Vector4 planes[6];
-        app->getCamera()->getFrustumPlanes(planes, aspect, false);
+        ModuleCamera* camera = app->getCamera();
+        camera->getFrustumPlanes(planes, aspect, false);
 
         renderList.clear();
-        app->getScene()->getScene()->frustumCulling(planes, renderList);
+        Scene* scene = app->getScene()->getScene();
+        scene->frustumCulling(planes, renderList);
+
+        const auto& directionalLights = app->getScene()->getScene()->getDirectionalLights();
+        if (!directionalLights.empty())
+        {
+            Vector4 boundingSphere = computeShadowBoundingSphere();
+            
+            // Compute Shadow casters
+            const Vector3& lightDir = directionalLights[0]->Ld;
+
+            Vector4 shadowFrustumPlanes[6];
+            shadowMapPass->buildFrustum(shadowFrustumPlanes, lightDir, boundingSphere);
+
+            shadowCasters.clear();
+            scene->frustumCulling(shadowFrustumPlanes, shadowCasters);
+        }
     }
 
     // ImGui and DebugDraw commands
@@ -191,7 +240,7 @@ void ModuleRender::imGuiDrawCommands()
     camera->setEnableInput(viewerFocused && !ImGuizmo::IsUsing());
 }
 
-void ModuleRender::updatePerFrameData(ID3D12GraphicsCommandList* commandList)
+void ModuleRender::updatePerFrameData()
 {
     ModuleCamera* camera = app->getCamera();
     Scene* scene = app->getScene()->getScene();
@@ -221,9 +270,11 @@ void ModuleRender::updatePerFrameData(ID3D12GraphicsCommandList* commandList)
     perFrameData.cameraPosition = camera->getPos();
     perFrameData.proj = proj.Transpose();
     perFrameData.invView = invView.Transpose();
+    perFrameData.shadowViewProj = shadowMapPass->getViewProj().Transpose();
 
     renderData.perFrameBuffer = app->getRingBuffer()->alloc(&perFrameData);
     renderData.iblTable = app->getScene()->getSkybox()->getIBLTable();
+    renderData.shadowMapTable = shadowMapPass->getSRVDesc().getGPUHandle(0);
 }
 
 void ModuleRender::renderGBuffer(ID3D12GraphicsCommandList* commandList)
@@ -231,12 +282,14 @@ void ModuleRender::renderGBuffer(ID3D12GraphicsCommandList* commandList)
     // Render GBuffer passes and transitions 
     renderData.gBuffer.beginRender(commandList);
     gbufferPass->render(commandList, renderList, renderData);
+    //executeCommands(commandList);
 
     // Transition depth buffer to SRV for light culling and decals rendering
     renderData.gBuffer.transitionDepthToSRV(commandList);
 
     // Render decals
     decalPass->render(commandList, app->getScene()->getDecals(), renderData);
+    //executeCommands(commandList);
 
     renderData.gBuffer.endRender(commandList);
 }
@@ -316,12 +369,19 @@ void ModuleRender::render()
     if (renderTexture->isValid() && canvasSize.x > 0.0f && canvasSize.y > 0.0f)
     {
         // Updates per-frame data
-        updatePerFrameData(commandList);
+        updatePerFrameData();
 
         // Updates skinning
-        skinningPass->record(commandList, std::span<RenderMesh>(renderList.data(), renderList.size()));
+        skinningPass->render(commandList, std::span<RenderMesh>(renderList.data(), renderList.size()));
+        //executeCommands(commandList);
+
         renderData.skinningBuffer = skinningPass->getOutputAddress();
 
+        // Render shadow map
+        shadowMapPass->render(commandList, shadowCasters, renderData);
+        //executeCommands(commandList);
+
+        // G-Buffer export
         renderGBuffer(commandList);
 
         // Tile light building pass
@@ -339,6 +399,15 @@ void ModuleRender::render()
 
     // Transition to Present, command list Close + queue 
     d3d12->endFrameRender();
+}
+
+void ModuleRender::executeCommands(ID3D12GraphicsCommandList* commandList) 
+{
+    if (SUCCEEDED(commandList->Close()))
+    {
+        ID3D12CommandList* commandLists[] = { commandList };
+        app->getD3D12()->getDrawCommandQueue()->ExecuteCommandLists(1, commandLists);
+    }
 }
 
 float ModuleRender::getRenderTargetAspect() const

@@ -60,7 +60,7 @@ void GBuffer::resize(UINT width, UINT height)
 
     // Create Depth Texture
     resources->deferRelease(depthTexture);
-    depthTexture = resources->createDepthStencil(depthFormat, size_t(width), size_t(height), 1, 1.0, 0, "GBuffer_Depth");
+    depthTexture = resources->createDepthStencil(depthFormat, size_t(width), size_t(height), 1, 1.0, 0, true, "GBuffer_Depth");
 
     srvDesc.createTexture2DSRV(depthTexture.Get(), DXGI_FORMAT_R32_FLOAT, BUFFER_COUNT);
 

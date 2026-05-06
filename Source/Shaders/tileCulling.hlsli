@@ -2,7 +2,7 @@
 #define TILECULLING_HLSLI
 
 #define TILE_RES 16
-#define MAX_LIGHTS_PER_TILE 1024
+#define MAX_LIGHTS_PER_TILE 64
 
 uint getNumTiles(uint size)
 {

@@ -21,6 +21,8 @@ struct PerFrame
 
     Matrix proj;
     Matrix invView;
+
+    Matrix shadowViewProj; // Used for shadow mapping, contains the view-projection matrix for the light's perspective
 };
 
 // Structure containing GPU addresses of the light data buffers. This is passed to the deferred shader to access light information.
@@ -46,6 +48,7 @@ struct RenderData
     D3D12_GPU_VIRTUAL_ADDRESS   perFrameBuffer;
     D3D12_GPU_VIRTUAL_ADDRESS   skinningBuffer;
     D3D12_GPU_DESCRIPTOR_HANDLE iblTable;
+    D3D12_GPU_DESCRIPTOR_HANDLE shadowMapTable;
 
     LightsData                  lightsData;
     GBuffer                     gBuffer;

@@ -17,7 +17,9 @@ class RenderTexture;
 class SkinningPass;
 class BuildTileLightsPass;
 class DecalPass;
-struct RenderMesh;
+class ShadowMapPass;
+struct RenderMesh;  
+struct RenderData;
 
 class ModuleRender : public Module
 {
@@ -29,10 +31,12 @@ class ModuleRender : public Module
     std::unique_ptr<DeferredPass>        deferredPass;
     std::unique_ptr<SkinningPass>        skinningPass;
     std::unique_ptr<BuildTileLightsPass> buildTileLightsPass;
-    std::unique_ptr<DecalPass>           decalPass;        
+    std::unique_ptr<DecalPass>           decalPass;     
+    std::unique_ptr<ShadowMapPass>       shadowMapPass;    
 
     // Render Data
     std::vector<RenderMesh>             renderList;
+    std::vector<RenderMesh>             shadowCasters;
     RenderData                          renderData;
     std::unique_ptr<RenderTexture>      renderTexture;
 
@@ -73,13 +77,15 @@ public:
 
     float getRenderTargetAspect() const;
 
+    Vector4 computeShadowBoundingSphere() const;
+
 private:
 
     void renderGBuffer(ID3D12GraphicsCommandList* commandList);
-    void updatePerFrameData(ID3D12GraphicsCommandList* commandList);
+    void updatePerFrameData();
     void updateLightsList(ID3D12GraphicsCommandList* commandList);
     void renderToTexture(ID3D12GraphicsCommandList* commandList);
-
+    void executeCommands(ID3D12GraphicsCommandList* commandList);
 
     void imGuiDrawCommands();
 };

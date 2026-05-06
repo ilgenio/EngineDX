@@ -22,6 +22,8 @@ cbuffer PerFrame : register(b0)
 
     float4x4 proj; // projection matrix
     float4x4 invView; // Inverse view matrix
+
+    float4x4 shadowViewProj; // directional light's shadow view-projection matrix
 };
 
 Texture2D gBufferAlbedo : register(t0);
@@ -36,9 +38,39 @@ StructuredBuffer<Spot>  spotLights  : register(t6);
 StructuredBuffer<int> pointLightIndices : register(t7);
 StructuredBuffer<int> spotLightIndices : register(t8);
 
+Texture2D shadowMap : register(t12);
+
 TextureCube irradiance : register(t9);
 TextureCube radiance : register(t10);
 Texture2D  brdfLUT : register(t11);
+
+float3 computeShadowCoord(in float3 worldPos)
+{
+    float4 shadowPos = mul(float4(worldPos, 1.0), shadowViewProj);
+    shadowPos /= shadowPos.w;
+
+    // Transform from NDC to UV space
+    shadowPos.xy = ndcToUV(shadowPos.xy); 
+
+    return shadowPos.xyz;
+}
+
+float inShadow(in float3 worldPos)
+{
+    float3 shadowNDC = computeShadowCoord(worldPos);
+    
+    // If outside of shadow map, consider it lit
+    if (shadowNDC.x < 0.0 || shadowNDC.x > 1.0 || shadowNDC.y < 0.0 || shadowNDC.y > 1.0 || shadowNDC.z < 0.0 || shadowNDC.z > 1.0)
+        return 0.0;
+
+    float closestDepth = shadowMap.Sample(bilinearClamp, shadowNDC.xy).r;
+    float currentDepth = shadowNDC.z;
+
+    // Bias to prevent shadow acne
+    float bias = 0.0001; // TODO: pass bias as a PerFrame variable and adjust based on light angle and scene scale
+
+    return currentDepth - bias > closestDepth ? 0.0 : 1.0;
+}
 
 float4 main(in float2 uv : TEXCOORD) : SV_Target
 {
@@ -74,7 +106,18 @@ float4 main(in float2 uv : TEXCOORD) : SV_Target
 
     // Direct lights
     for (uint i = 0; i < numDirLights; i++)
-        colour += computeLighting(V, N, dirLights[i], baseColour, alphaRoughness, metallic);
+    {
+        if (i == 0)
+        {
+            // TODO: Add to forward rendering pass 
+            float shadow = inShadow(worldPos);
+            colour += shadow*computeLighting(V, N, dirLights[i], baseColour, alphaRoughness, metallic);
+        }
+        else 
+        {
+            colour += computeLighting(V, N, dirLights[i], baseColour, alphaRoughness, metallic);
+        }
+    }
 
     // Tiled lights
 

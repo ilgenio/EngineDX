@@ -32,6 +32,7 @@ class Exercise12 : public Module
 
     ComPtr<ID3D12RootSignature>             rootSignature;
     ComPtr<ID3D12PipelineState>             pso;
+    ComPtr<ID3D12CommandList>               commandList;    
 
     std::unique_ptr<DebugDrawPass>          debugDrawPass;
     std::unique_ptr<ImGuiPass>              imguiPass;

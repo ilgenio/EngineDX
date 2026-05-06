@@ -300,7 +300,7 @@ ComPtr<ID3D12Resource> ModuleResources::createRenderTarget(DXGI_FORMAT format, s
     return texture;
 }
 
-ComPtr<ID3D12Resource> ModuleResources::createDepthStencil(DXGI_FORMAT format, size_t width, size_t height, UINT sampleCount, float clearDepth, uint8_t clearStencil, const char* name)
+ComPtr<ID3D12Resource> ModuleResources::createDepthStencil(DXGI_FORMAT format, size_t width, size_t height, UINT sampleCount, float clearDepth, uint8_t clearStencil, bool startInWriteState, const char* name)
 {
     ComPtr<ID3D12Resource> texture;
 
@@ -315,7 +315,7 @@ ComPtr<ID3D12Resource> ModuleResources::createDepthStencil(DXGI_FORMAT format, s
     clear.DepthStencil.Stencil = clearStencil;
 
     app->getD3D12()->getDevice()->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES,
-        &desc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &clear, IID_PPV_ARGS(&texture));
+        &desc, startInWriteState ? D3D12_RESOURCE_STATE_DEPTH_WRITE : D3D12_RESOURCE_STATE_COMMON, &clear, IID_PPV_ARGS(&texture));
 
     texture->SetName(std::wstring(name, name + strlen(name)).c_str());
 

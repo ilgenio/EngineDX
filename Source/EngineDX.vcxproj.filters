@@ -265,6 +265,9 @@
     <ClCompile Include="ShadowMapPass.cpp">
       <Filter>Passes</Filter>
     </ClCompile>
+    <ClCompile Include="DemoShadow.cpp">
+      <Filter>Demos</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EngineDX.h">
@@ -551,6 +554,9 @@
     </ClInclude>
     <ClInclude Include="ShadowMapPass.h">
       <Filter>Passes</Filter>
+    </ClInclude>
+    <ClInclude Include="DemoShadow.h">
+      <Filter>Demos</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

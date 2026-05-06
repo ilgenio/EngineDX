@@ -23,6 +23,7 @@ class ModuleSceneEditor : public Module
 
     Vector4 frustumPlanes[6];
     Vector3 trackedFrustumCorners[8];
+    Vector4 shadowBoundingSphere = Vector4::Zero;
     UINT quadTreeLevel = 0;
 
     SelectionType selectionType = SELECTION_NONE;

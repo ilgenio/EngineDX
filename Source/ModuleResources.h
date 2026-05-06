@@ -52,7 +52,7 @@ public:
     ComPtr<ID3D12Resource> createTextureFromFile(const std::filesystem::path& path, bool defaultSRGB = false);
 
     ComPtr<ID3D12Resource> createRenderTarget(DXGI_FORMAT format, size_t width, size_t height, UINT sampleCount, const Vector4& clearColour, const char* name);
-    ComPtr<ID3D12Resource> createDepthStencil(DXGI_FORMAT format, size_t width, size_t height, UINT sampleCount, float clearDepth, uint8_t clearStencil, const char* name);
+    ComPtr<ID3D12Resource> createDepthStencil(DXGI_FORMAT format, size_t width, size_t height, UINT sampleCount, float clearDepth, uint8_t clearStencil, bool startInWriteState, const char* name);
 
     ComPtr<ID3D12Resource> createCubemapRenderTarget(DXGI_FORMAT format, size_t size, const Vector4& clearColour, const char* name);
     ComPtr<ID3D12Resource> createCubemapRenderTarget(DXGI_FORMAT format, size_t size, size_t mipLevels, const Vector4& clearColour, const char* name);

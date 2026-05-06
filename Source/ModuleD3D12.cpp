@@ -37,7 +37,7 @@ bool ModuleD3D12::init()
     ok = ok && createSwapChain();
     ok = ok && createRenderTargets();
     ok = ok && createDepthStencil();
-    ok = ok && createCommandList();
+    ok = ok && createCommandAllocator();
     ok = ok && createDrawFence();
 
     if (ok)
@@ -372,7 +372,7 @@ bool ModuleD3D12::createRenderTargets()
     return ok;
 }
 
-bool ModuleD3D12::createCommandList()
+bool ModuleD3D12::createCommandAllocator()
 {
     bool ok = true;
     
@@ -460,24 +460,52 @@ void ModuleD3D12::endFrameRender()
     }    
 }
 
-    ComPtr<ID3D12RootSignature> ModuleD3D12::createRootSignature(const CD3DX12_ROOT_SIGNATURE_DESC& desc)
+void ModuleD3D12::resetCommandList(ID3D12GraphicsCommandList* commandList)
+{
+    commandList->Reset(getCommandAllocator(), nullptr);
+}
+
+void ModuleD3D12::executeCommandList(ID3D12GraphicsCommandList* commandList)
+{
+    if (SUCCEEDED(commandList->Close()))
     {
-        ComPtr<ID3DBlob> rootSignatureBlob;
-        ComPtr<ID3DBlob> errorBlob;
-
-        if (FAILED(D3D12SerializeRootSignature(&desc, D3D_ROOT_SIGNATURE_VERSION_1, &rootSignatureBlob, &errorBlob)))
-        {
-            std::wstring msg((char*)errorBlob->GetBufferPointer(), (char*)errorBlob->GetBufferPointer() + errorBlob->GetBufferSize());
-            _ASSERT_EXPR(false, msg.c_str());
-
-            return nullptr;
-        }
-
-        ComPtr<ID3D12RootSignature> rootSig;
-        if (FAILED(device->CreateRootSignature(0, rootSignatureBlob->GetBufferPointer(), rootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSig))))
-        {
-            return nullptr;
-        }
-
-        return rootSig;
+        ID3D12CommandList* commandLists[] = { commandList };
+        getDrawCommandQueue()->ExecuteCommandLists(UINT(std::size(commandLists)), commandLists);
     }
+}
+
+ComPtr<ID3D12GraphicsCommandList> ModuleD3D12::createCommandList()
+{
+    ComPtr<ID3D12GraphicsCommandList> commandList;
+    bool ok = SUCCEEDED(device->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&commandList)));
+
+    if (!ok)
+    {
+        return nullptr;
+    }
+
+    return commandList;
+}
+
+ComPtr<ID3D12RootSignature> ModuleD3D12::createRootSignature(const CD3DX12_ROOT_SIGNATURE_DESC& desc)
+{
+    ComPtr<ID3DBlob> rootSignatureBlob;
+    ComPtr<ID3DBlob> errorBlob;
+
+    if (FAILED(D3D12SerializeRootSignature(&desc, D3D_ROOT_SIGNATURE_VERSION_1, &rootSignatureBlob, &errorBlob)))
+    {
+        std::wstring msg((char*)errorBlob->GetBufferPointer(), (char*)errorBlob->GetBufferPointer() + errorBlob->GetBufferSize());
+        _ASSERT_EXPR(false, msg.c_str());
+
+        return nullptr;
+    }
+
+    ComPtr<ID3D12RootSignature> rootSig;
+    if (FAILED(device->CreateRootSignature(0, rootSignatureBlob->GetBufferPointer(), rootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSig))))
+    {
+        return nullptr;
+    }
+
+    return rootSig;
+}
+

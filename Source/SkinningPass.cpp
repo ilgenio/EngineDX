@@ -75,7 +75,7 @@ std::vector<float> SkinningPass::copyMorphWeights(ID3D12GraphicsCommandList* com
 }
 
 
-void SkinningPass::record(ID3D12GraphicsCommandList* commandList, std::span<RenderMesh> meshes)
+void SkinningPass::render(ID3D12GraphicsCommandList* commandList, std::span<RenderMesh> meshes)
 {
     if (!meshes.empty())
     {

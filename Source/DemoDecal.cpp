@@ -76,14 +76,14 @@ void DemoDecal::serialize()
     std::string configStr;
     config.dump(configStr);
 
-    writeFile("scene_config.json", configStr);
+    writeFile("decal_scene_config.json", configStr);
 }
 
 bool DemoDecal::deserialize()
 {
     ModuleSceneEditor* sceneEditor = app->getSceneEditor();
 
-    std::string configStr = readFile(std::string("scene_config.json"));
+    std::string configStr = readFile(std::string("decal_scene_config.json"));
     std::string error;
     Json configJson = Json::parse(configStr, error);
 

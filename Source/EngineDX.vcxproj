@@ -189,6 +189,7 @@
     <ClInclude Include="DemoDescriptors.h" />
     <ClInclude Include="DemoMorph.h" />
     <ClInclude Include="DemoScene.h" />
+    <ClInclude Include="DemoShadow.h" />
     <ClInclude Include="DemoSkinning.h" />
     <ClInclude Include="DemoTrail.h" />
     <ClInclude Include="DepthStencilDesc.h" />
@@ -348,6 +349,7 @@
     <ClCompile Include="DemoDescriptors.cpp" />
     <ClCompile Include="DemoMorph.cpp" />
     <ClCompile Include="DemoScene.cpp" />
+    <ClCompile Include="DemoShadow.cpp" />
     <ClCompile Include="DemoSkinning.cpp" />
     <ClCompile Include="DemoTrail.cpp" />
     <ClCompile Include="DepthStencilDesc.cpp" />

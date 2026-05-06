@@ -29,7 +29,7 @@ public:
     SkinningPass();
     ~SkinningPass();
 
-    void record(ID3D12GraphicsCommandList* commandList, std::span<RenderMesh> meshes);
+    void render(ID3D12GraphicsCommandList* commandList, std::span<RenderMesh> meshes);
     D3D12_GPU_VIRTUAL_ADDRESS getOutputAddress() const; 
 
 private:

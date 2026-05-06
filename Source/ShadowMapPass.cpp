@@ -5,6 +5,8 @@
 #include "Application.h"
 #include "ModuleD3D12.h"
 #include "ModuleResources.h"
+#include "ModuleTargetDescriptors.h"
+#include "ModuleShaderDescriptors.h"
 
 #include "RenderStructs.h"
 #include "Scene.h"
@@ -13,7 +15,7 @@
 
 #include "Mesh.h"
 
-#define SHADOW_MAP_SIZE 1024
+#define SHADOW_MAP_SIZE 16384 //8192
 
 ShadowMapPass::ShadowMapPass()
 {
@@ -53,6 +55,20 @@ void ShadowMapPass::render(ID3D12GraphicsCommandList* commandList, std::span<con
     commandList->SetGraphicsRootSignature(rootSignature.Get());
     commandList->SetPipelineState(pso.Get());
 
+    D3D12_CPU_DESCRIPTOR_HANDLE dsv = dsvDesc.getCPUHandle();
+    
+
+    CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(shadowMap.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+    commandList->ResourceBarrier(1, &barrier);
+
+    commandList->OMSetRenderTargets(0, nullptr, FALSE, &dsv);
+    commandList->ClearDepthStencilView(dsvDesc.getCPUHandle(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+
+    D3D12_VIEWPORT viewport{ 0.0f, 0.0f, float(SHADOW_MAP_SIZE), float(SHADOW_MAP_SIZE), 0.0f, 1.0f };
+    D3D12_RECT scissor = { 0, 0, LONG(SHADOW_MAP_SIZE), LONG(SHADOW_MAP_SIZE) };
+    commandList->RSSetViewports(1, &viewport);
+    commandList->RSSetScissorRects(1, &scissor);
+
     commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
     for (const RenderMesh& mesh : meshes)
@@ -89,8 +105,10 @@ void ShadowMapPass::render(ID3D12GraphicsCommandList* commandList, std::span<con
         }
     }
 
-    END_EVENT(commandList);
+    barrier = CD3DX12_RESOURCE_BARRIER::Transition(shadowMap.Get(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    commandList->ResourceBarrier(1, &barrier);
 
+    END_EVENT(commandList);
 }
 
 bool ShadowMapPass::createRootSignature()
@@ -110,33 +128,41 @@ bool ShadowMapPass::createRootSignature()
 bool ShadowMapPass::createPSO()
 {
     // Implementation for creating pipeline state object
-    shadowMap = app->getResources()->createDepthStencil(DXGI_FORMAT_D32_FLOAT, SHADOW_MAP_SIZE, SHADOW_MAP_SIZE, 1, 1.0, 1, "ShadowMap");
-
-    return shadowMap != nullptr;
-}
-
-bool ShadowMapPass::createShadowMapResource()
-{
-    // Implementation for creating pipeline state object
     auto dataVS = DX::ReadData(L"shadowMapVS.cso");
     auto dataPS = DX::ReadData(L"shadowMapPS.cso");
 
     D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
-    psoDesc.InputLayout =  Mesh::getInputLayoutDesc();                       
-    psoDesc.pRootSignature = rootSignature.Get();                            
-    psoDesc.VS = { dataVS.data(), dataVS.size() };                           
-    psoDesc.PS = { dataPS.data(), dataPS.size() };                           
-    psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;  
-    psoDesc.SampleDesc = { 1, 0};                                            
-    psoDesc.SampleMask = 0xffffffff;                                         
-    psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);        
-    psoDesc.RasterizerState.FrontCounterClockwise = TRUE;                    
+    psoDesc.InputLayout = Mesh::getInputLayoutDesc();
+    psoDesc.pRootSignature = rootSignature.Get();
+    psoDesc.VS = { dataVS.data(), dataVS.size() };
+    psoDesc.PS = { dataPS.data(), dataPS.size() };
+    psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+    psoDesc.SampleDesc = { 1, 0 };
+    psoDesc.SampleMask = 0xffffffff;
+    psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+    psoDesc.RasterizerState.FrontCounterClockwise = TRUE;
     psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-    psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);                   
+    psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 
     psoDesc.NumRenderTargets = 0; // No render targets, only depth
     psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
 
     // create the pso
-    return SUCCEEDED(app->getD3D12()->getDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pso))); 
+    return SUCCEEDED(app->getD3D12()->getDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pso)));
 }
+
+bool ShadowMapPass::createShadowMapResource()
+{
+    // Implementation for creating pipeline state object
+    shadowMap = app->getResources()->createDepthStencil(DXGI_FORMAT_D32_FLOAT, SHADOW_MAP_SIZE, SHADOW_MAP_SIZE, 1, 1.0, 0, false, "ShadowMap");
+
+    ModuleTargetDescriptors* targetDescriptors = app->getTargetDescriptors();
+
+    dsvDesc = targetDescriptors->createDS(shadowMap.Get());
+
+    srvDesc = app->getShaderDescriptors()->allocTable();
+    srvDesc.createTexture2DSRV(shadowMap.Get(), DXGI_FORMAT_R32_FLOAT);
+
+    return shadowMap != nullptr;
+}
+

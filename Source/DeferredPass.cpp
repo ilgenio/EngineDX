@@ -42,6 +42,7 @@ void DeferredPass::render(ID3D12GraphicsCommandList* commandList, const RenderDa
     commandList->SetGraphicsRootShaderResourceView(SLOT_POINT_LIST, renderData.lightsData.pointLightIndicesAddress);
     commandList->SetGraphicsRootShaderResourceView(SLOT_SPOT_LIST, renderData.lightsData.spotLightIndicesAddress);
     commandList->SetGraphicsRootDescriptorTable(SLOT_IBL_TABLE, renderData.iblTable);
+    commandList->SetGraphicsRootDescriptorTable(SLOT_SHADOW_MAP_TABLE, renderData.shadowMapTable);
     
     commandList->SetGraphicsRootDescriptorTable(SLOT_SAMPLERS, app->getSamplers()->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
 
@@ -57,12 +58,13 @@ bool DeferredPass::createRootSignature()
 {
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
     CD3DX12_ROOT_PARAMETER rootParameters[SLOT_COUNT] = {};
-    CD3DX12_DESCRIPTOR_RANGE lightsTableRange, iblTableRange, gbufferTableRange;
+    CD3DX12_DESCRIPTOR_RANGE lightsTableRange, iblTableRange, gbufferTableRange, shadowMapTableRange;
     CD3DX12_DESCRIPTOR_RANGE sampRange;
 
     gbufferTableRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 4, 0);
     lightsTableRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 4);
     iblTableRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 9);
+    shadowMapTableRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 12);
     sampRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, ModuleSamplers::COUNT, 0);
 
     rootParameters[SLOT_PER_FRAME_CB].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_PIXEL);
@@ -72,6 +74,7 @@ bool DeferredPass::createRootSignature()
     rootParameters[SLOT_SPOT_BUFFER].InitAsShaderResourceView(6, 0, D3D12_SHADER_VISIBILITY_PIXEL);
     rootParameters[SLOT_POINT_LIST].InitAsShaderResourceView(7, 0, D3D12_SHADER_VISIBILITY_PIXEL);  
     rootParameters[SLOT_SPOT_LIST].InitAsShaderResourceView(8, 0, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[SLOT_SHADOW_MAP_TABLE].InitAsDescriptorTable(1, &shadowMapTableRange, D3D12_SHADER_VISIBILITY_PIXEL);
     rootParameters[SLOT_IBL_TABLE].InitAsDescriptorTable(1, &iblTableRange, D3D12_SHADER_VISIBILITY_PIXEL);
     rootParameters[SLOT_SAMPLERS].InitAsDescriptorTable(1, &sampRange, D3D12_SHADER_VISIBILITY_PIXEL);
 
