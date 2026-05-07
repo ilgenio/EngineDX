@@ -83,7 +83,6 @@ Vector4 ModuleRender::computeShadowBoundingSphere() const
 
         // Compute real near and far planes distances to the scene to get a tighter bounding sphere. 
         // This is needed to avoid shadow quality issues when the near/far planes are too far apart.
-
         ModuleCamera* camera = app->getCamera();
         const Matrix& view = camera->getView();
 
@@ -94,22 +93,28 @@ Vector4 ModuleRender::computeShadowBoundingSphere() const
         {
             const BoundingSphere& bsphere = renderMesh.mesh->getBoundingSphere();
             BoundingSphere transformedSphere;
-
-       
+      
             Vector3 viewCenter = Vector3::Transform(bsphere.Center, view);
 
             float distance = -viewCenter.z + bsphere.Radius;
 
-            minDistance = std::min(minDistance, distance);
-            maxDistance = std::max(maxDistance, distance);
+            minDistance = std::min(minDistance, -viewCenter.z - bsphere.Radius);
+            maxDistance = std::max(maxDistance, -viewCenter.z + bsphere.Radius);
         }
 
         // Adjust the near and far planes based on the computed distances
 
-        // TODO: Store near and far planes in the camera 
-        minDistance = std::max(0.1f, minDistance);
-        maxDistance = std::min(maxDistance, 250.0f);
-        //maxDistance = std::max(maxDistance, minDistance + 0.1f);
+        if (minDistance > maxDistance)
+        {
+            minDistance = 0.1f;
+            maxDistance = 250.0f;
+        }
+        else
+        {
+            minDistance = std::max(0.1f, minDistance);
+            maxDistance = std::min(maxDistance, 250.0f);
+            maxDistance = std::max(maxDistance, minDistance + 0.1f);
+        }
 
         Matrix proj = ModuleCamera::getPerspectiveProj(aspect, XM_PIDIV4, minDistance, maxDistance);
 
@@ -121,26 +126,6 @@ Vector4 ModuleRender::computeShadowBoundingSphere() const
 
         BoundingSphere shadowSphere;
         BoundingSphere::CreateFromFrustum(shadowSphere, frustum);
-
-        /*
-        app->getCamera()->getFrustumCorners(corners, aspect);
-
-        Vector3 frustumCenter = Vector3::Zero;
-        for (UINT i = 0; i < 8; ++i)
-        {
-            frustumCenter += corners[i];
-        }
-
-        frustumCenter *= 0.125f;
-
-        float sphereRadius = 0.0f;
-        for (UINT i = 0; i < 8; ++i)
-        {
-            sphereRadius = std::max(sphereRadius, Vector3::Distance(frustumCenter, corners[i]));
-        }
-
-        return Vector4(frustumCenter.x, frustumCenter.y, frustumCenter.z, sphereRadius);
-        */
 
         return Vector4(shadowSphere.Center.x, shadowSphere.Center.y, shadowSphere.Center.z, shadowSphere.Radius);
     }

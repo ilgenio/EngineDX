@@ -15,7 +15,7 @@
 
 #include "Mesh.h"
 
-#define SHADOW_MAP_SIZE 1 << 12 //8192 //16384 
+#define SHADOW_MAP_SIZE 1 << 13 
 
 ShadowMapPass::ShadowMapPass()
 {
@@ -37,7 +37,12 @@ void ShadowMapPass::buildFrustum(Vector4 planes[6], const Vector3& lightDir, con
     Matrix proj = Matrix::CreateOrthographic(sphereRadius * 2.0f, sphereRadius * 2.0f, 0.0f, sphereRadius * 2.0f);
 
     Vector3 eye = sphereCenter - lightDir * sphereRadius;
+
+    Vector3 front = (sphereCenter - eye);
+    front.Normalize();
+
     Vector3 up = Vector3::Up;
+
     Matrix view = Matrix::CreateLookAt(eye, sphereCenter, up);
 
     viewProj = view * proj;
