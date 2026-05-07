@@ -44,6 +44,7 @@ public:
     const D3D12_VERTEX_BUFFER_VIEW& getMorphBufferView() const { return morphView; }
 
     const BoundingBox& getBoundingBox() const { return bbox; }
+    const BoundingSphere& getBoundingSphere() const { return bsphere; }
 
     // Input Layout Descriptor
     static const D3D12_INPUT_LAYOUT_DESC& getInputLayoutDesc() { return inputLayoutDesc; }
@@ -81,6 +82,7 @@ private:
 
     // bounding box
     BoundingBox bbox;
+    BoundingSphere bsphere;
 
     std::unique_ptr<float[]> morphWeights; // initial morph target weights
 

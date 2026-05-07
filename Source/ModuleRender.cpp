@@ -25,6 +25,7 @@
 #include "BuildTileLightsPass.h"
 #include "ShadowMapPass.h"
 #include "DecalPass.h"
+#include "Mesh.h"
 
 #include "json_utils.h"
 
@@ -79,6 +80,49 @@ Vector4 ModuleRender::computeShadowBoundingSphere() const
     {
         Vector3 corners[8];
         float aspect = getRenderTargetAspect();
+
+        // Compute real near and far planes distances to the scene to get a tighter bounding sphere. 
+        // This is needed to avoid shadow quality issues when the near/far planes are too far apart.
+
+        ModuleCamera* camera = app->getCamera();
+        const Matrix& view = camera->getView();
+
+        float minDistance = FLT_MAX;
+        float maxDistance = 0.0f;
+
+        for(const auto& renderMesh : renderList)
+        {
+            const BoundingSphere& bsphere = renderMesh.mesh->getBoundingSphere();
+            BoundingSphere transformedSphere;
+
+       
+            Vector3 viewCenter = Vector3::Transform(bsphere.Center, view);
+
+            float distance = -viewCenter.z + bsphere.Radius;
+
+            minDistance = std::min(minDistance, distance);
+            maxDistance = std::max(maxDistance, distance);
+        }
+
+        // Adjust the near and far planes based on the computed distances
+
+        // TODO: Store near and far planes in the camera 
+        minDistance = std::max(0.1f, minDistance);
+        maxDistance = std::min(maxDistance, 250.0f);
+        //maxDistance = std::max(maxDistance, minDistance + 0.1f);
+
+        Matrix proj = ModuleCamera::getPerspectiveProj(aspect, XM_PIDIV4, minDistance, maxDistance);
+
+        BoundingFrustum frustum;
+        frustum.CreateFromMatrix(frustum, proj, true);
+
+        frustum.Origin = camera->getPos();
+        frustum.Orientation = camera->getRot();
+
+        BoundingSphere shadowSphere;
+        BoundingSphere::CreateFromFrustum(shadowSphere, frustum);
+
+        /*
         app->getCamera()->getFrustumCorners(corners, aspect);
 
         Vector3 frustumCenter = Vector3::Zero;
@@ -96,6 +140,9 @@ Vector4 ModuleRender::computeShadowBoundingSphere() const
         }
 
         return Vector4(frustumCenter.x, frustumCenter.y, frustumCenter.z, sphereRadius);
+        */
+
+        return Vector4(shadowSphere.Center.x, shadowSphere.Center.y, shadowSphere.Center.z, shadowSphere.Radius);
     }
 
     return Vector4::Zero;

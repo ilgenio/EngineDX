@@ -15,7 +15,7 @@
 
 #include "Mesh.h"
 
-#define SHADOW_MAP_SIZE 16384 //8192
+#define SHADOW_MAP_SIZE 1 << 12 //8192 //16384 
 
 ShadowMapPass::ShadowMapPass()
 {

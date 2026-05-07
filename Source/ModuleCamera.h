@@ -63,6 +63,6 @@ public:
     void getFrustumPlanes(Vector4 planes[6], float aspect, bool normalize) const;
     void getFrustumCorners(Vector3 corners[8], float aspect) const;
 
-    static Matrix getPerspectiveProj(float aspect, float fov = XM_PIDIV4 * 0.5f, float nearPlane = 0.1f, float farPlane = 25.0f);
+    static Matrix getPerspectiveProj(float aspect, float fov = XM_PIDIV4, float nearPlane = 0.1f, float farPlane = 250.0f);
 
 };

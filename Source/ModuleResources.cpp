@@ -117,7 +117,7 @@ ComPtr<ID3D12Resource> ModuleResources::createDefaultBuffer(const void* data, si
     return buffer;
 }
 
-ComPtr<ID3D12Resource> ModuleResources::createRawTexture2D(const void* data, size_t rowSize, size_t width, size_t height, DXGI_FORMAT format)
+ComPtr<ID3D12Resource> ModuleResources::createDefaultTexture2D(size_t width, size_t height, DXGI_FORMAT format, D3D12_RESOURCE_FLAGS flags, const char *name)
 {
     ModuleD3D12* d3d12 = app->getD3D12();
     ID3D12Device2* device = d3d12->getDevice();
@@ -128,53 +128,14 @@ ComPtr<ID3D12Resource> ModuleResources::createRawTexture2D(const void* data, siz
     desc.MipLevels = 1;
     desc.DepthOrArraySize = 1;
     desc.Format = format;
-    desc.Flags = D3D12_RESOURCE_FLAG_NONE;
+    desc.Flags = flags;
     desc.SampleDesc.Count = 1;
     desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 
     ComPtr<ID3D12Resource> texture = nullptr;
 
     CD3DX12_HEAP_PROPERTIES heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-    bool ok = SUCCEEDED(device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&texture)));
-
-
-    UINT64 requiredSize = 0;
-
-    D3D12_PLACED_SUBRESOURCE_FOOTPRINT layout = {};
-
-    device->GetCopyableFootprints(&desc, 0, 1, 0, &layout, nullptr, nullptr, &requiredSize);
-    ComPtr<ID3D12Resource> upload = createUploadBuffer(requiredSize);
-
-    if (ok)
-    {
-        BYTE* uploadData = nullptr;
-        CD3DX12_RANGE readRange(0, 0);
-        upload->Map(0, &readRange, reinterpret_cast<void**>(&uploadData));
-        for (uint32_t i = 0; i < height; ++i)
-        {
-            memcpy(uploadData + layout.Offset + layout.Footprint.RowPitch *i, (BYTE*)data + rowSize * i , rowSize);
-        }
-
-        upload->Unmap(0, nullptr);
-
-        CD3DX12_TEXTURE_COPY_LOCATION Dst(texture.Get(), 0);
-        CD3DX12_TEXTURE_COPY_LOCATION Src(upload.Get(), layout);
-        commandList->CopyTextureRegion(&Dst, 0, 0, 0, &Src, nullptr);
-
-        CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(texture.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-        commandList->ResourceBarrier(1, &barrier);
-        commandList->Close();
-
-        ID3D12CommandList* commandLists[] = { commandList.Get() };
-        ID3D12CommandQueue* queue = d3d12->getDrawCommandQueue();
-
-        queue->ExecuteCommandLists(UINT(std::size(commandLists)), commandLists);
-
-        d3d12->flush();
-
-        commandAllocator->Reset();
-        ok = SUCCEEDED(commandList->Reset(commandAllocator.Get(), nullptr));
-    }
+    bool ok = SUCCEEDED(device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&texture)));
 
     return texture;
 }

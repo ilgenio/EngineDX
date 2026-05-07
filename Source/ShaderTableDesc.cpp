@@ -84,6 +84,19 @@ void ShaderTableDesc::createTextureSRV(ID3D12Resource *resource, UINT8 slot)
     }
 }
 
+void ShaderTableDesc::createTextureUAV(ID3D12Resource *resource, UINT8 slot)
+{
+    _ASSERTE(slot < ModuleShaderDescriptors::DESCRIPTORS_PER_TABLE);
+
+    if (resource)
+    {
+        ModuleShaderDescriptors *descriptors = app->getShaderDescriptors();
+        _ASSERTE(descriptors->isValid(handle));
+
+        app->getD3D12()->getDevice()->CreateUnorderedAccessView(resource, nullptr, nullptr, descriptors->getCPUHandle(handle, slot));
+    }
+}
+
 void ShaderTableDesc::createTexture2DSRV(ID3D12Resource* resource, DXGI_FORMAT format, UINT8 slot)
 {
     _ASSERTE(slot < ModuleShaderDescriptors::DESCRIPTORS_PER_TABLE);

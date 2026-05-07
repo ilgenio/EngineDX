@@ -392,6 +392,7 @@ void Model::frustumCulling(const Vector4 frustumPlanes[6], const Vector3 absFrus
                 renderMesh.numMorphTargets = renderMesh.mesh->getNumMorphTargets();
             }
 
+
             renderList.push_back(renderMesh);
         }
     }
