@@ -268,6 +268,9 @@
     <ClCompile Include="DemoShadow.cpp">
       <Filter>Demos</Filter>
     </ClCompile>
+    <ClCompile Include="DepthMinMaxPass.cpp">
+      <Filter>Passes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EngineDX.h">
@@ -558,6 +561,9 @@
     <ClInclude Include="DemoShadow.h">
       <Filter>Demos</Filter>
     </ClInclude>
+    <ClInclude Include="DepthMinMaxPass.h">
+      <Filter>Passes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="EngineDX.ico">
@@ -791,6 +797,12 @@
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\shadowMapVS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\minMaxDepthCS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\buildShadowVPCS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>

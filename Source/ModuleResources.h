@@ -53,7 +53,7 @@ public:
         return createDefaultTexture2D(width, height, format, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, name);
     }
 
-    //ComPtr<ID3D12Resource> createRawTexture2D(const void* data, size_t rowSize, size_t width, size_t height);
+    ComPtr<ID3D12Resource> createRawTexture2D(const void* data, size_t rowSize, size_t width, size_t height);
     ComPtr<ID3D12Resource> createTextureFromMemory(const void* data, size_t size, const char* name);
     ComPtr<ID3D12Resource> createTextureFromFile(const std::filesystem::path& path, bool defaultSRGB = false);
 

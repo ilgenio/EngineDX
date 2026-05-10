@@ -35,6 +35,7 @@ void DeferredPass::render(ID3D12GraphicsCommandList* commandList, const RenderDa
     commandList->SetPipelineState(pso.Get());
 
     commandList->SetGraphicsRootConstantBufferView(SLOT_PER_FRAME_CB, renderData.perFrameBuffer);
+    commandList->SetGraphicsRootConstantBufferView(SLOT_SHADOW_VIEW_PROJ, renderData.shadowViewProjBuffer);
     commandList->SetGraphicsRootDescriptorTable(SLOT_GBUFFER_TABLE, renderData.gBuffer.getSrvTableDesc().getGPUHandle());
     commandList->SetGraphicsRootShaderResourceView(SLOT_DIRECTIONAL_BUFFER, renderData.lightsData.directionalLightsAddress);
     commandList->SetGraphicsRootShaderResourceView(SLOT_POINT_BUFFER, renderData.lightsData.pointLightsAddress);
@@ -68,6 +69,7 @@ bool DeferredPass::createRootSignature()
     sampRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, ModuleSamplers::COUNT, 0);
 
     rootParameters[SLOT_PER_FRAME_CB].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[SLOT_SHADOW_VIEW_PROJ].InitAsConstantBufferView(1, 0, D3D12_SHADER_VISIBILITY_PIXEL);
     rootParameters[SLOT_GBUFFER_TABLE].InitAsDescriptorTable(1, &gbufferTableRange, D3D12_SHADER_VISIBILITY_PIXEL);
     rootParameters[SLOT_DIRECTIONAL_BUFFER].InitAsShaderResourceView(4, 0, D3D12_SHADER_VISIBILITY_PIXEL);
     rootParameters[SLOT_POINT_BUFFER].InitAsShaderResourceView(5, 0, D3D12_SHADER_VISIBILITY_PIXEL);

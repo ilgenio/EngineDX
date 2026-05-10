@@ -18,6 +18,7 @@ class SkinningPass;
 class BuildTileLightsPass;
 class DecalPass;
 class ShadowMapPass;
+class DepthMinMaxPass;
 struct RenderMesh;  
 struct RenderData;
 
@@ -33,6 +34,7 @@ class ModuleRender : public Module
     std::unique_ptr<BuildTileLightsPass> buildTileLightsPass;
     std::unique_ptr<DecalPass>           decalPass;     
     std::unique_ptr<ShadowMapPass>       shadowMapPass;    
+    std::unique_ptr<DepthMinMaxPass>     depthMinMaxPass;
 
     // Render Data
     std::vector<RenderMesh>             renderList;

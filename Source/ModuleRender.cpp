@@ -25,6 +25,7 @@
 #include "BuildTileLightsPass.h"
 #include "ShadowMapPass.h"
 #include "DecalPass.h"
+#include "DepthMinMaxPass.h"
 #include "Mesh.h"
 
 #include "json_utils.h"
@@ -56,6 +57,7 @@ bool ModuleRender::init()
     buildTileLightsPass = std::make_unique<BuildTileLightsPass>();
     decalPass           = std::make_unique<DecalPass>();  
     shadowMapPass       = std::make_unique<ShadowMapPass>();
+    depthMinMaxPass = std::make_unique<DepthMinMaxPass>();
 
     bool ok = renderMeshPass->init(false);
     ok = ok && gbufferPass->init();
@@ -199,6 +201,7 @@ void ModuleRender::preRender()
         renderTexture->resize(sizeX, sizeY);
         renderData.gBuffer.resize(sizeX, sizeY);
         buildTileLightsPass->resize(sizeX, sizeY);
+        depthMinMaxPass->resize(sizeX, sizeY);
     }
 
     ModuleD3D12* d3d12 = app->getD3D12();
@@ -302,7 +305,6 @@ void ModuleRender::updatePerFrameData()
     perFrameData.cameraPosition = camera->getPos();
     perFrameData.proj = proj.Transpose();
     perFrameData.invView = invView.Transpose();
-    perFrameData.shadowViewProj = shadowMapPass->getViewProj().Transpose();
 
     renderData.perFrameBuffer = app->getRingBuffer()->alloc(&perFrameData);
     renderData.iblTable = app->getScene()->getSkybox()->getIBLTable();
@@ -405,16 +407,22 @@ void ModuleRender::render()
 
         // Updates skinning
         skinningPass->render(commandList, std::span<RenderMesh>(renderList.data(), renderList.size()));
-        //executeCommands(commandList);
-
         renderData.skinningBuffer = skinningPass->getOutputAddress();
 
-        // Render shadow map
-        shadowMapPass->render(commandList, shadowCasters, renderData);
-        //executeCommands(commandList);
+        // Depth reduction pass
 
         // G-Buffer export
         renderGBuffer(commandList);
+
+        // Shadows
+        const auto& directionalLights = app->getScene()->getScene()->getDirectionalLights();
+        if (!directionalLights.empty())
+        {
+            depthMinMaxPass->record(commandList, directionalLights[0]->Ld, renderData);
+            renderData.shadowViewProjBuffer = depthMinMaxPass->getVPBufferAddress();
+
+            shadowMapPass->render(commandList, shadowCasters, renderData);
+        }
 
         // Tile light building pass
         updateLightsList(commandList);

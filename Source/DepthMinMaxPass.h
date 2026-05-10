@@ -8,16 +8,24 @@ struct RenderData;
 // This is used for sample distribution shadow maps 
 class DepthMinMaxPass
 {
-    enum RootParams
+    enum MinMaxRootParams
     {
-        ROOTPARAM_CONSTANTS = 0,
-        ROOTPARAM_INPUT_DEPTH,
-        ROOTPARAM_INPUT_MINMAX,
-        ROOTPARAM_OUTPUT,
-        ROOTPARAM_COUNT
+        MINMAX_ROOTPARAM_CONSTANTS = 0,
+        MINMAX_ROOTPARAM_INPUT_DEPTH,
+        MINMAX_ROOTPARAM_INPUT_MINMAX,
+        MINMAX_ROOTPARAM_OUTPUT,
+        MINMAX_ROOTPARAM_COUNT
     };
 
-    struct Constants
+    enum BuildRootParams
+    {
+        BUILD_ROOTPARAM_CONSTANTS = 0,
+        BUILD_ROOTPARAM_INPUT_MINMAX,
+        BUILD_ROOTPARAM_OUTPUT_VP,
+        BUILD_ROOTPARAM_COUNT
+    };
+
+    struct MinMaxConstants
     {
         UINT width;
         UINT height;
@@ -25,9 +33,23 @@ class DepthMinMaxPass
         UINT padding; // Padding to make the size of the constants buffer a multiple of 16 bytes
     };
 
-    ComPtr<ID3D12RootSignature> rootSignature;
-    ComPtr<ID3D12PipelineState> pso;
+    struct BuildConstants
+    {
+        Matrix  projection;
+        Matrix  invView;
+        Vector3 lightDir;
+        float   aspectRatio;
+        float   fov;
+        float   padding[3]; // Padding to make the size of the constants buffer a multiple of 16 bytes
+    };
 
+    ComPtr<ID3D12RootSignature> minMaxRS;
+    ComPtr<ID3D12PipelineState> minMaxPSO;
+
+    ComPtr<ID3D12RootSignature> buildRS;
+    ComPtr<ID3D12PipelineState> buildPSO;
+    
+    ComPtr<ID3D12Resource> vpBuffer; 
     ComPtr<ID3D12Resource> depthMinMaxTexture[2]; // ping-pong textures for compute shader output
     ShaderTableDesc shaderTableDesc;
 
@@ -41,8 +63,14 @@ public:
     ~DepthMinMaxPass();
 
     void resize(UINT width, UINT height);
-    void record(ID3D12GraphicsCommandList* commandList, const RenderData& renderData);
+    void record(ID3D12GraphicsCommandList* commandList, const Vector3& lightDir, const RenderData& renderData);
+
+    D3D12_GPU_VIRTUAL_ADDRESS getVPBufferAddress() const { return vpBuffer->GetGPUVirtualAddress(); }
+
 private:
-    bool createRootSignature();
-    bool createPSO();
+    bool createMinMaxRS();
+    bool createMinMaxPSO();
+
+    bool createBuildRS();
+    bool createBuildPSO();
 };

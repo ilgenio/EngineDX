@@ -13,7 +13,6 @@ class ShadowMapPass
     DepthStencilDesc dsvDesc;
     ShaderTableDesc  srvDesc;
 
-
     ComPtr<ID3D12RootSignature> rootSignature;
     ComPtr<ID3D12PipelineState> pso;
     Matrix viewProj = Matrix::Identity;

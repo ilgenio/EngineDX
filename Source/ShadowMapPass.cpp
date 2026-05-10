@@ -15,7 +15,7 @@
 
 #include "Mesh.h"
 
-#define SHADOW_MAP_SIZE 1 << 13 
+#define SHADOW_MAP_SIZE 1 << 12
 
 ShadowMapPass::ShadowMapPass()
 {
@@ -76,14 +76,15 @@ void ShadowMapPass::render(ID3D12GraphicsCommandList* commandList, std::span<con
 
     commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
+
     for (const RenderMesh& mesh : meshes)
     {
-        Matrix mvp;
+        Matrix model;
 
         if (mesh.numJoints > 0 || mesh.numMorphTargets > 0) // skinned mesh
         {
             // Note: Skinned mesh has already bee transformed in the skinning pass 
-            mvp = viewProj.Transpose();
+            model = Matrix::Identity;
 
             D3D12_VERTEX_BUFFER_VIEW vertexBufferView = mesh.mesh->getVertexBufferView();
             vertexBufferView.BufferLocation = renderData.skinningBuffer + mesh.skinningOffset;
@@ -92,12 +93,13 @@ void ShadowMapPass::render(ID3D12GraphicsCommandList* commandList, std::span<con
         }
         else // rigid mesh
         {
-            mvp = (mesh.transform * viewProj).Transpose();
+            model = mesh.transform.Transpose();
 
             commandList->IASetVertexBuffers(0, 1, &mesh.mesh->getVertexBufferView());
         }
 
-        commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &mvp, 0);
+        commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix) / sizeof(UINT32), &model, 0);
+        commandList->SetGraphicsRootConstantBufferView(1, renderData.shadowViewProjBuffer);
 
         if (mesh.mesh->getNumIndices() > 0) // indexed draw
         {
@@ -119,11 +121,12 @@ void ShadowMapPass::render(ID3D12GraphicsCommandList* commandList, std::span<con
 bool ShadowMapPass::createRootSignature()
 {
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-    CD3DX12_ROOT_PARAMETER rootParameter = {};
+    CD3DX12_ROOT_PARAMETER rootParameter[2] = {};
 
-    rootParameter.InitAsConstants((sizeof(Matrix) / sizeof(UINT32)), 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
+    rootParameter[0].InitAsConstants((sizeof(Matrix) / sizeof(UINT32)), 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
+    rootParameter[1].InitAsConstantBufferView(1, 0, D3D12_SHADER_VISIBILITY_VERTEX);
 
-    rootSignatureDesc.Init(1, &rootParameter, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+    rootSignatureDesc.Init(2, rootParameter, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
     rootSignature = app->getD3D12()->createRootSignature(rootSignatureDesc);
 

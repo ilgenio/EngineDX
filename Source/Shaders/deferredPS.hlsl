@@ -22,8 +22,11 @@ cbuffer PerFrame : register(b0)
 
     float4x4 proj; // projection matrix
     float4x4 invView; // Inverse view matrix
+};
 
-    float4x4 shadowViewProj; // directional light's shadow view-projection matrix
+cbuffer ShadowData : register(b1)
+{
+    float4x4 shadowViewProj; // Light's view-projection matrix for shadow mapping
 };
 
 Texture2D gBufferAlbedo : register(t0);
@@ -67,7 +70,7 @@ float inShadow(in float3 worldPos)
     float currentDepth = shadowNDC.z;
 
     // Bias to prevent shadow acne
-    float bias = 0.0001; // TODO: pass bias as a PerFrame variable and adjust based on light angle and scene scale
+    float bias = 0.001; // TODO: pass bias as a PerFrame variable and adjust based on light angle and scene scale
 
     return currentDepth - bias > closestDepth ? 0.0 : 1.0;
 }
