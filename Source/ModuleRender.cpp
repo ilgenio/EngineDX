@@ -118,6 +118,9 @@ Vector4 ModuleRender::computeShadowBoundingSphere() const
             maxDistance = std::max(maxDistance, minDistance + 0.1f);
         }
 
+        minDistance = 0.1f;
+        maxDistance = 250.0f;
+
         Matrix proj = ModuleCamera::getPerspectiveProj(aspect, XM_PIDIV4, minDistance, maxDistance);
 
         BoundingFrustum frustum;
@@ -316,15 +319,12 @@ void ModuleRender::renderGBuffer(ID3D12GraphicsCommandList* commandList)
     // Render GBuffer passes and transitions 
     renderData.gBuffer.beginRender(commandList);
     gbufferPass->render(commandList, renderList, renderData);
-    //executeCommands(commandList);
 
     // Transition depth buffer to SRV for light culling and decals rendering
     renderData.gBuffer.transitionDepthToSRV(commandList);
 
     // Render decals
     decalPass->render(commandList, app->getScene()->getDecals(), renderData);
-    //executeCommands(commandList);
-
     renderData.gBuffer.endRender(commandList);
 }
 
@@ -420,6 +420,8 @@ void ModuleRender::render()
         {
             depthMinMaxPass->record(commandList, directionalLights[0]->Ld, renderData);
             renderData.shadowViewProjBuffer = depthMinMaxPass->getVPBufferAddress();
+            //Matrix shadowViewProj = shadowMapPass->getViewProj().Transpose();
+            //renderData.shadowViewProjBuffer = app->getRingBuffer()->alloc(&shadowViewProj);
 
             shadowMapPass->render(commandList, shadowCasters, renderData);
         }

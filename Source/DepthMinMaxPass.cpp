@@ -68,6 +68,8 @@ void DepthMinMaxPass::record(ID3D12GraphicsCommandList* commandList, const Vecto
 {
     BEGIN_EVENT(commandList, "DepthMinMax Pass");
 
+    ModuleRingBuffer* ringBuffer = app->getRingBuffer();
+
     UINT numTilesX = getDivisedSize(width, GROUP_SIZE_X);
     UINT numTilesY = getDivisedSize(height, GROUP_SIZE_Y);
 
@@ -85,21 +87,22 @@ void DepthMinMaxPass::record(ID3D12GraphicsCommandList* commandList, const Vecto
 
     while(true)
     {
-        UINT transitionToUAVIndex = (pingPongIndex + 1) % 2; // The texture index that will be used as UAV in this iteration
-
-        CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(depthMinMaxTexture[transitionToUAVIndex].Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-        commandList->ResourceBarrier(1, &barrier);
-
         UINT srvIndex = pingPongIndex % 2;  // 0 for first iteration, then alternates between 0 and 1
         UINT uavIndex = 2 + srvIndex;       // 2 for first iteration, then alternates between 2 and 3
 
-        commandList->SetComputeRoot32BitConstants(MINMAX_ROOTPARAM_CONSTANTS, sizeof(MinMaxConstants) / 4, &constants, 0);
+        UINT transitionToUAVIndex = (srvIndex + 1) % 2;
+
+        CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(depthMinMaxTexture[transitionToUAVIndex].Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+        commandList->ResourceBarrier(1, &barrier);
+
+
+        commandList->SetComputeRootConstantBufferView(MINMAX_ROOTPARAM_CONSTANTS, ringBuffer->alloc(&constants));
         commandList->SetComputeRootDescriptorTable(MINMAX_ROOTPARAM_INPUT_MINMAX, shaderTableDesc.getGPUHandle(srvIndex)); 
         commandList->SetComputeRootDescriptorTable(MINMAX_ROOTPARAM_OUTPUT, shaderTableDesc.getGPUHandle(uavIndex)); 
 
         commandList->Dispatch(numTilesX, numTilesY, 1);
 
-        barrier = CD3DX12_RESOURCE_BARRIER::Transition(depthMinMaxTexture[transitionToUAVIndex].Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+        barrier = CD3DX12_RESOURCE_BARRIER::Transition(depthMinMaxTexture[transitionToUAVIndex].Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
         commandList->ResourceBarrier(1, &barrier);
 
         // Dispatch compute shader with enough thread groups to cover numTilesX x numTilesY
@@ -131,7 +134,6 @@ void DepthMinMaxPass::record(ID3D12GraphicsCommandList* commandList, const Vecto
     commandList->SetComputeRootSignature(buildRS.Get());
 
     ModuleCamera* camera = app->getCamera();
-    ModuleRingBuffer* ringBuffer = app->getRingBuffer();
 
     float aspectRatio = float(width) / float(height);
 
@@ -147,12 +149,12 @@ void DepthMinMaxPass::record(ID3D12GraphicsCommandList* commandList, const Vecto
     commandList->SetComputeRootDescriptorTable(BUILD_ROOTPARAM_INPUT_MINMAX, shaderTableDesc.getGPUHandle(finalSrvIndex));
     commandList->SetComputeRootUnorderedAccessView(BUILD_ROOTPARAM_OUTPUT_VP, vpBuffer->GetGPUVirtualAddress()); 
 
-    CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(vpBuffer.Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+    CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(vpBuffer.Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
     commandList->ResourceBarrier(1, &barrier);
 
     commandList->Dispatch(1, 1, 1);
 
-    barrier = CD3DX12_RESOURCE_BARRIER::Transition(vpBuffer.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+    barrier = CD3DX12_RESOURCE_BARRIER::Transition(vpBuffer.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
     commandList->ResourceBarrier(1, &barrier);
 
     END_EVENT(commandList);
@@ -168,7 +170,7 @@ bool DepthMinMaxPass::createMinMaxRS()
     ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1);
     ranges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0);
 
-    rootParameters[MINMAX_ROOTPARAM_CONSTANTS].InitAsConstants(sizeof(MinMaxConstants) / 4, 0); // size in 32-bit values, register b0    
+    rootParameters[MINMAX_ROOTPARAM_CONSTANTS].InitAsConstantBufferView(0); // size in 32-bit values, register b0    
     rootParameters[MINMAX_ROOTPARAM_INPUT_DEPTH].InitAsDescriptorTable(1, &ranges[0]); // SRV for input depth texture
     rootParameters[MINMAX_ROOTPARAM_INPUT_MINMAX].InitAsDescriptorTable(1, &ranges[1]); // SRV for input min-max texture
     rootParameters[MINMAX_ROOTPARAM_OUTPUT].InitAsDescriptorTable(1, &ranges[2]); // UAV for output min-max texture

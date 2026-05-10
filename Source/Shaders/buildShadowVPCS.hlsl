@@ -9,6 +9,8 @@ cbuffer BuildMVPData : register(b0)
     float fov;
 };
 
+#define SUN_DISTANCE 50.0
+
 Texture2D<float2> inputMinMax : register(t0);
 RWStructuredBuffer<float4x4> outputVP : register(u0);
 
@@ -100,6 +102,8 @@ void main()
 {
     float2 minMaxDepth = inputMinMax.Load(int3(0, 0, 0));
 
+    minMaxDepth.y = max(minMaxDepth.y, minMaxDepth.x + 0.01); // Ensure far plane is always greater than near plane
+
     float near = -lineariseDepth(minMaxDepth.x, projection);
     float far = -lineariseDepth(minMaxDepth.y, projection);
 
@@ -111,10 +115,10 @@ void main()
     float4 sphere = sphereFromPoints(cornerPoints);
 
     // Compute new view matrix 
-    float3 eye = sphere.xyz - lightDir * sphere.w;
+    float3 eye = sphere.xyz - lightDir * (sphere.w + SUN_DISTANCE);
     float3 up = float3(0, 1, 0);
 
     float4x4 view = getView(eye, sphere.xyz, up);
 
-    outputVP[0] = mul(view, getOrthographicProj(sphere.w * 2.0, sphere.w * 2.0, 0.0, sphere.w * 2.0));
+    outputVP[0] = mul(view, getOrthographicProj(sphere.w * 2.0, sphere.w * 2.0, 0.0, sphere.w*2 + SUN_DISTANCE )); 
 }

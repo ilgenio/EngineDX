@@ -14,7 +14,7 @@ class ModuleRender;
 class ModuleScene;
 class ModuleSceneEditor;
 class ModuleResources;
-class ModuleShaderDescriptors;
+class ModuleShaderDescriptors; 
 class ModuleTargetDescriptors;
 class ModuleSamplers;
 class ModuleRingBuffer;

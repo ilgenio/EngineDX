@@ -47,20 +47,21 @@ TextureCube irradiance : register(t9);
 TextureCube radiance : register(t10);
 Texture2D  brdfLUT : register(t11);
 
-float3 computeShadowCoord(in float3 worldPos)
+float3 convertToShadowSpace(in float3 worldPos)
 {
-    float4 shadowPos = mul(float4(worldPos, 1.0), shadowViewProj);
-    shadowPos /= shadowPos.w;
+    float4 shadowPos = mul(float4(worldPos, 1.0), shadowViewProj); // clipping space
+
+    shadowPos /= shadowPos.w; // Now in NDC space [-1, 1] 
 
     // Transform from NDC to UV space
-    shadowPos.xy = ndcToUV(shadowPos.xy); 
+    shadowPos.xy = ndcToUV(shadowPos.xy); // convert x,y to [0, 1] for texture sampling
 
     return shadowPos.xyz;
 }
 
 float inShadow(in float3 worldPos)
 {
-    float3 shadowNDC = computeShadowCoord(worldPos);
+    float3 shadowNDC = convertToShadowSpace(worldPos);
     
     // If outside of shadow map, consider it lit
     if (shadowNDC.x < 0.0 || shadowNDC.x > 1.0 || shadowNDC.y < 0.0 || shadowNDC.y > 1.0 || shadowNDC.z < 0.0 || shadowNDC.z > 1.0)
@@ -70,7 +71,7 @@ float inShadow(in float3 worldPos)
     float currentDepth = shadowNDC.z;
 
     // Bias to prevent shadow acne
-    float bias = 0.001; // TODO: pass bias as a PerFrame variable and adjust based on light angle and scene scale
+    float bias = 0.00001; // TODO: pass bias as a PerFrame variable and adjust based on light angle and scene scale
 
     return currentDepth - bias > closestDepth ? 0.0 : 1.0;
 }

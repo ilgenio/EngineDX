@@ -75,9 +75,11 @@ void ModuleD3D12::preRender()
 }
 
 void ModuleD3D12::postRender()
-
 {
-    swapChain->Present(0, allowTearing ? DXGI_PRESENT_ALLOW_TEARING : 0);
+    UINT syncInterval = vsync ? 1 : 0;
+    UINT presentFlags = (!vsync && allowTearing) ? DXGI_PRESENT_ALLOW_TEARING : 0;
+
+    swapChain->Present(syncInterval, presentFlags);
 
     signalDrawQueue();
 }
@@ -463,6 +465,9 @@ void ModuleD3D12::endFrameRender()
 void ModuleD3D12::resetCommandList(ID3D12GraphicsCommandList* commandList)
 {
     commandList->Reset(getCommandAllocator(), nullptr);
+    ID3D12DescriptorHeap* descriptorHeaps[] = { app->getShaderDescriptors()->getHeap(), app->getSamplers()->getHeap() };
+    commandList->SetDescriptorHeaps(2, descriptorHeaps);
+
 }
 
 void ModuleD3D12::executeCommandList(ID3D12GraphicsCommandList* commandList)
