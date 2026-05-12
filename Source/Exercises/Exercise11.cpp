@@ -112,7 +112,7 @@ void Exercise11::renderToTexture(ID3D12GraphicsCommandList* commandList)
     
    
     const Matrix & view = camera->getView();
-    Matrix proj = ModuleCamera::getPerspectiveProj(float(width) / float(height));
+    Matrix proj = camera->getPerspectiveProj(float(width) / float(height));
     Matrix mvp = model->getModelMatrix() * view * proj;
     mvp = mvp.Transpose();
 

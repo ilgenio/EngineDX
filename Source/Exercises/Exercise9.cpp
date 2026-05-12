@@ -90,7 +90,7 @@ void Exercise9::render()
     commandList->RSSetViewports(1, &viewport);
     commandList->RSSetScissorRects(1, &scissor);
 
-    Matrix proj = ModuleCamera::getPerspectiveProj(float(width) / float(height));
+    Matrix proj = camera->getPerspectiveProj(float(width) / float(height));
     skyboxRenderPass->record(commandList, tableDesc.getGPUHandle(1), camera->getRot(), proj);
     debugDrawPass->record(commandList, width, height, camera->getView(), proj);
 

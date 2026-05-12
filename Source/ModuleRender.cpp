@@ -91,8 +91,8 @@ void ModuleRender::updateShadowFrustum()
         ModuleCamera* camera = app->getCamera();
         const Matrix& view = camera->getView();
 
-        float currentNear = 0.1f;
-        float currentFar = 250.0f;
+        float currentNear = camera->getNearPlane();
+        float currentFar = camera->getFarPlane();
 
         float minDistance = FLT_MAX;
         float maxDistance = 0.0f;
@@ -122,8 +122,8 @@ void ModuleRender::updateShadowFrustum()
             maxDistance = std::max(maxDistance, minDistance + 0.0001f);
         }
 
-        Matrix proj = ModuleCamera::getPerspectiveProj(aspect, XM_PIDIV4, minDistance, maxDistance);
-
+        Matrix proj = Matrix::CreatePerspectiveFieldOfView(aspect, camera->getFov(), minDistance, maxDistance);
+            
         BoundingFrustum frustum;
         frustum.CreateFromMatrix(frustum, proj, true);
         frustum.Origin = camera->getPos();
@@ -144,11 +144,11 @@ void ModuleRender::updateShadowFrustum()
         Vector3 up = Vector3::Up;
         shadowView = Matrix::CreateLookAt(eye, target, up);
 
-        // Planes
+        // Get Planes for doing culling
         Vector4 shadowFrustumPlanes[6];
         getPlanes(shadowFrustumPlanes, shadowView * shadowProj, true);
 
-        // Culling
+        // Frustum Culling
         shadowCasters.clear();
         app->getScene()->getScene()->frustumCulling(shadowFrustumPlanes, shadowCasters);
     }
@@ -267,7 +267,7 @@ void ModuleRender::imGuiDrawCommands()
         if (ImGui::IsKeyPressed(ImGuiKey_R)) gizmoOperation = ImGuizmo::ROTATE;
 
         const Matrix& viewMatrix = camera->getView();
-        Matrix projMatrix = ModuleCamera::getPerspectiveProj(float(canvasSize.x) / float(canvasSize.y));
+        Matrix projMatrix = camera->getPerspectiveProj(float(canvasSize.x) / float(canvasSize.y));
 
         ImGuizmo::SetRect(cursorPos.x, cursorPos.y, canvasSize.x, canvasSize.y);
         ImGuizmo::SetDrawlist();
@@ -292,7 +292,7 @@ void ModuleRender::updatePerFrameData()
     float aspect = float(width) / float(height);
     const Matrix& invView = camera->getCamera(); // Note: camera matrix is the inverse of the view matrix
     const Matrix& view = camera->getView();
-    Matrix proj = ModuleCamera::getPerspectiveProj(aspect);
+    Matrix proj = camera->getPerspectiveProj(aspect);
 
     renderData.view = view;
     renderData.proj = proj;

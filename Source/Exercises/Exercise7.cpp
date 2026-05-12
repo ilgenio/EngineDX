@@ -206,7 +206,7 @@ void Exercise7::imGuiCommands()
     if (showGuizmo)
     {
         const Matrix& viewMatrix = camera->getView();
-        Matrix projMatrix = ModuleCamera::getPerspectiveProj(float(canvasSize.x) / float(canvasSize.y));
+        Matrix projMatrix = camera->getPerspectiveProj(float(canvasSize.x) / float(canvasSize.y));
 
         // Manipulate the object
         ImGuizmo::SetRect(cursorPos.x, cursorPos.y, canvasSize.x, canvasSize.y);
@@ -241,7 +241,7 @@ void Exercise7::renderToTexture(ID3D12GraphicsCommandList* commandList)
     unsigned height = unsigned(canvasSize.y);
 
     const Matrix& view = camera->getView();
-    Matrix proj = ModuleCamera::getPerspectiveProj(float(width) / float(height));
+    Matrix proj = camera->getPerspectiveProj(float(width) / float(height));
 
     Matrix mvp = model->getModelMatrix() * view * proj;
     mvp = mvp.Transpose();

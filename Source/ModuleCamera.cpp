@@ -136,7 +136,7 @@ void ModuleCamera::deserialize(const Json& obj)
     params.translation = deserializeVector3(obj["translation"]);
 }
 
-Matrix ModuleCamera::getPerspectiveProj(float aspect, float fov, float nearPlane, float farPlane) 
+Matrix ModuleCamera::getPerspectiveProj(float aspect) const
 {
     return Matrix::CreatePerspectiveFieldOfView(fov, aspect, nearPlane, farPlane);
 }

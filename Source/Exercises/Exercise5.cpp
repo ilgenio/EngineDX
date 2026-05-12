@@ -117,7 +117,7 @@ void Exercise5::imGuiCommands()
         unsigned height = d3d12->getWindowHeight();
 
         const Matrix& viewMatrix = camera->getView();
-        Matrix projMatrix = ModuleCamera::getPerspectiveProj(float(width) / float(height));
+        Matrix projMatrix = camera->getPerspectiveProj(float(width) / float(height));
 
         // Manipulate the object
         ImGuizmo::Manipulate((const float*)&viewMatrix, (const float*)&projMatrix, gizmoOperation, ImGuizmo::LOCAL, (float*)&objectMatrix);
@@ -153,7 +153,7 @@ void Exercise5::render()
     unsigned height = d3d12->getWindowHeight();
 
     const Matrix& view = camera->getView();
-    Matrix proj = ModuleCamera::getPerspectiveProj(float(width) / float(height));
+    Matrix proj = camera->getPerspectiveProj(float(width) / float(height));
 
     Matrix mvp = model->getModelMatrix() * view * proj;
     mvp = mvp.Transpose();

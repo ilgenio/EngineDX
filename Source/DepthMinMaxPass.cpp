@@ -138,7 +138,7 @@ void DepthMinMaxPass::record(ID3D12GraphicsCommandList* commandList, const Vecto
     float aspectRatio = float(width) / float(height);
 
     BuildConstants buildConstants = {};
-    buildConstants.projection = ModuleCamera::getPerspectiveProj(aspectRatio).Transpose();
+    buildConstants.projection = camera->getPerspectiveProj(aspectRatio).Transpose();
     buildConstants.invView = camera->getCamera().Transpose();
     buildConstants.lightDir = lightDir; 
     buildConstants.aspectRatio = aspectRatio;

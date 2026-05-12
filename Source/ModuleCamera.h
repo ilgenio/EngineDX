@@ -32,6 +32,9 @@ class ModuleCamera : public Module
     bool enableInput = true; 
     UINT64  lastMilis = 0;
     UINT64  elapsedMilis = 0;
+    float nearPlane = 0.1f;
+    float farPlane = 250.0f;
+    float fov = XM_PIDIV4;
 
 public:
 
@@ -60,11 +63,15 @@ public:
     const Quaternion& getRot() const { return rotation; }
     const Vector3&    getPos() const { return position; }
 
+
+    float getFov() const { return fov; }
+    float getNearPlane() const { return nearPlane; }
+    float getFarPlane() const { return farPlane; }
+
+
+    Matrix getPerspectiveProj(float aspect) const;
     void getFrustumPlanes(Vector4 planes[6], float aspect, bool normalize) const;
     void getFrustumCorners(Vector3 corners[8], float aspect) const;
 
     static void getFrustumCorners(Vector3 corners[8], const Matrix& proj, const Matrix& invView, bool perspectiveProj);
-
-    static Matrix getPerspectiveProj(float aspect, float fov = XM_PIDIV4, float nearPlane = 0.1f, float farPlane = 250.0f);
-
 };

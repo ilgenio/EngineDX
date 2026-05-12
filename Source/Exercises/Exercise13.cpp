@@ -165,7 +165,7 @@ void Exercise13::renderModel(ID3D12GraphicsCommandList* commandList)
 
     BasicModel* model = &models[currentModel];
 
-    Matrix mvp = model->getModelMatrix() * camera->getView() * ModuleCamera::getPerspectiveProj(float(canvasSize.x) / float(canvasSize.y));
+    Matrix mvp = model->getModelMatrix() * camera->getView() * camera->getPerspectiveProj(float(canvasSize.x) / float(canvasSize.y));
     mvp = mvp.Transpose();
 
     commandList->SetGraphicsRoot32BitConstants(ROOTPARAM_MVP, sizeof(Matrix) / sizeof(UINT32), &mvp, 0);
@@ -202,14 +202,14 @@ void Exercise13::renderToTexture(ID3D12GraphicsCommandList* commandList)
     float aspect = canvasSize.x / canvasSize.y;
 
     // skybox render
-    skybox->render(commandList, ModuleCamera::getPerspectiveProj(aspect));
+    skybox->render(commandList, camera->getPerspectiveProj(aspect));
 
     // model render
     renderModel(commandList);
 
     // debug draw render
     debugDrawPass->record(commandList, uint32_t(canvasSize.x), uint32_t(canvasSize.y), 
-                          camera->getView(), ModuleCamera::getPerspectiveProj(aspect));
+                          camera->getView(), camera->getPerspectiveProj(aspect));
 
     renderTexture->endRender(commandList);
 
