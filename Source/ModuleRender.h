@@ -57,7 +57,6 @@ class ModuleRender : public Module
 
     Matrix shadowView;
     Matrix shadowProj;
-    Vector4 shadowBoundingSphere;
 
 public:
 
@@ -84,7 +83,7 @@ public:
 
     float getRenderTargetAspect() const;
 
-    Vector4 computeShadowBoundingSphere() const;
+    void updateShadowFrustum();
 
     std::span<RenderMesh> getRenderList();
 

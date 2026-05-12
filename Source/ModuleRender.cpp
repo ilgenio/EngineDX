@@ -32,6 +32,8 @@
 
 #define SUN_DISTANCE 100.0f
 
+#define USE_DEPTH_MIN_MAX_PASS 1
+
 
 ModuleRender::ModuleRender()
 {
@@ -77,12 +79,11 @@ bool ModuleRender::cleanUp()
     return true;
 }
 
-Vector4 ModuleRender::computeShadowBoundingSphere() const
+void ModuleRender::updateShadowFrustum() 
 {
     const auto& directionalLights = app->getScene()->getScene()->getDirectionalLights();
     if (!directionalLights.empty())
     {
-        Vector3 corners[8];
         float aspect = getRenderTargetAspect();
 
         // Compute real near and far planes distances to the scene to get a tighter bounding sphere. 
@@ -125,17 +126,32 @@ Vector4 ModuleRender::computeShadowBoundingSphere() const
 
         BoundingFrustum frustum;
         frustum.CreateFromMatrix(frustum, proj, true);
-
         frustum.Origin = camera->getPos();
         frustum.Orientation = camera->getRot();
 
         BoundingSphere shadowSphere;
         BoundingSphere::CreateFromFrustum(shadowSphere, frustum);
 
-        return Vector4(shadowSphere.Center.x, shadowSphere.Center.y, shadowSphere.Center.z, shadowSphere.Radius);
-    }
+        // Compute Shadow casters
+        const Vector3& lightDir = directionalLights[0]->Ld;
 
-    return Vector4::Zero;
+        // Orthographic projection
+        shadowProj = Matrix::CreateOrthographic(shadowSphere.Radius * 2.0f, shadowSphere.Radius * 2.0f, 0.0f, shadowSphere.Radius * 2.0f + SUN_DISTANCE);
+
+        // View
+        Vector3 eye = shadowSphere.Center - lightDir * (shadowSphere.Radius + SUN_DISTANCE);
+        Vector3 target = shadowSphere.Center;
+        Vector3 up = Vector3::Up;
+        shadowView = Matrix::CreateLookAt(eye, target, up);
+
+        // Planes
+        Vector4 shadowFrustumPlanes[6];
+        getPlanes(shadowFrustumPlanes, shadowView * shadowProj, true);
+
+        // Culling
+        shadowCasters.clear();
+        app->getScene()->getScene()->frustumCulling(shadowFrustumPlanes, shadowCasters);
+    }
 }
 
 
@@ -154,34 +170,7 @@ void ModuleRender::preRender()
         Scene* scene = app->getScene()->getScene();
         scene->frustumCulling(planes, renderList);
 
-        const auto& directionalLights = app->getScene()->getScene()->getDirectionalLights();
-        if (!directionalLights.empty())
-        {
-            Vector4 boundingSphere = computeShadowBoundingSphere();
-            
-            float sphereRadius = boundingSphere.w;
-            Vector3 sphereCenter = Vector3(boundingSphere.x, boundingSphere.y, boundingSphere.z);
-
-            // Compute Shadow casters
-            const Vector3& lightDir = directionalLights[0]->Ld;
-          
-            // Orthographic projection
-            shadowProj = Matrix::CreateOrthographic(sphereRadius * 2.0f, sphereRadius * 2.0f, 0.0f, sphereRadius * 2.0f + SUN_DISTANCE);
-
-            // View
-            Vector3 eye = sphereCenter - lightDir * (sphereRadius + SUN_DISTANCE);
-            Vector3 target = sphereCenter;
-            Vector3 up = Vector3::Up;
-            shadowView = Matrix::CreateLookAt(eye, target, up);
-
-            // Planes
-            Vector4 shadowFrustumPlanes[6];
-            getPlanes(shadowFrustumPlanes, shadowView * shadowProj, true);
-
-            // Culling
-            shadowCasters.clear();
-            scene->frustumCulling(shadowFrustumPlanes, shadowCasters);
-        }
+        updateShadowFrustum();
     }
 
     // ImGui and DebugDraw commands
@@ -432,10 +421,13 @@ void ModuleRender::render()
         const auto& directionalLights = app->getScene()->getScene()->getDirectionalLights();
         if (!directionalLights.empty())
         {
+#if USE_DEPTH_MIN_MAX_PASS
             depthMinMaxPass->record(commandList, directionalLights[0]->Ld, renderData);
             renderData.shadowViewProjBuffer = depthMinMaxPass->getVPBufferAddress();
-            //Matrix shadowViewProj = (shadowView * shadowProj).Transpose();
-            //renderData.shadowViewProjBuffer = app->getRingBuffer()->alloc(&shadowViewProj);
+#else
+            Matrix shadowViewProj = (shadowView * shadowProj).Transpose();
+            renderData.shadowViewProjBuffer = app->getRingBuffer()->alloc(&shadowViewProj);
+#endif
 
             shadowMapPass->render(commandList, shadowCasters, renderData);
         }
