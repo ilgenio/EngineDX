@@ -20,10 +20,11 @@ class ModuleSceneEditor : public Module
     bool showGrid = false;
     bool showQuadTree = false;
     bool trackFrustum = false;
+    bool showBoundingSpheres = false;
+    bool showBoundingBoxes = false;
 
     Vector4 frustumPlanes[6];
     Vector3 trackedFrustumCorners[8];
-    Vector4 shadowBoundingSphere = Vector4::Zero;
     UINT quadTreeLevel = 0;
 
     SelectionType selectionType = SELECTION_NONE;
@@ -43,7 +44,6 @@ public:
     bool getShowGrid() const { return showGrid; }
     bool getShowQuadtree() const { return showQuadTree; }
     bool getTrackFrustum() const { return trackFrustum; }
-
     void setShowAxis(bool value) { showAxis = value; }
     void setShowGrid(bool value) { showGrid = value; }
     void setShowQuadtree(bool value) { showQuadTree = value; }

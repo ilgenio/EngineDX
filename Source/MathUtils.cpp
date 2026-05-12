@@ -30,18 +30,28 @@ float lineariseDepth(float depth, const Matrix& projection)
     return -a / (b + depth); 
 };
 
-Vector3 reconstructViewPosition(const Vector3& ndcSpace, const Matrix& projection)
+Vector3 reconstructViewPosition(const Vector3& ndcSpace, const Matrix& projection, bool perspectiveProj)
 {
-    float zView = lineariseDepth(ndcSpace.z, projection);
-    float xView = ndcSpace.x * (-zView) / projection._11;
-    float yView = ndcSpace.y * (-zView) / projection._22;
+    if (perspectiveProj)
+    {
+        float zView = lineariseDepth(ndcSpace.z, projection);
+        float xView = ndcSpace.x * (-zView) / projection._11;
+        float yView = ndcSpace.y * (-zView) / projection._22;
+
+        return Vector3(xView, yView, zView);
+
+    }
+
+    float zView = ndcSpace.z / projection._33;
+    float xView = ndcSpace.x / projection._11;
+    float yView = ndcSpace.y / projection._22;
 
     return Vector3(xView, yView, zView);
 };
 
-Vector3 reconstructWorldPosition(const Vector3& ndcSpace, const Matrix& projection, const Matrix& invView)
+Vector3 reconstructWorldPosition(const Vector3& ndcSpace, const Matrix& projection, const Matrix& invView, bool perspectiveProj)
 {
-    Vector3 viewPos = reconstructViewPosition(ndcSpace, projection);
+    Vector3 viewPos = reconstructViewPosition(ndcSpace, projection, perspectiveProj);
     return Vector3::Transform(Vector3(viewPos), invView);
 };
 

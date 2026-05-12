@@ -149,7 +149,7 @@ void ModuleCamera::getFrustumPlanes(Vector4 planes[6], float aspect, bool normal
     getPlanes(planes, viewProjection, normalize);
 }
 
-void ModuleCamera::getFrustumCorners(Vector3 corners[8], float aspect) const
+void ModuleCamera::getFrustumCorners(Vector3 corners[8], const Matrix &proj, const Matrix& invView, bool perspectiveProj)
 {
     Vector3 ndcCorners[8] =
     {
@@ -163,11 +163,14 @@ void ModuleCamera::getFrustumCorners(Vector3 corners[8], float aspect) const
         Vector3(-1, -1, 1)
     };
 
-    Matrix proj = getPerspectiveProj(aspect);
-
     for(int i = 0; i < 8; ++i)
     {
-        corners[i] = reconstructWorldPosition(ndcCorners[i], proj, camera);
+        corners[i] = reconstructWorldPosition(ndcCorners[i], proj, invView, perspectiveProj);
     }
+}
+
+void ModuleCamera::getFrustumCorners(Vector3 corners[8], float aspect) const
+{
+    return getFrustumCorners(corners, getPerspectiveProj(aspect), camera, true);
 }
 

@@ -7,6 +7,9 @@
 #include "ModuleRender.h"
 #include "ModuleCamera.h"
 
+#include "RenderStructs.h"
+#include "Mesh.h"
+
 #include "MathUtils.h"
 
 #include "Light.h"
@@ -80,6 +83,40 @@ void ModuleSceneEditor::debugDrawCommands()
         app->getScene()->getScene()->debugDrawQuadTree(frustumPlanes, quadTreeLevel);
 
         dd::box(ddConvert(trackedFrustumCorners), dd::colors::White);
+    }
+
+    if (showBoundingSpheres)
+    {
+        const auto renderList = app->getRender()->getRenderList();
+        for (const auto& renderMesh : renderList)
+        {
+            const BoundingSphere& bsphere = renderMesh.mesh->getBoundingSphere();
+            
+            Vector3 scale, translation;
+            Quaternion rotation;
+            renderMesh.transform.Decompose(scale, rotation, translation);
+
+            Vector3 transformedCenter = Vector3::Transform(bsphere.Center, rotation) + translation;
+            float transformedRadius = bsphere.Radius * std::max(std::max(scale.x, scale.y), scale.z);
+
+            dd::sphere(ddConvert(transformedCenter), dd::colors::Yellow, transformedRadius);
+        }
+    }
+
+    if (showBoundingBoxes)
+    {
+        const auto renderList = app->getRender()->getRenderList();
+        for (const auto& renderMesh : renderList)
+        {
+            BoundingOrientedBox worldBox;
+            BoundingOrientedBox::CreateFromBoundingBox(worldBox, renderMesh.mesh->getBoundingBox());
+            worldBox.Transform(worldBox, renderMesh.transform);
+
+            Vector3 corners[8];
+            worldBox.GetCorners(corners);
+
+            dd::box(ddConvert(corners), dd::colors::Yellow);
+        }
     }
 
     switch (selectionType)
@@ -312,6 +349,8 @@ void ModuleSceneEditor::imGuiDrawProperties()
     ImGui::Checkbox("Show grid", &showGrid);
     ImGui::Checkbox("Show axis", &showAxis);
     ImGui::Checkbox("Show quadtree", &showQuadTree);
+    ImGui::Checkbox("Show bounding spheres", &showBoundingSpheres);
+    ImGui::Checkbox("Show boudning boxes", &showBoundingBoxes);
     if (showQuadTree)
     {
         ImGui::SliderInt("QuadTree level", (int*)&quadTreeLevel, 0, 10);

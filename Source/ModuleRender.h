@@ -7,6 +7,7 @@
 
 #include<memory>
 #include<vector>
+#include<span>
 
 class DebugDrawPass;
 class ImGuiPass;
@@ -54,6 +55,10 @@ class ModuleRender : public Module
 
     std::vector<Callback> renderCallbacks;
 
+    Matrix shadowView;
+    Matrix shadowProj;
+    Vector4 shadowBoundingSphere;
+
 public:
 
     typedef Callback RenderCallback;
@@ -80,6 +85,8 @@ public:
     float getRenderTargetAspect() const;
 
     Vector4 computeShadowBoundingSphere() const;
+
+    std::span<RenderMesh> getRenderList();
 
 private:
 

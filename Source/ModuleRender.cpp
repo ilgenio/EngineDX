@@ -30,6 +30,8 @@
 
 #include "json_utils.h"
 
+#define SUN_DISTANCE 100.0f
+
 
 ModuleRender::ModuleRender()
 {
@@ -88,6 +90,9 @@ Vector4 ModuleRender::computeShadowBoundingSphere() const
         ModuleCamera* camera = app->getCamera();
         const Matrix& view = camera->getView();
 
+        float currentNear = 0.1f;
+        float currentFar = 250.0f;
+
         float minDistance = FLT_MAX;
         float maxDistance = 0.0f;
 
@@ -95,31 +100,26 @@ Vector4 ModuleRender::computeShadowBoundingSphere() const
         {
             const BoundingSphere& bsphere = renderMesh.mesh->getBoundingSphere();
             BoundingSphere transformedSphere;
-      
-            Vector3 viewCenter = Vector3::Transform(bsphere.Center, view);
 
-            float distance = -viewCenter.z + bsphere.Radius;
-
-            minDistance = std::min(minDistance, -viewCenter.z - bsphere.Radius);
-            maxDistance = std::max(maxDistance, -viewCenter.z + bsphere.Radius);
+            bsphere.Transform(transformedSphere, renderMesh.transform * view );
+            
+            minDistance = std::min(minDistance, -transformedSphere.Center.z - transformedSphere.Radius);
+            maxDistance = std::max(maxDistance, -transformedSphere.Center.z + transformedSphere.Radius);
         }
 
         // Adjust the near and far planes based on the computed distances
 
         if (minDistance > maxDistance)
         {
-            minDistance = 0.1f;
-            maxDistance = 250.0f;
+            minDistance = currentNear;
+            maxDistance = currentFar;
         }
         else
         {
-            minDistance = std::max(0.1f, minDistance);
-            maxDistance = std::min(maxDistance, 250.0f);
-            maxDistance = std::max(maxDistance, minDistance + 0.1f);
+            minDistance = std::max(currentNear, minDistance);
+            maxDistance = std::min(maxDistance, currentFar);
+            maxDistance = std::max(maxDistance, minDistance + 0.0001f);
         }
-
-        minDistance = 0.1f;
-        maxDistance = 250.0f;
 
         Matrix proj = ModuleCamera::getPerspectiveProj(aspect, XM_PIDIV4, minDistance, maxDistance);
 
@@ -159,12 +159,26 @@ void ModuleRender::preRender()
         {
             Vector4 boundingSphere = computeShadowBoundingSphere();
             
+            float sphereRadius = boundingSphere.w;
+            Vector3 sphereCenter = Vector3(boundingSphere.x, boundingSphere.y, boundingSphere.z);
+
             // Compute Shadow casters
             const Vector3& lightDir = directionalLights[0]->Ld;
+          
+            // Orthographic projection
+            shadowProj = Matrix::CreateOrthographic(sphereRadius * 2.0f, sphereRadius * 2.0f, 0.0f, sphereRadius * 2.0f + SUN_DISTANCE);
 
+            // View
+            Vector3 eye = sphereCenter - lightDir * (sphereRadius + SUN_DISTANCE);
+            Vector3 target = sphereCenter;
+            Vector3 up = Vector3::Up;
+            shadowView = Matrix::CreateLookAt(eye, target, up);
+
+            // Planes
             Vector4 shadowFrustumPlanes[6];
-            shadowMapPass->buildFrustum(shadowFrustumPlanes, lightDir, boundingSphere);
+            getPlanes(shadowFrustumPlanes, shadowView * shadowProj, true);
 
+            // Culling
             shadowCasters.clear();
             scene->frustumCulling(shadowFrustumPlanes, shadowCasters);
         }
@@ -420,7 +434,7 @@ void ModuleRender::render()
         {
             depthMinMaxPass->record(commandList, directionalLights[0]->Ld, renderData);
             renderData.shadowViewProjBuffer = depthMinMaxPass->getVPBufferAddress();
-            //Matrix shadowViewProj = shadowMapPass->getViewProj().Transpose();
+            //Matrix shadowViewProj = (shadowView * shadowProj).Transpose();
             //renderData.shadowViewProjBuffer = app->getRingBuffer()->alloc(&shadowViewProj);
 
             shadowMapPass->render(commandList, shadowCasters, renderData);
@@ -462,3 +476,7 @@ float ModuleRender::getRenderTargetAspect() const
     return 0.0f;
 }
 
+std::span<RenderMesh> ModuleRender::getRenderList()
+{
+    return std::span<RenderMesh>(renderList.data(), renderList.size());
+}

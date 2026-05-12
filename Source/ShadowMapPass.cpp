@@ -29,27 +29,6 @@ ShadowMapPass::~ShadowMapPass()
 
 }
 
-void ShadowMapPass::buildFrustum(Vector4 planes[6], const Vector3& lightDir, const Vector4& sphereBound)
-{
-    float sphereRadius = sphereBound.w;
-    Vector3 sphereCenter = Vector3(sphereBound.x, sphereBound.y, sphereBound.z);
-
-    Matrix proj = Matrix::CreateOrthographic(sphereRadius * 2.0f, sphereRadius * 2.0f, 0.0f, sphereRadius * 2.0f);
-
-    Vector3 eye = sphereCenter - lightDir * sphereRadius;
-
-    Vector3 front = (sphereCenter - eye);
-    front.Normalize();
-
-    Vector3 up = Vector3::Up;
-
-    Matrix view = Matrix::CreateLookAt(eye, sphereCenter, up);
-
-    viewProj = view * proj;
-
-    getPlanes(planes, viewProj, false);
-}
-
 void ShadowMapPass::render(ID3D12GraphicsCommandList* commandList, std::span<const RenderMesh> meshes, const RenderData& renderData)
 {
     BEGIN_EVENT(commandList, "ShadowMap Pass");

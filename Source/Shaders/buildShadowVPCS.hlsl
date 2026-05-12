@@ -102,7 +102,7 @@ void main()
 {
     float2 minMaxDepth = inputMinMax.Load(int3(0, 0, 0));
 
-    minMaxDepth.y = max(minMaxDepth.y, minMaxDepth.x + 0.01); // Ensure far plane is always greater than near plane
+    minMaxDepth.y = max(minMaxDepth.y, minMaxDepth.x + 0.0001); // Ensure far plane is always greater than near plane
 
     float near = -lineariseDepth(minMaxDepth.x, projection);
     float far = -lineariseDepth(minMaxDepth.y, projection);
