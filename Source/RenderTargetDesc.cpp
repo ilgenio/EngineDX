@@ -34,14 +34,14 @@ RenderTargetDesc& RenderTargetDesc::operator=(RenderTargetDesc&& other)
 
 RenderTargetDesc::operator bool() const
 {
-    return app->getTargetDescriptors()->isValidRT(handle);
+    return app->getTargetDescriptors()->isValidRTV(handle);
 }
 
 void RenderTargetDesc::release()
 {
     if (refCount && --(*refCount) == 0)
     {
-        app->getTargetDescriptors()->releaseRT(handle);
+        app->getTargetDescriptors()->releaseRTV(handle);
 
         handle = 0;
         refCount = nullptr;
@@ -55,5 +55,5 @@ void RenderTargetDesc::addRef()
 
 D3D12_CPU_DESCRIPTOR_HANDLE RenderTargetDesc::getCPUHandle() const
 {
-    return app->getTargetDescriptors()->getRTCPUHandle(handle);
+    return app->getTargetDescriptors()->getRTVCPUHandle(handle);
 }

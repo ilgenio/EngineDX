@@ -54,7 +54,7 @@ void GBuffer::resize(UINT width, UINT height)
     {
         resources->deferRelease(textures[i]);
         textures[i] = resources->createRenderTarget( gBufferFormats[i], size_t(width), size_t(height), 1, clearColour, gBufferNames[i]);
-        rtvDesc[i] = targetDescriptors->createRT(textures[i].Get());
+        rtvDesc[i] = targetDescriptors->createRTV(textures[i].Get());
         srvDesc.createTextureSRV(textures[i].Get(), i);
     }
 
@@ -65,7 +65,7 @@ void GBuffer::resize(UINT width, UINT height)
     srvDesc.createTexture2DSRV(depthTexture.Get(), DXGI_FORMAT_R32_FLOAT, BUFFER_COUNT);
 
     // Create DSV
-    dsvDesc = targetDescriptors->createDS(depthTexture.Get());
+    dsvDesc = targetDescriptors->createDSV(depthTexture.Get());
 }
 
 void GBuffer::transitionToRTV(ID3D12GraphicsCommandList* cmdList)

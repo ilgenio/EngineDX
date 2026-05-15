@@ -33,7 +33,7 @@ void RenderTexture::resize(UINT width, UINT height)
     }
 
     // Create RTV.
-    rtvDesc = targetDescriptors->createRT(texture.Get());
+    rtvDesc = targetDescriptors->createRTV(texture.Get());
 
     // Create SRV.
     srvDesc = descriptors->allocTable();
@@ -46,7 +46,7 @@ void RenderTexture::resize(UINT width, UINT height)
         depthTexture = resources->createDepthStencil(depthFormat, size_t(width), size_t(height), msaa ? 4 : 1, clearDepth, 0, true, name);
 
         // Create DSV
-        dsvDesc = targetDescriptors->createDS(depthTexture.Get());
+        dsvDesc = targetDescriptors->createDSV(depthTexture.Get());
     }
 }
 

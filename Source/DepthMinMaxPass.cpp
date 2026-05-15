@@ -50,8 +50,8 @@ void DepthMinMaxPass::resize(UINT width, UINT height)
     resources->deferRelease(depthMinMaxTexture[0]);
     resources->deferRelease(depthMinMaxTexture[1]);
 
-    depthMinMaxTexture[0] = resources->createUnorderedAccessTexture2D(numTilesX, numTilesY, DXGI_FORMAT_R32G32_FLOAT, "DepthMinMax0");
-    depthMinMaxTexture[1] = resources->createUnorderedAccessTexture2D(numTilesX, numTilesY, DXGI_FORMAT_R32G32_FLOAT, "DepthMinMax1");
+    depthMinMaxTexture[0] = resources->createUnorderedAccessTexture2D(DXGI_FORMAT_R32G32_FLOAT, numTilesX, numTilesY, "DepthMinMax0");
+    depthMinMaxTexture[1] = resources->createUnorderedAccessTexture2D(DXGI_FORMAT_R32G32_FLOAT, numTilesX, numTilesY, "DepthMinMax1");
 
     shaderTableDesc = app->getShaderDescriptors()->allocTable();
 

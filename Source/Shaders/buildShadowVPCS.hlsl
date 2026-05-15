@@ -9,7 +9,7 @@ cbuffer BuildMVPData : register(b0)
     float fov;
 };
 
-#define SUN_DISTANCE 50.0
+#define SUN_DISTANCE 100.0
 
 Texture2D<float2> inputMinMax : register(t0);
 RWStructuredBuffer<float4x4> outputVP : register(u0);

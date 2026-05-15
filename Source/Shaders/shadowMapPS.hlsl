@@ -1,4 +1,6 @@
-void main()
+float2 main(float4 position : SV_POSITION) : SV_TARGET
 {
-    // Shadow map pixel shader is intentionally left empty as we only need depth information for shadow mapping.
+    float depth = position.z / position.w; 
+
+    return float2(depth, depth*depth);
 }

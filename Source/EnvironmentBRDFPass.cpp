@@ -53,7 +53,7 @@ ComPtr<ID3D12Resource> EnvironmentBRDFPass::generate(size_t size)
     commandList->RSSetViewports(1, &viewport);
     commandList->RSSetScissorRects(1, &scissor);
 
-    RenderTargetDesc rtvDesc = targetDescriptors->createRT(environmentMap.Get());
+    RenderTargetDesc rtvDesc = targetDescriptors->createRTV(environmentMap.Get());
     D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = rtvDesc.getCPUHandle();
     commandList->OMSetRenderTargets(1, &cpuHandle, FALSE, nullptr);
 

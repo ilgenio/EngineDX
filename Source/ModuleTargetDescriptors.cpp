@@ -42,7 +42,7 @@ bool ModuleTargetDescriptors::init()
 }
 
 
-RenderTargetDesc ModuleTargetDescriptors::createRT(ID3D12Resource *resource)
+RenderTargetDesc ModuleTargetDescriptors::createRTV(ID3D12Resource *resource)
 {
     UINT handle = rtHandles.allocHandle();
 
@@ -50,10 +50,10 @@ RenderTargetDesc ModuleTargetDescriptors::createRT(ID3D12Resource *resource)
 
     app->getD3D12()->getDevice()->CreateRenderTargetView(resource, nullptr, CD3DX12_CPU_DESCRIPTOR_HANDLE(cpuStartRT, rtHandles.indexFromHandle(handle), rtDescriptorSize));
 
-    return RenderTargetDesc(handle, &rtRefCounts[indexFromRTHandle(handle)]);
+    return RenderTargetDesc(handle, &rtRefCounts[indexFromRTVHandle(handle)]);
 }
 
-RenderTargetDesc ModuleTargetDescriptors::createRT(ID3D12Resource *resource, UINT arraySlice, UINT mipSlice, DXGI_FORMAT format)
+RenderTargetDesc ModuleTargetDescriptors::createRTV(ID3D12Resource *resource, UINT arraySlice, UINT mipSlice, DXGI_FORMAT format)
 {
     UINT handle = rtHandles.allocHandle();
 
@@ -69,11 +69,11 @@ RenderTargetDesc ModuleTargetDescriptors::createRT(ID3D12Resource *resource, UIN
 
     app->getD3D12()->getDevice()->CreateRenderTargetView(resource, &rtvDesc, CD3DX12_CPU_DESCRIPTOR_HANDLE(cpuStartRT, rtHandles.indexFromHandle(handle), rtDescriptorSize));
 
-    return RenderTargetDesc(handle, &rtRefCounts[indexFromRTHandle(handle)]);
+    return RenderTargetDesc(handle, &rtRefCounts[indexFromRTVHandle(handle)]);
 
 }
 
-void ModuleTargetDescriptors::releaseRT(UINT handle)
+void ModuleTargetDescriptors::releaseRTV(UINT handle)
 {
     if(handle != 0) 
     {
@@ -81,7 +81,7 @@ void ModuleTargetDescriptors::releaseRT(UINT handle)
     }
 }
 
-DepthStencilDesc ModuleTargetDescriptors::createDS(ID3D12Resource* resource)
+DepthStencilDesc ModuleTargetDescriptors::createDSV(ID3D12Resource* resource)
 {
     UINT handle = dsHandles.allocHandle();
 
@@ -89,10 +89,10 @@ DepthStencilDesc ModuleTargetDescriptors::createDS(ID3D12Resource* resource)
 
     app->getD3D12()->getDevice()->CreateDepthStencilView(resource, nullptr, CD3DX12_CPU_DESCRIPTOR_HANDLE(cpuStartDS, dsHandles.indexFromHandle(handle), dsDescriptorSize));
 
-    return DepthStencilDesc(handle, &dsRefCounts[indexFromDSHandle(handle)]);
+    return DepthStencilDesc(handle, &dsRefCounts[indexFromDSVHandle(handle)]);
 }
 
-void ModuleTargetDescriptors::releaseDS(UINT handle)
+void ModuleTargetDescriptors::releaseDSV(UINT handle)
 {
     if (handle != 0)
     {

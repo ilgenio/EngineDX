@@ -86,7 +86,7 @@ ComPtr<ID3D12Resource> PrefilterEnvMapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE
             CD3DX12_RESOURCE_BARRIER toRT = CD3DX12_RESOURCE_BARRIER::Transition(prefilterMap.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET, subResource);
             commandList->ResourceBarrier(1, &toRT);
 
-            RenderTargetDesc rtDesc = rtDescriptors->createRT(prefilterMap.Get(), i, roughnessLevel, DXGI_FORMAT_R16G16B16A16_FLOAT);
+            RenderTargetDesc rtDesc = rtDescriptors->createRTV(prefilterMap.Get(), i, roughnessLevel, DXGI_FORMAT_R16G16B16A16_FLOAT);
             D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = rtDesc.getCPUHandle();
             commandList->OMSetRenderTargets(1, &cpuHandle, FALSE, nullptr);
 

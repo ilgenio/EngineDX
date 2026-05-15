@@ -48,9 +48,9 @@ public:
         return createDefaultBuffer(size, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, name);
     }
 
-    ComPtr<ID3D12Resource> createUnorderedAccessTexture2D(size_t width, size_t height, DXGI_FORMAT format, const char* name = nullptr)
+    ComPtr<ID3D12Resource> createUnorderedAccessTexture2D(DXGI_FORMAT format, size_t width, size_t height, const char* name = nullptr)
     {
-        return createDefaultTexture2D(width, height, format, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, name);
+        return createDefaultTexture2D(format, width, height, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, name);
     }
 
     ComPtr<ID3D12Resource> createRawTexture2D(const void* data, size_t rowSize, size_t width, size_t height);
@@ -71,7 +71,7 @@ private:
     ComPtr<ID3D12Resource> createRenderTarget(DXGI_FORMAT format, size_t width, size_t height, size_t arraySize, size_t mipLevels, UINT sampleCount, const Vector4& clearColour, const char* name);
     ComPtr<ID3D12Resource> createUploadBuffer(size_t size, const char* name = nullptr);
     ComPtr<ID3D12Resource> createDefaultBuffer(size_t size, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE, const char* name = nullptr);
-    ComPtr<ID3D12Resource> createDefaultTexture2D(size_t width, size_t height, DXGI_FORMAT format, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE, const char* name = nullptr);
+    ComPtr<ID3D12Resource> createDefaultTexture2D(DXGI_FORMAT format, size_t width, size_t height, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE, const char* name = nullptr);
 };
 
 inline ComPtr<ID3D12Resource> ModuleResources::createRenderTarget(DXGI_FORMAT format, size_t width, size_t height, UINT sampleCount, const Vector4& clearColour, const char* name)

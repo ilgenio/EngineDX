@@ -17,30 +17,30 @@ public:
 
     bool init() override;
 
-    RenderTargetDesc createRT(ID3D12Resource* resource);
-    RenderTargetDesc createRT(ID3D12Resource* resource, UINT arraySlice, UINT mipSlice, DXGI_FORMAT format);
-    DepthStencilDesc createDS(ID3D12Resource* resource);
+    RenderTargetDesc createRTV(ID3D12Resource* resource);
+    RenderTargetDesc createRTV(ID3D12Resource* resource, UINT arraySlice, UINT mipSlice, DXGI_FORMAT format);
+    DepthStencilDesc createDSV(ID3D12Resource* resource);
 
 private:
 
-    void releaseRT(UINT handle);
-    D3D12_CPU_DESCRIPTOR_HANDLE getRTCPUHandle(UINT handle) const { return CD3DX12_CPU_DESCRIPTOR_HANDLE(cpuStartRT, rtHandles.indexFromHandle(handle), rtDescriptorSize); }
+    void releaseRTV(UINT handle);
+    D3D12_CPU_DESCRIPTOR_HANDLE getRTVCPUHandle(UINT handle) const { return CD3DX12_CPU_DESCRIPTOR_HANDLE(cpuStartRT, rtHandles.indexFromHandle(handle), rtDescriptorSize); }
 
-    void releaseDS(UINT handle);
-    D3D12_CPU_DESCRIPTOR_HANDLE getDSCPUHandle(UINT handle) const { return CD3DX12_CPU_DESCRIPTOR_HANDLE(cpuStartDS, dsHandles.indexFromHandle(handle), dsDescriptorSize); }
+    void releaseDSV(UINT handle);
+    D3D12_CPU_DESCRIPTOR_HANDLE getDSVCPUHandle(UINT handle) const { return CD3DX12_CPU_DESCRIPTOR_HANDLE(cpuStartDS, dsHandles.indexFromHandle(handle), dsDescriptorSize); }
 
 
-    bool isValidRT(UINT handle) const { return rtHandles.validHandle(handle); }
-    UINT indexFromRTHandle(UINT handle) const { return rtHandles.indexFromHandle(handle); }
+    bool isValidRTV(UINT handle) const { return rtHandles.validHandle(handle); }
+    UINT indexFromRTVHandle(UINT handle) const { return rtHandles.indexFromHandle(handle); }
 
-    bool isValidDS(UINT handle) const { return dsHandles.validHandle(handle); }
-    UINT indexFromDSHandle(UINT handle) const { return dsHandles.indexFromHandle(handle); }
+    bool isValidDSV(UINT handle) const { return dsHandles.validHandle(handle); }
+    UINT indexFromDSVHandle(UINT handle) const { return dsHandles.indexFromHandle(handle); }
 
 private:
     enum { MAX_NUM_TARGETS = 256, MAX_NUM_DEPTHS = 128 };
 
-    typedef HandleManager<MAX_NUM_TARGETS> RTHandles;
-    typedef HandleManager<MAX_NUM_DEPTHS> DSHandles;
+    typedef HandleManager<MAX_NUM_TARGETS> RTVHandles;
+    typedef HandleManager<MAX_NUM_DEPTHS> DSVHandles;
    
     ComPtr<ID3D12DescriptorHeap> heapRT;
     D3D12_CPU_DESCRIPTOR_HANDLE cpuStartRT = {0};
@@ -50,8 +50,8 @@ private:
     D3D12_CPU_DESCRIPTOR_HANDLE cpuStartDS = { 0 };
     UINT dsDescriptorSize = 0;
 
-    RTHandles rtHandles;
-    DSHandles dsHandles;
+    RTVHandles rtHandles;
+    DSVHandles dsHandles;
 
     std::array<UINT, MAX_NUM_TARGETS> rtRefCounts = { 0 };
     std::array<UINT, MAX_NUM_DEPTHS> dsRefCounts = { 0 };

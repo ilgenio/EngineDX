@@ -84,7 +84,7 @@ ComPtr<ID3D12Resource> HDRToCubemapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE hd
         CD3DX12_RESOURCE_BARRIER toRT = CD3DX12_RESOURCE_BARRIER::Transition(cubemap.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET, subResource);
         commandList->ResourceBarrier(1, &toRT);
 
-        RenderTargetDesc rtvDesc = rtDescriptors->createRT(cubemap.Get(), i, 0, DXGI_FORMAT_R16G16B16A16_FLOAT);
+        RenderTargetDesc rtvDesc = rtDescriptors->createRTV(cubemap.Get(), i, 0, DXGI_FORMAT_R16G16B16A16_FLOAT);
         D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = rtvDesc.getCPUHandle();
         commandList->OMSetRenderTargets(1, &cpuHandle, FALSE, nullptr);
 
@@ -114,7 +114,7 @@ ComPtr<ID3D12Resource> HDRToCubemapPass::generate(D3D12_GPU_DESCRIPTOR_HANDLE hd
             CD3DX12_RESOURCE_BARRIER toRT = CD3DX12_RESOURCE_BARRIER::Transition(cubemap.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET, subResource);
             commandList->ResourceBarrier(1, &toRT);
 
-            RenderTargetDesc rtvDesc = rtDescriptors->createRT(cubemap.Get(), j, i, DXGI_FORMAT_R16G16B16A16_FLOAT);
+            RenderTargetDesc rtvDesc = rtDescriptors->createRTV(cubemap.Get(), j, i, DXGI_FORMAT_R16G16B16A16_FLOAT);
             D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = rtvDesc.getCPUHandle();
             commandList->OMSetRenderTargets(1, &cpuHandle, FALSE, nullptr);
 

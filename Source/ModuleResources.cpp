@@ -117,7 +117,7 @@ ComPtr<ID3D12Resource> ModuleResources::createDefaultBuffer(const void* data, si
     return buffer;
 }
 
-ComPtr<ID3D12Resource> ModuleResources::createDefaultTexture2D(size_t width, size_t height, DXGI_FORMAT format, D3D12_RESOURCE_FLAGS flags, const char *name)
+ComPtr<ID3D12Resource> ModuleResources::createDefaultTexture2D(DXGI_FORMAT format, size_t width, size_t height, D3D12_RESOURCE_FLAGS flags, const char *name)
 {
     ModuleD3D12* d3d12 = app->getD3D12();
     ID3D12Device2* device = d3d12->getDevice();

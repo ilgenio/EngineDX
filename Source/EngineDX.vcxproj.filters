@@ -668,6 +668,9 @@
     <None Include="Exercises\Shaders\Exercise13.hlsli">
       <Filter>Exercises\Shaders</Filter>
     </None>
+    <None Include="Shaders\gaussianBlurCS.hlsli">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\skyboxVS.hlsl">
@@ -803,6 +806,9 @@
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\buildShadowVPCS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\momentsBlurCS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>
