@@ -48,7 +48,7 @@ struct RenderData
     D3D12_GPU_DESCRIPTOR_HANDLE iblTable;
 
     D3D12_GPU_VIRTUAL_ADDRESS   shadowViewProjBuffer;
-    D3D12_GPU_DESCRIPTOR_HANDLE shadowMapTable;
+    D3D12_GPU_DESCRIPTOR_HANDLE shadowMapMoments;
 
     LightsData                  lightsData;
     GBuffer                     gBuffer;

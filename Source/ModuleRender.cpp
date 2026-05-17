@@ -314,7 +314,7 @@ void ModuleRender::updatePerFrameData()
 
     renderData.perFrameBuffer = app->getRingBuffer()->alloc(&perFrameData);
     renderData.iblTable = app->getScene()->getSkybox()->getIBLTable();
-    renderData.shadowMapTable = shadowMapPass->getSRVDesc().getGPUHandle(0);
+    renderData.shadowMapMoments = shadowMapPass->getMomentsSRV();
 }
 
 void ModuleRender::renderGBuffer(ID3D12GraphicsCommandList* commandList)

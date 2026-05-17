@@ -41,7 +41,8 @@ StructuredBuffer<Spot>  spotLights  : register(t6);
 StructuredBuffer<int> pointLightIndices : register(t7);
 StructuredBuffer<int> spotLightIndices : register(t8);
 
-Texture2D shadowMap : register(t12);
+//Texture2D shadowMap : register(t12);
+Texture2D shadowMoments : register(t12);
 
 TextureCube irradiance : register(t9);
 TextureCube radiance : register(t10);
@@ -59,6 +60,7 @@ float3 convertToShadowSpace(in float3 worldPos)
     return shadowPos.xyz;
 }
 
+#if 0
 float inShadow(in float3 worldPos)
 {
     float3 shadowNDC = convertToShadowSpace(worldPos);
@@ -74,6 +76,43 @@ float inShadow(in float3 worldPos)
     float bias = 0.00001; // TODO: pass bias as a PerFrame variable and adjust based on light angle and scene scale
 
     return currentDepth - bias > closestDepth ? 0.0 : 1.0;
+}
+#endif 
+
+float ReduceLightBleeding(float p_max, float Amount)
+{
+    return saturate((p_max-Amount) / (1.0 - Amount));
+}
+
+float chebyshevUpperBound(in float2 moments, in float t)
+{
+    float p = step(t, moments.x); // If t is less than the first moment, it's fully lit
+
+    float variance = moments.y - (moments.x * moments.x);
+    variance = max(variance, 0.00002); // Avoid division by zero and reduce light bleeding
+
+    float d = t - moments.x;
+    float p_max = variance / (variance + d * d); // Chebyshev's inequality
+
+    return max(p, ReduceLightBleeding(p_max, 0.2));
+}
+
+float shadowContribution(in float3 worldPos)
+{
+    float3 shadowNDC = convertToShadowSpace(worldPos);
+    
+    // If outside of shadow map, consider it lit
+    if (shadowNDC.x < 0.0 || shadowNDC.x > 1.0 || shadowNDC.y < 0.0 || shadowNDC.y > 1.0 || shadowNDC.z < 0.0 || shadowNDC.z > 1.0)
+        return 1.0;
+
+    float2 moments = shadowMoments.Sample(bilinearClamp, shadowNDC.xy).rg;
+
+    const float bias = 0.0005;
+
+    float currentDepth = shadowNDC.z - bias;
+    currentDepth = exp2(currentDepth * 16.0); // Apply the same exponential transformation as in the shadow map generation
+
+    return chebyshevUpperBound(moments, currentDepth);
 }
 
 float4 main(in float2 uv : TEXCOORD) : SV_Target
@@ -114,7 +153,7 @@ float4 main(in float2 uv : TEXCOORD) : SV_Target
         if (i == 0)
         {
             // TODO: Add to forward rendering pass 
-            float shadow = inShadow(worldPos);
+            float shadow = shadowContribution(worldPos);
             colour += shadow*computeLighting(V, N, dirLights[i], baseColour, alphaRoughness, metallic);
         }
         else 

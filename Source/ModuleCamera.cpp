@@ -21,6 +21,9 @@ bool ModuleCamera::init()
     position = Vector3(0.0f, 0.0f, 10.0f);
     rotation = Quaternion::CreateFromAxisAngle(Vector3(0.0f, 1.0f, 0.0f), XMConvertToRadians(0.0f));
 
+    camera = Matrix::CreateFromQuaternion(rotation);
+    camera.Translation(position);
+
     Quaternion invRot;
     rotation.Inverse(invRot);
 

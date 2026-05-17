@@ -137,6 +137,12 @@ ComPtr<ID3D12Resource> ModuleResources::createDefaultTexture2D(DXGI_FORMAT forma
     CD3DX12_HEAP_PROPERTIES heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
     bool ok = SUCCEEDED(device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&texture)));
 
+    if (ok)
+    {
+        std::wstring convertStr(name, name + strlen(name));
+        texture->SetName(convertStr.c_str());
+    }
+
     return texture;
 }
 

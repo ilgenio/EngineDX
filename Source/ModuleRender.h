@@ -55,8 +55,8 @@ class ModuleRender : public Module
 
     std::vector<Callback> renderCallbacks;
 
-    Matrix shadowView;
-    Matrix shadowProj;
+    Matrix shadowView = Matrix::Identity;
+    Matrix shadowProj = Matrix::Identity;
 
 public:
 

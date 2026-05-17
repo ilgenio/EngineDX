@@ -59,7 +59,7 @@ void main(uint2 globalIdx : SV_DispatchThreadID, uint localIndex : SV_GroupIndex
         {
             float2 minMax = float2(asfloat(minDepth), asfloat(maxDepth));
 
-            if (minDepth == 0xffffffff) minMax.x = 1.0; 
+            if(minDepth == 0xffffffff) minMax.x = 1.0; 
             if(maxDepth == 0) minMax.y = 1.0; 
 
             output[groupIdx] = minMax;

@@ -73,7 +73,8 @@ float4 sphereFromPoints(float3 points[8])
 
     center /= 8.0;
 
-    float radius = 0;
+    float radius = 0.0;
+
     for(int i = 0; i < 8; ++i)
     {
         float dist = length(points[i] - center);
@@ -100,18 +101,20 @@ float4x4 getView(float3 eye, float3 target, float3 up)
 [numthreads(1, 1, 1)]
 void main()
 {
+    // Load min and max depth from the previous pass
     float2 minMaxDepth = inputMinMax.Load(int3(0, 0, 0));
-
     minMaxDepth.y = max(minMaxDepth.y, minMaxDepth.x + 0.0001); // Ensure far plane is always greater than near plane
 
+    // Compute near/far from view space depth
     float near = -lineariseDepth(minMaxDepth.x, projection);
     float far = -lineariseDepth(minMaxDepth.y, projection);
 
+    // Generate new camera projection that tightly fits the scene from the light's perspective
     float4x4 clampedProj = getPerspectiveProj(aspectRatio, fov, near, far);
-
     float3 cornerPoints[8];
     getCornerPoints(cornerPoints, clampedProj, invView);
 
+    // Compute bounding sphere 
     float4 sphere = sphereFromPoints(cornerPoints);
 
     // Compute new view matrix 
@@ -120,5 +123,7 @@ void main()
 
     float4x4 view = getView(eye, sphere.xyz, up);
 
-    outputVP[0] = mul(view, getOrthographicProj(sphere.w * 2.0, sphere.w * 2.0, 0.0, sphere.w*2 + SUN_DISTANCE )); 
+    // Output the new view-projection matrix for the shadow pass
+    float diameter = sphere.w * 2.0;
+    outputVP[0] = mul(view, getOrthographicProj(diameter, diameter, 0.0, diameter + SUN_DISTANCE )); 
 }

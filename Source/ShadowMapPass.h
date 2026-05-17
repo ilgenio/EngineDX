@@ -16,8 +16,6 @@ class ShadowMapPass
         int directionY;
         int width;
         int height;
-        int sigma;
-        int padding[3];
     };
 
     enum RootParamsShadowPass

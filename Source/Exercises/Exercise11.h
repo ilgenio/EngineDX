@@ -58,8 +58,8 @@ class Exercise11 : public Module
     ShaderTableDesc tableDesc;
 
     std::unique_ptr<RenderTexture> renderTexture;
-    ImVec2 canvasSize;
-    ImVec2 canvasPos;
+    ImVec2 canvasSize = ImVec2(0, 0);
+    ImVec2 canvasPos = ImVec2(0, 0);
 
 public:
 

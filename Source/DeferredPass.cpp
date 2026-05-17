@@ -43,7 +43,7 @@ void DeferredPass::render(ID3D12GraphicsCommandList* commandList, const RenderDa
     commandList->SetGraphicsRootShaderResourceView(SLOT_POINT_LIST, renderData.lightsData.pointLightIndicesAddress);
     commandList->SetGraphicsRootShaderResourceView(SLOT_SPOT_LIST, renderData.lightsData.spotLightIndicesAddress);
     commandList->SetGraphicsRootDescriptorTable(SLOT_IBL_TABLE, renderData.iblTable);
-    commandList->SetGraphicsRootDescriptorTable(SLOT_SHADOW_MAP_TABLE, renderData.shadowMapTable);
+    commandList->SetGraphicsRootDescriptorTable(SLOT_SHADOW_MAP_TABLE, renderData.shadowMapMoments);
     
     commandList->SetGraphicsRootDescriptorTable(SLOT_SAMPLERS, app->getSamplers()->getGPUHandle(ModuleSamplers::LINEAR_WRAP));
 

@@ -25,7 +25,7 @@ DepthMinMaxPass::DepthMinMaxPass()
     createBuildRS();
     createBuildPSO();
 
-    vpBuffer = app->getResources()->createUnorderedAccessBuffer(sizeof(Matrix), "DepthMinMax VP Buffer");
+    vpBuffer = app->getResources()->createUnorderedAccessBuffer(alignUp(sizeof(Matrix), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT), "DepthMinMax VP Buffer");
 }
 
 DepthMinMaxPass::~DepthMinMaxPass()
@@ -81,6 +81,8 @@ void DepthMinMaxPass::record(ID3D12GraphicsCommandList* commandList, const Vecto
     constants.height = height;
     constants.inputIsDepth = TRUE; // First iteration with depth buffer as input
 
+    float clearValues[4] = { FLT_MAX, -FLT_MAX, 0, 0 }; // Clear min to max float and max to min float
+
     commandList->SetComputeRootDescriptorTable(MINMAX_ROOTPARAM_INPUT_DEPTH, renderData.gBuffer.getSrvTableDesc().getGPUHandle(GBuffer::BUFFER_DEPTH)); 
 
     UINT pingPongIndex = 0;
@@ -92,7 +94,7 @@ void DepthMinMaxPass::record(ID3D12GraphicsCommandList* commandList, const Vecto
 
         UINT transitionToUAVIndex = (srvIndex + 1) % 2;
 
-        CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(depthMinMaxTexture[transitionToUAVIndex].Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+        CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(depthMinMaxTexture[transitionToUAVIndex].Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
         commandList->ResourceBarrier(1, &barrier);
 
 
@@ -102,7 +104,7 @@ void DepthMinMaxPass::record(ID3D12GraphicsCommandList* commandList, const Vecto
 
         commandList->Dispatch(numTilesX, numTilesY, 1);
 
-        barrier = CD3DX12_RESOURCE_BARRIER::Transition(depthMinMaxTexture[transitionToUAVIndex].Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        barrier = CD3DX12_RESOURCE_BARRIER::Transition(depthMinMaxTexture[transitionToUAVIndex].Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
         commandList->ResourceBarrier(1, &barrier);
 
         // Dispatch compute shader with enough thread groups to cover numTilesX x numTilesY
@@ -137,9 +139,11 @@ void DepthMinMaxPass::record(ID3D12GraphicsCommandList* commandList, const Vecto
 
     float aspectRatio = float(width) / float(height);
 
+    Matrix invView = invertAffineTransform(camera->getView());
+
     BuildConstants buildConstants = {};
     buildConstants.projection = camera->getPerspectiveProj(aspectRatio).Transpose();
-    buildConstants.invView = camera->getCamera().Transpose();
+    buildConstants.invView = invView.Transpose();
     buildConstants.lightDir = lightDir; 
     buildConstants.aspectRatio = aspectRatio;
     buildConstants.fov = XM_PIDIV4;
@@ -149,12 +153,12 @@ void DepthMinMaxPass::record(ID3D12GraphicsCommandList* commandList, const Vecto
     commandList->SetComputeRootDescriptorTable(BUILD_ROOTPARAM_INPUT_MINMAX, shaderTableDesc.getGPUHandle(finalSrvIndex));
     commandList->SetComputeRootUnorderedAccessView(BUILD_ROOTPARAM_OUTPUT_VP, vpBuffer->GetGPUVirtualAddress()); 
 
-    CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(vpBuffer.Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+    CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(vpBuffer.Get(), D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
     commandList->ResourceBarrier(1, &barrier);
 
     commandList->Dispatch(1, 1, 1);
 
-    barrier = CD3DX12_RESOURCE_BARRIER::Transition(vpBuffer.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    barrier = CD3DX12_RESOURCE_BARRIER::Transition(vpBuffer.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
     commandList->ResourceBarrier(1, &barrier);
 
     END_EVENT(commandList);
