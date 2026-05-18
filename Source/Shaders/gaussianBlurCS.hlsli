@@ -4,26 +4,20 @@
 #define TYPE float4
 #endif
 
+static const int SAMPLE_COUNT = 3;
+static const float OFFSETS[SAMPLE_COUNT] = { -1.3446745248463534, 0.4466722983756714, 2 };
+static const float WEIGHTS[SAMPLE_COUNT] = { 0.35564374091247164, 0.5217749216739427, 0.1225813374135857 };
+
 cbuffer BlurData : register(b0)
 {
     int2 direction;
     int2 size;
 };
 
-static const int SAMPLE_COUNT = 3;
-
-static const float OFFSETS[SAMPLE_COUNT] = { -1.3446745248463534, 0.4466722983756714, 2 };
-static const float WEIGHTS[SAMPLE_COUNT] = { 0.35564374091247164, 0.5217749216739427, 0.1225813374135857 };
-
-
 Texture2D<TYPE> input : register(t0);
 RWTexture2D<TYPE> output : register(u0);
 
-#define GROUP_SIZE_X 8
-#define GROUP_SIZE_Y 8
-
-
-[numthreads(GROUP_SIZE_X, GROUP_SIZE_Y, 1)]
+[numthreads(8, 8, 1)]
 void main(uint2 globalIdx : SV_DispatchThreadID, uint localIndex : SV_GroupIndex)
 {
     if(globalIdx.x < size.x && globalIdx.y < size.y)

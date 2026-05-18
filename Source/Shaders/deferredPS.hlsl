@@ -94,7 +94,7 @@ float chebyshevUpperBound(in float2 moments, in float t)
     float d = t - moments.x;
     float p_max = variance / (variance + d * d); // Chebyshev's inequality
 
-    return max(p, ReduceLightBleeding(p_max, 0.2));
+    return max(p, ReduceLightBleeding(p_max, 0.4));
 }
 
 float shadowContribution(in float3 worldPos)
