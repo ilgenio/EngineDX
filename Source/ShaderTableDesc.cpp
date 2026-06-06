@@ -147,27 +147,6 @@ void ShaderTableDesc::createTexture2DSRV(ID3D12Resource *resource, UINT arraySli
     }
 }
 
-void ShaderTableDesc::createTexture2DUAV(ID3D12Resource *resource, UINT arraySlice, UINT mipSlice, UINT8 slot)
-{
-    if (resource)
-    {
-        ModuleShaderDescriptors *descriptors = app->getShaderDescriptors();
-        _ASSERTE(descriptors->isValid(handle));
-
-        D3D12_RESOURCE_DESC desc = resource->GetDesc();
-
-        D3D12_UNORDERED_ACCESS_VIEW_DESC viewDesc;
-        viewDesc.Format = desc.Format;
-        viewDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
-        viewDesc.Texture2DArray.MipSlice = mipSlice;
-        viewDesc.Texture2DArray.FirstArraySlice = arraySlice;
-        viewDesc.Texture2DArray.ArraySize = 1;
-        viewDesc.Texture2DArray.PlaneSlice = 0;
-
-        app->getD3D12()->getDevice()->CreateUnorderedAccessView(resource, nullptr, &viewDesc, descriptors->getCPUHandle(handle, slot));
-    }
-}
-
 void ShaderTableDesc::createCubeTextureSRV(ID3D12Resource *resource, UINT8 slot)
 {
     _ASSERTE(slot < ModuleShaderDescriptors::DESCRIPTORS_PER_TABLE);

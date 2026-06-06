@@ -23,7 +23,6 @@ public:
     void createTextureUAV(ID3D12Resource* resource, UINT8 slot = 0);
     void createTexture2DSRV(ID3D12Resource* resource, DXGI_FORMAT format, UINT8 slot = 0);
     void createTexture2DSRV(ID3D12Resource* resource, UINT arraySlice, UINT mipSlice, UINT8 slot = 0);
-    void createTexture2DUAV(ID3D12Resource* resource, UINT arraySlice, UINT mipSlice, UINT8 slot = 0);
     void createCubeTextureSRV(ID3D12Resource* resource, UINT8 slot = 0);
     void createNullTexture2DSRV(UINT8 slot = 0);
 

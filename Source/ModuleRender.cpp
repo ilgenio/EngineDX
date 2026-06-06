@@ -8,7 +8,6 @@
 #include "ModuleCamera.h"
 #include "ModuleShaderDescriptors.h"
 #include "ModuleRingBuffer.h"
-#include "ModulePerFrameBuffer.h"
 
 #include "Scene.h"
 #include "Model.h"
@@ -26,6 +25,7 @@
 #include "ShadowMapPass.h"
 #include "DecalPass.h"
 #include "DepthMinMaxPass.h"
+#include "SSAOPass.h"
 #include "Mesh.h"
 
 #include "json_utils.h"
@@ -61,7 +61,8 @@ bool ModuleRender::init()
     buildTileLightsPass = std::make_unique<BuildTileLightsPass>();
     decalPass           = std::make_unique<DecalPass>();  
     shadowMapPass       = std::make_unique<ShadowMapPass>();
-    depthMinMaxPass = std::make_unique<DepthMinMaxPass>();
+    depthMinMaxPass     = std::make_unique<DepthMinMaxPass>();
+    ssaoPass            = std::make_unique<SSAOPass>();
 
     bool ok = renderMeshPass->init(false);
     ok = ok && gbufferPass->init();
@@ -208,6 +209,7 @@ void ModuleRender::preRender()
         renderData.gBuffer.resize(sizeX, sizeY);
         buildTileLightsPass->resize(sizeX, sizeY);
         depthMinMaxPass->resize(sizeX, sizeY);
+        ssaoPass->resize(sizeX, sizeY);
     }
 
     ModuleD3D12* d3d12 = app->getD3D12();
@@ -339,7 +341,7 @@ void ModuleRender::updateLightsList(ID3D12GraphicsCommandList* commandList)
     buildTileLightsPass->record(commandList, renderData.width, renderData.height, renderData.view, renderData.proj, scene->getPointLights(), scene->getSpotLights(),
         renderData.gBuffer.getSrvTableDesc().getGPUHandle(GBuffer::BUFFER_DEPTH));
 
-    ModulePerFrameBuffer* perFrameBuffer = app->getPerFrameBuffer();
+    ModuleRingBuffer* ringBuffer = app->getRingBuffer();
 
     auto buildData = [=]<typename T>(std::span<T*> list) -> D3D12_GPU_VIRTUAL_ADDRESS
     {
@@ -351,7 +353,7 @@ void ModuleRender::updateLightsList(ID3D12GraphicsCommandList* commandList)
             data.push_back(*light);
         }
 
-        return perFrameBuffer->alloc(data.data(), data.size());
+        return ringBuffer->alloc(data.data(), data.size());
     };
 
     renderData.lightsData.directionalLightsAddress  = buildData(scene->getDirectionalLights());
@@ -359,8 +361,6 @@ void ModuleRender::updateLightsList(ID3D12GraphicsCommandList* commandList)
     renderData.lightsData.spotLightsAddress         = buildData(scene->getSpotLights());
     renderData.lightsData.pointLightIndicesAddress  = buildTileLightsPass->getPointListAddress();
     renderData.lightsData.spotLightIndicesAddress   = buildTileLightsPass->getSpotListAddress();
-
-    perFrameBuffer->submitCopy(commandList);
 }
 
 void ModuleRender::renderToTexture(ID3D12GraphicsCommandList* commandList)
@@ -434,6 +434,9 @@ void ModuleRender::render()
 
         // Tile light building pass
         updateLightsList(commandList);
+
+        // SSAO Pass
+        ssaoPass->render(commandList, renderData);
 
         // Do forward mesh rendering + deferred pass
         renderToTexture(commandList);

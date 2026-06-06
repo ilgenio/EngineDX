@@ -8,7 +8,6 @@
 
 #include "ModuleRingBuffer.h"
 #include "ModuleResources.h"
-#include "ModulePerFrameBuffer.h"
 
 #include "Light.h"
 #include "MathUtils.h"
@@ -72,7 +71,7 @@ void BuildTileLightsPass::record(ID3D12GraphicsCommandList* commandList, int wid
 
 
     ModuleCamera* camera = app->getCamera();
-    ModulePerFrameBuffer* perFrameBuffer = app->getPerFrameBuffer();
+    ModuleRingBuffer* ringBuffer = app->getRingBuffer();
     UINT outputIndex = app->getD3D12()->getCurrentBackBufferIdx();
 
     Constants constants = {};
@@ -83,10 +82,10 @@ void BuildTileLightsPass::record(ID3D12GraphicsCommandList* commandList, int wid
     constants.numPointLights = UINT(pointLights.size());
     constants.numSpotLights  = UINT(spotLights.size());
 
-    D3D12_GPU_VIRTUAL_ADDRESS constantsAddress = perFrameBuffer->alloc(&constants);
+    D3D12_GPU_VIRTUAL_ADDRESS constantsAddress = ringBuffer->alloc(&constants);
 
-    D3D12_GPU_VIRTUAL_ADDRESS pointSphereAddress = perFrameBuffer->alloc(pointSphereData.data(), pointSphereData.size());
-    D3D12_GPU_VIRTUAL_ADDRESS spotSphereAddress = perFrameBuffer->alloc(spotSphereData.data(), spotSphereData.size());
+    D3D12_GPU_VIRTUAL_ADDRESS pointSphereAddress = ringBuffer->alloc(pointSphereData.data(), pointSphereData.size());
+    D3D12_GPU_VIRTUAL_ADDRESS spotSphereAddress = ringBuffer->alloc(spotSphereData.data(), spotSphereData.size());
 
     commandList->SetComputeRootConstantBufferView(ROOTPARAM_CONSTANTS, constantsAddress);
     commandList->SetComputeRootDescriptorTable(ROOTPARAM_DEPTH_TABLE, depthSRV);
@@ -100,8 +99,6 @@ void BuildTileLightsPass::record(ID3D12GraphicsCommandList* commandList, int wid
     barrier[0] = CD3DX12_RESOURCE_BARRIER::Transition(pointLists[outputIndex].Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
     barrier[1] = CD3DX12_RESOURCE_BARRIER::Transition(spotLists[outputIndex].Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
     commandList->ResourceBarrier(2, &barrier[0]);
-
-    perFrameBuffer->submitCopy(commandList);
 
     UINT dispatchX = getNumTiles(width); 
     UINT dispatchY = getNumTiles(height);
