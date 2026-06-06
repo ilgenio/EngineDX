@@ -16,7 +16,8 @@ class DeferredPass
         SLOT_SPOT_LIST = 7, 
         SLOT_IBL_TABLE = 8,
         SLOT_SHADOW_MAP_TABLE = 9,
-        SLOT_SAMPLERS = 10,
+        SLOT_SSAO_TABLE = 10,
+        SLOT_SAMPLERS = 11,
         SLOT_COUNT
     };
 

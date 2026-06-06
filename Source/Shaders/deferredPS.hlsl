@@ -41,8 +41,8 @@ StructuredBuffer<Spot>  spotLights  : register(t6);
 StructuredBuffer<int> pointLightIndices : register(t7);
 StructuredBuffer<int> spotLightIndices : register(t8);
 
-//Texture2D shadowMap : register(t12);
 Texture2D shadowMoments : register(t12);
+Texture2D ssaoResult : register(t13);
 
 TextureCube irradiance : register(t9);
 TextureCube radiance : register(t10);
@@ -121,6 +121,8 @@ float4 main(in float2 uv : TEXCOORD) : SV_Target
     float4 albedoData = gBufferAlbedo.Sample(pointClamp, uv);
     float4 normalMetRougData = gBufferNormalMetRoug.Sample(pointClamp, uv);
     float4 emissiveOcclData = gBufferEmissiveOccl.Sample(pointClamp, uv);
+    float ssao = ssaoResult.Sample(pointClamp, uv).r; 
+
 
     float3 baseColour = albedoData.rgb;
     float metallic = f16tof32(asuint(normalMetRougData.a) & 0xFFFF);
@@ -129,7 +131,8 @@ float4 main(in float2 uv : TEXCOORD) : SV_Target
 
     float3 N = normalize(normalMetRougData.xyz);
     float3 emissive = emissiveOcclData.rgb;
-    float diffuseAO = emissiveOcclData.a;
+    float diffuseAO = emissiveOcclData.a * ssao; 
+
 
     float depth = depthTex.Sample(pointClamp, uv).r;
     float3 worldPos = reconstructWorldPosition(uv, depth, proj, invView);

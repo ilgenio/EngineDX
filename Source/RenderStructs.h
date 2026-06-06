@@ -49,6 +49,7 @@ struct RenderData
 
     D3D12_GPU_VIRTUAL_ADDRESS   shadowViewProjBuffer;
     D3D12_GPU_DESCRIPTOR_HANDLE shadowMapMoments;
+    D3D12_GPU_DESCRIPTOR_HANDLE ssaoResult;
 
     LightsData                  lightsData;
     GBuffer                     gBuffer;
