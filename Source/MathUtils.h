@@ -35,3 +35,5 @@ IntersectionType insideAABB(const BoundingBox& aabb, const Vector3 points[8]);
 
 Matrix invertAffineTransform(const Matrix& matrix);
 Vector4 getBoundingSphere(const Spot& spotLight);
+
+Vector2 halton23(UINT index);

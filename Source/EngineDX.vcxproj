@@ -260,6 +260,7 @@
     <ClInclude Include="SphereMesh.h" />
     <ClInclude Include="SSAOPass.h" />
     <ClInclude Include="StartMenu.h" />
+    <ClInclude Include="TAAPass.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
@@ -431,6 +432,7 @@
     <ClCompile Include="SphereMesh.cpp" />
     <ClCompile Include="SSAOPass.cpp" />
     <ClCompile Include="StartMenu.cpp" />
+    <ClCompile Include="TAAPass.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="EngineDX.rc" />
@@ -865,6 +867,13 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.0</ShaderModel>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">-Qembed_debug %(AdditionalOptions)</AdditionalOptions>
+    </FxCompile>
+    <FxCompile Include="Shaders\taaCS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.0</ShaderModel>
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">-Qembed_debug %(AdditionalOptions)</AdditionalOptions>
     </FxCompile>

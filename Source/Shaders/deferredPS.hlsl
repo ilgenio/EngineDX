@@ -121,8 +121,10 @@ float4 main(in float2 uv : TEXCOORD) : SV_Target
     float4 albedoData = gBufferAlbedo.Sample(pointClamp, uv);
     float4 normalMetRougData = gBufferNormalMetRoug.Sample(pointClamp, uv);
     float4 emissiveOcclData = gBufferEmissiveOccl.Sample(pointClamp, uv);
+
     float ssao = ssaoResult.Sample(pointClamp, uv).r; 
 
+    ssao = ssao * ssao; // Apply a simple power function to increase contrast of SSAO results (optional)
 
     float3 baseColour = albedoData.rgb;
     float metallic = f16tof32(asuint(normalMetRougData.a) & 0xFFFF);
@@ -131,8 +133,9 @@ float4 main(in float2 uv : TEXCOORD) : SV_Target
 
     float3 N = normalize(normalMetRougData.xyz);
     float3 emissive = emissiveOcclData.rgb;
-    float diffuseAO = emissiveOcclData.a * ssao; 
+    float diffuseAO = emissiveOcclData.a; // * ssao; 
 
+    //diffuseAO *= ssao;
 
     float depth = depthTex.Sample(pointClamp, uv).r;
     float3 worldPos = reconstructWorldPosition(uv, depth, proj, invView);
@@ -143,6 +146,7 @@ float4 main(in float2 uv : TEXCOORD) : SV_Target
     float NdotR = saturate(dot(N, R));
 
     float specularAO = getSpecularAO(NdotV, NdotR, diffuseAO, roughness);
+
 
     // Compute lighting
 
@@ -197,6 +201,8 @@ float4 main(in float2 uv : TEXCOORD) : SV_Target
     }
 
     colour += emissive;
+
+    colour *= ssao; // Apply SSAO as a screen-space factor to the final color (affects both direct and indirect lighting)
 
     // tonemapping
     float3 ldr = PBRNeutralToneMapping(colour);

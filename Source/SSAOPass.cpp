@@ -197,11 +197,12 @@ void SSAOPass::renderSSAO(ID3D12GraphicsCommandList *commandList, const RenderDa
     commandList->SetPipelineState(pso.Get());
 
     params.proj = renderData.proj.Transpose();
+    params.view = renderData.view.Transpose();
     params.frameIndex++;
     params.width = width;
     params.height = height;
-    params.kernelRadius = 0.25f; // Example kernel radius, can be adjusted or made dynamic
-    params.bias = 0.0003f; // Example bias, can be adjusted or made dynamic
+    params.rangeDistance = 0.25f; // Example kernel radius, can be adjusted or made dynamic
+    params.bias = 0.0001f; // Example bias, can be adjusted or made dynamic
     ModuleRingBuffer* ringBuffer = app->getRingBuffer();
 
     D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = rtv.getCPUHandle();

@@ -122,15 +122,7 @@ ComPtr<ID3D12Resource> ModuleResources::createDefaultTexture2D(DXGI_FORMAT forma
     ModuleD3D12* d3d12 = app->getD3D12();
     ID3D12Device2* device = d3d12->getDevice();
 
-    D3D12_RESOURCE_DESC desc = {};
-    desc.Width = UINT(width);
-    desc.Height = UINT(height);
-    desc.MipLevels = 1;
-    desc.DepthOrArraySize = 1;
-    desc.Format = format;
-    desc.Flags = flags;
-    desc.SampleDesc.Count = 1;
-    desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+    D3D12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Tex2D(format, UINT64(width), UINT(height), UINT16(1), UINT16(1), 1, 0, flags);
 
     ComPtr<ID3D12Resource> texture = nullptr;
 

@@ -34,8 +34,9 @@ class SSAOPass
     struct Params
     {
         Matrix proj;
+        Matrix view;
         Vector4 kernel[KERNEL_SIZE]; 
-        float kernelRadius;
+        float rangeDistance;
         float bias;
         UINT frameIndex = 0;
         UINT width;

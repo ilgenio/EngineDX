@@ -290,3 +290,27 @@ Vector4 getBoundingSphere(const Spot& spotLight)
 
     return Vector4(sphereCenter.x, sphereCenter.y, sphereCenter.z, sphereRadius);
 }
+
+float radicalInverse(int base, UINT index)
+{
+    float f = 1.0f;
+    float r = 0.0f;
+    UINT i = index;
+    while (i > 0)
+    {
+        f /= base;
+        r += f * (i % base);
+        i /= base;
+    }
+    return r;
+}
+
+Vector2 halton23(UINT index)
+{
+    Vector2 result;
+
+    result.x = radicalInverse(2, index);
+    result.y = radicalInverse(3, index);
+    
+    return result;
+}

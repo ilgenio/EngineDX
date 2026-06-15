@@ -26,6 +26,7 @@
 #include "DecalPass.h"
 #include "DepthMinMaxPass.h"
 #include "SSAOPass.h"
+#include "TAAPass.h"
 #include "Mesh.h"
 
 #include "json_utils.h"
@@ -51,18 +52,19 @@ bool ModuleRender::init()
 
     debugDesc           = app->getShaderDescriptors()->allocTable();
 
-    debugDrawPass       = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue(), false, debugDesc.getCPUHandle(0), debugDesc.getGPUHandle(0));
-    imguiPass           = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd(), debugDesc.getCPUHandle(1), debugDesc.getGPUHandle(1));
-    renderTexture       = std::make_unique<RenderTexture>("ModuleRender", DXGI_FORMAT_R8G8B8A8_UNORM, Vector4(0.188f, 0.208f, 0.259f, 1.0f), DXGI_FORMAT_UNKNOWN, 1.0f, false, false);
-    renderMeshPass      = std::make_unique<RenderMeshPass>();
-    gbufferPass         = std::make_unique<GBufferExportPass>();
-    deferredPass        = std::make_unique<DeferredPass>();
-    skinningPass        = std::make_unique<SkinningPass>();
-    buildTileLightsPass = std::make_unique<BuildTileLightsPass>();
-    decalPass           = std::make_unique<DecalPass>();  
-    shadowMapPass       = std::make_unique<ShadowMapPass>();
-    depthMinMaxPass     = std::make_unique<DepthMinMaxPass>();
-    ssaoPass            = std::make_unique<SSAOPass>();
+    debugDrawPass        = std::make_unique<DebugDrawPass>(d3d12->getDevice(), d3d12->getDrawCommandQueue(), false, debugDesc.getCPUHandle(0), debugDesc.getGPUHandle(0));
+    imguiPass            = std::make_unique<ImGuiPass>(d3d12->getDevice(), d3d12->getHWnd(), debugDesc.getCPUHandle(1), debugDesc.getGPUHandle(1));
+    renderTexture        = std::make_unique<RenderTexture>("MainOutput", DXGI_FORMAT_R8G8B8A8_UNORM, Vector4(0.188f, 0.208f, 0.259f, 1.0f), DXGI_FORMAT_UNKNOWN, 1.0f, false, false);
+    renderMeshPass       = std::make_unique<RenderMeshPass>();
+    gbufferPass          = std::make_unique<GBufferExportPass>();
+    deferredPass         = std::make_unique<DeferredPass>();
+    skinningPass         = std::make_unique<SkinningPass>();
+    buildTileLightsPass  = std::make_unique<BuildTileLightsPass>();
+    decalPass            = std::make_unique<DecalPass>();  
+    shadowMapPass        = std::make_unique<ShadowMapPass>();
+    depthMinMaxPass      = std::make_unique<DepthMinMaxPass>();
+    ssaoPass             = std::make_unique<SSAOPass>();
+    taaPass              = std::make_unique<TAAPass>();
 
     bool ok = renderMeshPass->init(false);
     ok = ok && gbufferPass->init();
@@ -210,6 +212,7 @@ void ModuleRender::preRender()
         buildTileLightsPass->resize(sizeX, sizeY);
         depthMinMaxPass->resize(sizeX, sizeY);
         ssaoPass->resize(sizeX, sizeY);
+        taaPass->resize(sizeX, sizeY);
     }
 
     ModuleD3D12* d3d12 = app->getD3D12();
@@ -231,8 +234,7 @@ void ModuleRender::imGuiDrawCommands()
     ImGui::Text("FPS: [%d]. Avg. elapsed (Ms): [%g] ", uint32_t(app->getFPS()), app->getAvgElapsedMs());
     ImGui::Separator();
     ModuleCamera* camera = app->getCamera();
-    ImGui::Text("Camera pos: [%.2f, %.2f, %.2f], Camera spherical angles: [%.2f, %.2f]", camera->getPos().x, camera->getPos().y, camera->getPos().z,
-        XMConvertToDegrees(camera->getPolar()), XMConvertToDegrees(camera->getAzimuthal()));
+    ImGui::Text("Camera pos: [%.2f, %.2f, %.2f], Camera spherical angles: [%.2f, %.2f]", camera->getPos().x, camera->getPos().y, camera->getPos().z, XMConvertToDegrees(camera->getPolar()), XMConvertToDegrees(camera->getAzimuthal()));
 
     ImGui::Separator();
 
@@ -258,7 +260,7 @@ void ModuleRender::imGuiDrawCommands()
 
     if (renderTexture->isValid())
     {
-        ImGui::Image((ImTextureID)renderTexture->getSrvHandle().ptr, canvasSize);
+        ImGui::Image((ImTextureID)taaPass->getSrvHandle().ptr, canvasSize);
     }
 
     if (showGuizmo)
@@ -275,7 +277,6 @@ void ModuleRender::imGuiDrawCommands()
         ImGuizmo::SetDrawlist();
         ImGuizmo::Manipulate((const float*)&viewMatrix, (const float*)&projMatrix, gizmoOperation, ImGuizmo::LOCAL, (float*)&guizmoTransform);
     }
-
 
     ImGui::EndChildFrame();
     ImGui::End();
@@ -295,6 +296,12 @@ void ModuleRender::updatePerFrameData()
     const Matrix& invView = camera->getCamera(); // Note: camera matrix is the inverse of the view matrix
     const Matrix& view = camera->getView();
     Matrix proj = camera->getPerspectiveProj(aspect);
+
+    Vector2 halton = halton23(frameIndex++) - Vector2(0.5f, 0.5f);
+    Vector2 jitter = halton * Vector2(1.0f/width, 1.0f/height); 
+
+    proj.m[2][0] = jitter.x;
+    proj.m[2][1] = jitter.y;
 
     renderData.view = view;
     renderData.proj = proj;
@@ -441,6 +448,9 @@ void ModuleRender::render()
 
         // Do forward mesh rendering + deferred pass
         renderToTexture(commandList);
+
+        // TAA Pass
+        taaPass->render(commandList, renderTexture->getSrvHandle());
     }
 
     // Set backbuffer render target and transition to RT

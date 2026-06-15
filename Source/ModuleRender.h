@@ -21,6 +21,7 @@ class DecalPass;
 class ShadowMapPass;
 class DepthMinMaxPass;
 class SSAOPass;
+class TAAPass;
 struct RenderMesh;  
 struct RenderData;
 
@@ -38,12 +39,13 @@ class ModuleRender : public Module
     std::unique_ptr<ShadowMapPass>       shadowMapPass;    
     std::unique_ptr<DepthMinMaxPass>     depthMinMaxPass;
     std::unique_ptr<SSAOPass>            ssaoPass;
+    std::unique_ptr<TAAPass>             taaPass;
 
     // Render Data
     std::vector<RenderMesh>             renderList;
     std::vector<RenderMesh>             shadowCasters;
     RenderData                          renderData;
-    std::unique_ptr<RenderTexture>      renderTexture;
+    std::unique_ptr<RenderTexture>      renderTexture;    
 
     bool showGuizmo = false;
     Matrix guizmoTransform = Matrix::Identity;
@@ -59,6 +61,8 @@ class ModuleRender : public Module
 
     Matrix shadowView = Matrix::Identity;
     Matrix shadowProj = Matrix::Identity;
+
+    UINT frameIndex = 1;
 
 public:
 

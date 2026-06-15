@@ -6,8 +6,9 @@
  cbuffer SSAOParams : register(b0)
  {
     float4x4 proj;
+    float4x4 view;
     float4 kernel[KERNEL_SIZE];
-    float kernelRadius;
+    float rangeDistance;
     float bias;
     uint frameIndex;
     uint width;
@@ -29,7 +30,7 @@ float sampleIGN(float2 uv, float frameIndex)
 float3 getRandomTangent(float2 uv, uint frameIndex)
 {
     float randomAngle = sampleIGN(uv, frameIndex) * 2.0 * PI; // Random angle in radians
-    return float3(cos(randomAngle), sin(randomAngle), 0.0); // Random tangent in the XY plane
+    return float3(cos(randomAngle), sin(randomAngle), 0.0);   // Random tangent in the XY plane
 }
 
 float3x3 computeTangentSpace(float3 normal, float3 randomTangent)
@@ -43,7 +44,7 @@ float3x3 computeTangentSpace(float3 normal, float3 randomTangent)
 float4 main(in float2 texCoord : TEXCOORD) : SV_TARGET
 {
     float depth = depthTexture.SampleLevel(pointClamp, texCoord, 0).r;
-    float3 normal = normalTexture.SampleLevel(pointClamp, texCoord, 0).rgb;
+    float3 normal = mul(normalTexture.SampleLevel(pointClamp, texCoord, 0).rgb, (float3x3)view);
     float3 viewPos = reconstructViewPosition(texCoord, depth, proj);
     float3x3 tangentSpace = computeTangentSpace(normal, getRandomTangent(texCoord, frameIndex));
 
@@ -64,7 +65,7 @@ float4 main(in float2 texCoord : TEXCOORD) : SV_TARGET
 
         float sampleDepth = depthTexture.SampleLevel(pointClamp, uv, 0).r;
 
-        float rangeCheck = smoothstep(0.0, 1.0, kernelRadius / abs(viewPos.z - lineariseDepth(sampleDepth, proj)));
+        float rangeCheck = smoothstep(0.0, 1.0, rangeDistance / abs(viewPos.z - lineariseDepth(sampleDepth, proj)));
 
         occlusion += ((sampleDepth+bias) >= sampleNDCPos.z ? 0.0 : 1.0) * rangeCheck;
     }
