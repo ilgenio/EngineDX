@@ -10,6 +10,7 @@ class TAAPass
     {
         ROOT_TAA_CONSTANTS = 0,
         ROOT_TAA_PREVIOUS,
+        ROOT_TAA_DEPTH,
         ROOT_TAA_CURRENT,
 
         NUM_ROOT_PARAMETERS_TAA
@@ -17,10 +18,20 @@ class TAAPass
 
     struct TAAConstants
     {
+        Matrix proj;
+        Matrix invView;
+        Matrix prevViewProj;
+
+        float jitterX;
+        float jitterY;
+
         UINT width;
         UINT height;
-        UINT padding0;
-        UINT padding1;
+
+        UINT prevWidth;
+        UINT prevHeight;
+
+        UINT pad[2]; // Padding to ensure 16-byte alignment
     };
 
     ComPtr<ID3D12PipelineState> pso;
@@ -36,7 +47,7 @@ public:
     TAAPass();
     ~TAAPass();
     
-    void render(ID3D12GraphicsCommandList* commandList, D3D12_GPU_DESCRIPTOR_HANDLE currentFrame);
+    void render(ID3D12GraphicsCommandList* commandList, const RenderData& renderData, D3D12_GPU_DESCRIPTOR_HANDLE currentFrame);
     void resize(UINT width, UINT height);
 
     D3D12_GPU_DESCRIPTOR_HANDLE getSrvHandle() const { return tableDesc.getGPUHandle(0); }

@@ -261,6 +261,7 @@ void ModuleRender::imGuiDrawCommands()
     if (renderTexture->isValid())
     {
         ImGui::Image((ImTextureID)taaPass->getSrvHandle().ptr, canvasSize);
+        //ImGui::Image((ImTextureID)renderTexture->getSrvHandle().ptr, canvasSize);
     }
 
     if (showGuizmo)
@@ -302,6 +303,10 @@ void ModuleRender::updatePerFrameData()
 
     proj.m[2][0] = jitter.x;
     proj.m[2][1] = jitter.y;
+
+    renderData.prevViewProj = renderData.viewProj;
+    renderData.prevWidth = renderData.width;
+    renderData.prevHeight = renderData.height;
 
     renderData.view = view;
     renderData.proj = proj;
@@ -450,7 +455,7 @@ void ModuleRender::render()
         renderToTexture(commandList);
 
         // TAA Pass
-        taaPass->render(commandList, renderTexture->getSrvHandle());
+        taaPass->render(commandList, renderData, renderTexture->getSrvHandle());
     }
 
     // Set backbuffer render target and transition to RT

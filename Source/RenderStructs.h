@@ -26,30 +26,34 @@ struct PerFrame
 // Structure containing GPU addresses of the light data buffers. This is passed to the deferred shader to access light information.
 struct LightsData
 {
-    D3D12_GPU_VIRTUAL_ADDRESS directionalLightsAddress;
-    D3D12_GPU_VIRTUAL_ADDRESS pointLightsAddress;
-    D3D12_GPU_VIRTUAL_ADDRESS spotLightsAddress;
-    D3D12_GPU_VIRTUAL_ADDRESS pointLightIndicesAddress;
-    D3D12_GPU_VIRTUAL_ADDRESS spotLightIndicesAddress;
+    D3D12_GPU_VIRTUAL_ADDRESS directionalLightsAddress = 0;
+    D3D12_GPU_VIRTUAL_ADDRESS pointLightsAddress = 0;
+    D3D12_GPU_VIRTUAL_ADDRESS spotLightsAddress = 0;
+    D3D12_GPU_VIRTUAL_ADDRESS pointLightIndicesAddress = 0;
+    D3D12_GPU_VIRTUAL_ADDRESS spotLightIndicesAddress = 0;
 };
 
 // The main structure that encapsulates all the data needed for rendering. This is passed to the render passes to access per-frame data, skinning results, light information, and descriptor tables.
 struct RenderData
 {
-    UINT                        width; 
-    UINT                        height;
-    Matrix                      view;
-    Matrix                      invView;
-    Matrix                      proj;
-    Matrix                      viewProj; 
+    UINT                        width  = 0;
+    UINT                        height = 0;
+    UINT                        prevWidth = 0;
+    UINT                        prevHeight = 0;
 
-    D3D12_GPU_VIRTUAL_ADDRESS   perFrameBuffer;
-    D3D12_GPU_VIRTUAL_ADDRESS   skinningBuffer;
-    D3D12_GPU_DESCRIPTOR_HANDLE iblTable;
+    Matrix                      view   = Matrix::Identity;
+    Matrix                      invView = Matrix::Identity;
+    Matrix                      proj = Matrix::Identity;
+    Matrix                      viewProj = Matrix::Identity; 
+    Matrix                      prevViewProj = Matrix::Identity;
 
-    D3D12_GPU_VIRTUAL_ADDRESS   shadowViewProjBuffer;
-    D3D12_GPU_DESCRIPTOR_HANDLE shadowMapMoments;
-    D3D12_GPU_DESCRIPTOR_HANDLE ssaoResult;
+    D3D12_GPU_VIRTUAL_ADDRESS   perFrameBuffer = 0;
+    D3D12_GPU_VIRTUAL_ADDRESS   skinningBuffer = 0;
+    D3D12_GPU_DESCRIPTOR_HANDLE iblTable = {};
+
+    D3D12_GPU_VIRTUAL_ADDRESS   shadowViewProjBuffer = 0;
+    D3D12_GPU_DESCRIPTOR_HANDLE shadowMapMoments = {};
+    D3D12_GPU_DESCRIPTOR_HANDLE ssaoResult = {};
 
     LightsData                  lightsData;
     GBuffer                     gBuffer;

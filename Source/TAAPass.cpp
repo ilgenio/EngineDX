@@ -5,6 +5,7 @@
 #include "ModuleD3D12.h"
 #include "ModuleResources.h"
 #include "ModuleShaderDescriptors.h"
+#include "ModuleRingBuffer.h"
 
 #include "ReadData.h"
 #include "RenderStructs.h"
@@ -22,7 +23,7 @@ TAAPass::~TAAPass()
     // Destructor implementation
 }
 
-void TAAPass::render(ID3D12GraphicsCommandList* commandList, D3D12_GPU_DESCRIPTOR_HANDLE currentFrame)
+void TAAPass::render(ID3D12GraphicsCommandList* commandList, const RenderData& renderData, D3D12_GPU_DESCRIPTOR_HANDLE currentFrame)
 {
     BEGIN_EVENT(commandList, "TAA Pass");
 
@@ -31,12 +32,23 @@ void TAAPass::render(ID3D12GraphicsCommandList* commandList, D3D12_GPU_DESCRIPTO
 
     commandList->SetComputeRootSignature(rootSignature.Get());
     commandList->SetPipelineState(pso.Get());
-    TAAConstants constants = {};
-    constants.width = width;
-    constants.height = height;
 
-    commandList->SetComputeRoot32BitConstants(ROOT_TAA_CONSTANTS, sizeof(constants) / sizeof(DWORD), &constants, 0);
+    TAAConstants constants = {};
+    constants.width         = width;
+    constants.height        = height;
+    constants.proj          = renderData.proj.Transpose();
+    constants.invView       = renderData.invView.Transpose();
+    constants.prevViewProj  = renderData.prevViewProj.Transpose();
+    constants.prevWidth     = renderData.prevWidth;
+    constants.prevHeight    = renderData.prevHeight;
+    constants.jitterX       = renderData.proj._31;
+    constants.jitterY       = renderData.proj._32;
+
+    ModuleRingBuffer* ringBuffer = app->getRingBuffer();
+
+    commandList->SetComputeRootConstantBufferView(ROOT_TAA_CONSTANTS, ringBuffer->alloc(&constants));
     commandList->SetComputeRootDescriptorTable(ROOT_TAA_PREVIOUS, currentFrame);
+    commandList->SetComputeRootDescriptorTable(ROOT_TAA_DEPTH, renderData.gBuffer.getSrvTableDesc().getGPUHandle(GBuffer::BUFFER_DEPTH));
     commandList->SetComputeRootDescriptorTable(ROOT_TAA_CURRENT, tableDesc.getGPUHandle(1));
 
     UINT numGroupsX = getDivisedSize(width, 8);
@@ -55,11 +67,14 @@ bool TAAPass::createRootSignature()
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
     CD3DX12_ROOT_PARAMETER rootParameter[NUM_ROOT_PARAMETERS_TAA] = {};
 
-    CD3DX12_DESCRIPTOR_RANGE srvRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
+    CD3DX12_DESCRIPTOR_RANGE sourceRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
+    CD3DX12_DESCRIPTOR_RANGE depthRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1);
+
     CD3DX12_DESCRIPTOR_RANGE uavRange(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0);
 
-    rootParameter[ROOT_TAA_CONSTANTS].InitAsConstants(sizeof(TAAConstants) / sizeof(DWORD), 0, 0, D3D12_SHADER_VISIBILITY_ALL);
-    rootParameter[ROOT_TAA_PREVIOUS].InitAsDescriptorTable(1, &srvRange, D3D12_SHADER_VISIBILITY_ALL);
+    rootParameter[ROOT_TAA_CONSTANTS].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_ALL);
+    rootParameter[ROOT_TAA_PREVIOUS].InitAsDescriptorTable(1, &sourceRange, D3D12_SHADER_VISIBILITY_ALL);
+    rootParameter[ROOT_TAA_DEPTH].InitAsDescriptorTable(1, &depthRange, D3D12_SHADER_VISIBILITY_ALL);
     rootParameter[ROOT_TAA_CURRENT].InitAsDescriptorTable(1, &uavRange, D3D12_SHADER_VISIBILITY_ALL);
     rootSignatureDesc.Init(NUM_ROOT_PARAMETERS_TAA, rootParameter, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_NONE);
 
