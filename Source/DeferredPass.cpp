@@ -60,24 +60,24 @@ bool DeferredPass::createRootSignature()
 {
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
     CD3DX12_ROOT_PARAMETER rootParameters[SLOT_COUNT] = {};
-    CD3DX12_DESCRIPTOR_RANGE lightsTableRange, iblTableRange, gbufferTableRange, shadowMapTableRange, ssaoTableRange;
+    CD3DX12_DESCRIPTOR_RANGE iblTableRange, gbufferTableRange, shadowMapTableRange, ssaoTableRange;
     CD3DX12_DESCRIPTOR_RANGE sampRange;
 
-    gbufferTableRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 4, 0);
-    lightsTableRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 4);
-    iblTableRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 9);
-    shadowMapTableRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 12);
-    ssaoTableRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 13);
+    gbufferTableRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, GBuffer::BUFFER_DEPTH+1, 0);
+    iblTableRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, GBuffer::BUFFER_DEPTH+6);
+    shadowMapTableRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, GBuffer::BUFFER_DEPTH+9);
+    ssaoTableRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, GBuffer::BUFFER_DEPTH +10);
     sampRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, ModuleSamplers::COUNT, 0);
 
     rootParameters[SLOT_PER_FRAME_CB].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_PIXEL);
     rootParameters[SLOT_SHADOW_VIEW_PROJ].InitAsConstantBufferView(1, 0, D3D12_SHADER_VISIBILITY_PIXEL);
     rootParameters[SLOT_GBUFFER_TABLE].InitAsDescriptorTable(1, &gbufferTableRange, D3D12_SHADER_VISIBILITY_PIXEL);
-    rootParameters[SLOT_DIRECTIONAL_BUFFER].InitAsShaderResourceView(4, 0, D3D12_SHADER_VISIBILITY_PIXEL);
-    rootParameters[SLOT_POINT_BUFFER].InitAsShaderResourceView(5, 0, D3D12_SHADER_VISIBILITY_PIXEL);
-    rootParameters[SLOT_SPOT_BUFFER].InitAsShaderResourceView(6, 0, D3D12_SHADER_VISIBILITY_PIXEL);
-    rootParameters[SLOT_POINT_LIST].InitAsShaderResourceView(7, 0, D3D12_SHADER_VISIBILITY_PIXEL);  
-    rootParameters[SLOT_SPOT_LIST].InitAsShaderResourceView(8, 0, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[SLOT_DIRECTIONAL_BUFFER].InitAsShaderResourceView(GBuffer::BUFFER_DEPTH+1, 0, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[SLOT_POINT_BUFFER].InitAsShaderResourceView(GBuffer::BUFFER_DEPTH +2, 0, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[SLOT_SPOT_BUFFER].InitAsShaderResourceView(GBuffer::BUFFER_DEPTH +3, 0, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[SLOT_POINT_LIST].InitAsShaderResourceView(GBuffer::BUFFER_DEPTH +4, 0, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[SLOT_SPOT_LIST].InitAsShaderResourceView(GBuffer::BUFFER_DEPTH +5, 0, D3D12_SHADER_VISIBILITY_PIXEL);
+
     rootParameters[SLOT_SHADOW_MAP_TABLE].InitAsDescriptorTable(1, &shadowMapTableRange, D3D12_SHADER_VISIBILITY_PIXEL);
     rootParameters[SLOT_SSAO_TABLE].InitAsDescriptorTable(1, &ssaoTableRange, D3D12_SHADER_VISIBILITY_PIXEL);
     rootParameters[SLOT_IBL_TABLE].InitAsDescriptorTable(1, &iblTableRange, D3D12_SHADER_VISIBILITY_PIXEL);

@@ -5,9 +5,11 @@ struct PSOutput
     float4 albedo : SV_Target0;
     float4 normalMetalRough : SV_Target1;
     float4 emissiveAO : SV_Target2;
+    float2 velocity : SV_Target3;
 };
 
-PSOutput main(float3 worldPos : POSITION, float2 texCoord0 : TEXCOORD0, float2 texCoord1 : TEXCOORD1, float3 normal : NORMAL0, float3 tangent : TANGENT)
+PSOutput main(float3 worldPos : POSITION, float2 texCoord0 : TEXCOORD0, float2 texCoord1 : TEXCOORD1, float3 normal : NORMAL0, float3 tangent : TANGENT, 
+              float4 clipPos : POSITION1, float4 clipPrevPos : POSITION2)
 {
     PSOutput output;
 
@@ -36,6 +38,12 @@ PSOutput main(float3 worldPos : POSITION, float2 texCoord0 : TEXCOORD0, float2 t
     output.albedo = float4(baseColour, 1.0);
     output.normalMetalRough = float4(N, asfloat(metallic16 | roughness16 << 16));
     output.emissiveAO = float4(emissive, diffuseAO);
+    
+    // Velocity calculation
+    float2 a = ndcToUV(clipPos.xy / clipPos.w);
+    float2 b = ndcToUV(clipPrevPos.xy / clipPrevPos.w);
+
+    output.velocity = a - b;
 
     return output;
 }

@@ -20,6 +20,12 @@ class GBufferExportPass
         SLOT_COUNT
     };
 
+    struct Constants
+    {
+        Matrix mvp;
+        Matrix prevMVP;
+    };
+
     struct PerInstance
     {
         Matrix modelMat;

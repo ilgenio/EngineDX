@@ -20,6 +20,7 @@ class Model
         std::string name;
         Matrix localTransform;
         Matrix worldTransform;
+        Matrix prevWorldTransform = Matrix::Identity;
         bool dirtyWorld = true;
         bool lastFrameDirty = true;
         INT parent = -1;

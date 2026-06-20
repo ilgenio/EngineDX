@@ -279,9 +279,12 @@ void Model::updateWorldTransforms()
             numDirty = node->numChilds;
         }
 
+        node->prevWorldTransform = node->worldTransform;
+
         if (dirty)
         {
             INT parentIndex = node->parent;
+
             if (parentIndex >= 0)
             {
                 Node* parent = nodes[parentIndex];
@@ -372,6 +375,7 @@ void Model::frustumCulling(const Vector4 frustumPlanes[6], const Vector3 absFrus
             _ASSERTE(nodes[instance->nodeIndex]->dirtyWorld == false);
 
             renderMesh.transform = nodes[instance->nodeIndex]->worldTransform;
+            renderMesh.prevTransform = nodes[instance->nodeIndex]->prevWorldTransform;
 
             renderMesh.normalMatrix = renderMesh.transform;
             renderMesh.normalMatrix.Translation(Vector3::Zero);

@@ -25,6 +25,7 @@ struct RenderMesh
     const float* morphWeights = nullptr;
     UINT numMorphTargets = 0;
 
+    Matrix prevTransform;
     Matrix transform;
     Matrix normalMatrix;
 };

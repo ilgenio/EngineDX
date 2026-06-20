@@ -32,21 +32,22 @@ cbuffer ShadowData : register(b1)
 Texture2D gBufferAlbedo : register(t0);
 Texture2D gBufferNormalMetRoug : register(t1);
 Texture2D gBufferEmissiveOccl : register(t2);
-Texture2D depthTex : register(t3);
+Texture2D gBufferVelocity : register(t3);
+Texture2D depthTex : register(t4);
 
-StructuredBuffer<Directional> dirLights : register(t4);
-StructuredBuffer<Point> pointLights : register(t5);
-StructuredBuffer<Spot>  spotLights  : register(t6);
+StructuredBuffer<Directional> dirLights : register(t5);
+StructuredBuffer<Point> pointLights : register(t6);
+StructuredBuffer<Spot>  spotLights  : register(t7);
 
-StructuredBuffer<int> pointLightIndices : register(t7);
-StructuredBuffer<int> spotLightIndices : register(t8);
+StructuredBuffer<int> pointLightIndices : register(t8);
+StructuredBuffer<int> spotLightIndices : register(t9);
 
-Texture2D shadowMoments : register(t12);
-Texture2D ssaoResult : register(t13);
+TextureCube irradiance : register(t10);
+TextureCube radiance : register(t11);
+Texture2D  brdfLUT : register(t12);
 
-TextureCube irradiance : register(t9);
-TextureCube radiance : register(t10);
-Texture2D  brdfLUT : register(t11);
+Texture2D shadowMoments : register(t13);
+Texture2D ssaoResult : register(t14);
 
 float3 convertToShadowSpace(in float3 worldPos)
 {

@@ -7,6 +7,7 @@
 cbuffer MVP : register(b0)
 {
     float4x4 mvp;  
+    float4x4 prevMVP;
 };
 
 cbuffer PerInstance : register(b1)

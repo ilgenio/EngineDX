@@ -11,14 +11,16 @@ const DXGI_FORMAT GBuffer::gBufferFormats[BUFFER_COUNT] =
 {
     DXGI_FORMAT_R8G8B8A8_UNORM,     // Albedo+alpha
     DXGI_FORMAT_R32G32B32A32_FLOAT, // Normal+MetallicRoughness
-    DXGI_FORMAT_R32G32B32A32_FLOAT  // Emissive+AO
+    DXGI_FORMAT_R32G32B32A32_FLOAT, // Emissive+AO
+    DXGI_FORMAT_R16G16_FLOAT,       // Velocity
 };
 
 const char* GBuffer::gBufferNames[BUFFER_COUNT] =
 {
     "GBuffer_Albedo",
     "GBuffer_Normal_MetallicRoughness",
-    "GBuffer_Emissive_AO"
+    "GBuffer_Emissive_AO",
+    "GBuffer_Velocity"
 };
 
 const DXGI_FORMAT GBuffer::depthFormat = DXGI_FORMAT_D32_FLOAT;
