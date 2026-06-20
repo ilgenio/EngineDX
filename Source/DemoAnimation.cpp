@@ -20,7 +20,7 @@ bool DemoAnimation::init()
 
     UINT modelIdx = scene->addModel("Assets/Models/busterDrone/busterDrone.gltf");
     UINT animIdx = scene->addClip("Assets/Models/busterDrone/busterDrone.gltf", 0);
-    //scene->getModel(modelIdx)->playAnim(scene->getClip(animIdx));
+    scene->getModel(modelIdx)->playAnim(scene->getClip(animIdx));
 
     ModuleCamera* camera = app->getCamera();
 

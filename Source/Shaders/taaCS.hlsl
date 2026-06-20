@@ -70,9 +70,9 @@ void main(uint2 globalIdx : SV_DispatchThreadID)
     {
         for(int j = -1; j <= 1; ++j)
         {
-            uint2 offsetPos = prevPos + uint2(i, j);
+            uint2 offsetPos = globalIdx + uint2(i, j);
 
-            if(offsetPos.x < 0 || offsetPos.x >= prevWidth || offsetPos.y < 0 || offsetPos.y >= prevHeight)
+            if(offsetPos.x < 0 || offsetPos.x >= width || offsetPos.y < 0 || offsetPos.y >= height)
             {
                 continue;
             }
