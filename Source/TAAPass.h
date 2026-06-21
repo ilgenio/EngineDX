@@ -11,6 +11,7 @@ class TAAPass
         ROOT_TAA_CONSTANTS = 0,
         ROOT_TAA_PREVIOUS,
         ROOT_TAA_DEPTH,
+        ROOT_TAA_VELOCITY,
         ROOT_TAA_CURRENT,
 
         NUM_ROOT_PARAMETERS_TAA

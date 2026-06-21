@@ -8,8 +8,8 @@ struct PSOutput
     float2 velocity : SV_Target3;
 };
 
-PSOutput main(float3 worldPos : POSITION, float2 texCoord0 : TEXCOORD0, float2 texCoord1 : TEXCOORD1, float3 normal : NORMAL0, float3 tangent : TANGENT, 
-              float4 clipPos : POSITION1, float4 clipPrevPos : POSITION2)
+PSOutput main(float3 worldPos : POSITION, float2 texCoord0 : TEXCOORD0, float2 texCoord1 : TEXCOORD1, float3 normal : NORMAL0, 
+              float3 tangent : TANGENT, float4 clipPos : POSITION1, float4 clipPrevPos : POSITION2)
 {
     PSOutput output;
 

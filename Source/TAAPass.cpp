@@ -38,7 +38,7 @@ void TAAPass::render(ID3D12GraphicsCommandList* commandList, const RenderData& r
     constants.height        = height;
     constants.proj          = renderData.proj.Transpose();
     constants.invView       = renderData.invView.Transpose();
-    constants.prevViewProj  = renderData.prevViewProj.Transpose();
+    constants.prevViewProj  = renderData.prevViewProjNoJitter.Transpose();
     constants.prevWidth     = renderData.prevWidth;
     constants.prevHeight    = renderData.prevHeight;
     constants.jitterX       = renderData.proj._31;
@@ -49,6 +49,7 @@ void TAAPass::render(ID3D12GraphicsCommandList* commandList, const RenderData& r
     commandList->SetComputeRootConstantBufferView(ROOT_TAA_CONSTANTS, ringBuffer->alloc(&constants));
     commandList->SetComputeRootDescriptorTable(ROOT_TAA_PREVIOUS, currentFrame);
     commandList->SetComputeRootDescriptorTable(ROOT_TAA_DEPTH, renderData.gBuffer.getSrvTableDesc().getGPUHandle(GBuffer::BUFFER_DEPTH));
+    commandList->SetComputeRootDescriptorTable(ROOT_TAA_VELOCITY, renderData.gBuffer.getSrvTableDesc().getGPUHandle(GBuffer::BUFFER_VELOCITY));
     commandList->SetComputeRootDescriptorTable(ROOT_TAA_CURRENT, tableDesc.getGPUHandle(1));
 
     UINT numGroupsX = getDivisedSize(width, 8);
@@ -69,12 +70,14 @@ bool TAAPass::createRootSignature()
 
     CD3DX12_DESCRIPTOR_RANGE sourceRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
     CD3DX12_DESCRIPTOR_RANGE depthRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1);
+    CD3DX12_DESCRIPTOR_RANGE velocityRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 2);
 
     CD3DX12_DESCRIPTOR_RANGE uavRange(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0);
 
     rootParameter[ROOT_TAA_CONSTANTS].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_ALL);
     rootParameter[ROOT_TAA_PREVIOUS].InitAsDescriptorTable(1, &sourceRange, D3D12_SHADER_VISIBILITY_ALL);
     rootParameter[ROOT_TAA_DEPTH].InitAsDescriptorTable(1, &depthRange, D3D12_SHADER_VISIBILITY_ALL);
+    rootParameter[ROOT_TAA_VELOCITY].InitAsDescriptorTable(1, &velocityRange, D3D12_SHADER_VISIBILITY_ALL);
     rootParameter[ROOT_TAA_CURRENT].InitAsDescriptorTable(1, &uavRange, D3D12_SHADER_VISIBILITY_ALL);
     rootSignatureDesc.Init(NUM_ROOT_PARAMETERS_TAA, rootParameter, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_NONE);
 

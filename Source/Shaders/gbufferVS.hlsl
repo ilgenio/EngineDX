@@ -17,9 +17,11 @@ VS_OUTPUT main(float3 position : POSITION, float2 texCoord0 : TEXCOORD0, float2 
     VS_OUTPUT output;
 
     float4 worldPos = mul(float4(position, 1.0), modelMat);
+
     output.position = mul(float4(position, 1.0), mvp);
-    output.currentPosition = output.position;
-    output.prevPosition = mul(float4(position, 1.0), prevMVP);
+    output.clipPos = mul(float4(position, 1.0), mvpNoJitter);
+    output.clipPrevPos = mul(float4(position, 1.0), prevMVPNoJitter);
+
     output.worldPos = worldPos.xyz;
 
     output.normal = normalize(mul(float4(normal, 0.0), normalMat)).xyz;

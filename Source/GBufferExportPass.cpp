@@ -51,15 +51,17 @@ void GBufferExportPass::render(ID3D12GraphicsCommandList* commandList, std::span
     {
         if (mesh.material)
         {
-            Constants constants;
+            Matrix mvp; 
 
             PerInstance perInstance;
 
             if (mesh.numJoints > 0 || mesh.numMorphTargets > 0) // skinned mesh
             {
                 // Note: Skinned mesh has already bee transformed in the skinning pass 
-                constants.mvp = (renderData.viewProj).Transpose();
-                constants.prevMVP = (renderData.prevViewProj).Transpose();
+                mvp = (renderData.viewProj).Transpose();
+
+                perInstance.prevMVPNoJitter = (renderData.prevViewProjNoJitter).Transpose();
+                perInstance.mvpNoJitter = (renderData.viewProjNoJitter).Transpose();
                 perInstance.modelMat = Matrix::Identity;
                 perInstance.normalMat = Matrix::Identity;
 
@@ -70,8 +72,10 @@ void GBufferExportPass::render(ID3D12GraphicsCommandList* commandList, std::span
             }
             else // rigid mesh
             {
-                constants.mvp = (mesh.transform * renderData.viewProj).Transpose();
-                constants.prevMVP = (mesh.prevTransform * renderData.prevViewProj).Transpose();
+                mvp = (mesh.transform * renderData.viewProj).Transpose();
+
+                perInstance.prevMVPNoJitter = (mesh.prevTransform * renderData.prevViewProjNoJitter).Transpose();
+                perInstance.mvpNoJitter = (mesh.transform * renderData.viewProjNoJitter).Transpose();
 
                 perInstance.modelMat = mesh.transform.Transpose();
                 perInstance.normalMat = mesh.normalMatrix.Transpose();
@@ -81,7 +85,7 @@ void GBufferExportPass::render(ID3D12GraphicsCommandList* commandList, std::span
 
             perInstance.material = mesh.material->getData();
 
-            commandList->SetGraphicsRoot32BitConstants(SLOT_MVP_MATRIX, sizeof(Constants) / sizeof(UINT32), &constants, 0);
+            commandList->SetGraphicsRoot32BitConstants(SLOT_MVP_MATRIX, sizeof(Matrix) / sizeof(UINT32), &mvp, 0);
             commandList->SetGraphicsRootConstantBufferView(SLOT_PER_INSTANCE_CB, ringBuffer->alloc(&perInstance));
             commandList->SetGraphicsRootDescriptorTable(SLOT_TEXTURES_TABLE, mesh.material->getTextureTable());
 
@@ -110,7 +114,7 @@ bool GBufferExportPass::createRootSignature()
     materialTableRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, Material::getNumTextureSlots(), 0);
     sampRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, ModuleSamplers::COUNT, 0);
 
-    rootParameters[SLOT_MVP_MATRIX].InitAsConstants((sizeof(Constants) / sizeof(UINT32)), 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
+    rootParameters[SLOT_MVP_MATRIX].InitAsConstants((sizeof(Matrix) / sizeof(UINT32)), 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
     rootParameters[SLOT_PER_INSTANCE_CB].InitAsConstantBufferView(1, 0, D3D12_SHADER_VISIBILITY_ALL);
     rootParameters[SLOT_TEXTURES_TABLE].InitAsDescriptorTable(1, &materialTableRange, D3D12_SHADER_VISIBILITY_PIXEL);
     rootParameters[SLOT_SAMPLERS].InitAsDescriptorTable(1, &sampRange, D3D12_SHADER_VISIBILITY_PIXEL);

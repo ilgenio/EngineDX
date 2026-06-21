@@ -296,15 +296,17 @@ void ModuleRender::updatePerFrameData()
     float aspect = float(width) / float(height);
     const Matrix& invView = camera->getCamera(); // Note: camera matrix is the inverse of the view matrix
     const Matrix& view = camera->getView();
-    Matrix proj = camera->getPerspectiveProj(aspect);
+    Matrix projNoJitter = camera->getPerspectiveProj(aspect);
 
     Vector2 halton = halton23(frameIndex++) - Vector2(0.5f, 0.5f);
     Vector2 jitter = halton * Vector2(1.0f/width, 1.0f/height); 
 
+    Matrix proj = projNoJitter;
+
     proj.m[2][0] = jitter.x;
     proj.m[2][1] = jitter.y;
 
-    renderData.prevViewProj = renderData.viewProj;
+    renderData.prevViewProjNoJitter = renderData.viewProjNoJitter;
     renderData.prevWidth = renderData.width;
     renderData.prevHeight = renderData.height;
 
@@ -312,6 +314,7 @@ void ModuleRender::updatePerFrameData()
     renderData.proj = proj;
     renderData.invView = invView;
     renderData.viewProj = view * proj;
+    renderData.viewProjNoJitter = view * projNoJitter;
     renderData.width = width;
     renderData.height = height;
 

@@ -7,13 +7,15 @@
 cbuffer MVP : register(b0)
 {
     float4x4 mvp;  
-    float4x4 prevMVP;
 };
 
 cbuffer PerInstance : register(b1)
 {
     float4x4 modelMat;
     float4x4 normalMat;
+    float4x4 prevMVPNoJitter;
+    float4x4 mvpNoJitter;
+
     
     Material material;
 };

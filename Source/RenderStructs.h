@@ -45,7 +45,8 @@ struct RenderData
     Matrix                      invView = Matrix::Identity;
     Matrix                      proj = Matrix::Identity;
     Matrix                      viewProj = Matrix::Identity; 
-    Matrix                      prevViewProj = Matrix::Identity;
+    Matrix                      viewProjNoJitter = Matrix::Identity;
+    Matrix                      prevViewProjNoJitter = Matrix::Identity;
 
     D3D12_GPU_VIRTUAL_ADDRESS   perFrameBuffer = 0;
     D3D12_GPU_VIRTUAL_ADDRESS   skinningBuffer = 0;

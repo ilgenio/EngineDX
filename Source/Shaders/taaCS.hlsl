@@ -18,6 +18,7 @@ cbuffer Constants : register(b0)
 
 Texture2D<float4> current : register(t0);
 Texture2D<float> depth : register(t1);
+Texture2D<float2> velocity : register(t2);
 
 RWTexture2D<float4> taaResult : register(u0);
 
@@ -45,9 +46,8 @@ void main(uint2 globalIdx : SV_DispatchThreadID)
 
     float2 uv = (float2(globalIdx) + float2(0.5, 0.5)) / float2(width, height);
 
-    //uv = uv - jitter; // remove jitter for reprojection
-
-    float2 prevUV = reproject(uv, currentDepth);    
+    float2 prevUV = uv - velocity[globalIdx]; // Use velocity buffer for reprojection
+    //float2 prevUV = reproject(uv, currentDepth);
 
     if(prevUV.x < 0.0 || prevUV.x > 1.0 || prevUV.y < 0.0 || prevUV.y > 1.0)
     {
@@ -70,7 +70,7 @@ void main(uint2 globalIdx : SV_DispatchThreadID)
     {
         for(int j = -1; j <= 1; ++j)
         {
-            uint2 offsetPos = globalIdx + uint2(i, j);
+            int2 offsetPos = globalIdx + int2(i, j);
 
             if(offsetPos.x < 0 || offsetPos.x >= width || offsetPos.y < 0 || offsetPos.y >= height)
             {
@@ -88,7 +88,7 @@ void main(uint2 globalIdx : SV_DispatchThreadID)
     // TODO: Depth rejection 
 
     // Blending factor, can be adjusted for more or less smoothing
-    const float alpha = 0.1; 
+    const float alpha = 0.30;
 
     taaResult[globalIdx] = float4(lerp(prevColor, currentColor, alpha), 1.0);
 }
