@@ -55,6 +55,9 @@ void GBufferExportPass::render(ID3D12GraphicsCommandList* commandList, std::span
 
             PerInstance perInstance;
 
+            D3D12_VERTEX_BUFFER_VIEW vertexBufferView = mesh.mesh->getVertexBufferView();
+            commandList->IASetVertexBuffers(0, 1, &vertexBufferView);
+
             if (mesh.numJoints > 0 || mesh.numMorphTargets > 0) // skinned mesh
             {
                 // Note: Skinned mesh has already bee transformed in the skinning pass 
@@ -64,11 +67,6 @@ void GBufferExportPass::render(ID3D12GraphicsCommandList* commandList, std::span
                 perInstance.mvpNoJitter = (renderData.viewProjNoJitter).Transpose();
                 perInstance.modelMat = Matrix::Identity;
                 perInstance.normalMat = Matrix::Identity;
-
-                D3D12_VERTEX_BUFFER_VIEW vertexBufferView = mesh.mesh->getVertexBufferView();
-                vertexBufferView.BufferLocation = renderData.skinningBuffer + mesh.skinningOffset;
-
-                commandList->IASetVertexBuffers(0, 1, &vertexBufferView);
             }
             else // rigid mesh
             {
@@ -79,8 +77,6 @@ void GBufferExportPass::render(ID3D12GraphicsCommandList* commandList, std::span
 
                 perInstance.modelMat = mesh.transform.Transpose();
                 perInstance.normalMat = mesh.normalMatrix.Transpose();
-
-                commandList->IASetVertexBuffers(0, 1, &mesh.mesh->getVertexBufferView());
             }
 
             perInstance.material = mesh.material->getData();

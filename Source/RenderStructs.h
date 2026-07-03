@@ -49,7 +49,6 @@ struct RenderData
     Matrix                      prevViewProjNoJitter = Matrix::Identity;
 
     D3D12_GPU_VIRTUAL_ADDRESS   perFrameBuffer = 0;
-    D3D12_GPU_VIRTUAL_ADDRESS   skinningBuffer = 0;
     D3D12_GPU_DESCRIPTOR_HANDLE iblTable = {};
 
     D3D12_GPU_VIRTUAL_ADDRESS   shadowViewProjBuffer = 0;

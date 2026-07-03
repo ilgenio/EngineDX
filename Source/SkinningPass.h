@@ -22,21 +22,18 @@ class SkinningPass
     ComPtr<ID3D12RootSignature> rootSignature;
     ComPtr<ID3D12PipelineState> pso;
 
-    ComPtr<ID3D12Resource> output;
-
 public:
 
     SkinningPass();
     ~SkinningPass();
 
     void render(ID3D12GraphicsCommandList* commandList, std::span<RenderMesh> meshes);
-    D3D12_GPU_VIRTUAL_ADDRESS getOutputAddress() const; 
 
 private:
-    std::vector<Matrix> copyPalettes(ID3D12GraphicsCommandList* commandList, std::span<RenderMesh> meshes);
-    std::vector<float> copyMorphWeights(ID3D12GraphicsCommandList* commandList, std::span<RenderMesh> meshes);
 
-    bool buildBuffers();
+    void copyPalette(const RenderMesh& mesh, std::vector<Matrix>& palettes);
+    void copyMorphWeights(const RenderMesh& mesh, std::vector<float>& morphWeights);
+
     bool createRootSignature();
     bool createPSO();
 };

@@ -83,18 +83,13 @@ void ShadowMapPass::renderShadowMap(ID3D12GraphicsCommandList* commandList, std:
             // Note: Skinned mesh has already bee transformed in the skinning pass 
             model = Matrix::Identity;
 
-            D3D12_VERTEX_BUFFER_VIEW vertexBufferView = mesh.mesh->getVertexBufferView();
-            vertexBufferView.BufferLocation = renderData.skinningBuffer + mesh.skinningOffset;
-
-            commandList->IASetVertexBuffers(0, 1, &vertexBufferView);
         }
         else // rigid mesh
         {
             model = mesh.transform.Transpose();
-
-            commandList->IASetVertexBuffers(0, 1, &mesh.mesh->getVertexBufferView());
         }
 
+        commandList->IASetVertexBuffers(0, 1, &mesh.mesh->getVertexBufferView());
         commandList->SetGraphicsRoot32BitConstants(ROOT_SHADOW_MODEL, sizeof(Matrix) / sizeof(UINT32), &model, 0);
         commandList->SetGraphicsRootConstantBufferView(ROOT_SHADOW_VP, renderData.shadowViewProjBuffer);
 

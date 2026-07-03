@@ -25,14 +25,15 @@ bool DemoScene::init()
     {
         scene->getSkybox()->init("Assets/Textures/qwantani_very_dark.hdr", false);
 
-        scene->addModel("Assets/Models/Sponza/Sponza.gltf");
+        //scene->addModel("Assets/Models/Sponza/Sponza.gltf");
+        scene->addModel("Assets/Models/BistroExterior/BistroExterior.gltf");
 
         ModuleCamera* camera = app->getCamera();
         camera->setPolar(XMConvertToRadians(-90.0f));
         camera->setAzimuthal(XMConvertToRadians(-15.0f));
         camera->setTranslation(Vector3(-6.0f, 4.0f, -0.5f));
 
-        scene->addLight(Directional(Vector3(-0.5f, -1.0f, -0.5f), Color(1.0f, 1.0f, 1.0f, 1.0f)));
+        //scene->addLight(Directional(Vector3(-0.5f, -1.0f, -0.5f), Color(1.0f, 1.0f, 1.0f, 1.0f)));
     }
 
     return true;

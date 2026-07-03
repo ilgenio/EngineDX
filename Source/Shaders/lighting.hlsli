@@ -8,7 +8,15 @@ float3 computeLighting(float3 V, float3 N, float3 L, float3 lightColour, float3 
 {
     float3 H = normalize(V + L);
     
-    float NdotL = saturate(dot(L, N));
+    float NdotL = dot(L, N);
+
+    if(NdotL <= 0.0)
+    {
+        // Light is behind the surface, no contribution
+        return 0.0;
+    }
+
+    NdotL = saturate(NdotL);
     float VdotH = saturate(dot(V, H));
     float NdotV = saturate(dot(N, V));
     float NdotH = saturate(dot(N, H));

@@ -88,7 +88,7 @@ void main(uint2 globalIdx : SV_DispatchThreadID)
     // TODO: Depth rejection 
 
     // Blending factor, can be adjusted for more or less smoothing
-    const float alpha = 0.30;
+    const float alpha = 0.40;
 
     taaResult[globalIdx] = float4(lerp(prevColor, currentColor, alpha), 1.0);
 }

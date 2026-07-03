@@ -42,7 +42,7 @@ private:
     unsigned                            lastCompletedFrame = 0;
 
     bool                                allowTearing = false;
-    bool                                vsync = true;
+    bool                                vsync = false;
     bool                                supportsRT = false;
     unsigned                            currentBackBufferIdx = 0;
 

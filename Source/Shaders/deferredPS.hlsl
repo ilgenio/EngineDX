@@ -143,7 +143,15 @@ float4 main(in float2 uv : TEXCOORD) : SV_Target
     float3 V = normalize(viewPos - worldPos);
 
     float3 R = reflect(-V, N);
-    float NdotV = saturate(dot(N, V));
+    float NdotV = dot(N, V);
+
+    if(NdotV <= 0.0)
+    {
+        // Backface, no contribution
+        return 0.0;
+    }
+    
+    NdotV = saturate(NdotV);
     float NdotR = saturate(dot(N, R));
 
     float specularAO = getSpecularAO(NdotV, NdotR, diffuseAO, roughness);

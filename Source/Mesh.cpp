@@ -3,6 +3,7 @@
 
 #include "Application.h"
 #include "ModuleStaticBuffer.h"
+#include "ModuleResources.h"
 
 #include "gltf_utils.h"
 
@@ -182,6 +183,18 @@ void Mesh::load(const tinygltf::Model& model, const tinygltf::Mesh& mesh, const 
         if (numMorphTargets > 0)
         {            
             staticBuffer->allocVertexBuffer(numVertices * numMorphTargets, sizeof(Vertex), morphVertices.get(), morphView);
+        }
+
+        if(hasJoints && hasWeights || numMorphTargets > 0)
+        {
+            ModuleResources* resources = app->getResources();
+
+            for(UINT i= 0; i < MaxDeformationBuffers; ++i)
+            {
+                std::string bufferName = name + "_deformationBuffer_" + std::to_string(i);
+                deformationBuffer[i] = resources->createUnorderedAccessBuffer(numVertices * sizeof(Vertex), bufferName.c_str());
+                deformationBufferView[i] = { deformationBuffer[i]->GetGPUVirtualAddress(), numVertices * sizeof(Vertex), sizeof(Vertex) };
+            }
         }
     }
 }

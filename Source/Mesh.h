@@ -40,11 +40,24 @@ public:
     D3D12_GPU_VIRTUAL_ADDRESS getMorphBuffer() const { return morphView.BufferLocation; }
 
     const D3D12_INDEX_BUFFER_VIEW& getIndexBufferView() const { return indexBufferView; }
-    const D3D12_VERTEX_BUFFER_VIEW& getVertexBufferView() const { return vertexBufferView; }
+    const D3D12_VERTEX_BUFFER_VIEW& getVertexBufferView() const 
+    { 
+        if (needsMorphing() || needsSkinning())
+        {
+            return deformationBufferView[currentDeformationBuffer];
+        }
+
+        return vertexBufferView; 
+    }
+
     const D3D12_VERTEX_BUFFER_VIEW& getMorphBufferView() const { return morphView; }
 
     const BoundingBox& getBoundingBox() const { return bbox; }
     const BoundingSphere& getBoundingSphere() const { return bsphere; }
+
+    void swapDeformationBuffer() const { currentDeformationBuffer = (currentDeformationBuffer + 1) % MaxDeformationBuffers; }
+    ID3D12Resource* getCurrentDeformationBuffer() const { return deformationBuffer[currentDeformationBuffer].Get(); }
+    ID3D12Resource* getPrevDeformationBuffer() const { return deformationBuffer[(currentDeformationBuffer + MaxDeformationBuffers - 1) % MaxDeformationBuffers].Get(); }
 
     // Input Layout Descriptor
     static const D3D12_INPUT_LAYOUT_DESC& getInputLayoutDesc() { return inputLayoutDesc; }
@@ -79,6 +92,12 @@ private:
     D3D12_INDEX_BUFFER_VIEW indexBufferView;
     D3D12_VERTEX_BUFFER_VIEW morphView;
     D3D12_GPU_VIRTUAL_ADDRESS boneData = 0;
+
+    enum { MaxDeformationBuffers = 2 };
+
+    ComPtr<ID3D12Resource> deformationBuffer[MaxDeformationBuffers]; // buffer for skinning and morph target data
+    D3D12_VERTEX_BUFFER_VIEW deformationBufferView[MaxDeformationBuffers];
+    mutable UINT currentDeformationBuffer = 0;
 
     // bounding box
     BoundingBox bbox;

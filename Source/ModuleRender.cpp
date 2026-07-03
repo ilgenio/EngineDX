@@ -426,7 +426,6 @@ void ModuleRender::render()
 
         // Updates skinning
         skinningPass->render(commandList, std::span<RenderMesh>(renderList.data(), renderList.size()));
-        renderData.skinningBuffer = skinningPass->getOutputAddress();
 
         // Depth reduction pass
 

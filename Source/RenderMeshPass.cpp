@@ -68,6 +68,7 @@ void RenderMeshPass::render(ID3D12GraphicsCommandList* commandList, std::span<co
 
             commandList->SetGraphicsRootConstantBufferView(SLOT_PER_INSTANCE_CB, ringBuffer->alloc(&perInstance));
             commandList->SetGraphicsRootDescriptorTable(SLOT_TEXTURES_TABLE, mesh.material->getTextureTable());
+            commandList->IASetVertexBuffers(0, 1, &mesh.mesh->getVertexBufferView());
 
             if (mesh.numJoints > 0 || mesh.numMorphTargets >0) // skinned mesh
             {
@@ -75,16 +76,11 @@ void RenderMeshPass::render(ID3D12GraphicsCommandList* commandList, std::span<co
                 perInstance.normalMat = Matrix::Identity;
 
                 D3D12_VERTEX_BUFFER_VIEW vertexBufferView = mesh.mesh->getVertexBufferView();
-                vertexBufferView.BufferLocation = renderData.skinningBuffer + mesh.skinningOffset;
-                
-                commandList->IASetVertexBuffers(0, 1, &vertexBufferView);                
             }
             else // rigid mesh
             {
                 perInstance.modelMat = mesh.transform.Transpose();
                 perInstance.normalMat = mesh.normalMatrix.Transpose();
-
-                commandList->IASetVertexBuffers(0, 1, &mesh.mesh->getVertexBufferView());
             }
 
             if (mesh.mesh->getNumIndices() > 0) // indexed draw
