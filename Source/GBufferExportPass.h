@@ -16,7 +16,8 @@ class GBufferExportPass
         SLOT_MVP_MATRIX = 0,
         SLOT_PER_INSTANCE_CB = 1,
         SLOT_TEXTURES_TABLE = 2,
-        SLOT_SAMPLERS = 3,
+        SLOT_PREVFRAME_VERTICES = 3, 
+        SLOT_SAMPLERS = 4,
         SLOT_COUNT
     };
 
@@ -26,6 +27,8 @@ class GBufferExportPass
         Matrix normalMat;
         Matrix prevMVPNoJitter;
         Matrix mvpNoJitter;
+        BOOL   isSkinned;
+        UINT   padding[3];
 
         Material::Data material;
     };

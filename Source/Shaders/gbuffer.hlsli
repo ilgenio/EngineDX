@@ -15,6 +15,10 @@ cbuffer PerInstance : register(b1)
     float4x4 normalMat;
     float4x4 prevMVPNoJitter;
     float4x4 mvpNoJitter;
+    bool     isSkinned;
+    uint     padding0;
+    uint     padding1;
+    uint     padding2;
 
     
     Material material;

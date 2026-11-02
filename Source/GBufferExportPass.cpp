@@ -55,11 +55,16 @@ void GBufferExportPass::render(ID3D12GraphicsCommandList* commandList, std::span
 
             PerInstance perInstance;
 
-            D3D12_VERTEX_BUFFER_VIEW vertexBufferView = mesh.mesh->getVertexBufferView();
-            commandList->IASetVertexBuffers(0, 1, &vertexBufferView);
-
-            if (mesh.numJoints > 0 || mesh.numMorphTargets > 0) // skinned mesh
+            bool hasSkinning = mesh.numJoints > 0 || mesh.numMorphTargets > 0;
+            if (hasSkinning) // skinned mesh
             {
+                ID3D12Resource* prevDeform = mesh.mesh->getPrevDeformationBuffer();
+
+                // TODO: Barrier + add StructuredBuffer "Descriptor"
+                auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(prevDeform, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+                commandList->ResourceBarrier(1, &barrier);
+                commandList->SetGraphicsRootShaderResourceView(SLOT_PREVFRAME_VERTICES, prevDeform->GetGPUVirtualAddress());
+
                 // Note: Skinned mesh has already bee transformed in the skinning pass 
                 mvp = (renderData.viewProj).Transpose();
 
@@ -67,6 +72,7 @@ void GBufferExportPass::render(ID3D12GraphicsCommandList* commandList, std::span
                 perInstance.mvpNoJitter = (renderData.viewProjNoJitter).Transpose();
                 perInstance.modelMat = Matrix::Identity;
                 perInstance.normalMat = Matrix::Identity;
+                perInstance.isSkinned = TRUE;
             }
             else // rigid mesh
             {
@@ -77,10 +83,12 @@ void GBufferExportPass::render(ID3D12GraphicsCommandList* commandList, std::span
 
                 perInstance.modelMat = mesh.transform.Transpose();
                 perInstance.normalMat = mesh.normalMatrix.Transpose();
+                perInstance.isSkinned = FALSE;
             }
 
             perInstance.material = mesh.material->getData();
 
+            commandList->IASetVertexBuffers(0, 1, &mesh.mesh->getVertexBufferView());
             commandList->SetGraphicsRoot32BitConstants(SLOT_MVP_MATRIX, sizeof(Matrix) / sizeof(UINT32), &mvp, 0);
             commandList->SetGraphicsRootConstantBufferView(SLOT_PER_INSTANCE_CB, ringBuffer->alloc(&perInstance));
             commandList->SetGraphicsRootDescriptorTable(SLOT_TEXTURES_TABLE, mesh.material->getTextureTable());
@@ -93,6 +101,14 @@ void GBufferExportPass::render(ID3D12GraphicsCommandList* commandList, std::span
             else if (mesh.mesh->getNumVertices() > 0) // non-indexed draw
             {
                 commandList->DrawInstanced(mesh.mesh->getNumVertices(), 1, 0, 0);
+            }
+
+            if (hasSkinning)
+            {
+                ID3D12Resource* prevDeform = mesh.mesh->getPrevDeformationBuffer();
+
+                auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(prevDeform, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+                commandList->ResourceBarrier(1, &barrier);
             }
         }
     }
@@ -113,6 +129,7 @@ bool GBufferExportPass::createRootSignature()
     rootParameters[SLOT_MVP_MATRIX].InitAsConstants((sizeof(Matrix) / sizeof(UINT32)), 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
     rootParameters[SLOT_PER_INSTANCE_CB].InitAsConstantBufferView(1, 0, D3D12_SHADER_VISIBILITY_ALL);
     rootParameters[SLOT_TEXTURES_TABLE].InitAsDescriptorTable(1, &materialTableRange, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[SLOT_PREVFRAME_VERTICES].InitAsShaderResourceView(10);
     rootParameters[SLOT_SAMPLERS].InitAsDescriptorTable(1, &sampRange, D3D12_SHADER_VISIBILITY_PIXEL);
 
     rootSignatureDesc.Init(SLOT_COUNT, rootParameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
